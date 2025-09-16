@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PUMP STYLE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .animate-fadeIn {
+        animation: fadeIn 1s ease-in-out forwards;
+      }
+      @keyframes gradient-pulse {
+        0% {
+          box-shadow: 0 0 0 0px rgba(236, 72, 153, 0.7), /* pink-500 */
+                      0 0 0 0px rgba(139, 92, 246, 0.7); /* purple-600 */
+        }
+        100% {
+          box-shadow: 0 0 0 25px rgba(236, 72, 153, 0),
+                      0 0 0 40px rgba(139, 92, 246, 0);
+        }
+      }
+      .animate-gradient-pulse {
+        animation: gradient-pulse 2.5s infinite cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      @keyframes subtle-pulse {
+        0%, 100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.03);
+        }
+      }
+      .animate-subtle-pulse {
+        animation: subtle-pulse 2.5s infinite ease-in-out;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.19.0"
+  }
+}
+</script>
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+
+    <!-- Facebook SDK for JavaScript (Temporariamente desativado) -->
+    <!--
+    <script>
+      window.fbAsyncInit = function() {
+        FB.init({
+          // IMPORTANTE: Substitua 'YOUR_FACEBOOK_APP_ID' pelo seu App ID real.
+          // Você pode criar um em https://developers.facebook.com/apps/
+          appId      : '2236300083540934',
+          cookie     : true,
+          xfbml      : true,
+          version    : 'v18.0',
+          status     : false // Alterado para 'false' para evitar a verificação automática de status em HTTP
+        });
+        FB.AppEvents.logPageView();
+      };
+
+      (function(d, s, id){
+         var js, fjs = d.getElementsByTagName(s)[0];
+         if (d.getElementById(id)) {return;}
+         js = d.createElement(s); js.id = id;
+         js.src = "https://connect.facebook.net/pt_BR/sdk.js"; // SDK em Português
+         fjs.parentNode.insertBefore(js, fjs);
+       }(document, 'script', 'facebook-jssdk'));
+    </script>
+    -->
+  </body>
+</html>
