@@ -2,19 +2,19 @@ import React from 'react';
 import type { Item } from '../types';
 import GradientButton from './GradientButton';
 import Header from './Header';
-import { ShoppingBagIcon, PlusIcon, UndoIcon, ShareIcon } from './IconComponents';
+import { ShoppingBagIcon, PlusIcon, UndoIcon, ShareIcon, BookmarkIcon } from './IconComponents';
 
 interface ResultScreenProps {
   generatedImage: string;
   items: Item[]; // Agora recebe uma lista de itens
   onPostToFeed: () => void; // Renomeado de onSave
-  onBuy: () => void;
+  onBuy: (items: Item[]) => void;
   onBack: () => void;
-  onAddToCart: () => void;
+  onSaveLook: () => void;
   onContinueStyling: () => void;
 }
 
-const ResultScreen: React.FC<ResultScreenProps> = ({ generatedImage, items, onPostToFeed, onBuy, onBack, onAddToCart, onContinueStyling }) => {
+const ResultScreen: React.FC<ResultScreenProps> = ({ generatedImage, items, onPostToFeed, onBuy, onBack, onSaveLook, onContinueStyling }) => {
   const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
   const lastItem = items[items.length - 1];
 
@@ -23,7 +23,7 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ generatedImage, items, onPo
       <Header title="Seu Look" />
       <div className="flex-grow pt-20 flex flex-col items-center p-4 overflow-y-auto">
         <div className="w-full max-w-sm aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl shadow-black/30 mb-6 bg-gray-900 flex-shrink-0">
-            <img src={generatedImage} alt={`Você vestindo ${lastItem.name}`} className="w-full h-full object-cover" />
+            <img src={generatedImage} alt={`Você vestindo ${lastItem.name}`} className="w-full h-full object-cover animate-imageAppear" />
         </div>
         
         <div className="w-full max-w-sm bg-gray-900 rounded-xl p-4 mb-4">
@@ -65,11 +65,11 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ generatedImage, items, onPo
                 Desfazer
             </button>
             <button
-                onClick={onAddToCart}
+                onClick={onSaveLook}
                 className="flex-1 flex items-center justify-center text-white font-bold py-3 px-4 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
             >
-               <ShoppingBagIcon className="w-5 h-5 mr-2" />
-                Carrinho
+               <BookmarkIcon className="w-5 h-5 mr-2" />
+                Salvar Look
             </button>
              <button
                 onClick={onPostToFeed} // Alterado de onSave
@@ -79,7 +79,7 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ generatedImage, items, onPo
                 Postar
             </button>
          </div>
-        <GradientButton onClick={onBuy}>
+        <GradientButton onClick={() => onBuy(items)}>
             <div className="flex items-center justify-center">
                  <ShoppingBagIcon className="w-5 h-5 mr-2" />
                 Comprar Look Completo

@@ -1,4 +1,5 @@
-import { GoogleGenAI, Modality } from '@google/genai';
+
+import { GoogleGenAI, Modality, GenerateContentResponse } from '@google/genai';
 import type { Item } from '../types';
 
 // Utility to convert data URL to base64 and get mimeType
@@ -27,7 +28,7 @@ export const generateTryOnImage = async (userImage: string, newItem: Item, exist
         promptText = `Imagine this person is trying on a piece of clothing. Superimpose the following item onto them realistically, matching their body shape, pose, and the lighting of the photo. The item is a ${newItem.name}: ${newItem.description}.`;
     }
 
-    const response = await ai.models.generateContent({
+    const response: GenerateContentResponse = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image-preview',
       contents: {
         parts: [
@@ -47,6 +48,8 @@ export const generateTryOnImage = async (userImage: string, newItem: Item, exist
       },
     });
 
+    // FIX: Corrected misleading comment. The code correctly iterates through response candidates
+    // to find the image data, which is the proper method for image generation models.
     for (const part of response.candidates[0].content.parts) {
       if (part.inlineData) {
         const base64ImageBytes: string = part.inlineData.data;

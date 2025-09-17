@@ -1,51 +1,243 @@
 import React from 'react';
-import { Screen, Category, Item, Post } from './types';
+// FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
+import { Session } from '@supabase/supabase-js';
+import { supabase } from './services/supabaseClient';
+import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile } from './types';
 import { generateTryOnImage } from './services/geminiService';
-import { INITIAL_POSTS } from './constants';
+import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES } from './constants';
 
 // Screen Components
 import SplashScreen from './components/SplashScreen';
 import LoginScreen from './components/LoginScreen';
 import HomeScreen from './components/HomeScreen';
+import SubCategorySelectionScreen from './components/SubCategorySelectionScreen';
 import ItemSelectionScreen from './components/ItemSelectionScreen';
 import LoadingIndicator from './components/LoadingIndicator';
 import ResultScreen from './components/ResultScreen';
 import ConfirmationScreen from './components/ConfirmationScreen';
 import FeedScreen from './components/FeedScreen';
 import MyLooksScreen from './components/MyLooksScreen';
+import CameraScreen from './components/CameraScreen';
+import ImageSourceSelectionScreen from './components/ImageSourceSelectionScreen';
+import CartScreen from './components/CartScreen';
+
+declare global {
+  interface Window {}
+  interface Navigator {
+      canShare(data?: ShareData): boolean;
+  }
+  interface ShareData {
+    files?: File[];
+    text?: string;
+    title?: string;
+    url?: string;
+  }
+}
+
+// Helper para converter data URL para Blob para upload
+const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
+    const res = await fetch(dataUrl);
+    return await res.blob();
+};
+
 
 const App: React.FC = () => {
-    // State management
-    const [currentScreen, setCurrentScreen] = React.useState<Screen>(Screen.Splash);
+    // Auth & Profile state
+    const [session, setSession] = React.useState<Session | null>(null);
+    const [profile, setProfile] = React.useState<Profile | null>(null);
+    const [authLoading, setAuthLoading] = React.useState(true);
+
+    // App Navigation and UI state
+    const [currentScreen, setCurrentScreen] = React.useState<Screen>(Screen.Home);
     const [userImage, setUserImage] = React.useState<string | null>(null);
     const [generatedImage, setGeneratedImage] = React.useState<string | null>(null);
-    const [selectedCategory, setSelectedCategory] = React.useState<Category | null>(null);
+    const [navigationStack, setNavigationStack] = React.useState<(Category | SubCategory)[]>([]);
+    const [collectionIdentifier, setCollectionIdentifier] = React.useState<{id: string, name: string} | null>(null);
     const [wornItems, setWornItems] = React.useState<Item[]>([]);
     const [posts, setPosts] = React.useState<Post[]>(INITIAL_POSTS);
+    const [stories, setStories] = React.useState<Story[]>(INITIAL_STORIES);
+    const [savedLooks, setSavedLooks] = React.useState<SavedLook[]>([]);
+    const [cartItems, setCartItems] = React.useState<Item[]>([]);
+    const [toast, setToast] = React.useState<string | null>(null);
     const [confirmationMessage, setConfirmationMessage] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
 
-    // Navigation and state update handlers
-    const handleLogin = () => setCurrentScreen(Screen.Home);
+    // Auth effect
+    React.useEffect(() => {
+        const fetchSessionAndProfile = async () => {
+            // FIX: Use `getSession()` which is the correct async method for Supabase v2+.
+            const { data: { session } } = await supabase.auth.getSession();
+            setSession(session);
+            
+            if (session) {
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+                
+                if (error) {
+                    console.error("Error fetching profile:", error.message);
+                } else if (data) {
+                    setProfile(data);
+                }
+            }
+            setAuthLoading(false);
+        };
+
+        fetchSessionAndProfile();
+
+        // FIX: Correctly destructure the subscription object from `onAuthStateChange` for Supabase v2+.
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            setSession(session);
+             if (session && _event === 'SIGNED_IN') {
+                 // Fetch profile on sign in
+                 const { data, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+                if (error) console.error("Error fetching profile:", error.message);
+                else if (data) setProfile(data);
+             } else if (!session) {
+                 setProfile(null);
+             }
+        });
+
+        return () => subscription?.unsubscribe();
+    }, []);
+
+    // Profile Management
+    const handleSignOut = async () => {
+        // FIX: Added error handling for `signOut` for more robust code.
+        const { error } = await supabase.auth.signOut();
+        if (error) {
+            console.error("Error signing out:", error.message);
+        }
+        setCurrentScreen(Screen.Home); // Reset screen state
+    };
+
+    const handleUpdateProfile = async (updates: { username?: string, bio?: string }) => {
+        if (!session) return;
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .update(updates)
+                .eq('id', session.user.id)
+                .select()
+                .single();
+            if (error) throw error;
+            if (data) setProfile(data);
+            setToast('Perfil atualizado com sucesso!');
+        } catch (err: any) {
+            setError(err.message);
+        }
+    };
+    
+    const uploadImage = async (bucket: string, imageDataUrl: string): Promise<string | null> => {
+        if (!session) return null;
+        try {
+            const blob = await dataUrlToBlob(imageDataUrl);
+            const fileExt = blob.type.split('/')[1] || 'png';
+            const filePath = `${session.user.id}/${Date.now()}.${fileExt}`;
+
+            const { error: uploadError } = await supabase.storage.from(bucket).upload(filePath, blob);
+            if (uploadError) throw uploadError;
+
+            const { data } = supabase.storage.from(bucket).getPublicUrl(filePath);
+            return data.publicUrl;
+        } catch (err: any) {
+            setError('Falha no upload da imagem: ' + err.message);
+            return null;
+        }
+    };
+
+    const handleUpdateProfileImage = async (imageDataUrl: string) => {
+        const publicUrl = await uploadImage('profiles', imageDataUrl);
+        if (publicUrl && session) {
+            const { data, error } = await supabase
+                .from('profiles')
+                .update({ profile_image_url: publicUrl })
+                .eq('id', session.user.id)
+                .select()
+                .single();
+            if (error) setError(error.message);
+            else if (data) setProfile(data);
+        }
+    };
+    
+    const handleUpdateCoverImage = async (imageDataUrl: string) => {
+        const publicUrl = await uploadImage('profiles', imageDataUrl);
+        if (publicUrl && session) {
+            const { data, error } = await supabase
+                .from('profiles')
+                .update({ cover_image_url: publicUrl })
+                .eq('id', session.user.id)
+                .select()
+                .single();
+            if (error) setError(error.message);
+            else if (data) setProfile(data);
+        }
+    };
+
+    // App Logic Handlers
     const handleImageUpload = (imageDataUrl: string) => {
         setUserImage(imageDataUrl);
-        setGeneratedImage(imageDataUrl); // Initially, generated image is the user's image
-        setWornItems([]); // Reset items when a new photo is uploaded
+        setGeneratedImage(imageDataUrl);
+        setWornItems([]);
+        const currentCategory = navigationStack.length > 0 ? navigationStack[0] as Category : null;
+        if (currentCategory) {
+            setCurrentScreen(Screen.SubCategorySelection);
+        } else {
+            const defaultCategory = CATEGORIES[0];
+            if (defaultCategory) {
+                setNavigationStack([defaultCategory]);
+                setCurrentScreen(Screen.SubCategorySelection);
+            } else {
+                setCurrentScreen(Screen.Home);
+            }
+        }
     };
 
     const handleSelectCategory = (category: Category) => {
-        setSelectedCategory(category);
-        setCurrentScreen(Screen.ItemSelection);
+        setNavigationStack([category]);
+        if (!userImage) {
+            setCurrentScreen(Screen.ImageSourceSelection);
+            return;
+        }
+        if (category.subCategories && category.subCategories.length > 0) {
+            setCurrentScreen(Screen.SubCategorySelection);
+        } else {
+            setCollectionIdentifier({ id: category.id, name: category.name });
+            setCurrentScreen(Screen.ItemSelection);
+        }
+    };
+    
+    const handleSelectSubCategory = (subCategory: SubCategory) => {
+        if (subCategory.subCategories && subCategory.subCategories.length > 0) {
+            setNavigationStack(prev => [...prev, subCategory]);
+        } else {
+            setCollectionIdentifier({ id: subCategory.id, name: subCategory.name });
+            setCurrentScreen(Screen.ItemSelection);
+        }
+    };
+
+    const handleBack = () => {
+        const newStack = [...navigationStack];
+        newStack.pop();
+        if (newStack.length === 0) {
+            setCurrentScreen(Screen.Home);
+        } else {
+            setNavigationStack(newStack);
+            setCurrentScreen(Screen.SubCategorySelection);
+        }
     };
 
     const handleItemSelect = async (item: Item) => {
         if (!userImage) return;
-        
-        // Use the latest generated image as the base for the next try-on
         const baseImage = generatedImage || userImage;
         const existingItems = [...wornItems];
-
         setCurrentScreen(Screen.Generating);
         setIsLoading(true);
         setError(null);
@@ -56,109 +248,177 @@ const App: React.FC = () => {
             setCurrentScreen(Screen.Result);
         } catch (err: any) {
             setError(err.message || 'An unknown error occurred.');
-            // Go back to item selection on error
             setCurrentScreen(Screen.ItemSelection);
         } finally {
             setIsLoading(false);
         }
     };
     
-    const handleUndo = () => {
-        // This is a simplified undo. A real app might need a history stack.
-        // For now, it just goes back to the item selection screen.
-        // A better implementation would remove the last item and revert the image.
-        if (selectedCategory) {
-            setCurrentScreen(Screen.ItemSelection);
+    const handleStartNewTryOnSession = async (item: Item) => {
+        if (!userImage) {
+            setCurrentScreen(Screen.ImageSourceSelection);
+            return;
+        }
+        setCollectionIdentifier(null);
+        setCurrentScreen(Screen.Generating);
+        setIsLoading(true);
+        setError(null);
+        try {
+            const newImage = await generateTryOnImage(userImage, item, []);
+            setGeneratedImage(newImage);
+            setWornItems([item]);
+            setCurrentScreen(Screen.Result);
+        } catch (err: any) {
+            setError(err.message || 'An unknown error occurred.');
+            setCurrentScreen(Screen.Cart);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleUndoLastItem = () => {
+        if (collectionIdentifier) {
+             setCurrentScreen(Screen.ItemSelection);
         } else {
-            setCurrentScreen(Screen.Home);
+            handleBack();
         }
     };
 
     const handleContinueStyling = () => {
-        if (selectedCategory) {
+        if (collectionIdentifier) {
             setCurrentScreen(Screen.ItemSelection);
         } else {
-            // This case shouldn't happen, but as a fallback:
             setCurrentScreen(Screen.Home);
         }
     };
-
-    const handleBuy = () => {
-        setConfirmationMessage('Sua compra foi finalizada com sucesso!');
-        setCurrentScreen(Screen.Confirmation);
-    };
     
-    const handleAddToCart = () => {
-        setConfirmationMessage('Itens adicionados ao carrinho!');
+    const handleUseCamera = () => setCurrentScreen(Screen.Camera);
+    const handleStartTryOn = () => {
+        setNavigationStack([]);
+        setCurrentScreen(Screen.ImageSourceSelection);
+    };
+    const handleBuy = (item: Item) => {
+        setConfirmationMessage(`Sua compra de ${item.name} foi finalizada!`);
         setCurrentScreen(Screen.Confirmation);
     };
+    const handleBuyLook = (items: Item[]) => {
+        const total = items.reduce((sum, item) => sum + item.price, 0);
+        const formattedTotal = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        setConfirmationMessage(`Sua compra de ${items.length} item(ns) no valor de ${formattedTotal} foi finalizada!`);
+        setCurrentScreen(Screen.Confirmation);
+    };
+    const handleAddToCart = (item: Item) => {
+        setCartItems(prevItems => [...prevItems, item]);
+        setToast(`${item.name} foi adicionado ao carrinho!`);
+        setTimeout(() => setToast(null), 3000);
+    };
+    const handleRemoveFromCart = (indexToRemove: number) => {
+        setCartItems(prevItems => prevItems.filter((_, index) => index !== indexToRemove));
+    };
+    const handleBuySingleItemFromCart = (item: Item, index: number) => {
+        setConfirmationMessage(`Sua compra de ${item.name} foi finalizada!`);
+        setCurrentScreen(Screen.Confirmation);
+        handleRemoveFromCart(index);
+    };
+    const handleNavigateToCart = () => setCurrentScreen(Screen.Cart);
 
     const handlePostToFeed = () => {
-        if (generatedImage && wornItems.length > 0) {
+        if (generatedImage && wornItems.length > 0 && profile) {
             const newPost: Post = {
                 id: `post_${Date.now()}`,
-                user: { name: 'você', avatar: userImage || 'https://i.pravatar.cc/150?u=me' },
+                user: { name: profile.username, avatar: profile.profile_image_url || 'https://i.pravatar.cc/150?u=me' },
                 image: generatedImage,
                 items: wornItems,
                 likes: 0,
                 isLiked: false,
             };
             setPosts(prevPosts => [newPost, ...prevPosts]);
-            setCurrentScreen(Screen.Feed); // Alterado para ir direto para o Feed
+            setCurrentScreen(Screen.Feed);
+        }
+    };
+
+    const handleSaveLook = () => {
+        if (generatedImage && wornItems.length > 0) {
+            const newLook: SavedLook = {
+                id: `look_${Date.now()}`,
+                image: generatedImage,
+                items: wornItems,
+            };
+            setSavedLooks(prevLooks => [newLook, ...prevLooks]);
+            setConfirmationMessage('Look salvo com sucesso na sua galeria!');
+            setCurrentScreen(Screen.Confirmation);
+        }
+    };
+
+    const handleItemClick = (item: Item) => {
+        const parentCategoryId = item.category.split('_')[0];
+        const parentCategory = CATEGORIES.find(c => c.id === parentCategoryId);
+        if (parentCategory) {
+            setWornItems([]);
+            if (userImage) setGeneratedImage(userImage);
+            handleSelectCategory(parentCategory);
         }
     };
 
     const resetToHome = () => {
-        // Keep user image, but reset the rest of the flow
         setGeneratedImage(userImage);
         setWornItems([]);
-        setSelectedCategory(null);
+        setNavigationStack([]);
+        setCollectionIdentifier(null);
         setCurrentScreen(Screen.Home);
     };
 
-    const handleNavigateToMyLooks = () => {
-        setCurrentScreen(Screen.MyLooks);
-    };
+    const handleNavigateToMyLooks = () => setCurrentScreen(Screen.MyLooks);
 
     const renderScreen = () => {
-        if (isLoading) {
-            return <LoadingIndicator userImage={userImage!} />;
-        }
+        if (isLoading) return <LoadingIndicator userImage={userImage!} />;
+
+        const currentNode = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1] : null;
 
         switch (currentScreen) {
-            case Screen.Splash:
-                return <SplashScreen onFinish={() => setCurrentScreen(Screen.Login)} />;
-            case Screen.Login:
-                return <LoginScreen onLogin={handleLogin} />;
             case Screen.Home:
                 return <HomeScreen 
-                            userImage={userImage}
-                            onImageUpload={handleImageUpload}
+                            profile={profile!}
+                            onUpdateProfileImage={handleUpdateProfileImage}
+                            onUpdateCoverImage={handleUpdateCoverImage}
+                            onUpdateProfile={handleUpdateProfile}
                             onSelectCategory={handleSelectCategory} 
                             onNavigateToFeed={() => setCurrentScreen(Screen.Feed)}
                             onNavigateToMyLooks={handleNavigateToMyLooks}
-                            onNavigateToCart={handleAddToCart}
+                            onNavigateToCart={handleNavigateToCart}
+                            onStartTryOn={handleStartTryOn}
+                            onSignOut={handleSignOut}
                         />;
+            case Screen.ImageSourceSelection:
+                 return <ImageSourceSelectionScreen 
+                            onImageUpload={handleImageUpload} 
+                            onUseCamera={handleUseCamera}
+                            onBack={() => setCurrentScreen(Screen.Home)}
+                        />;
+            case Screen.SubCategorySelection:
+                 if (currentNode) {
+                    return <SubCategorySelectionScreen
+                        node={currentNode}
+                        onSelectSubCategory={handleSelectSubCategory}
+                        onBack={handleBack}
+                    />;
+                 }
+                 setCurrentScreen(Screen.Home);
+                 return null;
             case Screen.ItemSelection:
-                if (userImage && selectedCategory) {
+                if (userImage && collectionIdentifier) {
                     return <ItemSelectionScreen
                         userImage={userImage}
-                        category={selectedCategory}
+                        collectionId={collectionIdentifier.id}
+                        collectionName={collectionIdentifier.name}
                         onItemSelect={handleItemSelect}
-                        onBack={() => setCurrentScreen(Screen.Home)}
+                        onBack={() => setCurrentScreen(Screen.SubCategorySelection)}
                         onBuy={handleBuy}
                         onAddToCart={handleAddToCart}
                     />;
                 }
-                // Fallback if state is inconsistent
-                return <HomeScreen 
-                            userImage={userImage} 
-                            onImageUpload={handleImageUpload} 
-                            onSelectCategory={handleSelectCategory} 
-                            onNavigateToFeed={() => setCurrentScreen(Screen.Feed)}
-                            onNavigateToMyLooks={handleNavigateToMyLooks}
-                            onNavigateToCart={handleAddToCart}
-                       />;
+                setCurrentScreen(Screen.Home);
+                return null;
             case Screen.Generating:
                  return <LoadingIndicator userImage={generatedImage || userImage!} />;
             case Screen.Result:
@@ -167,43 +427,79 @@ const App: React.FC = () => {
                         generatedImage={generatedImage}
                         items={wornItems}
                         onPostToFeed={handlePostToFeed}
-                        onBuy={handleBuy}
-                        onBack={handleUndo}
-                        onAddToCart={handleAddToCart}
+                        onBuy={handleBuyLook}
+                        onBack={handleUndoLastItem}
+                        onSaveLook={handleSaveLook}
                         onContinueStyling={handleContinueStyling}
                     />;
                 }
-                return <HomeScreen 
-                            userImage={userImage} 
-                            onImageUpload={handleImageUpload} 
-                            onSelectCategory={handleSelectCategory} 
-                            onNavigateToFeed={() => setCurrentScreen(Screen.Feed)}
-                            onNavigateToMyLooks={handleNavigateToMyLooks}
-                            onNavigateToCart={handleAddToCart}
-                       />;
+                setCurrentScreen(Screen.Home);
+                return null;
             case Screen.Confirmation:
                 return <ConfirmationScreen message={confirmationMessage} onHome={resetToHome} />;
             case Screen.Feed:
                  return <FeedScreen 
                             posts={posts}
+                            stories={stories}
+                            profileImage={profile?.profile_image_url || null}
                             onBack={() => setCurrentScreen(Screen.Home)}
-                            // A simple implementation: clicking an item takes you to its category
-                            onItemClick={(item) => {
-                                const category = { id: item.category, name: item.category.toUpperCase(), image: ''}; // Simplified
-                                handleSelectCategory(category);
-                            }}
+                            onItemClick={handleItemClick}
                         />;
             case Screen.MyLooks:
-                return <MyLooksScreen onBack={() => setCurrentScreen(Screen.Home)} />;
+                return <MyLooksScreen 
+                            looks={savedLooks} 
+                            onBack={() => setCurrentScreen(Screen.Home)} 
+                            onItemClick={handleItemClick}
+                            onBuyLook={handleBuyLook}
+                        />;
+            case Screen.Camera:
+                return <CameraScreen 
+                           onPhotoTaken={handleImageUpload} 
+                           onBack={() => setCurrentScreen(Screen.ImageSourceSelection)} 
+                       />;
+            case Screen.Cart:
+                return <CartScreen
+                    cartItems={cartItems}
+                    onBack={() => setCurrentScreen(Screen.Home)}
+                    onRemoveItem={handleRemoveFromCart}
+                    onBuyItem={handleBuySingleItemFromCart}
+                    onTryOnItem={handleStartNewTryOnSession}
+                    onCheckout={() => {
+                        if (cartItems.length > 0) {
+                            handleBuyLook(cartItems);
+                            setCartItems([]);
+                        }
+                    }}
+                />;
             default:
-                return <SplashScreen onFinish={() => setCurrentScreen(Screen.Login)} />;
+                setCurrentScreen(Screen.Home);
+                return null;
         }
+    };
+    
+    const renderContent = () => {
+        if (authLoading) {
+            return <SplashScreen />;
+        }
+        if (!session) {
+            return <LoginScreen />;
+        }
+        if (!profile) {
+            // Profile is being fetched or failed to fetch, show a loader
+            return <SplashScreen />;
+        }
+        return renderScreen();
     };
 
     return (
         <div className="h-screen w-screen max-w-md mx-auto bg-black overflow-hidden relative shadow-2xl shadow-purple-500/30">
             {error && <div className="absolute top-0 left-0 right-0 p-2 bg-red-500 text-white text-center z-50">{error}</div>}
-            {renderScreen()}
+            {renderContent()}
+            {toast && (
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-green-500/90 backdrop-blur-sm text-white px-5 py-2.5 rounded-full shadow-lg z-50 animate-fadeIn text-sm font-semibold">
+                    {toast}
+                </div>
+            )}
         </div>
     );
 };

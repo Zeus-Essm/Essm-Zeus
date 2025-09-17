@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>PUMP STYLE</title>
+    <title>MEU ESTILO</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
@@ -41,6 +41,38 @@
       .animate-subtle-pulse {
         animation: subtle-pulse 2.5s infinite ease-in-out;
       }
+      @keyframes imageAppear {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      .animate-imageAppear {
+        animation: imageAppear 0.8s ease-out forwards;
+      }
+      @keyframes modalFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      .animate-modalFadeIn {
+        animation: modalFadeIn 0.3s ease-out forwards;
+      }
+      @keyframes modalZoomIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      .animate-modalZoomIn {
+        animation: modalZoomIn 0.3s ease-out forwards;
+      }
+      @keyframes slow-zoom {
+        0%, 100% {
+          transform: scale(1.02);
+        }
+        50% {
+          transform: scale(1.07);
+        }
+      }
+      .animate-slow-zoom {
+        animation: slow-zoom 20s infinite ease-in-out;
+      }
     </style>
   <script type="importmap">
 {
@@ -48,7 +80,8 @@
     "react/": "https://aistudiocdn.com/react@^19.1.1/",
     "react": "https://aistudiocdn.com/react@^19.1.1",
     "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.19.0"
+    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.19.0",
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
   }
 }
 </script>
@@ -56,31 +89,5 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
-
-    <!-- Facebook SDK for JavaScript (Temporariamente desativado) -->
-    <!--
-    <script>
-      window.fbAsyncInit = function() {
-        FB.init({
-          // IMPORTANTE: Substitua 'YOUR_FACEBOOK_APP_ID' pelo seu App ID real.
-          // Você pode criar um em https://developers.facebook.com/apps/
-          appId      : '2236300083540934',
-          cookie     : true,
-          xfbml      : true,
-          version    : 'v18.0',
-          status     : false // Alterado para 'false' para evitar a verificação automática de status em HTTP
-        });
-        FB.AppEvents.logPageView();
-      };
-
-      (function(d, s, id){
-         var js, fjs = d.getElementsByTagName(s)[0];
-         if (d.getElementById(id)) {return;}
-         js = d.createElement(s); js.id = id;
-         js.src = "https://connect.facebook.net/pt_BR/sdk.js"; // SDK em Português
-         fjs.parentNode.insertBefore(js, fjs);
-       }(document, 'script', 'facebook-jssdk'));
-    </script>
-    -->
   </body>
 </html>
