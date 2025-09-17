@@ -5,7 +5,11 @@ import { supabase } from '../services/supabaseClient';
 import GradientButton from './GradientButton';
 import { FacebookIcon } from './IconComponents';
 
-const LoginScreen: React.FC = () => {
+interface LoginScreenProps {
+    onContinueAsVisitor: () => void;
+}
+
+const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -99,7 +103,13 @@ const LoginScreen: React.FC = () => {
                 <span className="font-semibold">{isSignUp ? 'Continue com Facebook' : 'Entrar com Facebook'}</span>
             </button>
             
-            <p className="mt-8 text-gray-400">
+            <div className="my-4 text-center text-sm">
+                <button onClick={onContinueAsVisitor} className="font-semibold text-gray-400 hover:text-white underline transition-colors">
+                    Continuar como Visitante
+                </button>
+            </div>
+
+            <p className="mt-4 text-gray-400">
                 {isSignUp ? 'Já tem uma conta? ' : 'Não tem uma conta? '}
                 <button onClick={() => setIsSignUp(!isSignUp)} className="font-semibold text-blue-400 hover:underline">
                     {isSignUp ? 'Faça Login' : 'Inscreva-se'}

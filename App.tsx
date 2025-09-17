@@ -135,6 +135,22 @@ const App: React.FC = () => {
 
         return () => subscription?.unsubscribe();
     }, []);
+    
+    const handleContinueAsVisitor = () => {
+        const mockProfile: Profile = {
+            id: 'mock_user_123',
+            username: 'Visitante',
+            bio: 'Bem-vindo(a) ao MEU ESTILO! Explore as coleções e prove roupas virtualmente.',
+            profile_image_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29433?q=80&w=400&auto=format&fit=crop',
+            cover_image_url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1000&auto=format&fit=crop',
+        };
+        const mockSession = { user: { id: 'mock_user_123' } } as Session;
+
+        setSession(mockSession);
+        setProfile(mockProfile);
+        setAuthLoading(false);
+    };
+
 
     // Profile Management
     const handleSignOut = async () => {
@@ -143,11 +159,23 @@ const App: React.FC = () => {
         if (error) {
             console.error("Error signing out:", error.message);
         }
+        // Clearing local state for visitor mode
+        if (session?.user.id.startsWith('mock_')) {
+            setSession(null);
+            setProfile(null);
+        }
         setCurrentScreen(Screen.Home); // Reset screen state
     };
 
     const handleUpdateProfile = async (updates: { username?: string, bio?: string }) => {
-        if (!session) return;
+        if (!session || session.user.id.startsWith('mock_')) {
+            setToast('Função desativada para visitantes.');
+            // Optimistically update local state for demo purposes
+            if (profile) {
+                setProfile({ ...profile, ...updates });
+            }
+            return;
+        }
         try {
             const { data, error } = await supabase
                 .from('profiles')
@@ -164,7 +192,10 @@ const App: React.FC = () => {
     };
     
     const uploadImage = async (bucket: string, imageDataUrl: string): Promise<string | null> => {
-        if (!session) return null;
+        if (!session || session.user.id.startsWith('mock_')) {
+            setToast('Função desativada para visitantes.');
+            return null;
+        }
         try {
             const blob = await dataUrlToBlob(imageDataUrl);
             const fileExt = blob.type.split('/')[1] || 'png';
@@ -182,6 +213,12 @@ const App: React.FC = () => {
     };
 
     const handleUpdateProfileImage = async (imageDataUrl: string) => {
+        // Optimistically update for mock user
+        if (session?.user.id.startsWith('mock_') && profile) {
+            setProfile({ ...profile, profile_image_url: imageDataUrl });
+            return;
+        }
+
         const publicUrl = await uploadImage('profiles', imageDataUrl);
         if (publicUrl && session) {
             const { data, error } = await supabase
@@ -196,6 +233,12 @@ const App: React.FC = () => {
     };
     
     const handleUpdateCoverImage = async (imageDataUrl: string) => {
+        // Optimistically update for mock user
+        if (session?.user.id.startsWith('mock_') && profile) {
+            setProfile({ ...profile, cover_image_url: imageDataUrl });
+            return;
+        }
+
         const publicUrl = await uploadImage('profiles', imageDataUrl);
         if (publicUrl && session) {
             const { data, error } = await supabase
@@ -510,7 +553,7 @@ const App: React.FC = () => {
             return <SplashScreen />;
         }
         if (!session) {
-            return <LoginScreen />;
+            return <LoginScreen onContinueAsVisitor={handleContinueAsVisitor} />;
         }
         if (!profile) {
             // Profile is being fetched or failed to fetch, show a loader
