@@ -139,10 +139,10 @@ const App: React.FC = () => {
     const handleContinueAsVisitor = () => {
         const mockProfile: Profile = {
             id: 'mock_user_123',
-            username: 'Visitante',
+            username: 'Essm o Zeus',
             bio: 'Bem-vindo(a) ao MEU ESTILO! Explore as coleções e prove roupas virtualmente.',
-            profile_image_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29433?q=80&w=400&auto=format&fit=crop',
-            cover_image_url: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?q=80&w=1000&auto=format&fit=crop',
+            profile_image_url: 'https://i.postimg.cc/25YWKQVx/IMG-1101.jpg',
+            cover_image_url: 'https://i.postimg.cc/wTJLdTLj/Captura-de-Tela-2025-09-17-a-s-9-43-54-PM.png',
         };
         const mockSession = { user: { id: 'mock_user_123' } } as Session;
 
