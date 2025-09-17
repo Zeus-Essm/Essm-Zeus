@@ -1,3 +1,4 @@
+
 import React from 'react';
 // FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
 import { Session } from '@supabase/supabase-js';
@@ -41,6 +42,51 @@ const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
 };
 
 
+// Helper to get or create a user profile
+const getOrCreateProfile = async (session: Session, setError: (msg: string) => void): Promise<Profile | null> => {
+    try {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+
+        // Check for specific error code for 'no rows'
+        if (error && error.code !== 'PGRST116') {
+            throw error;
+        }
+
+        if (data) {
+            return data;
+        }
+
+        // No profile found, let's create one
+        const user = session.user;
+        const username = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || `user_${Date.now().toString().slice(-6)}`;
+        const avatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+
+        const { data: newProfile, error: insertError } = await supabase
+            .from('profiles')
+            .insert({
+                id: user.id,
+                username: username,
+                profile_image_url: avatar,
+            })
+            .select()
+            .single();
+
+        if (insertError) {
+            throw insertError;
+        }
+        return newProfile;
+    } catch (err: any) {
+        console.error("Error getting or creating profile:", err.message);
+        setError("Não foi possível carregar o perfil do usuário.");
+        return null;
+    }
+};
+
+
 const App: React.FC = () => {
     // Auth & Profile state
     const [session, setSession] = React.useState<Session | null>(null);
@@ -65,44 +111,26 @@ const App: React.FC = () => {
 
     // Auth effect
     React.useEffect(() => {
-        const fetchSessionAndProfile = async () => {
-            // FIX: Use `getSession()` which is the correct async method for Supabase v2+.
+        const setupAuth = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             setSession(session);
-            
             if (session) {
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
-                
-                if (error) {
-                    console.error("Error fetching profile:", error.message);
-                } else if (data) {
-                    setProfile(data);
-                }
+                const profileData = await getOrCreateProfile(session, setError);
+                setProfile(profileData);
             }
             setAuthLoading(false);
         };
 
-        fetchSessionAndProfile();
+        setupAuth();
 
-        // FIX: Correctly destructure the subscription object from `onAuthStateChange` for Supabase v2+.
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
             setSession(session);
-             if (session && _event === 'SIGNED_IN') {
-                 // Fetch profile on sign in
-                 const { data, error } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', session.user.id)
-                    .single();
-                if (error) console.error("Error fetching profile:", error.message);
-                else if (data) setProfile(data);
-             } else if (!session) {
-                 setProfile(null);
-             }
+            if (session) {
+                const profileData = await getOrCreateProfile(session, setError);
+                setProfile(profileData);
+            } else {
+                setProfile(null);
+            }
         });
 
         return () => subscription?.unsubscribe();
