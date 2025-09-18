@@ -14,10 +14,11 @@ interface HomeScreenProps {
   onNavigateToCart: () => void;
   onStartTryOn: () => void;
   onSignOut: () => void;
+  isCartAnimating: boolean;
 }
 
-const ActionButton: React.FC<{ icon: React.ReactNode; label: string; onClick: () => void; }> = ({ icon, label, onClick }) => (
-    <button onClick={onClick} className="flex flex-col items-center justify-center gap-2 p-3 bg-gray-900 rounded-2xl hover:bg-gray-800 transition-colors flex-1 text-center">
+const ActionButton: React.FC<{ icon: React.ReactNode; label: string; onClick: () => void; className?: string; }> = ({ icon, label, onClick, className = '' }) => (
+    <button onClick={onClick} className={`flex flex-col items-center justify-center gap-2 p-3 bg-gray-900 rounded-2xl hover:bg-gray-800 transition-colors flex-1 text-center ${className}`}>
         <div className="w-8 h-8 text-gray-300">{icon}</div>
         <span className="text-xs font-bold uppercase tracking-wider">{label}</span>
     </button>
@@ -40,7 +41,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     onNavigateToMyLooks,
     onNavigateToCart,
     onStartTryOn,
-    onSignOut
+    onSignOut,
+    isCartAnimating
 }) => {
     
   const profileFileInputRef = useRef<HTMLInputElement>(null);
@@ -239,7 +241,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         
         <div className="grid grid-cols-4 items-stretch justify-around gap-2 my-6">
             <ActionButton icon={<LooksIcon />} label="LOOKS" onClick={onNavigateToMyLooks} />
-            <ActionButton icon={<ShoppingBagIcon />} label="CARRINHO" onClick={onNavigateToCart} />
+            <ActionButton icon={<ShoppingBagIcon />} label="CARRINHO" onClick={onNavigateToCart} className={isCartAnimating ? 'animate-cart-pulse' : ''} />
             <ActionButton icon={<CompassIcon />} label="FEED" onClick={onNavigateToFeed} />
             <ActionButton icon={<UploadIcon />} label="VESTIR" onClick={onStartTryOn} />
         </div>

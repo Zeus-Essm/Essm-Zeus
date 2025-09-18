@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 // FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
 import { Session } from '@supabase/supabase-js';
@@ -108,6 +109,7 @@ const App: React.FC = () => {
     const [confirmationMessage, setConfirmationMessage] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
     const [error, setError] = React.useState<string | null>(null);
+    const [isCartAnimating, setIsCartAnimating] = React.useState(false);
 
     // Auth effect
     React.useEffect(() => {
@@ -382,6 +384,12 @@ const App: React.FC = () => {
         setCartItems(prevItems => [...prevItems, item]);
         setToast(`${item.name} foi adicionado ao carrinho!`);
         setTimeout(() => setToast(null), 3000);
+
+        // Animation logic
+        setIsCartAnimating(true);
+        setTimeout(() => {
+            setIsCartAnimating(false);
+        }, 500); // Animation duration
     };
     const handleRemoveFromCart = (indexToRemove: number) => {
         setCartItems(prevItems => prevItems.filter((_, index) => index !== indexToRemove));
@@ -459,6 +467,7 @@ const App: React.FC = () => {
                             onNavigateToCart={handleNavigateToCart}
                             onStartTryOn={handleStartTryOn}
                             onSignOut={handleSignOut}
+                            isCartAnimating={isCartAnimating}
                         />;
             case Screen.ImageSourceSelection:
                  return <ImageSourceSelectionScreen 
