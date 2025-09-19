@@ -12,23 +12,39 @@ const getBase64Parts = (dataUrl: string): { base64: string; mimeType: string } =
 
 // Fetches an image from a URL and converts it into a data URL (base64 encoded string).
 const imageUrlToDataUrl = async (url: string): Promise<string> => {
+  // SOLUÇÃO DEFINITIVA PARA CORS:
+  // Por que usamos um proxy? Os navegadores implementam uma política de segurança chamada CORS (Cross-Origin Resource Sharing)
+  // que impede um site (nosso app) de buscar recursos (como imagens) de um domínio diferente (ex: i.postimg.cc)
+  // a menos que esse domínio autorize explicitamente. Sites de hospedagem de imagens raramente dão essa permissão.
+  //
+  // O proxy CORS atua como um intermediário seguro:
+  // 1. Nosso app solicita a imagem ao proxy.
+  // 2. O proxy (que é um servidor) busca a imagem no destino original.
+  // 3. O proxy nos envia a imagem com os cabeçalhos corretos, contornando a restrição do navegador.
+  // Esta é a abordagem padrão e mais robusta da indústria para resolver este problema em aplicações web.
+  //
+  // NOTA DE ATUALIZAÇÃO: Os proxies anteriores ('codetabs.com', 'allorigins.win') apresentaram instabilidade.
+  // Trocamos por um novo serviço ('corsproxy.io') para tentar restaurar a funcionalidade.
+  const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+  
   try {
-    // FIX: Use a CORS proxy to bypass browser restrictions on fetching images from other domains.
-    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
     const response = await fetch(proxyUrl);
     if (!response.ok) {
-        throw new Error(`Falha ao buscar a imagem: ${response.statusText}`);
+        // Este erro pode vir tanto da URL da imagem original (ex: 404 Not Found)
+        // quanto de um problema com o próprio serviço de proxy.
+        throw new Error(`Falha na rede ao buscar a imagem via proxy: ${response.status} ${response.statusText}`);
     }
     const blob = await response.blob();
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = reject;
+      reader.onerror = (error) => reject(error); // Passa o objeto de erro real
       reader.readAsDataURL(blob);
     });
   } catch (error) {
-    console.error(`Erro ao converter a URL da imagem para data URL (${url}):`, error);
-    throw new Error(`Não foi possível carregar a imagem do item. Verifique sua conexão.`);
+    console.error(`Erro ao converter a URL da imagem via proxy (${url}):`, error);
+    // Mensagem de erro amigável para o usuário final.
+    throw new Error('Não foi possível carregar a imagem do item. Pode ser um problema de conexão ou o link da imagem está quebrado.');
   }
 };
 
@@ -63,12 +79,12 @@ REGRA DE VESTIR INTELIGENTE (ESSENCIAL):
 2.  SOBREPOSIÇÃO REALISTA: Se a nova peça for um item que se usa POR CIMA dos outros (ex: uma jaqueta sobre uma T-shirt que já foi adicionada), adicione-a realisticamente, criando dobras e sombras corretas sobre a roupa de baixo.
 3.  O objetivo final é uma imagem que pareça uma fotografia 100% real, não uma colagem digital. O realismo é a prioridade máxima.
 
-REGRAS CRÍTICAS E INQUEBRÁVEIS:
-1.  FIDELIDADE TOTAL AO PRODUTO: Você DEVE usar a imagem EXATA da nova peça da IMAGEM 2. Cor, textura, padrão, e logotipos DEVEM ser idênticos.
-2.  PRESERVAÇÃO DA PESSOA E ROUPAS NÃO AFETADAS: O rosto, cabelo, corpo, pose e quaisquer outras roupas que a pessoa esteja vestindo (e que não foram substituídas) devem permanecer COMPLETAMENTE inalterados.
-3.  FUNDO INTOCÁVEL: O fundo da IMAGEM 1 deve ser perfeitamente preservado.
-4.  REALISMO MÁXIMO: Ajuste a nova peça ao corpo, considerando caimento, dobras, sombras e a iluminação da foto original para uma integração perfeita.
-5.  NÃO CORTE A IMAGEM: A imagem final DEVE ter exatamente as mesmas dimensões da IMAGEM 1. A pessoa inteira, dos pés à cabeça, e todo o fundo original DEVEM permanecer visíveis.`;
+REGRAS CRÍTICAS E INQUEBRÁIS:
+1.  **NÃO CORTE A IMAGEM (REGRA FUNDAMENTAL):** A imagem final que você gera DEVE ter **exatamente as mesmas dimensões (largura e altura em pixels) da IMAGEM 1 original.** É proibido fazer zoom, cortar (crop) ou reenquadrar a imagem. A pessoa inteira, da cabeça aos pés, e todo o fundo original DEVEM ser 100% preservados e visíveis.
+2.  FIDELIDADE TOTAL AO PRODUTO: Você DEVE usar a imagem EXATA da nova peça da IMAGEM 2. Cor, textura, padrão, e logotipos DEVEM ser idênticos.
+3.  PRESERVAÇÃO DA PESSOA E ROUPAS NÃO AFETADAS: O rosto, cabelo, corpo, pose e quaisquer outras roupas que a pessoa esteja vestindo (e que não foram substituídas) devem permanecer COMPLETAMENTE inalterados.
+4.  FUNDO INTOCÁVEL: O fundo da IMAGEM 1 deve ser perfeitamente preservado, sem nenhuma alteração.
+5.  REALISMO MÁXIMO: Ajuste a nova peça ao corpo, considerando caimento, dobras, sombras e a iluminação da foto original para uma integração perfeita.`;
 
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image-preview',

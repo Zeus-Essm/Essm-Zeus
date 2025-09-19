@@ -62,9 +62,9 @@ export const CATEGORIES: Category[] = [
     name: 'NEW FEELING',
     image: 'https://i.postimg.cc/P5K1G2Py/new.jpg',
     subCategories: [
-        { id: 'nf_masculino', name: 'Masculino', image: 'https://i.postimg.cc/fT8c1V8q/nf-men.jpg', subCategories: createSubCategories('nf_masculino', MALE_CLOTHING_SUBCATEGORIES) },
-        { id: 'nf_feminino', name: 'Feminino', image: 'https://i.postimg.cc/sXv7xX6K/nf-women.jpg', subCategories: createSubCategories('nf_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
-        { id: 'nf_crianca', name: 'Criança', image: 'https://i.postimg.cc/prgQkDBL/nf-kid.jpg', subCategories: createSubCategories('nf_crianca', KID_CLOTHING_SUBCATEGORIES) }
+        { id: 'nf_masculino', name: 'Masculino', image: 'https://i.postimg.cc/zD9nNvQB/homem.jpg', subCategories: createSubCategories('nf_masculino', MALE_CLOTHING_SUBCATEGORIES) },
+        { id: 'nf_feminino', name: 'Feminino', image: 'https://i.postimg.cc/y8T90P8g/mulher.jpg', subCategories: createSubCategories('nf_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
+        { id: 'nf_crianca', name: 'Criança', image: 'https://i.postimg.cc/DyL1wFVc/pequeno.jpg', subCategories: createSubCategories('nf_crianca', KID_CLOTHING_SUBCATEGORIES) }
     ]
   },
   {
@@ -72,9 +72,9 @@ export const CATEGORIES: Category[] = [
     name: 'NOIVAS',
     image: 'https://i.postimg.cc/G3vH75kZ/465687536-1138426001618419-59111119315795457782-n.jpg',
     subCategories: [
-        { id: 'noivas_vestidos', name: 'Vestidos', image: 'https://i.postimg.cc/QdZ0c2s5/bride-dresses.jpg' },
-        { id: 'noivas_noivos', name: 'Noivos', image: 'https://i.postimg.cc/0j2gKzDF/groom-suits.jpg' },
-        { id: 'noivas_criancas', name: 'Crianças', image: 'https://i.postimg.cc/PqjM9g8L/wedding-kids.jpg' }
+        { id: 'noivas_masculino', name: 'Masculino', image: 'https://i.postimg.cc/zD9nNvQB/homem.jpg' },
+        { id: 'noivas_feminino', name: 'Feminino', image: 'https://i.postimg.cc/y8T90P8g/mulher.jpg' },
+        { id: 'noivas_crianca', name: 'Criança', image: 'https://i.postimg.cc/DyL1wFVc/pequeno.jpg' }
     ]
   },
   {
@@ -82,33 +82,89 @@ export const CATEGORIES: Category[] = [
     name: 'LILAS',
     image: 'https://i.postimg.cc/7Z9pT8Wk/L.jpg',
     subCategories: [
-        { id: 'lilas_masculino', name: 'Masculino', image: 'https://i.postimg.cc/fyy2v7s0/lilas-men.jpg', subCategories: createSubCategories('lilas_masculino', MALE_CLOTHING_SUBCATEGORIES) },
-        { id: 'lilas_feminino', name: 'Feminino', image: 'https://i.postimg.cc/WbFfVw8d/lilas-women.jpg', subCategories: createSubCategories('lilas_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
-        { id: 'lilas_crianca', name: 'Criança', image: 'https://i.postimg.cc/mDcf1W0w/lilas-kid.jpg', subCategories: createSubCategories('lilas_crianca', KID_CLOTHING_SUBCATEGORIES) }
+        { id: 'lilas_masculino', name: 'Masculino', image: 'https://i.postimg.cc/zD9nNvQB/homem.jpg', subCategories: createSubCategories('lilas_masculino', MALE_CLOTHING_SUBCATEGORIES) },
+        { id: 'lilas_feminino', name: 'Feminino', image: 'https://i.postimg.cc/y8T90P8g/mulher.jpg', subCategories: createSubCategories('lilas_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
+        { id: 'lilas_crianca', name: 'Criança', image: 'https://i.postimg.cc/DyL1wFVc/pequeno.jpg', subCategories: createSubCategories('lilas_crianca', KID_CLOTHING_SUBCATEGORIES) }
+    ]
+  },
+  {
+    id: 'adidas',
+    name: 'ADIDAS',
+    image: 'https://i.postimg.cc/LXmdq4H2/D.jpg',
+    subCategories: [
+        { id: 'adidas_masculino', name: 'Masculino', image: 'https://i.postimg.cc/zD9nNvQB/homem.jpg', subCategories: createSubCategories('adidas_masculino', MALE_CLOTHING_SUBCATEGORIES) },
+        { id: 'adidas_feminino', name: 'Feminino', image: 'https://i.postimg.cc/y8T90P8g/mulher.jpg', subCategories: createSubCategories('adidas_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
+        { id: 'adidas_crianca', name: 'Criança', image: 'https://i.postimg.cc/DyL1wFVc/pequeno.jpg', subCategories: createSubCategories('adidas_crianca', KID_CLOTHING_SUBCATEGORIES) }
     ]
   }
 ];
 
 // Itens de exemplo (mesma estrutura que antes)
 export const ITEMS: Item[] = [
-    // Louis Vuitton Masculino
-    { id: 'lv_masculino_fato_1', name: 'Fato Clássico Monogram', description: 'Um fato elegante com o padrão Monogram da Louis Vuitton.', category: 'lv_masculino_fato', image: 'https://i.postimg.cc/y8Yj9WkH/lv-men-suit1.jpg', price: 15000 },
-    { id: 'lv_masculino_tshirt_1', name: 'T-shirt LV com Logo', description: 'T-shirt de algodão com logo LV bordado.', category: 'lv_masculino_tshirt', image: 'https://i.postimg.cc/Gpd2YVZY/lv-men-tshirt1.jpg', price: 2500 },
-    { id: 'lv_masculino_camisa_1', name: 'Camisa de Seda LV', description: 'Camisa de seda com estampa exclusiva da coleção.', category: 'lv_masculino_camisa', image: 'https://i.postimg.cc/k4xY0VjM/lv-men-shirt1.jpg', price: 4500 },
-    { id: 'lv_masculino_calca_1', name: 'Calça Chino LV', description: 'Calça chino de corte moderno e confortável.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/L5Y8kYvg/lv-men-pants1.jpg', price: 3800 },
-    { id: 'lv_masculino_jaqueta_1', name: 'Jaqueta Bomber LV', description: 'Jaqueta bomber com detalhes em couro.', category: 'lv_masculino_jaqueta', image: 'https://i.postimg.cc/pr0yM7gY/lv-men-jacket1.jpg', price: 9500 },
-
     // Louis Vuitton Feminino
     { id: 'lv_feminino_vestido_1', name: 'Vestido de Cocktail LV', description: 'Vestido elegante para ocasiões especiais.', category: 'lv_feminino_vestido', image: 'https://i.postimg.cc/WpX9pL9g/lv-women-dress1.jpg', price: 12000 },
     { id: 'lv_feminino_saia_1', name: 'Saia Plissada Monogram', description: 'Saia plissada com o icônico padrão Monogram.', category: 'lv_feminino_saia', image: 'https://i.postimg.cc/qR3tjXz3/lv-women-skirt1.jpg', price: 5500 },
     { id: 'lv_feminino_tshirt_1', name: 'T-shirt Feminina LV', description: 'T-shirt com corte feminino e logo LV.', category: 'lv_feminino_tshirt', image: 'https://i.postimg.cc/SRhD10N6/lv-women-tshirt1.jpg', price: 2300 },
-    
-    // Novos Acessórios
     { id: 'lv_feminino_acessorios_1', name: 'Bolsa Speedy LV', description: 'Bolsa clássica em canvas Monogram.', category: 'lv_feminino_acessorios', image: 'https://i.postimg.cc/kXF1pG4j/lv-women-bag1.jpg', price: 8500 },
-    { id: 'lv_masculino_acessorios_1', name: 'Cinto LV Initiales', description: 'Cinto de couro com fivela LV.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/tJnB3w0N/lv-men-belt1.jpg', price: 2900 },
     { id: 'lv_feminino_acessorios_2', name: 'Óculos de Sol My Monogram', description: 'Óculos de sol elegantes com detalhes Monogram.', category: 'lv_feminino_acessorios', image: 'https://i.postimg.cc/Gmd0V5zN/lv-women-sunglasses1.jpg', price: 3200 },
-    { id: 'lv_masculino_acessorios_2', name: 'Relógio Tambour', description: 'Relógio sofisticado com design exclusivo.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/ydp3D9gM/lv-men-watch1.jpg', price: 25000 },
     { id: 'lv_feminino_acessorios_3', name: 'Lenço de Seda Monogram', description: 'Lenço de seda versátil com estampa Monogram.', category: 'lv_feminino_acessorios', image: 'https://i.postimg.cc/qMQ4wF7p/lv-women-scarf1.jpg', price: 2100 },
+    
+    // Louis Vuitton Masculino (Restante)
+    { id: 'lv_masculino_camisa_1', name: 'Camisa de Seda LV', description: 'Camisa de seda com estampa exclusiva da coleção.', category: 'lv_masculino_camisa', image: 'https://i.postimg.cc/k4xY0VjM/lv-men-shirt1.jpg', price: 4500 },
+
+    // LV Masculino - Fato (NOVO)
+    { id: 'lv_masculino_fato_new_1', name: 'fato 1', description: 'Fato Louis Vuitton.', category: 'lv_masculino_fato', image: 'https://i.postimg.cc/tg58WhFB/louis-vuitton-terno-pont-neuf-em-la-HQCF4-WAVD631-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_fato_new_2', name: 'fato 2', description: 'Fato Louis Vuitton.', category: 'lv_masculino_fato', image: 'https://i.postimg.cc/cHkj509Y/louis-vuitton-terno-pont-neuf-em-mescla-de-la-HQCF4-WFOG900-PM2-Front-view.webp', price: 20000 },
+
+    // LV Masculino - T-shirt (NOVO)
+    { id: 'lv_masculino_tshirt_new_1', name: 't-shirt 1', description: 'T-shirt Louis Vuitton.', category: 'lv_masculino_tshirt', image: 'https://i.postimg.cc/TPR4dpBg/louis-vuitton-camiseta-de-algodao-bordada-HTY18-WNPG651-PM2-Front-view.webp', price: 10000 },
+    { id: 'lv_masculino_tshirt_new_2', name: 't-shirt 2', description: 'T-shirt Louis Vuitton.', category: 'lv_masculino_tshirt', image: 'https://i.postimg.cc/6pVPxdbB/Louis-Vuitton-LV-Monogram-Gradient-Black-White-T-Shirt-Crepslocker-Front-1.webp', price: 10000 },
+    
+    // LV Masculino - Calça (NOVO)
+    { id: 'lv_masculino_calca_new_1', name: 'calça 1', description: 'Calça Louis Vuitton.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/wTBFPX5K/louis-vuitton-calca-cigarrete-de-la-com-jacquard-damier-HSP61-WSMYMU1-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_calca_new_2', name: 'calça 2', description: 'Calça Louis Vuitton.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/mkmjkks6/louis-vuitton-calca-de-agasalho-em-tecido-tecnologico-com-monogram-estampado-HRP83-WMJW609-PM2-Front.webp', price: 20000 },
+    { id: 'lv_masculino_calca_new_3', name: 'calça 3', description: 'Calça Louis Vuitton.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/SQdDDTM7/louis-vuitton-calca-de-couro-damier-HQL60-EBQV822-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_calca_new_4', name: 'calça 4', description: 'Calça Louis Vuitton.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/W1tdQn1k/dddd.webp', price: 20000 },
+    { id: 'lv_masculino_calca_new_5', name: 'calça 5', description: 'Calça Louis Vuitton.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/R09jWPJ3/louis-vuitton-fleece-jogpants-HQY22-WDFXMU1-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_calca_new_6', name: 'calça 6', description: 'Calça Louis Vuitton.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/76ZdVfVw/louis-vuitton-calca-em-jacquard-damoflage-HSN93-WTMJ900-PM2-Front-view.webp', price: 20000 },
+    
+    // LV Masculino - Jaqueta/Casaco (NOVO)
+    { id: 'lv_masculino_jaqueta_new_1', name: 'jaqueta 1', description: 'Jaqueta Louis Vuitton.', category: 'lv_masculino_jaqueta', image: 'https://i.postimg.cc/MZ4N7ZjJ/louis-vuitton-jaqueta-de-couro-damier-HSL90-ETAHMU1-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_jaqueta_new_2', name: 'jaqueta 2', description: 'Jaqueta Louis Vuitton.', category: 'lv_masculino_jaqueta', image: 'https://i.postimg.cc/QMC3DCnK/louis-vuitton-jaqueta-safari-chic-com-gola-de-couro-HSB73-WRJV851-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_casaco_new_1', name: 'casaco 1', description: 'Casaco Louis Vuitton.', category: 'lv_masculino_jaqueta', image: 'https://i.postimg.cc/W1cyy9n9/louis-vuitton-paleto-pont-neuf-de-la-HRFJ8-EDLG60-D-PM2-Front-view.png', price: 20000 },
+
+    // LV Masculino - Ténis (NOVO)
+    { id: 'lv_masculino_tenis_new_1', name: 'ténis 1', description: 'Ténis Louis Vuitton.', category: 'lv_masculino_tenis', image: 'https://i.postimg.cc/VvTx5mX1/louis-vuitton-sneaker-lv-skate-BO9-U3-PMI31-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_tenis_new_2', name: 'ténis 2', description: 'Ténis Louis Vuitton.', category: 'lv_masculino_tenis', image: 'https://i.postimg.cc/66mJMLgS/louis-vuitton-tenis-lv-skate-BP9-U2-PMI92-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_tenis_new_3', name: 'ténis 3', description: 'Ténis Louis Vuitton.', category: 'lv_masculino_tenis', image: 'https://i.postimg.cc/xTNrhNSd/louis-vuitton-tenis-lv-skate-BR9-U1-PMI20-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_tenis_new_4', name: 'ténis 4', description: 'Ténis Louis Vuitton.', category: 'lv_masculino_tenis', image: 'https://i.postimg.cc/hjCWW9jX/louis-vuitton-tenis-lv-trainer-BSUPN8-GC52-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_tenis_new_5', name: 'ténis 5', description: 'Ténis Louis Vuitton.', category: 'lv_masculino_tenis', image: 'https://i.postimg.cc/KjRXZRkJ/louis-vuitton-tenis-lv-trainer-BTU017-MI01-PM2-Front-view.webp', price: 20000 },
+
+    // LV Masculino - Acessórios (NOVO)
+    { id: 'lv_masculino_acessorios_new_1', name: 'Chapeu 1', description: 'Acessório Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/wBQYFKYc/louis-vuitton-bone-lv-get-ready-M76505-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_acessorios_new_2', name: 'Chapeu 2', description: 'Acessório Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/MTZ2FsWk/louis-vuitton-bone-lv-smash-M7608-L-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_acessorios_new_3', name: 'Chapeu 3', description: 'Acessório Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/NjTc99Nn/louis-vuitton-bone-monogram-shadow-M76580-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_acessorios_new_4', name: 'Chapeu 4', description: 'Acessório Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/j2W1pmm1/pngtree-brown-louis-vuitton-lv-polyester-mens-png-image-12912743.png', price: 20000 },
+    { id: 'lv_masculino_acessorios_new_5', name: 'rula 1', description: 'Acessório Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/cHd0NxBb/louis-vuitton-relogio-tambour-street-diver-chronograph-com-movimento-automatico-e-46-mm-de-diametro.webp', price: 20000 },
+    { id: 'lv_masculino_acessorios_new_6', name: 'rula 2', description: 'Acessório Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/0QZxkTt2/louis-vuitton-relogio-tambour-street-diver-chronograph-com-movimento-automatico-e-46-mm-de-diametro.webp', price: 20000 },
+    { id: 'lv_masculino_acessorios_new_7', name: 'rula 3', description: 'Acessório Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/PqWTcpYD/louis-vuitton-relogio-tambour-street-diver-de-movimento-automatico-com-44-mm-de-diametro-em-aco-QA1.webp', price: 20000 },
+    { id: 'lv_masculino_acessorios_new_8', name: 'óculos 1', description: 'Acessório Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/zvBNVxMw/louis-vuitton-1-1-millionaires-Z1165-E-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_acessorios_new_9', name: 'óculos 2', description: 'Acessório Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/h4ygHqz2/louis-vuitton-oculos-de-sol-1-0-millionaires-Z2516-U-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_acessorios_new_10', name: 'óculos 3', description: 'Acessório Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/pXmxv1KR/louis-vuitton-oculos-de-sol-lv-match-Z1414-W-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_acessorios_new_11', name: 'óculos 4', description: 'Acessório Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/TYBx3qcm/louis-vuitton-oculos-de-sol-quadrados-lv-clash-Z1579-W-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_acessorios_new_12', name: 'óculos 5', description: 'Acessório Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/1zhyJcnP/louis-vuitton-oculos-de-sol-quadrados-lv-link-pm-Z1566-W-PM2-Front-view.webp', price: 20000 },
+    { id: 'lv_masculino_acessorios_new_13', name: 'óculos 6', description: 'Acessório Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/RhDBfc5k/louis-vuitton-oculos-de-sol-quadrados-lv-ocean-Z2207-U-PM2-Front-view.webp', price: 20000 },
+
+    // ADIDAS Masculino
+    { id: 'adidas_masculino_tshirt_1', name: 'T-shirt Logo Trefoil', description: 'T-shirt clássica de algodão com o logo Trefoil da Adidas.', category: 'adidas_masculino_tshirt', image: 'https://i.postimg.cc/pT5L5bSj/adidas-men-tshirt1.jpg', price: 180 },
+    { id: 'adidas_masculino_calca_1', name: 'Calça Tiro 23', description: 'Calça de treino com tecnologia AEROREADY que remove o suor.', category: 'adidas_masculino_calca', image: 'https://i.postimg.cc/Y0NHgR8P/adidas-men-pants1.jpg', price: 350 },
+    { id: 'adidas_masculino_tenis_1', name: 'Ténis Superstar', description: 'O icónico ténis com a biqueira em concha de borracha.', category: 'adidas_masculino_tenis', image: 'https://i.postimg.cc/7L4wjy6J/adidas-men-shoes1.jpg', price: 550 },
+
+    // ADIDAS Feminino
+    { id: 'adidas_feminino_tshirt_1', name: 'T-shirt Boyfriend', description: 'T-shirt com modelagem folgada para um look descontraído.', category: 'adidas_feminino_tshirt', image: 'https://i.postimg.cc/k4W2r9bQ/adidas-women-tshirt1.jpg', price: 170 },
+    { id: 'adidas_feminino_calca_1', name: 'Legging Essentials', description: 'Legging de cintura alta com as 3 riscas laterais.', category: 'adidas_feminino_calca', image: 'https://i.postimg.cc/NMyL2yMh/adidas-women-leggings1.jpg', price: 280 },
+    { id: 'adidas_feminino_tenis_1', name: 'Tênis Stan Smith', description: 'O design clássico e minimalista que nunca sai de moda.', category: 'adidas_feminino_tenis', image: 'https://i.postimg.cc/50qf3G7f/adidas-women-shoes1.jpg', price: 520 },
+    { id: 'adidas_feminino_vestido_1', name: 'Vestido Longo 3-Stripes', description: 'Um vestido casual com as icónicas 3 riscas, combinando conforto e estilo.', category: 'adidas_feminino_vestido', image: 'https://i.postimg.cc/LXmdq4H2/D.jpg', price: 450 },
 ];
 
 
