@@ -1,4 +1,3 @@
-
 import React, { useRef, useState } from 'react';
 import type { Category, Profile } from '../types';
 import { CATEGORIES } from '../constants';
@@ -125,7 +124,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         <div 
             className="h-48 bg-gray-700 bg-cover"
             style={{ 
-                backgroundImage: `url(${profile.cover_image_url || 'https://i.postimg.cc/wB4g3W4z/cover-photo.jpg'})`,
+                backgroundImage: `url(${profile.cover_image_url || 'https://i.postimg.cc/wTQh27Rt/Captura-de-Tela-2025-09-19-a-s-2-10-14-PM.png'})`,
                 backgroundPosition: coverPosition,
             }}
         >
@@ -212,7 +211,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                             className="p-1 rounded-full hover:bg-yellow-500/20 transition-colors" 
                             aria-label="Ver recompensas"
                         >
-                            <img src="https://i.postimg.cc/T3jYwP1R/reward-coin.png" alt="Recompensas" className="w-10 h-10 transition-transform transform hover:scale-110" />
+                            <img src="https://i.postimg.cc/wjyHYD8S/moeda.png" alt="Recompensas" className="w-10 h-10 transition-transform transform hover:scale-110" />
                         </button>
                         <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 text-xs font-semibold text-white bg-gray-800 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none whitespace-nowrap">
                             Ver Recompensas

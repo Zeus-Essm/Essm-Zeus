@@ -49,7 +49,7 @@ export const CATEGORIES: Category[] = [
   { 
     id: 'lv', 
     name: 'Louis Vuitton', 
-    image: 'https://i.postimg.cc/j26tK8pX/lv-main.jpg',
+    image: 'https://i.postimg.cc/xCknv8vV/pexels-rdne-6224633.jpg',
     video: 'https://streamable.com/f79d27/video.mp4',
     subCategories: [
         { id: 'lv_masculino', name: 'Masculino', image: 'https://i.postimg.cc/k47tXvXy/lv-men.jpg', subCategories: createSubCategories('lv_masculino', MALE_CLOTHING_SUBCATEGORIES) },
@@ -60,7 +60,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'new_feeling',
     name: 'NEW FEELING',
-    image: 'https://i.postimg.cc/tJpD43Y7/new-feeling-main.jpg',
+    image: 'https://i.postimg.cc/P5K1G2Py/new.jpg',
     subCategories: [
         { id: 'nf_masculino', name: 'Masculino', image: 'https://i.postimg.cc/fT8c1V8q/nf-men.jpg', subCategories: createSubCategories('nf_masculino', MALE_CLOTHING_SUBCATEGORIES) },
         { id: 'nf_feminino', name: 'Feminino', image: 'https://i.postimg.cc/sXv7xX6K/nf-women.jpg', subCategories: createSubCategories('nf_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
@@ -70,7 +70,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'noivas',
     name: 'NOIVAS',
-    image: 'https://i.postimg.cc/d1Q3nCqj/noivas-main.jpg',
+    image: 'https://i.postimg.cc/G3vH75kZ/465687536-1138426001618419-5911119315795457782-n.jpg',
     subCategories: [
         { id: 'noivas_vestidos', name: 'Vestidos', image: 'https://i.postimg.cc/QdZ0c2s5/bride-dresses.jpg' },
         { id: 'noivas_noivos', name: 'Noivos', image: 'https://i.postimg.cc/0j2gKzDF/groom-suits.jpg' },
@@ -80,7 +80,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'lilas',
     name: 'LILAS',
-    image: 'https://i.postimg.cc/L8yQScDk/lilas-main.jpg',
+    image: 'https://i.postimg.cc/7Z9pT8Wk/L.jpg',
     subCategories: [
         { id: 'lilas_masculino', name: 'Masculino', image: 'https://i.postimg.cc/fyy2v7s0/lilas-men.jpg', subCategories: createSubCategories('lilas_masculino', MALE_CLOTHING_SUBCATEGORIES) },
         { id: 'lilas_feminino', name: 'Feminino', image: 'https://i.postimg.cc/WbFfVw8d/lilas-women.jpg', subCategories: createSubCategories('lilas_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
@@ -90,7 +90,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'adidas',
     name: 'ADIDAS',
-    image: 'https://i.postimg.cc/q7d3GZ3c/adidas-main.jpg',
+    image: 'https://i.postimg.cc/LXmdq4H2/D.jpg',
     subCategories: [
         { id: 'adidas_masculino', name: 'Masculino', image: 'https://i.postimg.cc/Hxb3SYN1/adidas-men.jpg', subCategories: createSubCategories('adidas_masculino', MALE_CLOTHING_SUBCATEGORIES) },
         { id: 'adidas_feminino', name: 'Feminino', image: 'https://i.postimg.cc/mkb7m2jN/adidas-women.jpg', subCategories: createSubCategories('adidas_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
@@ -102,6 +102,9 @@ export const CATEGORIES: Category[] = [
 // A coleção de itens
 export const ITEMS: Item[] = [
   // Louis Vuitton
+  { id: 'lv_item_m_hat1', name: 'Chapeu 1', description: 'Boné elegante com design exclusivo Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/wBQYFKYc/louis-vuitton-bone-lv-get-ready-M76505-PM2-Front-view.webp', price: 20000.00 },
+  { id: 'lv_item_m_hat2', name: 'Chapeu 2', description: 'Boné moderno para um look casual e sofisticado.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/MTZ2FsWk/louis-vuitton-bone-lv-smash-M7608-L-PM2-Front-view.webp', price: 20000.00 },
+  { id: 'lv_item_m_hat3', name: 'Chapeu 3', description: 'Boné com o clássico padrão Monogram para um estilo icónico.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/NjTc99Nn/louis-vuitton-bone-monogram-shadow-M76580-PM2-Front-view.webp', price: 20000.00 },
   { id: 'lv_item_m6', name: 'Calça 1980', description: 'Calça de couro com o icónico padrão Damier, um estilo arrojado e luxuoso.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/L5Kk6H7y/lv-damier-pants.webp', price: 25000.00 },
   { id: 'lv_item_m5', name: 'Calça lite', description: 'Calça de agasalho confortável em tecido tecnológico, com Monogram estampado para um toque de luxo casual.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/x8K6bBsF/lv-tech-pants.webp', price: 25000.00 },
   { id: 'lv_item_m4', name: 'Calça monock', description: 'Calça de corte elegante com padrão Monogram, combinando luxo e conforto.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/pT4yYwR2/lv-mono-pants.webp', price: 25000.00 },

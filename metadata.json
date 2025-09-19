@@ -1,6 +1,7 @@
 {
   "name": "MEU ESTILO",
   "description": "A modern and interactive virtual try-on platform for clothes and shoes, using AI to simulate how users would look with different items before buying.",
+  "iconUrl": "https://i.postimg.cc/htGw97By/Sem-Ti-tulo-1.png",
   "requestFramePermissions": [
     "camera"
   ]

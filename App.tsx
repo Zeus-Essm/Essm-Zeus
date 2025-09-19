@@ -143,8 +143,8 @@ const App: React.FC = () => {
             id: 'mock_user_123',
             username: 'BV (blue sky)',
             bio: 'Bem-vindo(a) ao MEU ESTILO! Explore as coleções e prove roupas virtualmente.',
-            profile_image_url: 'https://i.postimg.cc/3J7sKk81/profile-pic.jpg',
-            cover_image_url: 'https://i.postimg.cc/wB4g3W4z/cover-photo.jpg',
+            profile_image_url: 'https://i.postimg.cc/pL7M6Vgv/bv.jpg',
+            cover_image_url: 'https://i.postimg.cc/wTQh27Rt/Captura-de-Tela-2025-09-19-a-s-2-10-14-PM.png',
         };
         const mockSession = { user: { id: 'mock_user_123' } } as Session;
 
