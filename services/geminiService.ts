@@ -61,18 +61,19 @@ export const expandImageToSquare = async (userImage: string): Promise<string> =>
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const { base64: userBase64, mimeType: userMimeType } = getBase64Parts(userImage);
         
-        const promptText = `Sua tarefa é ser um especialista em edição de imagem para expandir uma imagem retangular para um formato perfeitamente quadrado (proporção 1:1) de forma ultra-realista, com fidelidade absoluta à iluminação original.
+        const promptText = `Sua tarefa é ser um especialista em edição de imagem para expandir uma imagem retangular para um formato perfeitamente quadrado (proporção 1:1) de forma ultra-realista.
 
-IMAGEM FORNECIDA:
-- Uma imagem de uma pessoa, que pode ser vertical ou horizontal.
+REGRA MAIS IMPORTANTE E INQUEBRÁVEL:
+A expansão SÓ PODE ACONTECER NAS LATERAIS (esquerda e direita). É ESTRITAMENTE PROIBIDO adicionar qualquer conteúdo na parte superior ou inferior da imagem original. A altura da imagem final DEVE ser idêntica à altura da imagem original.
 
-SUA MISSÃO:
-1.  **NÃO ALTERE O CONTEÚDO ORIGINAL:** O conteúdo da imagem fornecida deve ser mantido 100% intacto, centralizado na nova imagem quadrada.
-2.  **EXPANDA O FUNDO:** Você deve preencher as áreas que faltam (nas laterais para uma imagem vertical, ou em cima/embaixo para uma horizontal) para criar a tela quadrada.
-3.  **PREENCHIMENTO INTELIGENTE:** O preenchimento deve ser uma continuação natural e realista do fundo existente na foto. Se o fundo for uma parede, continue a parede. Se for um cenário ao ar livre, estenda o cenário. A transição entre o conteúdo original e o preenchimento gerado deve ser imperceptível.
-4.  **FIDELIDADE À ILUMINAÇÃO (CRÍTICO):** Esta é a regra mais importante. A iluminação do fundo expandido (sombras, brilhos, temperatura de cor) deve corresponder **exatamente** à iluminação da foto original. A nova área deve parecer que foi capturada pela mesma câmera, no mesmo instante e com a mesma luz. Evite qualquer mudança de brilho, contraste ou cor.
-5.  **MANTENHA O ESTILO:** O preenchimento deve corresponder à textura, cores e estilo geral da foto original.
-6.  **RESULTADO FINAL:** A imagem final deve ser uma fotografia quadrada realista, sem bordas ou cortes visíveis, onde o conteúdo original está perfeitamente centralizado e a iluminação é consistente em toda a imagem.`;
+SUA MISSÃO DETALHADA:
+1.  **MANTER A ALTURA ORIGINAL:** A imagem que você gerar deve ter exatamente a mesma altura da imagem fornecida.
+2.  **CRIAR UM QUADRADO:** A largura da imagem final deve ser igual à altura da imagem original, resultando em um quadrado perfeito.
+3.  **CENTRALIZAR E EXPANDIR:** Posicione o conteúdo da imagem original no centro do novo quadro quadrado. Sua tarefa é preencher de forma inteligente e realista as áreas vazias que agora existem APENAS nas laterais (esquerda e direita).
+4.  **PREENCHIMENTO REALISTA:** O preenchimento lateral deve ser uma continuação natural e imperceptível do fundo existente na foto. Se o fundo é uma parede, continue a parede. Se é um cenário, estenda o cenário.
+5.  **FIDELIDADE TOTAL À ILUMINAÇÃO (CRÍTICO):** A iluminação do fundo expandido (sombras, brilhos, temperatura de cor, contraste) deve corresponder **exatamente** à iluminação da foto original. As novas áreas devem parecer que foram capturadas pela mesma câmera, no mesmo instante.
+6.  **NÃO ALTERE O CONTEÚDO ORIGINAL:** O conteúdo principal da imagem fornecida (a pessoa, objetos) deve ser mantido 100% intacto.
+7.  **RESULTADO FINAL:** Uma fotografia quadrada, onde a imagem original ocupa toda a altura e está centralizada, com as laterais expandidas de forma ultra-realista e com iluminação consistente.`;
 
         const response: GenerateContentResponse = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image-preview',
@@ -128,7 +129,15 @@ export const generateTryOnImage = async (userImage: string, newItem: Item, exist
 
     const existingItemNames = existingItems.map(i => i.name).join(', ') || 'as roupas que a pessoa já está vestindo na foto';
 
-    const promptText = `Sua tarefa é ser um estilista virtual e especialista em edição de imagem de alta precisão. O objetivo é vestir uma nova peça de roupa em uma pessoa de forma ultra-realista, com fidelidade absoluta à iluminação da foto original.
+    const promptText = `Sua tarefa é ser um estilista virtual e especialista em edição de imagem de alta precisão. O objetivo é vestir uma nova peça de roupa em uma pessoa de forma ultra-realista.
+
+REGRA MAIS IMPORTANTE E INQUEBRÁVEL: FIDELIDADE TOTAL À ILUMINAÇÃO
+A iluminação da foto original (IMAGEM 1) é a verdade absoluta e NÃO PODE ser alterada. Sua única missão é fazer com que a nova peça de roupa (da IMAGEM 2) se integre perfeitamente a essa iluminação existente. A nova peça DEVE parecer que foi fotografada no mesmo local, no mesmo instante e com a mesma câmera.
+Isto significa replicar EXATAMENTE:
+- **Direção e Suavidade das Sombras:** As sombras projetadas sobre a nova peça devem corresponder perfeitamente às sombras existentes no corpo e no ambiente da foto original.
+- **Brilhos e Reflexos:** Qualquer brilho de fonte de luz ou reflexo visível na pessoa ou no ambiente deve ser aplicado de forma realista à nova peça de roupa.
+- **Temperatura de Cor:** A tonalidade da luz (seja quente, fria ou neutra) deve ser idêntica na nova peça e no resto da imagem.
+- **Contraste Geral:** A peça não pode parecer artificialmente mais clara ou escura que o resto da cena. A integração de contraste deve ser perfeita.
 
 IMAGENS FORNECIDAS:
 - IMAGEM 1: A foto da pessoa, com suas condições de iluminação, sombras e ambiente. A pessoa pode já estar vestindo: ${existingItemNames}.
@@ -142,16 +151,11 @@ REGRA DE VESTIR INTELIGENTE (ESSENCIAL):
 2.  SOBREPOSIÇÃO REALISTA: Se a nova peça for um item que se usa POR CIMA dos outros (ex: uma jaqueta sobre uma T-shirt que já foi adicionada), adicione-a realisticamente, criando dobras e sombras corretas sobre a roupa de baixo.
 3.  O objetivo final é uma imagem que pareça uma fotografia 100% real, não uma colagem digital. O realismo é a prioridade máxima.
 
-REGRAS CRÍTICAS E INQUEBRÁIS:
-1.  **FIDELIDADE TOTAL À ILUMINAÇÃO (REGRA MAIS IMPORTANTE):** A nova peça de roupa deve ser integrada à IMAGEM 1 de forma que pareça ter sido fotografada no mesmo ambiente, com a mesma luz. Você DEVE replicar **exatamente** a iluminação da foto original na nova peça. Isso inclui:
-    *   **Direção e suavidade das sombras:** As sombras na nova roupa devem corresponder às sombras existentes no corpo e no ambiente.
-    *   **Brilhos e reflexos:** Se houver fontes de luz visíveis ou reflexos na foto original, eles devem afetar a nova peça de forma realista.
-    *   **Temperatura de cor:** A cor da luz (quente, fria, neutra) deve ser consistente entre a nova peça e o resto da imagem.
-    *   **Contraste geral:** A peça não pode parecer mais clara ou mais escura que o resto da cena.
-2.  **NÃO CORTE A IMAGEM:** A imagem final que você gera DEVE ter **exatamente as mesmas dimensões (largura e altura em pixels) da IMAGEM 1 original.** É proibido fazer zoom, cortar (crop) ou reenquadrar a imagem. A pessoa inteira, da cabeça aos pés, e todo o fundo original DEVEM ser 100% preservados e visíveis.
-3.  FIDELIDADE TOTAL AO PRODUTO: Você DEVE usar a imagem EXATA da nova peça da IMAGEM 2. Cor, textura, padrão, e logotipos DEVEM ser idênticos.
-4.  PRESERVAÇÃO DA PESSOA E ROUPAS NÃO AFETADAS: O rosto, cabelo, corpo, pose e quaisquer outras roupas que a pessoa esteja vestindo (e que não foram substituídas) devem permanecer COMPLETAMENTE inalterados.
-5.  FUNDO INTOCÁVEL: O fundo da IMAGEM 1 deve ser perfeitamente preservado, sem nenhuma alteração.`;
+OUTRAS REGRAS CRÍTICAS:
+1.  **NÃO CORTE A IMAGEM:** A imagem final que você gera DEVE ter **exatamente as mesmas dimensões (largura e altura em pixels) da IMAGEM 1 original.** É proibido fazer zoom, cortar (crop) ou reenquadrar a imagem. A pessoa inteira, da cabeça aos pés, e todo o fundo original DEVEM ser 100% preservados e visíveis.
+2.  **FIDELIDADE TOTAL AO PRODUTO:** Você DEVE usar a imagem EXATA da nova peça da IMAGEM 2. Cor, textura, padrão, e logotipos DEVEM ser idênticos.
+3.  **PRESERVAÇÃO DA PESSOA E ROUPAS NÃO AFETADAS:** O rosto, cabelo, corpo, pose e quaisquer outras roupas que a pessoa esteja vestindo (e que não foram substituídas) devem permanecer COMPLETAMENTE inalterados.
+4.  **FUNDO INTOCÁVEL:** O fundo da IMAGEM 1 deve ser perfeitamente preservado, sem nenhuma alteração.`;
 
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image-preview',
