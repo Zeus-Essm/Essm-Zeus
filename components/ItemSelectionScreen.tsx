@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useRef } from 'react';
 import type { Item } from '../types';
 import { ITEMS } from '../constants';
@@ -19,20 +20,19 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
   const categoryItems = useMemo(() => ITEMS.filter(item => item.category === collectionId), [collectionId]);
   
   const [quickViewItem, setQuickViewItem] = useState<Item | null>(null);
-  // FIX: Explicitly type the ref to hold a number or null and initialize to null.
-  // This makes the logic safer and avoids potential type issues with timer IDs,
-  // as `clearTimeout` does not accept `null`.
+  const [pressedItemId, setPressedItemId] = useState<string | null>(null); // State to track pressed item for animation
   const pressTimer = useRef<number | null>(null);
 
   const handlePressStart = (item: Item) => {
+    setPressedItemId(item.id); // Start animation
     pressTimer.current = window.setTimeout(() => {
       setQuickViewItem(item);
+      setPressedItemId(null); // Stop animation when modal opens
     }, 500); // Long press duration
   };
 
   const handlePressEnd = () => {
-    // FIX: Add a guard to ensure clearTimeout is only called with a valid timer ID.
-    // This prevents passing null or undefined to clearTimeout, making the code more robust.
+    setPressedItemId(null); // Stop animation
     if (pressTimer.current) {
       clearTimeout(pressTimer.current);
     }
@@ -61,7 +61,7 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
               {categoryItems.map(item => (
                 <div 
                     key={item.id}
-                    className="bg-gray-900 rounded-xl p-2 flex flex-col hover:bg-gray-800 transition-colors cursor-pointer"
+                    className={`bg-gray-900 rounded-xl p-2 flex flex-col hover:bg-gray-800 cursor-pointer transition-all duration-200 ease-out ${pressedItemId === item.id ? 'transform scale-105 shadow-lg shadow-blue-500/20' : ''}`}
                     onMouseDown={() => handlePressStart(item)}
                     onMouseUp={handlePressEnd}
                     onMouseLeave={handlePressEnd}

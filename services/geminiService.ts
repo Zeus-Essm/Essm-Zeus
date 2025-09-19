@@ -63,17 +63,19 @@ export const expandImageToSquare = async (userImage: string): Promise<string> =>
         
         const promptText = `Sua tarefa é ser um especialista em edição de imagem para expandir uma imagem retangular para um formato perfeitamente quadrado (proporção 1:1) de forma ultra-realista.
 
-REGRA MAIS IMPORTANTE E INQUEBRÁVEL:
-A expansão SÓ PODE ACONTECER NAS LATERAIS (esquerda e direita). É ESTRITAMENTE PROIBIDO adicionar qualquer conteúdo na parte superior ou inferior da imagem original. A altura da imagem final DEVE ser idêntica à altura da imagem original.
+**A REGRA MAIS IMPORTANTE E INQUEBRÁVEL É SOBRE A DIREÇÃO DA EXPANSÃO:**
+- A expansão SÓ PODE acontecer NAS LATERAIS (esquerda e direita).
+- É ABSOLUTAMENTE PROIBIDO adicionar qualquer conteúdo na parte SUPERIOR ou INFERIOR.
+- A ALTURA da imagem original deve ser 100% PRESERVADA. A imagem final deve ter exatamente a mesma altura da original.
 
-SUA MISSÃO DETALHADA:
-1.  **MANTER A ALTURA ORIGINAL:** A imagem que você gerar deve ter exatamente a mesma altura da imagem fornecida.
-2.  **CRIAR UM QUADRADO:** A largura da imagem final deve ser igual à altura da imagem original, resultando em um quadrado perfeito.
-3.  **CENTRALIZAR E EXPANDIR:** Posicione o conteúdo da imagem original no centro do novo quadro quadrado. Sua tarefa é preencher de forma inteligente e realista as áreas vazias que agora existem APENAS nas laterais (esquerda e direita).
-4.  **PREENCHIMENTO REALISTA:** O preenchimento lateral deve ser uma continuação natural e imperceptível do fundo existente na foto. Se o fundo é uma parede, continue a parede. Se é um cenário, estenda o cenário.
-5.  **FIDELIDADE TOTAL À ILUMINAÇÃO (CRÍTICO):** A iluminação do fundo expandido (sombras, brilhos, temperatura de cor, contraste) deve corresponder **exatamente** à iluminação da foto original. As novas áreas devem parecer que foram capturadas pela mesma câmera, no mesmo instante.
-6.  **NÃO ALTERE O CONTEÚDO ORIGINAL:** O conteúdo principal da imagem fornecida (a pessoa, objetos) deve ser mantido 100% intacto.
-7.  **RESULTADO FINAL:** Uma fotografia quadrada, onde a imagem original ocupa toda a altura e está centralizada, com as laterais expandidas de forma ultra-realista e com iluminação consistente.`;
+**SUA MISSÃO DETALHADA:**
+1.  **MANTER A ALTURA ORIGINAL:** A imagem que você gerar deve ter exatamente a mesma altura da imagem fornecida. Nenhuma expansão vertical.
+2.  **CRIAR UM QUADRADO:** A largura da imagem final deve ser igual à altura, resultando em um quadrado perfeito.
+3.  **EXPANDIR APENAS PARA OS LADOS:** Centralize a imagem original. Sua tarefa é preencher de forma realista as áreas vazias que agora existem APENAS nas laterais.
+4.  **PREENCHIMENTO REALISTA:** O preenchimento lateral deve ser uma continuação natural e imperceptível do fundo existente na foto.
+5.  **FIDELIDADE TOTAL À ILUMINAÇÃO (CRÍTICO):** A iluminação do fundo expandido (sombras, brilhos, etc.) deve corresponder **exatamente** à iluminação da foto original.
+6.  **NÃO ALTERE O CONTEÚDO ORIGINAL:** A pessoa e os objetos na imagem original devem ser mantidos 100% intactos.
+7.  **RESULTADO FINAL:** Uma fotografia quadrada, com a imagem original ocupando toda a altura, centralizada, e com as laterais expandidas de forma ultra-realista.`;
 
         const response: GenerateContentResponse = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image-preview',
