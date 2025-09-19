@@ -22,6 +22,7 @@ import MyLooksScreen from './components/MyLooksScreen';
 import CameraScreen from './components/CameraScreen';
 import ImageSourceSelectionScreen from './components/ImageSourceSelectionScreen';
 import CartScreen from './components/CartScreen';
+import RewardsScreen from './components/RewardsScreen';
 
 declare global {
   interface Window {}
@@ -429,6 +430,20 @@ const App: React.FC = () => {
         }
     };
 
+    const handleSaveImage = () => {
+        if (!generatedImage) return;
+
+        const link = document.createElement('a');
+        link.href = generatedImage;
+        link.download = 'meu-estilo-look.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        setToast('Imagem salva na sua galeria!');
+        setTimeout(() => setToast(null), 3000);
+    };
+
     const handleItemClick = (item: Item) => {
         const parentCategoryId = item.category.split('_')[0];
         const parentCategory = CATEGORIES.find(c => c.id === parentCategoryId);
@@ -448,6 +463,7 @@ const App: React.FC = () => {
     };
 
     const handleNavigateToMyLooks = () => setCurrentScreen(Screen.MyLooks);
+    const handleNavigateToRewards = () => setCurrentScreen(Screen.Rewards);
 
     const renderScreen = () => {
         if (isLoading) return <LoadingIndicator userImage={userImage!} />;
@@ -465,6 +481,7 @@ const App: React.FC = () => {
                             onNavigateToFeed={() => setCurrentScreen(Screen.Feed)}
                             onNavigateToMyLooks={handleNavigateToMyLooks}
                             onNavigateToCart={handleNavigateToCart}
+                            onNavigateToRewards={handleNavigateToRewards}
                             onStartTryOn={handleStartTryOn}
                             onSignOut={handleSignOut}
                             isCartAnimating={isCartAnimating}
@@ -510,6 +527,7 @@ const App: React.FC = () => {
                         onBuy={handleBuyLook}
                         onBack={handleUndoLastItem}
                         onSaveLook={handleSaveLook}
+                        onSaveImage={handleSaveImage}
                         onContinueStyling={handleContinueStyling}
                     />;
                 }
@@ -551,6 +569,8 @@ const App: React.FC = () => {
                         }
                     }}
                 />;
+            case Screen.Rewards:
+                return <RewardsScreen onBack={() => setCurrentScreen(Screen.Home)} />;
             default:
                 setCurrentScreen(Screen.Home);
                 return null;

@@ -2,7 +2,7 @@ import React from 'react';
 import type { Item } from '../types';
 import GradientButton from './GradientButton';
 import Header from './Header';
-import { ShoppingBagIcon, PlusIcon, UndoIcon, ShareIcon, BookmarkIcon } from './IconComponents';
+import { ShoppingBagIcon, PlusIcon, UndoIcon, ShareIcon, BookmarkIcon, DownloadIcon } from './IconComponents';
 
 interface ResultScreenProps {
   generatedImage: string;
@@ -11,10 +11,11 @@ interface ResultScreenProps {
   onBuy: (items: Item[]) => void;
   onBack: () => void;
   onSaveLook: () => void;
+  onSaveImage: () => void;
   onContinueStyling: () => void;
 }
 
-const ResultScreen: React.FC<ResultScreenProps> = ({ generatedImage, items, onPostToFeed, onBuy, onBack, onSaveLook, onContinueStyling }) => {
+const ResultScreen: React.FC<ResultScreenProps> = ({ generatedImage, items, onPostToFeed, onBuy, onBack, onSaveLook, onSaveImage, onContinueStyling }) => {
   const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
   const lastItem = items[items.length - 1];
 
@@ -55,28 +56,35 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ generatedImage, items, onPo
            <PlusIcon className="w-5 h-5 mr-2" />
             Adicionar Mais Peças
         </button>
-         <div className="flex gap-3">
+         <div className="flex gap-2">
              <button
                 onClick={onBack}
-                className="flex-1 flex items-center justify-center text-white font-bold py-3 px-4 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+                className="flex-1 flex flex-col items-center justify-center text-white font-semibold py-2 px-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
                 aria-label="Desfazer última peça"
             >
-               <UndoIcon className="w-5 h-5 mr-2" />
-                Desfazer
+               <UndoIcon className="w-5 h-5 mb-1" />
+                <span className="text-xs tracking-wide">DESFAZER</span>
             </button>
             <button
                 onClick={onSaveLook}
-                className="flex-1 flex items-center justify-center text-white font-bold py-3 px-4 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+                className="flex-1 flex flex-col items-center justify-center text-white font-semibold py-2 px-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
             >
-               <BookmarkIcon className="w-5 h-5 mr-2" />
-                Salvar Look
+               <BookmarkIcon className="w-5 h-5 mb-1" />
+                <span className="text-xs tracking-wide">SALVAR</span>
             </button>
              <button
-                onClick={onPostToFeed} // Alterado de onSave
-                className="flex-1 flex items-center justify-center text-white font-bold py-3 px-4 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+                onClick={onPostToFeed}
+                className="flex-1 flex flex-col items-center justify-center text-white font-semibold py-2 px-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
             >
-               <ShareIcon className="w-5 h-5 mr-2" />
-                Postar
+               <ShareIcon className="w-5 h-5 mb-1" />
+                <span className="text-xs tracking-wide">POSTAR</span>
+            </button>
+            <button
+                onClick={onSaveImage}
+                className="flex-1 flex flex-col items-center justify-center text-white font-semibold py-2 px-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+            >
+               <DownloadIcon className="w-5 h-5 mb-1" />
+                <span className="text-xs tracking-wide">SALVAR FOTO</span>
             </button>
          </div>
         <GradientButton onClick={() => onBuy(items)}>

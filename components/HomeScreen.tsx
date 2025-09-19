@@ -12,6 +12,7 @@ interface HomeScreenProps {
   onNavigateToFeed: () => void;
   onNavigateToMyLooks: () => void;
   onNavigateToCart: () => void;
+  onNavigateToRewards: () => void;
   onStartTryOn: () => void;
   onSignOut: () => void;
   isCartAnimating: boolean;
@@ -40,6 +41,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     onNavigateToFeed,
     onNavigateToMyLooks,
     onNavigateToCart,
+    onNavigateToRewards,
     onStartTryOn,
     onSignOut,
     isCartAnimating
@@ -208,6 +210,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                 {!isEditingBio && (
                     <div className="relative group flex-shrink-0">
                         <button 
+                            onClick={onNavigateToRewards}
                             className="p-1 rounded-full hover:bg-yellow-500/20 transition-colors" 
                             aria-label="Ver recompensas"
                         >

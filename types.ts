@@ -12,6 +12,7 @@ export enum Screen {
   Camera,
   ImageSourceSelection,
   Cart,
+  Rewards,
 }
 
 export interface SubCategory {

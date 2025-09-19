@@ -47,27 +47,28 @@ export const generateTryOnImage = async (userImage: string, newItem: Item, exist
     const itemDataUrl = await imageUrlToDataUrl(newItem.image);
     const { base64: itemBase64, mimeType: itemMimeType } = getBase64Parts(itemDataUrl);
 
-    let promptText = '';
-    if (existingItems.length > 0) {
-        const existingItemNames = existingItems.map(i => i.name).join(', ');
-        promptText = `Sua tarefa é uma edição de imagem de alta precisão. IMAGEM 1: uma pessoa vestindo ${existingItemNames}. IMAGEM 2: uma nova peça de roupa ('${newItem.name}'). Sua única tarefa é ADICIONAR a peça de roupa da IMAGEM 2 na pessoa da IMAGEM 1, sobre as roupas existentes.
+    const existingItemNames = existingItems.map(i => i.name).join(', ') || 'as roupas que a pessoa já está vestindo na foto';
+
+    const promptText = `Sua tarefa é ser um estilista virtual e especialista em edição de imagem de alta precisão. O objetivo é vestir uma nova peça de roupa em uma pessoa de forma ultra-realista, substituindo a roupa existente se necessário.
+
+IMAGENS FORNECIDAS:
+- IMAGEM 1: A foto da pessoa. A pessoa pode já estar vestindo algumas roupas, que podem incluir: ${existingItemNames}.
+- IMAGEM 2: A nova peça de roupa que você deve adicionar ao visual: '${newItem.name}'.
+
+SUA MISSÃO:
+Analisar a IMAGEM 1 para identificar o que a pessoa está vestindo e, em seguida, integrar a nova peça ('${newItem.name}') da IMAGEM 2 de forma inteligente e realista.
+
+REGRA DE VESTIR INTELIGENTE (ESSENCIAL):
+1.  ANÁLISE E SUBSTITUIÇÃO: Primeiro, olhe para a IMAGEM 1 e identifique a peça de roupa principal que a pessoa está usando na parte superior do corpo (ex: uma camisa, uma T-shirt, um casaco). Se a nova peça ('${newItem.name}') for do mesmo tipo (ex: você está adicionando uma T-shirt e a pessoa já usa uma camisa), você DEVE REMOVER COMPLETAMENTE a peça antiga e TROCÁ-LA pela nova. A substituição deve ser perfeita, como se a pessoa tivesse trocado de roupa. NÃO sobreponha uma T-shirt sobre outra T-shirt ou camisa.
+2.  SOBREPOSIÇÃO REALISTA: Se a nova peça for um item que se usa POR CIMA dos outros (ex: uma jaqueta sobre uma T-shirt que já foi adicionada), adicione-a realisticamente, criando dobras e sombras corretas sobre a roupa de baixo.
+3.  O objetivo final é uma imagem que pareça uma fotografia 100% real, não uma colagem digital. O realismo é a prioridade máxima.
 
 REGRAS CRÍTICAS E INQUEBRÁVEIS:
-1.  USE A IMAGEM EXATA: Você DEVE usar a imagem exata da nova peça de roupa da IMAGEM 2. NÃO redesenhe, reinterprete ou modifique a peça. Cor, textura, padrão, e logotipos DEVEM ser idênticos. Pense nisso como recortar a peça da IMAGEM 2 e colá-la sobre a pessoa na IMAGEM 1.
-2.  NÃO ALTERE A PESSOA OU AS ROUPAS EXISTENTES: O rosto, cabelo, corpo, pose e as roupas que a pessoa já está vestindo na IMAGEM 1 devem permanecer COMPLETAMENTE inalterados, exceto onde a nova peça os cobre.
-3.  NÃO ALTERE O FUNDO: O fundo da IMAGEM 1 deve ser perfeitamente preservado.
-4.  SEJA REALISTA: Ajuste a nova peça sobre as roupas existentes, considerando camadas, dobras, sombras e iluminação para que se integre perfeitamente à foto original.
-5.  NÃO CORTE A IMAGEM EM HIPÓTESE ALGUMA: A imagem de saída DEVE ter exatamente as mesmas dimensões da IMAGEM 1. A pessoa inteira, dos pés à cabeça, e todo o fundo original DEVEM permanecer visíveis. Qualquer corte, especialmente na parte inferior, é estritamente proibido.`;
-    } else {
-        promptText = `Sua tarefa é uma edição de imagem de alta precisão. IMAGEM 1: uma pessoa. IMAGEM 2: uma peça de roupa ('${newItem.name}'). Sua única tarefa é pegar a peça de roupa da IMAGEM 2 e colocá-la na pessoa da IMAGEM 1.
-
-REGRAS CRÍTICAS E INQUEBRÁVEIS:
-1.  USE A IMAGEM EXATA: Você DEVE usar a imagem exata da peça de roupa da IMAGEM 2. NÃO redesenhe, reinterprete ou modifique a peça. Cor, textura, padrão, e logotipos DEVEM ser idênticos. Pense nisso como recortar a peça da IMAGEM 2 e colá-la na IMAGEM 1.
-2.  NÃO ALTERE A PESSOA: O rosto, cabelo, corpo e pose da pessoa na IMAGEM 1 devem permanecer COMPLETAMENTE inalterados.
-3.  NÃO ALTERE O FUNDO: O fundo da IMAGEM 1 deve ser perfeitamente preservado.
-4.  SEJA REALISTA: Ajuste a peça colada ao corpo da pessoa, adicionando dobras, sombras e iluminação realistas para que se integre perfeitamente à foto original.
-5.  NÃO CORTE A IMAGEM EM HIPÓTESE ALGUMA: A imagem de saída DEVE ter exatamente as mesmas dimensões da IMAGEM 1. A pessoa inteira, dos pés à cabeça, e todo o fundo original DEVEM permanecer visíveis. Qualquer corte, especialmente na parte inferior, é estritamente proibido.`;
-    }
+1.  FIDELIDADE TOTAL AO PRODUTO: Você DEVE usar a imagem EXATA da nova peça da IMAGEM 2. Cor, textura, padrão, e logotipos DEVEM ser idênticos.
+2.  PRESERVAÇÃO DA PESSOA E ROUPAS NÃO AFETADAS: O rosto, cabelo, corpo, pose e quaisquer outras roupas que a pessoa esteja vestindo (e que não foram substituídas) devem permanecer COMPLETAMENTE inalterados.
+3.  FUNDO INTOCÁVEL: O fundo da IMAGEM 1 deve ser perfeitamente preservado.
+4.  REALISMO MÁXIMO: Ajuste a nova peça ao corpo, considerando caimento, dobras, sombras e a iluminação da foto original para uma integração perfeita.
+5.  NÃO CORTE A IMAGEM: A imagem final DEVE ter exatamente as mesmas dimensões da IMAGEM 1. A pessoa inteira, dos pés à cabeça, e todo o fundo original DEVEM permanecer visíveis.`;
 
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image-preview',
