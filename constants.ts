@@ -3,39 +3,39 @@ import type { Category, Item, Post, Story } from './types';
 
 // Sub-categorias de Roupas reutilizáveis
 const MALE_CLOTHING_SUBCATEGORIES = [
-    { id: 'fato', name: 'Fato', image: 'https://i.postimg.cc/Qd37t43s/men-suit.jpg' },
-    { id: 'tshirt', name: 'T-shirt', image: 'https://i.postimg.cc/6p683zY1/men-tshirt.jpg' },
-    { id: 'camisa', name: 'Camisa', image: 'https://i.postimg.cc/Hxb3SYN1/men-shirt.jpg' },
-    { id: 'calca', name: 'Calça', image: 'https://i.postimg.cc/WbN1N7hV/men-pants.jpg' },
-    { id: 'jaqueta', name: 'Jaqueta', image: 'https://i.postimg.cc/mD3VZV8d/men-jacket.jpg' },
-    { id: 'tenis', name: 'Ténis', image: 'https://i.postimg.cc/3J8MczR7/men-sneakers.jpg' },
-    { id: 'sapatos', name: 'Sapatos', image: 'https://i.postimg.cc/y8Xn3JmY/men-shoes.jpg' },
-    { id: 'acessorios', name: 'Acessórios', image: 'https://i.postimg.cc/yN7k0v1N/men-accessories.jpg' },
+    { id: 'fato', name: 'Fato', image: 'https://i.postimg.cc/V6fN9JmQ/men-suit.jpg' },
+    { id: 'tshirt', name: 'T-shirt', image: 'https://i.postimg.cc/NMyT33t5/men-tshirt.jpg' },
+    { id: 'camisa', name: 'Camisa', image: 'https://i.postimg.cc/7Y3zX7Yg/men-shirt.jpg' },
+    { id: 'calca', name: 'Calça', image: 'https://i.postimg.cc/KzG5D7G0/men-pants.jpg' },
+    { id: 'jaqueta', name: 'Jaqueta', image: 'https://i.postimg.cc/8cQkYcM9/men-jacket.jpg' },
+    { id: 'tenis', name: 'Ténis', image: 'https://i.postimg.cc/y8Xn3JmY/men-sneakers.jpg' },
+    { id: 'sapatos', name: 'Sapatos', image: 'https://i.postimg.cc/pX49zB8g/men-shoes.jpg' },
+    { id: 'acessorios', name: 'Acessórios', image: 'https://i.postimg.cc/d11dFk3x/men-accessories.jpg' },
 ];
 
 const FEMALE_CLOTHING_SUBCATEGORIES = [
-    { id: 'tshirt', name: 'T-shirt', image: 'https://i.postimg.cc/KY1M8mDR/women-tshirt.jpg' },
-    { id: 'camisa', name: 'Camisa', image: 'https://i.postimg.cc/x8K6bBsF/women-blouse.jpg' },
-    { id: 'calca', name: 'Calça', image: 'https://i.postimg.cc/pXbJkYy5/women-pants.jpg' },
-    { id: 'saia', name: 'Saia', image: 'https://i.postimg.cc/Qx41pYgr/women-skirt.jpg' },
-    { id: 'vestido', name: 'Vestido', image: 'https://i.postimg.cc/Z5N3sSg1/women-dress.jpg' },
-    { id: 'jaqueta', name: 'Jaqueta', image: 'https://i.postimg.cc/J0BvB1fJ/mahdi-chaghari-J8-Cf-D-Q2-Fw-unsplash.jpg' },
-    { id: 'tenis', name: 'Ténis', image: 'https://i.postimg.cc/j5G0xM1P/adidas-women.jpg' },
-    { id: 'sapatos', name: 'Sapatos', image: 'https://i.postimg.cc/sX2C4x51/women-heels.jpg' },
+    { id: 'tshirt', name: 'T-shirt', image: 'https://i.postimg.cc/Y0zYy5fT/women-tshirt.jpg' },
+    { id: 'camisa', name: 'Camisa', image: 'https://i.postimg.cc/G3vH75kZ/women-blouse.jpg' },
+    { id: 'calca', name: 'Calça', image: 'https://i.postimg.cc/L6f2dJ2f/women-pants.jpg' },
+    { id: 'saia', name: 'Saia', image: 'https://i.postimg.cc/Pq91y5nj/women-skirt.jpg' },
+    { id: 'vestido', name: 'Vestido', image: 'https://i.postimg.cc/j5G0xM1P/women-dress.jpg' },
+    { id: 'jaqueta', name: 'Jaqueta', image: 'https://i.postimg.cc/sX2C4x51/women-jacket.jpg' },
+    { id: 'tenis', name: 'Ténis', image: 'https://i.postimg.cc/ydpLZYMh/women-sneakers.jpg' },
+    { id: 'sapatos', name: 'Sapatos', image: 'https://i.postimg.cc/WbN1N7hV/women-heels.jpg' },
     { id: 'acessorios', name: 'Acessórios', image: 'https://i.postimg.cc/cJVdYg6Q/women-accessories.jpg' },
 ];
 
 const KID_CLOTHING_SUBCATEGORIES = [
-    { id: 'fato', name: 'Fato', image: 'https://i.postimg.cc/vH4B6LwM/pageboy-suit.png' },
-    { id: 'tshirt', name: 'T-shirt', image: 'https://i.postimg.cc/1z7CqVjT/nf-kid-tshirt.png' },
-    { id: 'camisa', name: 'Camisa', image: 'https://i.postimg.cc/Pq91y5nj/kid-shirt.jpg' },
-    { id: 'calca', name: 'Calça', image: 'https://i.postimg.cc/YSG824Q0/nf-kid-shorts.png' },
-    { id: 'saia', name: 'Saia', image: 'https://i.postimg.cc/L6f2dJ2f/lilas-kid.jpg' },
-    { id: 'vestido', name: 'Vestido', image: 'https://i.postimg.cc/L5Kk6H7y/flowergirl-dress.png' },
-    { id: 'jaqueta', name: 'Jaqueta', image: 'https://i.postimg.cc/zXk0y3S9/lilas-kid-jacket.png' },
-    { id: 'tenis', name: 'Ténis', image: 'https://i.postimg.cc/Pq2kxbH1/adidas-kid.jpg' },
-    { id: 'sapatos', name: 'Sapatos', image: 'https://i.postimg.cc/J083BwrR/lv-kid-shoes.png' },
-    { id: 'acessorios', name: 'Acessórios', image: 'https://i.postimg.cc/ydpLZYMh/kid-accessories.jpg' },
+    { id: 'fato', name: 'Fato', image: 'https://i.postimg.cc/qBjM1W9L/kid-suit.png' },
+    { id: 'tshirt', name: 'T-shirt', image: 'https://i.postimg.cc/YSG824Q0/kid-tshirt.png' },
+    { id: 'camisa', name: 'Camisa', image: 'https://i.postimg.cc/Qx41pYgr/kid-shirt.jpg' },
+    { id: 'calca', name: 'Calça', image: 'https://i.postimg.cc/KY1M8mDR/kid-pants.png' },
+    { id: 'saia', name: 'Saia', image: 'https://i.postimg.cc/mD3VZV8d/kid-skirt.jpg' },
+    { id: 'vestido', name: 'Vestido', image: 'https://i.postimg.cc/Z5N3sSg1/kid-dress.png' },
+    { id: 'jaqueta', name: 'Jaqueta', image: 'https://i.postimg.cc/3J8MczR7/kid-jacket.png' },
+    { id: 'tenis', name: 'Ténis', image: 'https://i.postimg.cc/tJnF9L4g/kid-sneakers.jpg' },
+    { id: 'sapatos', name: 'Sapatos', image: 'https://i.postimg.cc/J0BvB1fJ/kid-shoes.png' },
+    { id: 'acessorios', name: 'Acessórios', image: 'https://i.postimg.cc/yN7k0v1N/kid-accessories.jpg' },
 ];
 
 // Helper para criar subcategorias com IDs únicos
@@ -49,52 +49,52 @@ export const CATEGORIES: Category[] = [
   { 
     id: 'lv', 
     name: 'Louis Vuitton', 
-    image: 'https://i.postimg.cc/xCknv8vV/pexels-rdne-6224633.jpg',
+    image: 'https://i.postimg.cc/j26tK8pX/lv-main.jpg',
     video: 'https://streamable.com/f79d27/video.mp4',
     subCategories: [
-        { id: 'lv_masculino', name: 'Masculino', image: 'https://i.postimg.cc/qBjM1W9L/pedro-sande-v-RT2t-T5-S-k-unsplash.jpg', subCategories: createSubCategories('lv_masculino', MALE_CLOTHING_SUBCATEGORIES) },
-        { id: 'lv_feminino', name: 'Feminino', image: 'https://i.postimg.cc/J05bN2Vv/charlesdeluvio-M-v-fl-T2-Fw-unsplash.jpg', subCategories: createSubCategories('lv_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
-        { id: 'lv_crianca', name: 'Criança', image: 'https://i.postimg.cc/mDcf1W0w/pexels-antoni-shkraba-production-8041071.jpg', subCategories: createSubCategories('lv_crianca', KID_CLOTHING_SUBCATEGORIES) }
+        { id: 'lv_masculino', name: 'Masculino', image: 'https://i.postimg.cc/k47tXvXy/lv-men.jpg', subCategories: createSubCategories('lv_masculino', MALE_CLOTHING_SUBCATEGORIES) },
+        { id: 'lv_feminino', name: 'Feminino', image: 'https://i.postimg.cc/vBC1p2bC/lv-women.jpg', subCategories: createSubCategories('lv_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
+        { id: 'lv_crianca', name: 'Criança', image: 'https://i.postimg.cc/pXbJkYy5/lv-kid.jpg', subCategories: createSubCategories('lv_crianca', KID_CLOTHING_SUBCATEGORIES) }
     ]
   },
   {
     id: 'new_feeling',
     name: 'NEW FEELING',
-    image: 'https://i.postimg.cc/P5K1G2Py/new.jpg',
+    image: 'https://i.postimg.cc/tJpD43Y7/new-feeling-main.jpg',
     subCategories: [
-        { id: 'nf_masculino', name: 'Masculino', image: 'https://i.postimg.cc/QdZ0c2s5/nf-men.jpg', subCategories: createSubCategories('nf_masculino', MALE_CLOTHING_SUBCATEGORIES) },
-        { id: 'nf_feminino', name: 'Feminino', image: 'https://i.postimg.cc/0j2gKzDF/nf-women.jpg', subCategories: createSubCategories('nf_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
-        { id: 'nf_crianca', name: 'Criança', image: 'https://i.postimg.cc/sXv7xX6K/nf-kid.jpg', subCategories: createSubCategories('nf_crianca', KID_CLOTHING_SUBCATEGORIES) }
+        { id: 'nf_masculino', name: 'Masculino', image: 'https://i.postimg.cc/fT8c1V8q/nf-men.jpg', subCategories: createSubCategories('nf_masculino', MALE_CLOTHING_SUBCATEGORIES) },
+        { id: 'nf_feminino', name: 'Feminino', image: 'https://i.postimg.cc/sXv7xX6K/nf-women.jpg', subCategories: createSubCategories('nf_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
+        { id: 'nf_crianca', name: 'Criança', image: 'https://i.postimg.cc/prgQkDBL/nf-kid.jpg', subCategories: createSubCategories('nf_crianca', KID_CLOTHING_SUBCATEGORIES) }
     ]
   },
   {
     id: 'noivas',
     name: 'NOIVAS',
-    image: 'https://i.postimg.cc/G3vH75kZ/465687536-1138426001618419-5911119315795457782-n.jpg',
+    image: 'https://i.postimg.cc/d1Q3nCqj/noivas-main.jpg',
     subCategories: [
-        { id: 'noivas_vestidos', name: 'Vestidos', image: 'https://i.postimg.cc/Kz4Y57h3/bride-dress.png' },
-        { id: 'noivas_noivos', name: 'Noivos', image: 'https://i.postimg.cc/Pqj05h6n/groom-tuxedo.png' },
-        { id: 'noivas_criancas', name: 'Crianças', image: 'https://i.postimg.cc/L5Kk6H7y/flowergirl-dress.png' }
+        { id: 'noivas_vestidos', name: 'Vestidos', image: 'https://i.postimg.cc/QdZ0c2s5/bride-dresses.jpg' },
+        { id: 'noivas_noivos', name: 'Noivos', image: 'https://i.postimg.cc/0j2gKzDF/groom-suits.jpg' },
+        { id: 'noivas_criancas', name: 'Crianças', image: 'https://i.postimg.cc/PqjM9g8L/wedding-kids.jpg' }
     ]
   },
   {
     id: 'lilas',
     name: 'LILAS',
-    image: 'https://i.postimg.cc/7Z9pT8Wk/L.jpg',
+    image: 'https://i.postimg.cc/L8yQScDk/lilas-main.jpg',
     subCategories: [
-        { id: 'lilas_masculino', name: 'Masculino', image: 'https://i.postimg.cc/pT4yYwR2/lilas-men.jpg', subCategories: createSubCategories('lilas_masculino', MALE_CLOTHING_SUBCATEGORIES) },
-        { id: 'lilas_feminino', name: 'Feminino', image: 'https://i.postimg.cc/tJnF9L4g/lilas-women.jpg', subCategories: createSubCategories('lilas_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
-        { id: 'lilas_crianca', name: 'Criança', image: 'https://i.postimg.cc/L6f2dJ2f/lilas-kid.jpg', subCategories: createSubCategories('lilas_crianca', KID_CLOTHING_SUBCATEGORIES) }
+        { id: 'lilas_masculino', name: 'Masculino', image: 'https://i.postimg.cc/fyy2v7s0/lilas-men.jpg', subCategories: createSubCategories('lilas_masculino', MALE_CLOTHING_SUBCATEGORIES) },
+        { id: 'lilas_feminino', name: 'Feminino', image: 'https://i.postimg.cc/WbFfVw8d/lilas-women.jpg', subCategories: createSubCategories('lilas_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
+        { id: 'lilas_crianca', name: 'Criança', image: 'https://i.postimg.cc/mDcf1W0w/lilas-kid.jpg', subCategories: createSubCategories('lilas_crianca', KID_CLOTHING_SUBCATEGORIES) }
     ]
   },
   {
     id: 'adidas',
     name: 'ADIDAS',
-    image: 'https://i.postimg.cc/LXmdq4H2/D.jpg',
+    image: 'https://i.postimg.cc/q7d3GZ3c/adidas-main.jpg',
     subCategories: [
-        { id: 'adidas_masculino', name: 'Masculino', image: 'https://i.postimg.cc/mD3B4Jg3/adidas-men.jpg', subCategories: createSubCategories('adidas_masculino', MALE_CLOTHING_SUBCATEGORIES) },
-        { id: 'adidas_feminino', name: 'Feminino', image: 'https://i.postimg.cc/j5G0xM1P/adidas-women.jpg', subCategories: createSubCategories('adidas_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
-        { id: 'adidas_crianca', name: 'Criança', image: 'https://i.postimg.cc/Pq2kxbH1/adidas-kid.jpg', subCategories: createSubCategories('adidas_crianca', KID_CLOTHING_SUBCATEGORIES) }
+        { id: 'adidas_masculino', name: 'Masculino', image: 'https://i.postimg.cc/Hxb3SYN1/adidas-men.jpg', subCategories: createSubCategories('adidas_masculino', MALE_CLOTHING_SUBCATEGORIES) },
+        { id: 'adidas_feminino', name: 'Feminino', image: 'https://i.postimg.cc/mkb7m2jN/adidas-women.jpg', subCategories: createSubCategories('adidas_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
+        { id: 'adidas_crianca', name: 'Criança', image: 'https://i.postimg.cc/zXk0y3S9/adidas-kid.jpg', subCategories: createSubCategories('adidas_crianca', KID_CLOTHING_SUBCATEGORIES) }
     ]
   },
 ];
@@ -102,44 +102,47 @@ export const CATEGORIES: Category[] = [
 // A coleção de itens
 export const ITEMS: Item[] = [
   // Louis Vuitton
-  { id: 'lv_item_m1', name: 'Jaqueta de Couro Monogram', description: 'Jaqueta bomber em couro de cordeiro macio com o icônico padrão Monogram em relevo.', category: 'lv_masculino_jaqueta', image: 'https://i.postimg.cc/X743w2vj/lv-men-jacket.png', price: 28000.00 },
-  { id: 'lv_item_m2', name: 'Tênis LV Trainer', description: 'Tênis de cano baixo inspirado nos modelos de basquete vintage, com assinatura Louis Vuitton manuscrita.', category: 'lv_masculino_tenis', image: 'https://i.postimg.cc/fyy2v7s0/lv-men-sneaker.png', price: 6850.00 },
-  { id: 'lv_item_f1', name: 'Bolsa Neverfull MM', description: 'A lendária bolsa tote em canvas Monogram com acabamento em couro natural, perfeita para qualquer ocasião.', category: 'lv_feminino_acessorios', image: 'https://i.postimg.cc/D0ghmQ8g/lv-women-bag.png', price: 10500.00 },
-  { id: 'lv_item_f2', name: 'Vestido de Seda Estampado', description: 'Vestido fluido de seda com estampa da coleção atual, combinando elegância e modernidade.', category: 'lv_feminino_vestido', image: 'https://i.postimg.cc/3wL20Wk1/lv-women-dress.png', price: 15200.00 },
-  { id: 'lv_item_c1', name: 'Macacão Infantil Monogram', description: 'Adorável macacão em algodão suave com o padrão Monogram, garantindo conforto e estilo para os pequenos.', category: 'lv_crianca_vestido', image: 'https://i.postimg.cc/d1G5B1G5/lv-kid-romper.png', price: 2500.00 },
-  { id: 'lv_item_c2', name: 'Sapatinho de Bebê LV Archlight', description: 'Versão em miniatura do icônico tênis Archlight, para os primeiros passos com muito estilo.', category: 'lv_crianca_sapatos', image: 'https://i.postimg.cc/J083BwrR/lv-kid-shoes.png', price: 1800.00 },
+  { id: 'lv_item_m6', name: 'Calça 1980', description: 'Calça de couro com o icónico padrão Damier, um estilo arrojado e luxuoso.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/L5Kk6H7y/lv-damier-pants.webp', price: 25000.00 },
+  { id: 'lv_item_m5', name: 'Calça lite', description: 'Calça de agasalho confortável em tecido tecnológico, com Monogram estampado para um toque de luxo casual.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/x8K6bBsF/lv-tech-pants.webp', price: 25000.00 },
+  { id: 'lv_item_m4', name: 'Calça monock', description: 'Calça de corte elegante com padrão Monogram, combinando luxo e conforto.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/pT4yYwR2/lv-mono-pants.webp', price: 25000.00 },
+  { id: 'lv_item_m3', name: 'Casaco de couro', description: 'Casaco de couro elegante e sofisticado, perfeito para um look moderno e luxuoso.', category: 'lv_masculino_jaqueta', image: 'https://i.postimg.cc/d1G5B1G5/lv-leather-jacket.webp', price: 20000.00 },
+  { id: 'lv_item_m2', name: 'Tênis LV Trainer', description: 'Tênis de cano baixo inspirado nos modelos de basquete vintage, com assinatura Louis Vuitton manuscrita.', category: 'lv_masculino_tenis', image: 'https://i.postimg.cc/Qd37t43s/lv-trainer-sneaker.png', price: 6850.00 },
+  { id: 'lv_item_f1', name: 'Bolsa Neverfull MM', description: 'A lendária bolsa tote em canvas Monogram com acabamento em couro natural, perfeita para qualquer ocasião.', category: 'lv_feminino_acessorios', image: 'https://i.postimg.cc/J083BwrR/lv-neverfull-bag.png', price: 10500.00 },
+  { id: 'lv_item_f2', name: 'Vestido de Seda Estampado', description: 'Vestido fluido de seda com estampa da coleção atual, combinando elegância e modernidade.', category: 'lv_feminino_vestido', image: 'https://i.postimg.cc/vH4B6LwM/lv-silk-dress.png', price: 15200.00 },
+  { id: 'lv_item_c1', name: 'Macacão Infantil Monogram', description: 'Adorável macacão em algodão suave com o padrão Monogram, garantindo conforto e estilo para os pequenos.', category: 'lv_crianca_vestido', image: 'https://i.postimg.cc/1z7CqVjT/lv-kid-romper.png', price: 2500.00 },
+  { id: 'lv_item_c2', name: 'Sapatinho de Bebê LV Archlight', description: 'Versão em miniatura do icônico tênis Archlight, para os primeiros passos com muito estilo.', category: 'lv_crianca_sapatos', image: 'https://i.postimg.cc/6p683zY1/lv-kid-shoes.png', price: 1800.00 },
 
   // NEW FEELING
-  { id: 'nf_item_m1', name: 'Moletom com Capuz Essencial', description: 'Moletom de algodão orgânico com um toque macio, perfeito para o dia a dia.', category: 'nf_masculino_jaqueta', image: 'https://i.postimg.cc/fT8c1V8q/nf-hoodie.png', price: 350.00 },
-  { id: 'nf_item_m2', name: 'Calça Jeans Reta Vintage', description: 'Jeans de corte reto com lavagem clássica, versátil e confortável.', category: 'nf_masculino_calca', image: 'https://i.postimg.cc/prgQkDBL/nf-jeans.png', price: 280.00 },
-  { id: 'nf_item_f1', name: 'Top Cropped Canelado', description: 'Top cropped básico em malha canelada, essencial para compor looks modernos.', category: 'nf_feminino_tshirt', image: 'https://i.postimg.cc/vB2QzYn6/nf-croptop.png', price: 120.00 },
-  { id: 'nf_item_f2', name: 'Calça Wide Leg de Linho', description: 'Calça de pernas largas em linho, proporcionando elegância e conforto.', category: 'nf_feminino_calca', image: 'https://i.postimg.cc/WbFfVw8d/nf-wideleg.png', price: 420.00 },
-  { id: 'nf_item_c1', name: 'Camiseta Estampada Divertida', description: 'Camiseta de algodão com estampa exclusiva, para brincar com estilo.', category: 'nf_crianca_tshirt', image: 'https://i.postimg.cc/1z7CqVjT/nf-kid-tshirt.png', price: 95.00 },
-  { id: 'nf_item_c2', name: 'Bermuda de Sarja Colorida', description: 'Bermuda confortável em sarja, disponível em várias cores vibrantes.', category: 'nf_crianca_calca', image: 'https://i.postimg.cc/YSG824Q0/nf-kid-shorts.png', price: 150.00 },
+  { id: 'nf_item_m1', name: 'Moletom com Capuz Essencial', description: 'Moletom de algodão orgânico com um toque macio, perfeito para o dia a dia.', category: 'nf_masculino_jaqueta', image: 'https://i.postimg.cc/CLrjs2Cb/nf-hoodie.png', price: 350.00 },
+  { id: 'nf_item_m2', name: 'Calça Jeans Reta Vintage', description: 'Jeans de corte reto com lavagem clássica, versátil e confortável.', category: 'nf_masculino_calca', image: 'https://i.postimg.cc/mkb7m2jN/nf-jeans.png', price: 280.00 },
+  { id: 'nf_item_f1', name: 'Top Cropped Canelado', description: 'Top cropped básico em malha canelada, essencial para compor looks modernos.', category: 'nf_feminino_tshirt', image: 'https://i.postimg.cc/2jFGhTXx/nf-croptop.png', price: 120.00 },
+  { id: 'nf_item_f2', name: 'Calça Wide Leg de Linho', description: 'Calça de pernas largas em linho, proporcionando elegância e conforto.', category: 'nf_feminino_calca', image: 'https://i.postimg.cc/Wb8j6T7Y/nf-wideleg.png', price: 420.00 },
+  { id: 'nf_item_c1', name: 'Camiseta Estampada Divertida', description: 'Camiseta de algodão com estampa exclusiva, para brincar com estilo.', category: 'nf_crianca_tshirt', image: 'https://i.postimg.cc/Pqj05h6n/nf-kid-tshirt.png', price: 95.00 },
+  { id: 'nf_item_c2', name: 'Bermuda de Sarja Colorida', description: 'Bermuda confortável em sarja, disponível em várias cores vibrantes.', category: 'nf_crianca_calca', image: 'https://i.postimg.cc/SQdDDTM7/nf-kid-shorts.png', price: 150.00 },
 
   // NOIVAS
-  { id: 'noivas_item_m1', name: 'Smoking de Lã Fria', description: 'Smoking clássico com lapela de cetim, corte impecável para o noivo.', category: 'noivas_noivos', image: 'https://i.postimg.cc/Pqj05h6n/groom-tuxedo.png', price: 4500.00 },
-  { id: 'noivas_item_m2', name: 'Sapato Oxford de Verniz', description: 'Sapato social em verniz com design elegante, o toque final para o traje.', category: 'noivas_noivos', image: 'https://i.postimg.cc/Y0zYy5fT/groom-shoes.png', price: 890.00 },
-  { id: 'noivas_item_f3', name: 'Vestido de pérolas', description: 'Elegante vestido de noiva com corpete bordado em pérolas e saia fluida.', category: 'noivas_vestidos', image: 'https://i.postimg.cc/2jFGhTXx/kindpng-519639.png', price: 20000.00 },
-  { id: 'noivas_item_f4', name: 'Vestido de Princesa', description: 'Um vestido de noiva deslumbrante estilo princesa com saia volumosa e detalhes brilhantes.', category: 'noivas_vestidos', image: 'https://i.postimg.cc/CLrjs2Cb/Captura-de-Tela-2025-09-17-a-s-12-10-28-AM.png', price: 30000.00 },
-  { id: 'noivas_item_c1', name: 'Vestido Daminha de Honra', description: 'Vestido de tule com faixa de cetim, perfeito para a daminha.', category: 'noivas_criancas', image: 'https://i.postimg.cc/L5Kk6H7y/flowergirl-dress.png', price: 750.00 },
-  { id: 'noivas_item_c2', name: 'Traje de Pajem Completo', description: 'Conjunto de calça, camisa e suspensório para o pajem.', category: 'noivas_criancas', image: 'https://i.postimg.cc/vH4B6LwM/pageboy-suit.png', price: 680.00 },
+  { id: 'noivas_item_m1', name: 'Smoking de Lã Fria', description: 'Smoking clássico com lapela de cetim, corte impecável para o noivo.', category: 'noivas_noivos', image: 'https://i.postimg.cc/mkmjkks6/groom-tuxedo.png', price: 4500.00 },
+  { id: 'noivas_item_m2', name: 'Sapato Oxford de Verniz', description: 'Sapato social em verniz com design elegante, o toque final para o traje.', category: 'noivas_noivos', image: 'https://i.postimg.cc/wTBFPX5K/groom-shoes.png', price: 890.00 },
+  { id: 'noivas_item_f3', name: 'Vestido de pérolas', description: 'Elegante vestido de noiva com corpete bordado em pérolas e saia fluida.', category: 'noivas_vestidos', image: 'https://i.postimg.cc/QMC3DCnK/bride-dress-pearls.png', price: 20000.00 },
+  { id: 'noivas_item_f4', name: 'Vestido de Princesa', description: 'Um vestido de noiva deslumbrante estilo princesa com saia volumosa e detalhes brilhantes.', category: 'noivas_vestidos', image: 'https://i.postimg.cc/xCknv8vV/bride-dress-princess.png', price: 30000.00 },
+  { id: 'noivas_item_c1', name: 'Vestido Daminha de Honra', description: 'Vestido de tule com faixa de cetim, perfeito para a daminha.', category: 'noivas_criancas', image: 'https://i.postimg.cc/P5K1G2Py/flowergirl-dress.png', price: 750.00 },
+  { id: 'noivas_item_c2', name: 'Traje de Pajem Completo', description: 'Conjunto de calça, camisa e suspensório para o pajem.', category: 'noivas_criancas', image: 'https://i.postimg.cc/pL4B3Yv4/pageboy-suit.png', price: 680.00 },
 
   // LILAS
-  { id: 'lilas_item_m1', name: 'Suéter de Lã Lilás', description: 'Suéter macio em tom de lilás, adicionando cor ao guarda-roupa.', category: 'lilas_masculino_camisa', image: 'https://i.postimg.cc/pL4B3Yv4/lilas-sweater.png', price: 410.00 },
-  { id: 'lilas_item_m2', name: 'Camisa de Botão Lavanda', description: 'Camisa social de algodão em um tom suave de lavanda.', category: 'lilas_masculino_camisa', image: 'https://i.postimg.cc/XvPKs1p7/lilas-shirt.png', price: 320.00 },
-  { id: 'lilas_item_f1', name: 'Vestido Midi Lilás', description: 'Vestido de comprimento midi com tecido fluido, ideal para a primavera.', category: 'lilas_feminino_vestido', image: 'https://i.postimg.cc/k47tXvXy/lilas-dress.png', price: 680.00 },
-  { id: 'lilas_item_f2', name: 'Bolsa de Ombro Acolchoada', description: 'Bolsa moderna em couro sintético lilás com alça de corrente.', category: 'lilas_feminino_acessorios', image: 'https://i.postimg.cc/PqjM9g8L/lilas-bag.png', price: 350.00 },
-  { id: 'lilas_item_c1', name: 'Jaqueta Corta-vento Lilás', description: 'Jaqueta leve e estilosa para proteger as crianças do vento.', category: 'lilas_crianca_jaqueta', image: 'https://i.postimg.cc/zXk0y3S9/lilas-kid-jacket.png', price: 250.00 },
-  { id: 'lilas_item_c2', name: 'Tênis Infantil Lilás', description: 'Tênis casual com detalhes em lilás, confortável para o dia a dia.', category: 'lilas_crianca_tenis', image: 'https://i.postimg.cc/J0bL4g3W/lilas-kid-shoes.png', price: 220.00 },
+  { id: 'lilas_item_m1', name: 'Suéter de Lã Lilás', description: 'Suéter macio em tom de lilás, adicionando cor ao guarda-roupa.', category: 'lilas_masculino_camisa', image: 'https://i.postimg.cc/XvPKs1p7/lilas-sweater.png', price: 410.00 },
+  { id: 'lilas_item_m2', name: 'Camisa de Botão Lavanda', description: 'Camisa social de algodão em um tom suave de lavanda.', category: 'lilas_masculino_camisa', image: 'https://i.postimg.cc/k47tXvXy/lilas-shirt.png', price: 320.00 },
+  { id: 'lilas_item_f1', name: 'Vestido Midi Lilás', description: 'Vestido de comprimento midi com tecido fluido, ideal para a primavera.', category: 'lilas_feminino_vestido', image: 'https://i.postimg.cc/vBC1p2bC/lilas-dress.png', price: 680.00 },
+  { id: 'lilas_item_f2', name: 'Bolsa de Ombro Acolchoada', description: 'Bolsa moderna em couro sintético lilás com alça de corrente.', category: 'lilas_feminino_acessorios', image: 'https://i.postimg.cc/pXbJkYy5/lilas-bag.png', price: 350.00 },
+  { id: 'lilas_item_c1', name: 'Jaqueta Corta-vento Lilás', description: 'Jaqueta leve e estilosa para proteger as crianças do vento.', category: 'lilas_crianca_jaqueta', image: 'https://i.postimg.cc/mDcf1W0w/lilas-kid-jacket.png', price: 250.00 },
+  { id: 'lilas_item_c2', name: 'Tênis Infantil Lilás', description: 'Tênis casual com detalhes em lilás, confortável para o dia a dia.', category: 'lilas_crianca_tenis', image: 'https://i.postimg.cc/fyy2v7s0/lilas-kid-shoes.png', price: 220.00 },
 
   // ADIDAS
-  { id: 'adidas_item_m1', name: 'Agasalho Adidas Originals', description: 'Conjunto de agasalho icônico com as três listras.', category: 'adidas_masculino_fato', image: 'https://i.postimg.cc/mkb7m2jN/adidas-tracksuit.png', price: 599.99 },
-  { id: 'adidas_item_m2', name: 'Tênis Adidas Samba OG', description: 'O clássico Samba, um ícone da moda urbana e do futebol.', category: 'adidas_masculino_tenis', image: 'https://i.postimg.cc/Wb8j6T7Y/adidas-samba.png', price: 699.99 },
-  { id: 'adidas_item_f1', name: 'Legging de Treino 3-Stripes', description: 'Legging de alta sustentação, ideal para qualquer tipo de treino.', category: 'adidas_feminino_calca', image: 'https://i.postimg.cc/0j9YwP6T/adidas-leggings.png', price: 279.99 },
-  { id: 'adidas_item_f2', name: 'Top Esportivo Don\'t Rest', description: 'Top de suporte médio com design costas nadador para liberdade de movimentos.', category: 'adidas_feminino_tshirt', image: 'https://i.postimg.cc/t453qgXk/adidas-bra.png', price: 199.99 },
-  { id: 'adidas_item_c1', name: 'Conjunto Infantil Adidas', description: 'Conjunto de shorts e camiseta para os pequenos atletas.', category: 'adidas_crianca_fato', image: 'https://i.postimg.cc/L6D8W21m/adidas-kid-set.png', price: 249.99 },
-  { id: 'adidas_item_c2', name: 'Tênis Superstar Infantil', description: 'A icônica biqueira shell-toe em uma versão para crianças.', category: 'adidas_crianca_tenis', image: 'https://i.postimg.cc/8PjT0qjS/adidas-kid-superstar.png', price: 329.99 },
+  { id: 'adidas_item_m1', name: 'Agasalho Adidas Originals', description: 'Conjunto de agasalho icônico com as três listras.', category: 'adidas_masculino_fato', image: 'https://i.postimg.cc/WbFfVw8d/adidas-tracksuit.png', price: 599.99 },
+  { id: 'adidas_item_m2', name: 'Tênis Adidas Samba OG', description: 'O clássico Samba, um ícone da moda urbana e do futebol.', category: 'adidas_masculino_tenis', image: 'https://i.postimg.cc/prgQkDBL/adidas-samba.png', price: 699.99 },
+  { id: 'adidas_item_f1', name: 'Legging de Treino 3-Stripes', description: 'Legging de alta sustentação, ideal para qualquer tipo de treino.', category: 'adidas_feminino_calca', image: 'https://i.postimg.cc/sXv7xX6K/adidas-leggings.png', price: 279.99 },
+  { id: 'adidas_item_f2', name: 'Top Esportivo Don\'t Rest', description: 'Top de suporte médio com design costas nadador para liberdade de movimentos.', category: 'adidas_feminino_tshirt', image: 'https://i.postimg.cc/0j2gKzDF/adidas-bra.png', price: 199.99 },
+  { id: 'adidas_item_c1', name: 'Conjunto Infantil Adidas', description: 'Conjunto de shorts e camiseta para os pequenos atletas.', category: 'adidas_crianca_fato', image: 'https://i.postimg.cc/QdZ0c2s5/adidas-kid-set.png', price: 249.99 },
+  { id: 'adidas_item_c2', name: 'Tênis Superstar Infantil', description: 'A icônica biqueira shell-toe em uma versão para crianças.', category: 'adidas_crianca_tenis', image: 'https://i.postimg.cc/j5G0xM1P/adidas-kid-superstar.png', price: 329.99 },
 ];
 
 
