@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { Item } from '../types';
 import GradientButton from './GradientButton';
@@ -23,8 +24,8 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ generatedImage, items, onPo
     <div className="w-full h-full flex flex-col text-white animate-fadeIn bg-black">
       <Header title="Seu Look" />
       <div className="flex-grow pt-20 flex flex-col items-center p-4 overflow-y-auto">
-        <div className="w-full max-w-sm aspect-[3/4] rounded-2xl overflow-hidden shadow-2xl shadow-black/30 mb-6 bg-gray-900 flex-shrink-0">
-            <img src={generatedImage} alt={`Você vestindo ${lastItem.name}`} className="w-full h-full object-cover animate-imageAppear" />
+        <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl shadow-black/30 mb-6 bg-gray-900 flex-shrink-0">
+            <img src={generatedImage} alt={`Você vestindo ${lastItem.name}`} className="w-full h-auto animate-imageAppear" />
         </div>
         
         <div className="w-full max-w-sm bg-gray-900 rounded-xl p-4 mb-4">
@@ -48,51 +49,53 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ generatedImage, items, onPo
             </div>
         </div>
       </div>
-      <div className="p-4 flex-shrink-0 space-y-3 bg-black border-t border-gray-800">
-         <button
-            onClick={onContinueStyling}
-            className="w-full flex items-center justify-center text-white font-bold py-3 px-6 rounded-lg bg-blue-500 hover:bg-blue-600 transition-colors transform hover:scale-105 animate-subtle-pulse"
-        >
-           <PlusIcon className="w-5 h-5 mr-2" />
-            Adicionar Mais Peças
-        </button>
-         <div className="flex gap-2">
+      <div className="p-4 flex-shrink-0 space-y-2 bg-black border-t border-gray-800">
+        <div className="flex gap-2">
+            <button
+                onClick={onContinueStyling}
+                className="flex-1 flex items-center justify-center text-white font-bold py-3 px-4 rounded-lg bg-blue-500 hover:bg-blue-600 transition-colors"
+            >
+               <PlusIcon className="w-4 h-4 mr-2" />
+                Adicionar Peças
+            </button>
+            <GradientButton onClick={() => onBuy(items)} className="flex-1 !py-3">
+                <div className="flex items-center justify-center">
+                     <ShoppingBagIcon className="w-4 h-4 mr-2" />
+                    Comprar Look
+                </div>
+            </GradientButton>
+        </div>
+        <div className="flex gap-1.5">
              <button
                 onClick={onBack}
-                className="flex-1 flex flex-col items-center justify-center text-white font-semibold py-2 px-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+                className="flex-1 flex flex-col items-center justify-center text-white font-semibold py-1 px-1 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
                 aria-label="Desfazer última peça"
             >
-               <UndoIcon className="w-5 h-5 mb-1" />
-                <span className="text-xs tracking-wide">DESFAZER</span>
+               <UndoIcon className="w-2 h-2 mb-0.5" />
+                <span className="text-[9px] tracking-wide">DESFAZER</span>
             </button>
             <button
                 onClick={onSaveLook}
-                className="flex-1 flex flex-col items-center justify-center text-white font-semibold py-2 px-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+                className="flex-1 flex flex-col items-center justify-center text-white font-semibold py-1 px-1 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
             >
-               <BookmarkIcon className="w-5 h-5 mb-1" />
-                <span className="text-xs tracking-wide">SALVAR</span>
+               <BookmarkIcon className="w-2 h-2 mb-0.5" />
+                <span className="text-[9px] tracking-wide">SALVAR</span>
             </button>
              <button
                 onClick={onPostToFeed}
-                className="flex-1 flex flex-col items-center justify-center text-white font-semibold py-2 px-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+                className="flex-1 flex flex-col items-center justify-center text-white font-semibold py-1 px-1 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
             >
-               <ShareIcon className="w-5 h-5 mb-1" />
-                <span className="text-xs tracking-wide">POSTAR</span>
+               <ShareIcon className="w-2 h-2 mb-0.5" />
+                <span className="text-[9px] tracking-wide">POSTAR</span>
             </button>
             <button
                 onClick={onSaveImage}
-                className="flex-1 flex flex-col items-center justify-center text-white font-semibold py-2 px-2 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+                className="flex-1 flex flex-col items-center justify-center text-white font-semibold py-1 px-1 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
             >
-               <DownloadIcon className="w-5 h-5 mb-1" />
-                <span className="text-xs tracking-wide">SALVAR FOTO</span>
+               <DownloadIcon className="w-2 h-2 mb-0.5" />
+                <span className="text-[9px] tracking-wide">SALVAR FOTO</span>
             </button>
          </div>
-        <GradientButton onClick={() => onBuy(items)}>
-            <div className="flex items-center justify-center">
-                 <ShoppingBagIcon className="w-5 h-5 mr-2" />
-                Comprar Look Completo
-            </div>
-        </GradientButton>
       </div>
     </div>
   );

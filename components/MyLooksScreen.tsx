@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Header from './Header';
 import { LooksIcon, ShareIcon, ShoppingBagIcon } from './IconComponents';
@@ -57,8 +58,8 @@ const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClic
             {looks.map(look => (
               <div key={look.id} className="bg-gray-900 rounded-lg overflow-hidden flex flex-col">
                 {/* Image */}
-                <div className="aspect-[3/4] w-full bg-black">
-                    <img src={look.image} alt="Look salvo" className="w-full h-full object-cover" />
+                <div className="w-full bg-black">
+                    <img src={look.image} alt="Look salvo" className="w-full h-auto" />
                 </div>
 
                 {/* Items List */}

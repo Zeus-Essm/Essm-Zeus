@@ -1,12 +1,10 @@
 
-
-
 import React from 'react';
 // FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
 import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile } from './types';
-import { generateTryOnImage } from './services/geminiService';
+import { generateTryOnImage, expandImageToSquare } from './services/geminiService';
 import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES } from './constants';
 
 // Screen Components
@@ -43,7 +41,6 @@ const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
     const res = await fetch(dataUrl);
     return await res.blob();
 };
-
 
 // Helper to get or create a user profile
 const getOrCreateProfile = async (session: Session, setError: (msg: string) => void): Promise<Profile | null> => {
@@ -110,6 +107,7 @@ const App: React.FC = () => {
     const [toast, setToast] = React.useState<string | null>(null);
     const [confirmationMessage, setConfirmationMessage] = React.useState('');
     const [isLoading, setIsLoading] = React.useState(false);
+    const [loadingMessage, setLoadingMessage] = React.useState<string | null>(null);
     const [error, setError] = React.useState<string | null>(null);
     const [isCartAnimating, setIsCartAnimating] = React.useState(false);
 
@@ -257,21 +255,37 @@ const App: React.FC = () => {
     };
 
     // App Logic Handlers
-    const handleImageUpload = (imageDataUrl: string) => {
+    const handleImageUpload = async (imageDataUrl: string) => {
         setUserImage(imageDataUrl);
-        setGeneratedImage(imageDataUrl);
-        setWornItems([]);
-        const currentCategory = navigationStack.length > 0 ? navigationStack[0] as Category : null;
-        if (currentCategory) {
-            setCurrentScreen(Screen.SubCategorySelection);
-        } else {
-            const defaultCategory = CATEGORIES[0];
-            if (defaultCategory) {
-                setNavigationStack([defaultCategory]);
+        setLoadingMessage("Expandindo sua foto com IA. Isso pode levar um momento...");
+        setIsLoading(true);
+        setError(null);
+        try {
+            const squaredImageDataUrl = await expandImageToSquare(imageDataUrl);
+            
+            setUserImage(squaredImageDataUrl);
+            setGeneratedImage(squaredImageDataUrl);
+            setWornItems([]);
+            
+            const currentCategory = navigationStack.length > 0 ? navigationStack[0] as Category : null;
+            if (currentCategory) {
                 setCurrentScreen(Screen.SubCategorySelection);
             } else {
-                setCurrentScreen(Screen.Home);
+                const defaultCategory = CATEGORIES[0];
+                if (defaultCategory) {
+                    setNavigationStack([defaultCategory]);
+                    setCurrentScreen(Screen.SubCategorySelection);
+                } else {
+                    setCurrentScreen(Screen.Home);
+                }
             }
+        } catch (err: any) {
+            console.error("Erro ao expandir a imagem:", err);
+            setError("Houve um problema ao preparar sua foto. Por favor, tente novamente.");
+            setCurrentScreen(Screen.ImageSourceSelection); 
+        } finally {
+            setIsLoading(false);
+            setLoadingMessage(null);
         }
     };
 
@@ -313,7 +327,7 @@ const App: React.FC = () => {
         if (!userImage) return;
         const baseImage = generatedImage || userImage;
         const existingItems = [...wornItems];
-        setCurrentScreen(Screen.Generating);
+        setLoadingMessage(null);
         setIsLoading(true);
         setError(null);
         try {
@@ -335,7 +349,7 @@ const App: React.FC = () => {
             return;
         }
         setCollectionIdentifier(null);
-        setCurrentScreen(Screen.Generating);
+        setLoadingMessage(null);
         setIsLoading(true);
         setError(null);
         try {
@@ -467,7 +481,7 @@ const App: React.FC = () => {
     const handleNavigateToRewards = () => setCurrentScreen(Screen.Rewards);
 
     const renderScreen = () => {
-        if (isLoading) return <LoadingIndicator userImage={userImage!} />;
+        if (isLoading) return <LoadingIndicator userImage={userImage!} customMessage={loadingMessage} />;
 
         const currentNode = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1] : null;
 

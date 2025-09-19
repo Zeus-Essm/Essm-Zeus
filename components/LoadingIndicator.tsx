@@ -1,29 +1,37 @@
+
 import React from 'react';
 
 interface LoadingIndicatorProps {
     userImage: string;
+    customMessage?: string | null;
 }
 
-const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ userImage }) => {
-    const messages = [
+const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ userImage, customMessage }) => {
+    const defaultMessages = [
         "Ajustando o caimento perfeito...",
         "Consultando nossos estilistas de IA...",
         "Tecendo pixels para criar seu look...",
         "Quase pronto! Finalizando os detalhes...",
     ];
 
-    const [message, setMessage] = React.useState(messages[0]);
+    const [message, setMessage] = React.useState(customMessage || defaultMessages[0]);
 
     React.useEffect(() => {
+        if (customMessage) {
+            setMessage(customMessage);
+            return;
+        }
+
+        setMessage(defaultMessages[0]);
         let index = 0;
         const intervalId = setInterval(() => {
-            index = (index + 1) % messages.length;
-            setMessage(messages[index]);
+            index = (index + 1) % defaultMessages.length;
+            setMessage(defaultMessages[index]);
         }, 3000);
 
         return () => clearInterval(intervalId);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [customMessage]);
 
     return (
         <div className="flex flex-col items-center justify-center h-full w-full text-white text-center p-6 animate-fadeIn">
