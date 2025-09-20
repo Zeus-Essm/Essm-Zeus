@@ -3,6 +3,7 @@ import type { Post, Item, Story } from '../types';
 import Header from './Header';
 import PostCard from './PostCard';
 import { PlusIcon } from './IconComponents';
+import ImageViewModal from './ImageViewModal';
 
 interface FeedScreenProps {
   posts: Post[];
@@ -10,10 +11,11 @@ interface FeedScreenProps {
   profileImage: string | null;
   onBack: () => void;
   onItemClick: (item: Item) => void;
+  onViewProfile: (profileId: string) => void;
 }
 
 const YourStoryCard: React.FC<{ profileImage: string | null }> = ({ profileImage }) => (
-    <div className="flex-shrink-0 w-36 h-56 flex flex-col rounded-xl overflow-hidden bg-gray-800 border border-gray-700 cursor-pointer group">
+    <div className="flex-shrink-0 w-36 h-56 flex flex-col rounded-xl overflow-hidden bg-gray-800 border border-gray-700 cursor-pointer group snap-start">
         <div className="h-3/5 w-full relative">
             <img 
                 src={profileImage || 'https://i.pravatar.cc/150?u=me'} 
@@ -32,7 +34,7 @@ const YourStoryCard: React.FC<{ profileImage: string | null }> = ({ profileImage
 
 
 const StoryCard: React.FC<{ story: Story }> = ({ story }) => (
-  <div className="flex-shrink-0 w-36 h-56 rounded-xl overflow-hidden relative cursor-pointer group">
+  <div className="flex-shrink-0 w-36 h-56 rounded-xl overflow-hidden relative cursor-pointer group snap-start">
     <img 
         src={story.backgroundImage} 
         alt={`Story by ${story.user.name}`} 
@@ -51,45 +53,71 @@ const StoryCard: React.FC<{ story: Story }> = ({ story }) => (
 );
 
 
-const FeedScreen: React.FC<FeedScreenProps> = ({ posts: initialPosts, stories, profileImage, onBack, onItemClick }) => {
+const FeedScreen: React.FC<FeedScreenProps> = ({ posts: initialPosts, stories, profileImage, onBack, onItemClick, onViewProfile }) => {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
+  // FIX: Changed state to track the index of the post to view, aligning with ImageViewModal's props.
+  const [viewingPostIndex, setViewingPostIndex] = useState<number | null>(null);
 
   const handleLike = (postId: string) => {
     setPosts(prevPosts =>
       prevPosts.map(post =>
-        post.id === postId ? { ...post, likes: post.isLiked ? post.likes -1 : post.likes + 1, isLiked: !post.isLiked } : post
+        post.id === postId ? { ...post, likes: post.isLiked ? post.likes - 1 : post.likes + 1, isLiked: !post.isLiked } : post
       )
     );
   };
 
+  const handleViewPost = (index: number) => {
+    setViewingPostIndex(index);
+  };
+
+  const handleClosePostView = () => {
+    setViewingPostIndex(null);
+  };
+
+
   return (
-    <div className="w-full h-full flex flex-col text-white bg-black animate-fadeIn">
-      <Header title="Feed" onBack={onBack} />
-      <div className="flex-grow pt-16 overflow-y-auto">
-        {/* Stories Section */}
-        <div className="py-3 border-b border-gray-800">
-          <div className="flex items-center space-x-3 px-3 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            <YourStoryCard profileImage={profileImage} />
-            {stories.map(story => (
-              <StoryCard 
-                key={story.id} 
-                story={story} 
+    <>
+      <div className="w-full h-full flex flex-col text-white bg-black animate-fadeIn">
+        <Header title="Feed" onBack={onBack} />
+        <div className="flex-grow pt-16 overflow-y-auto scroll-smooth">
+          {/* Stories Section */}
+          <div className="py-3 border-b border-gray-800">
+            <div className="flex items-center space-x-3 px-3 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory scroll-smooth">
+              <YourStoryCard profileImage={profileImage} />
+              {stories.map(story => (
+                <StoryCard 
+                  key={story.id} 
+                  story={story} 
+                />
+              ))}
+            </div>
+          </div>
+          <div className="space-y-2">
+            {posts.map((post, index) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                onLike={() => handleLike(post.id)}
+                onItemClick={onItemClick}
+                onViewProfile={() => onViewProfile(post.user.id)}
+                onImageClick={() => handleViewPost(index)}
               />
             ))}
           </div>
         </div>
-        <div className="space-y-2">
-          {posts.map(post => (
-            <PostCard
-              key={post.id}
-              post={post}
-              onLike={() => handleLike(post.id)}
-              onItemClick={onItemClick}
-            />
-          ))}
-        </div>
       </div>
-    </div>
+      {/* FIX: Updated ImageViewModal call to pass the correct props (posts, startIndex) instead of the incorrect `imageUrl`. */}
+      {viewingPostIndex !== null && (
+        <ImageViewModal
+          posts={posts}
+          startIndex={viewingPostIndex}
+          onClose={handleClosePostView}
+          onLike={handleLike}
+          onItemClick={onItemClick}
+          onViewProfile={onViewProfile}
+        />
+      )}
+    </>
   );
 };
 

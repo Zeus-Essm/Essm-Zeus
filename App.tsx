@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 // FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
 import { Session } from '@supabase/supabase-js';
@@ -86,6 +87,56 @@ const getOrCreateProfile = async (session: Session, setError: (msg: string) => v
     }
 };
 
+// Helper to assign demo posts to the current user for a better preview experience
+const assignDemoPostsToUser = (profile: Profile): Post[] => {
+    const userPostImages = [
+        'https://i.postimg.cc/nzdDSLvZ/meu-estilo-look-9.png',
+        'https://i.postimg.cc/PxhsxmFf/meu-estilo-look-12.png',
+        'https://i.postimg.cc/mk2v3Ts0/meu-estilo-look-13.png',
+        'https://i.postimg.cc/vTc6Jdzn/meu-estilo-look.png',
+        'https://i.postimg.cc/tgNPPkJs/meu-estilo-look-11.png',
+        'https://i.postimg.cc/T3mn2fXq/meu-estilo-look-5.png',
+        'https://i.postimg.cc/bJYnRnS3/meu-estilo-look-6.png',
+        'https://i.postimg.cc/nLJBCgF8/meu-estilo-look-7.png'
+    ];
+    // Create a fresh copy from INITIAL_POSTS to avoid mutations between sessions
+    return INITIAL_POSTS.map(post => {
+        if (userPostImages.includes(post.image)) {
+            return {
+                ...post,
+                user: {
+                    id: profile.id,
+                    name: profile.username,
+                    avatar: profile.profile_image_url || `https://i.pravatar.cc/150?u=${profile.id}`
+                }
+            };
+        }
+        return post;
+    });
+};
+
+// Helper to assign demo looks to the current user for a better "My Looks" experience
+const assignDemoLooksToUser = (): SavedLook[] => {
+    const userPostImages = [
+        'https://i.postimg.cc/nzdDSLvZ/meu-estilo-look-9.png',
+        'https://i.postimg.cc/PxhsxmFf/meu-estilo-look-12.png',
+        'https://i.postimg.cc/mk2v3Ts0/meu-estilo-look-13.png',
+        'https://i.postimg.cc/vTc6Jdzn/meu-estilo-look.png',
+        'https://i.postimg.cc/tgNPPkJs/meu-estilo-look-11.png',
+        'https://i.postimg.cc/T3mn2fXq/meu-estilo-look-5.png',
+        'https://i.postimg.cc/bJYnRnS3/meu-estilo-look-6.png',
+        'https://i.postimg.cc/nLJBCgF8/meu-estilo-look-7.png'
+    ];
+    // Filter INITIAL_POSTS to get only the demo posts and map them to SavedLook format
+    return INITIAL_POSTS
+        .filter(post => userPostImages.includes(post.image))
+        .map(post => ({
+            id: `look_${post.id}`, // Create a unique ID for the look
+            image: post.image,
+            items: post.items,
+        }));
+};
+
 
 const App: React.FC = () => {
     // Auth & Profile state
@@ -95,6 +146,7 @@ const App: React.FC = () => {
 
     // App Navigation and UI state
     const [currentScreen, setCurrentScreen] = React.useState<Screen>(Screen.Home);
+    const [viewedProfileId, setViewedProfileId] = React.useState<string | null>(null);
     const [userImage, setUserImage] = React.useState<string | null>(null);
     const [generatedImage, setGeneratedImage] = React.useState<string | null>(null);
     const [navigationStack, setNavigationStack] = React.useState<(Category | SubCategory)[]>([]);
@@ -110,6 +162,7 @@ const App: React.FC = () => {
     const [loadingMessage, setLoadingMessage] = React.useState<string | null>(null);
     const [error, setError] = React.useState<string | null>(null);
     const [isCartAnimating, setIsCartAnimating] = React.useState(false);
+    const [isPreviewingAsVisitor, setIsPreviewingAsVisitor] = React.useState(false);
 
     // Auth effect
     React.useEffect(() => {
@@ -119,6 +172,10 @@ const App: React.FC = () => {
             if (session) {
                 const profileData = await getOrCreateProfile(session, setError);
                 setProfile(profileData);
+                if (profileData) {
+                    setPosts(assignDemoPostsToUser(profileData));
+                    setSavedLooks(assignDemoLooksToUser());
+                }
             }
             setAuthLoading(false);
         };
@@ -130,8 +187,15 @@ const App: React.FC = () => {
             if (session) {
                 const profileData = await getOrCreateProfile(session, setError);
                 setProfile(profileData);
+                if (profileData) {
+                    setPosts(assignDemoPostsToUser(profileData));
+                    setSavedLooks(assignDemoLooksToUser());
+                }
             } else {
                 setProfile(null);
+                setViewedProfileId(null);
+                setPosts(INITIAL_POSTS); // Reset posts on logout
+                setSavedLooks([]); // Reset saved looks on logout
             }
         });
 
@@ -150,6 +214,8 @@ const App: React.FC = () => {
 
         setSession(mockSession);
         setProfile(mockProfile);
+        setPosts(assignDemoPostsToUser(mockProfile));
+        setSavedLooks(assignDemoLooksToUser());
         setAuthLoading(false);
     };
 
@@ -165,7 +231,10 @@ const App: React.FC = () => {
         if (session?.user.id.startsWith('mock_')) {
             setSession(null);
             setProfile(null);
+            setPosts(INITIAL_POSTS);
         }
+        setViewedProfileId(null);
+        setIsPreviewingAsVisitor(false);
         setCurrentScreen(Screen.Home); // Reset screen state
     };
 
@@ -316,11 +385,16 @@ const App: React.FC = () => {
         const newStack = [...navigationStack];
         newStack.pop();
         if (newStack.length === 0) {
-            setCurrentScreen(Screen.Home);
+            handleNavigateToProfile();
         } else {
             setNavigationStack(newStack);
             setCurrentScreen(Screen.SubCategorySelection);
         }
+    };
+    
+    const handleProfileBack = () => {
+        setViewedProfileId(null);
+        setCurrentScreen(Screen.Feed);
     };
 
     const handleItemSelect = async (item: Item) => {
@@ -377,7 +451,7 @@ const App: React.FC = () => {
         if (collectionIdentifier) {
             setCurrentScreen(Screen.ItemSelection);
         } else {
-            setCurrentScreen(Screen.Home);
+            handleNavigateToProfile();
         }
     };
     
@@ -421,7 +495,7 @@ const App: React.FC = () => {
         if (generatedImage && wornItems.length > 0 && profile) {
             const newPost: Post = {
                 id: `post_${Date.now()}`,
-                user: { name: profile.username, avatar: profile.profile_image_url || 'https://i.pravatar.cc/150?u=me' },
+                user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || 'https://i.pravatar.cc/150?u=me' },
                 image: generatedImage,
                 items: wornItems,
                 likes: 0,
@@ -443,6 +517,22 @@ const App: React.FC = () => {
             setConfirmationMessage('Look salvo com sucesso na sua galeria!');
             setCurrentScreen(Screen.Confirmation);
         }
+    };
+
+    const handlePostLookFromSaved = (look: SavedLook) => {
+        if (!profile) return;
+        const newPost: Post = {
+            id: `post_${Date.now()}`,
+            user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || 'https://i.pravatar.cc/150?u=me' },
+            image: look.image,
+            items: look.items,
+            likes: 0,
+            isLiked: false,
+        };
+        setPosts(prevPosts => [newPost, ...prevPosts]);
+        setToast('Look postado no feed com sucesso!');
+        setTimeout(() => setToast(null), 3000);
+        setCurrentScreen(Screen.Feed);
     };
 
     const handleSaveImage = () => {
@@ -474,11 +564,31 @@ const App: React.FC = () => {
         setWornItems([]);
         setNavigationStack([]);
         setCollectionIdentifier(null);
-        setCurrentScreen(Screen.Home);
+        handleNavigateToProfile();
     };
 
     const handleNavigateToMyLooks = () => setCurrentScreen(Screen.MyLooks);
     const handleNavigateToRewards = () => setCurrentScreen(Screen.Rewards);
+
+    const handleNavigateToProfile = () => {
+        setViewedProfileId(null);
+        setIsPreviewingAsVisitor(false);
+        setCurrentScreen(Screen.Home);
+    };
+
+    const handleViewProfile = async (profileId: string) => {
+        if (profileId === profile?.id) {
+            handleNavigateToProfile();
+            return;
+        }
+        setViewedProfileId(profileId);
+        setIsPreviewingAsVisitor(false);
+        setCurrentScreen(Screen.Home);
+    };
+
+    const handleToggleVisitorPreview = () => {
+        setIsPreviewingAsVisitor(prev => !prev);
+    };
 
     const renderScreen = () => {
         if (isLoading) return <LoadingIndicator userImage={userImage!} customMessage={loadingMessage} />;
@@ -488,7 +598,8 @@ const App: React.FC = () => {
         switch (currentScreen) {
             case Screen.Home:
                 return <HomeScreen 
-                            profile={profile!}
+                            loggedInProfile={profile!}
+                            viewedProfileId={viewedProfileId}
                             onUpdateProfileImage={handleUpdateProfileImage}
                             onUpdateCoverImage={handleUpdateCoverImage}
                             onUpdateProfile={handleUpdateProfile}
@@ -500,12 +611,18 @@ const App: React.FC = () => {
                             onStartTryOn={handleStartTryOn}
                             onSignOut={handleSignOut}
                             isCartAnimating={isCartAnimating}
+                            onBack={handleProfileBack}
+                            isPreviewingAsVisitor={isPreviewingAsVisitor}
+                            onToggleVisitorPreview={handleToggleVisitorPreview}
+                            posts={posts}
+                            onItemClick={handleItemClick}
+                            onViewProfile={handleViewProfile}
                         />;
             case Screen.ImageSourceSelection:
                  return <ImageSourceSelectionScreen 
                             onImageUpload={handleImageUpload} 
                             onUseCamera={handleUseCamera}
-                            onBack={() => setCurrentScreen(Screen.Home)}
+                            onBack={handleNavigateToProfile}
                         />;
             case Screen.SubCategorySelection:
                  if (currentNode) {
@@ -515,7 +632,7 @@ const App: React.FC = () => {
                         onBack={handleBack}
                     />;
                  }
-                 setCurrentScreen(Screen.Home);
+                 handleNavigateToProfile();
                  return null;
             case Screen.ItemSelection:
                 if (userImage && collectionIdentifier) {
@@ -529,7 +646,7 @@ const App: React.FC = () => {
                         onAddToCart={handleAddToCart}
                     />;
                 }
-                setCurrentScreen(Screen.Home);
+                handleNavigateToProfile();
                 return null;
             case Screen.Generating:
                  return <LoadingIndicator userImage={generatedImage || userImage!} />;
@@ -546,7 +663,7 @@ const App: React.FC = () => {
                         onContinueStyling={handleContinueStyling}
                     />;
                 }
-                setCurrentScreen(Screen.Home);
+                handleNavigateToProfile();
                 return null;
             case Screen.Confirmation:
                 return <ConfirmationScreen message={confirmationMessage} onHome={resetToHome} />;
@@ -555,15 +672,17 @@ const App: React.FC = () => {
                             posts={posts}
                             stories={stories}
                             profileImage={profile?.profile_image_url || null}
-                            onBack={() => setCurrentScreen(Screen.Home)}
+                            onBack={handleNavigateToProfile}
                             onItemClick={handleItemClick}
+                            onViewProfile={handleViewProfile}
                         />;
             case Screen.MyLooks:
                 return <MyLooksScreen 
                             looks={savedLooks} 
-                            onBack={() => setCurrentScreen(Screen.Home)} 
+                            onBack={handleNavigateToProfile} 
                             onItemClick={handleItemClick}
                             onBuyLook={handleBuyLook}
+                            onPostLook={handlePostLookFromSaved}
                         />;
             case Screen.Camera:
                 return <CameraScreen 
@@ -573,7 +692,7 @@ const App: React.FC = () => {
             case Screen.Cart:
                 return <CartScreen
                     cartItems={cartItems}
-                    onBack={() => setCurrentScreen(Screen.Home)}
+                    onBack={handleNavigateToProfile}
                     onRemoveItem={handleRemoveFromCart}
                     onBuyItem={handleBuySingleItemFromCart}
                     onTryOnItem={handleStartNewTryOnSession}
@@ -585,9 +704,9 @@ const App: React.FC = () => {
                     }}
                 />;
             case Screen.Rewards:
-                return <RewardsScreen onBack={() => setCurrentScreen(Screen.Home)} />;
+                return <RewardsScreen onBack={handleNavigateToProfile} />;
             default:
-                setCurrentScreen(Screen.Home);
+                handleNavigateToProfile();
                 return null;
         }
     };

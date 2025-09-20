@@ -6,19 +6,21 @@ interface PostCardProps {
   post: Post;
   onLike: () => void;
   onItemClick: (item: Item) => void;
+  onViewProfile: () => void;
+  onImageClick: () => void;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onViewProfile, onImageClick }) => {
   return (
     <div className="bg-black flex flex-col animate-fadeIn border-b border-gray-800">
       {/* Card Header */}
-      <div className="p-3 flex items-center gap-3">
+      <button onClick={onViewProfile} className="p-3 flex items-center gap-3 text-left hover:bg-gray-900/50 transition-colors">
         <img src={post.user.avatar} alt={post.user.name} className="w-10 h-10 rounded-full object-cover border-2 border-gray-700" />
         <span className="font-bold text-sm">{post.user.name}</span>
-      </div>
+      </button>
 
       {/* Post Image */}
-      <div className="aspect-w-1 aspect-h-1">
+      <div onClick={onImageClick} className="aspect-w-1 aspect-h-1 cursor-pointer">
         <img src={post.image} alt={`Look by ${post.user.name}`} className="w-full h-full object-cover" />
       </div>
 
@@ -41,7 +43,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick }) => {
       {/* Caption / Item List */}
       <div className="px-3 pb-4 text-sm">
         <p>
-          <span className="font-bold mr-2">{post.user.name}</span>
+          <button onClick={onViewProfile} className="font-bold mr-2 hover:underline">{post.user.name}</button>
           vestindo{' '}
           {post.items.map((item, index) => (
             <React.Fragment key={item.id}>

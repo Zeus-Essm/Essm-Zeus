@@ -1,7 +1,7 @@
 
 import React from 'react';
 import Header from './Header';
-import { LooksIcon, ShareIcon, ShoppingBagIcon } from './IconComponents';
+import { LooksIcon, ShareIcon, ShoppingBagIcon, UploadIcon } from './IconComponents';
 import type { SavedLook, Item } from '../types';
 
 interface MyLooksScreenProps {
@@ -9,9 +9,10 @@ interface MyLooksScreenProps {
   onBack: () => void;
   onItemClick: (item: Item) => void;
   onBuyLook: (items: Item[]) => void;
+  onPostLook: (look: SavedLook) => void;
 }
 
-const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClick, onBuyLook }) => {
+const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClick, onBuyLook, onPostLook }) => {
   const handleShare = async (look: SavedLook) => {
     const text = `Confira meu novo look criado com o app MEU ESTILO! Itens: ${look.items.map(i => i.name).join(', ')}.`;
 
@@ -80,13 +81,20 @@ const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClic
                 </div>
 
                  {/* Actions */}
-                <div className="p-3 flex gap-3 border-t border-gray-800 bg-gray-900/50">
+                <div className="p-3 flex gap-2 border-t border-gray-800 bg-gray-900/50">
                     <button
                         onClick={() => onBuyLook(look.items)}
                         className="flex-1 flex items-center justify-center text-white font-bold py-2.5 px-4 rounded-lg bg-blue-500 hover:bg-blue-600 transition-colors"
                     >
                         <ShoppingBagIcon className="w-5 h-5 mr-2" />
                         Comprar
+                    </button>
+                    <button
+                        onClick={() => onPostLook(look)}
+                        className="flex-1 flex items-center justify-center text-white font-bold py-2.5 px-4 rounded-lg bg-green-600 hover:bg-green-700 transition-colors"
+                    >
+                        <UploadIcon className="w-5 h-5 mr-2" />
+                        Postar
                     </button>
                     <button
                         onClick={() => handleShare(look)}

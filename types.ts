@@ -43,6 +43,7 @@ export interface Item {
 export interface Post {
   id: string;
   user: {
+    id: string; // ID do usuário que postou
     name: string;
     avatar: string; // URL da imagem de avatar
   };

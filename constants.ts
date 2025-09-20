@@ -1,4 +1,5 @@
 
+
 import type { Category, Item, Post, Story } from './types';
 
 // Sub-categorias de Roupas reutilizáveis
@@ -173,6 +174,7 @@ export const INITIAL_POSTS: Post[] = [
   {
     id: 'post_1',
     user: {
+      id: 'user_camila',
       name: 'camila_fashion',
       avatar: 'https://i.postimg.cc/zX8ZgGg1/vecteezy-portrait-of-a-beautiful-young-woman-with-long-hair-and-35990471.jpg',
     },
@@ -184,6 +186,7 @@ export const INITIAL_POSTS: Post[] = [
   {
     id: 'post_2',
     user: {
+      id: 'user_marco',
       name: 'marco_style',
       avatar: 'https://i.postimg.cc/135z5Y42/vecteezy-stylish-man-in-a-studio-shot-32204593.jpg',
     },
@@ -195,6 +198,7 @@ export const INITIAL_POSTS: Post[] = [
   {
     id: 'post_3',
     user: {
+      id: 'user_lv',
       name: 'louisvuitton',
       avatar: 'https://i.postimg.cc/7Z9pT8Wk/L.jpg',
     },
@@ -206,6 +210,7 @@ export const INITIAL_POSTS: Post[] = [
   {
     id: 'post_4',
     user: {
+      id: 'user_julia',
       name: 'julia_looks',
       avatar: 'https://i.postimg.cc/tJc7g4A9/vecteezy-portrait-of-a-stylish-woman-in-a-hat-32204595.jpg',
     },
@@ -217,6 +222,7 @@ export const INITIAL_POSTS: Post[] = [
   {
     id: 'post_5',
     user: {
+      id: 'user_ana',
       name: 'ana_trends',
       avatar: 'https://i.postimg.cc/pT3w6gT7/vecteezy-fashion-portrait-of-a-beautiful-young-woman-with-dark-hair-35990473.jpg',
     },
@@ -228,6 +234,7 @@ export const INITIAL_POSTS: Post[] = [
   {
     id: 'post_6',
     user: {
+      id: 'user_rodrigo',
       name: 'rodrigo_sharp',
       avatar: 'https://i.postimg.cc/C1bQZ6fK/vecteezy-a-man-in-a-suit-and-tie-is-posing-for-a-picture-35990491.jpg',
     },
@@ -239,6 +246,7 @@ export const INITIAL_POSTS: Post[] = [
   {
     id: 'post_7',
     user: {
+      id: 'user_fashionista',
       name: 'fashionista_br',
       avatar: 'https://i.postimg.cc/t46Tz9Cg/vecteezy-a-woman-with-long-hair-is-posing-for-a-picture-35990483.jpg',
     },
@@ -250,6 +258,7 @@ export const INITIAL_POSTS: Post[] = [
   {
     id: 'post_8',
     user: {
+      id: 'user_urban',
       name: 'urban_explorer',
       avatar: 'https://i.postimg.cc/2jT1yZk5/vecteezy-a-man-in-a-black-jacket-is-posing-for-a-picture-35990467.jpg',
     },
@@ -261,12 +270,109 @@ export const INITIAL_POSTS: Post[] = [
   {
     id: 'post_9',
     user: {
+      id: 'user_sofia',
       name: 'sofia_couture',
       avatar: 'https://i.postimg.cc/mk0jJzCF/vecteezy-a-woman-in-a-black-dress-is-posing-for-a-picture-35990494.jpg',
     },
     image: 'https://i.postimg.cc/2yT9gWwF/vecteezy-a-woman-in-a-black-dress-is-posing-for-a-picture-35990481.jpg',
     items: [ITEMS[6], ITEMS[8]],
     likes: 4123,
+    isLiked: true,
+  },
+  {
+    id: 'post_10',
+    user: {
+      id: 'user_rodrigo',
+      name: 'rodrigo_sharp',
+      avatar: 'https://i.postimg.cc/C1bQZ6fK/vecteezy-a-man-in-a-suit-and-tie-is-posing-for-a-picture-35990491.jpg',
+    },
+    image: 'https://i.postimg.cc/nzdDSLvZ/meu-estilo-look-9.png',
+    items: [ITEMS[15], ITEMS[16]],
+    likes: 982,
+    isLiked: false,
+  },
+  {
+    id: 'post_11',
+    user: {
+      id: 'user_ana',
+      name: 'ana_trends',
+      avatar: 'https://i.postimg.cc/pT3w6gT7/vecteezy-fashion-portrait-of-a-beautiful-young-woman-with-dark-hair-35990473.jpg',
+    },
+    image: 'https://i.postimg.cc/PxhsxmFf/meu-estilo-look-12.png',
+    items: [ITEMS[2], ITEMS[3], ITEMS[4]],
+    likes: 1743,
+    isLiked: true,
+  },
+  {
+    id: 'post_12',
+    user: {
+      id: 'user_julia',
+      name: 'julia_looks',
+      avatar: 'https://i.postimg.cc/tJc7g4A9/vecteezy-portrait-of-a-stylish-woman-in-a-hat-32204595.jpg',
+    },
+    image: 'https://i.postimg.cc/mk2v3Ts0/meu-estilo-look-13.png',
+    items: [ITEMS[0], ITEMS[5]],
+    likes: 2104,
+    isLiked: false,
+  },
+  {
+    id: 'post_13',
+    user: {
+      id: 'user_marco',
+      name: 'marco_style',
+      avatar: 'https://i.postimg.cc/135z5Y42/vecteezy-stylish-man-in-a-studio-shot-32204593.jpg',
+    },
+    image: 'https://i.postimg.cc/vTc6Jdzn/meu-estilo-look.png',
+    items: [ITEMS[19], ITEMS[20]],
+    likes: 654,
+    isLiked: false,
+  },
+  {
+    id: 'post_14',
+    user: {
+      id: 'user_sofia',
+      name: 'sofia_couture',
+      avatar: 'https://i.postimg.cc/mk0jJzCF/vecteezy-a-woman-in-a-black-dress-is-posing-for-a-picture-35990494.jpg',
+    },
+    image: 'https://i.postimg.cc/tgNPPkJs/meu-estilo-look-11.png',
+    items: [ITEMS[1], ITEMS[6]],
+    likes: 3201,
+    isLiked: true,
+  },
+  {
+    id: 'post_15',
+    user: {
+      id: 'user_camila',
+      name: 'camila_fashion',
+      avatar: 'https://i.postimg.cc/zX8ZgGg1/vecteezy-portrait-of-a-beautiful-young-woman-with-long-hair-and-35990471.jpg',
+    },
+    image: 'https://i.postimg.cc/T3mn2fXq/meu-estilo-look-5.png',
+    items: [ITEMS[7], ITEMS[8]],
+    likes: 1899,
+    isLiked: false,
+  },
+  {
+    id: 'post_16',
+    user: {
+      id: 'user_urban',
+      name: 'urban_explorer',
+      avatar: 'https://i.postimg.cc/2jT1yZk5/vecteezy-a-man-in-a-black-jacket-is-posing-for-a-picture-35990467.jpg',
+    },
+    image: 'https://i.postimg.cc/bJYnRnS3/meu-estilo-look-6.png',
+    items: [ITEMS[22], ITEMS[25]],
+    likes: 432,
+    isLiked: false,
+  },
+  {
+    id: 'post_17',
+    user: {
+      id: 'user_fashionista',
+      name: 'fashionista_br',
+      avatar: 'https://i.postimg.cc/t46Tz9Cg/vecteezy-a-woman-with-long-hair-is-posing-for-a-picture-35990483.jpg',
+    },
+    image: 'https://i.postimg.cc/nLJBCgF8/meu-estilo-look-7.png',
+    items: [ITEMS[3], ITEMS[5]],
+    likes: 2501,
     isLiked: true,
   }
 ];
