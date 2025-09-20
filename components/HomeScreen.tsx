@@ -1,3 +1,4 @@
+
 import React, { useRef, useState, useEffect } from 'react';
 import type { Category, Profile, Post } from '../types';
 import { supabase } from '../services/supabaseClient';
@@ -81,6 +82,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [tempBio, setTempBio] = useState('');
 
+  const [activeSlide, setActiveSlide] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   const isTrulyOwner = !viewedProfileId || viewedProfileId === loggedInProfile.id;
   const isOwner = isTrulyOwner && !isPreviewingAsVisitor;
 
@@ -120,6 +124,38 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
     fetchProfile();
   }, [viewedProfileId, loggedInProfile, isTrulyOwner, onBack, posts]);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+        (entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    const index = Number(entry.target.getAttribute('data-index'));
+                    setActiveSlide(index);
+                }
+            });
+        },
+        {
+            root: scrollContainerRef.current,
+            threshold: 0.6, // Fire when 60% of the item is visible
+        }
+    );
+
+    const container = scrollContainerRef.current;
+    if (container) {
+        Array.from(container.children).forEach((child) => {
+            observer.observe(child);
+        });
+    }
+
+    return () => {
+        if (container) {
+            Array.from(container.children).forEach((child) => {
+                observer.unobserve(child);
+            });
+        }
+    };
+  }, [isOwner]);
   
   const handleProfileFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -186,8 +222,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     );
   };
 
-  const featuredCategory = CATEGORIES[0];
-  const otherCategories = CATEGORIES.slice(1);
+  const featuredCategories = CATEGORIES.slice(0, 2);
+  const otherCategories = CATEGORIES.slice(2);
   
   if (loadingProfile || !displayProfile) {
     return <div className="w-full h-full flex items-center justify-center bg-black text-white">Carregando perfil...</div>;
@@ -376,35 +412,55 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
         {isOwner ? (
             <>
-                <div 
-                    onClick={() => onSelectCategory(featuredCategory)}
-                    className="mb-6 relative h-64 rounded-2xl overflow-hidden cursor-pointer group transform hover:scale-[1.02] transition-transform duration-300 shadow-2xl shadow-black/50"
+                <div
+                    ref={scrollContainerRef}
+                    className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth gap-4 py-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
                 >
-                    {featuredCategory.video ? (
-                        <video
-                            src={featuredCategory.video}
-                            poster={featuredCategory.image}
-                            autoPlay
-                            loop
-                            muted
-                            playsInline
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 animate-slow-zoom"
+                    {featuredCategories.map((category, index) => (
+                        <div
+                            key={category.id}
+                            data-index={index}
+                            onClick={() => onSelectCategory(category)}
+                            className="flex-shrink-0 w-[90%] snap-center relative h-64 rounded-2xl overflow-hidden cursor-pointer group transform hover:scale-[1.02] transition-transform duration-300 shadow-2xl shadow-black/50"
+                        >
+                            {category.video ? (
+                                <video
+                                    src={category.video}
+                                    poster={category.image}
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 animate-slow-zoom"
+                                />
+                            ) : (
+                                <img 
+                                    src={category.image} 
+                                    alt="Look em Destaque" 
+                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 animate-slow-zoom" 
+                                />
+                            )}
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                            <div className="absolute inset-0 flex flex-col justify-end p-5">
+                                <h3 className="text-sm font-bold uppercase tracking-widest text-gray-300">Look em Destaque</h3>
+                                <h2 className="text-3xl font-black tracking-tighter text-white uppercase mt-1">{category.name}</h2>
+                            </div>
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                <span className="text-xl font-bold border-2 border-white rounded-full px-6 py-2">Vestir Agora</span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div className="flex justify-center gap-2 my-4">
+                    {featuredCategories.map((_, index) => (
+                        <div
+                            key={index}
+                            className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                                activeSlide === index ? 'bg-white w-4' : 'bg-gray-600'
+                            }`}
                         />
-                    ) : (
-                        <img 
-                            src={featuredCategory.image} 
-                            alt="Look em Destaque" 
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110 animate-slow-zoom" 
-                        />
-                    )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                    <div className="absolute inset-0 flex flex-col justify-end p-5">
-                        <h3 className="text-sm font-bold uppercase tracking-widest text-gray-300">Look em Destaque</h3>
-                        <h2 className="text-3xl font-black tracking-tighter text-white uppercase mt-1">{featuredCategory.name}</h2>
-                    </div>
-                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <span className="text-xl font-bold border-2 border-white rounded-full px-6 py-2">Vestir Agora</span>
-                    </div>
+                    ))}
                 </div>
 
                 <main className="space-y-4 pb-4">

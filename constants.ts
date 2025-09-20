@@ -51,7 +51,7 @@ export const CATEGORIES: Category[] = [
     id: 'lv', 
     name: 'Louis Vuitton', 
     image: 'https://i.postimg.cc/xCknv8vV/pexels-rdne-6224633.jpg',
-    video: 'https://streamable.com/f79d27/video.mp4',
+    video: 'https://cdn-1.limewire.com/video/QmR7P4i2rTsqc9g99rM5895X3Lw9x9Y9jJ3k5t9x4f8w2q?filename=video-f0f80e72-d599-4c07-b649-14a5b51259ab-1718820876.mp4',
     subCategories: [
         { id: 'lv_masculino', name: 'Masculino', image: 'https://i.postimg.cc/zD9nNvQB/homem.jpg', subCategories: createSubCategories('lv_masculino', MALE_CLOTHING_SUBCATEGORIES) },
         { id: 'lv_feminino', name: 'Feminino', image: 'https://i.postimg.cc/y8T90P8g/mulher.jpg', subCategories: createSubCategories('lv_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
