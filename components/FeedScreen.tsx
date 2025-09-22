@@ -4,6 +4,7 @@ import Header from './Header';
 import PostCard from './PostCard';
 import { PlusIcon } from './IconComponents';
 import ImageViewModal from './ImageViewModal';
+import ShopTheLookModal from './ShopTheLookModal';
 
 interface FeedScreenProps {
   posts: Post[];
@@ -11,6 +12,8 @@ interface FeedScreenProps {
   profileImage: string | null;
   onBack: () => void;
   onItemClick: (item: Item) => void;
+  onAddToCartMultiple: (items: Item[]) => void;
+  onBuyMultiple: (items: Item[]) => void;
   onViewProfile: (profileId: string) => void;
 }
 
@@ -53,10 +56,10 @@ const StoryCard: React.FC<{ story: Story }> = ({ story }) => (
 );
 
 
-const FeedScreen: React.FC<FeedScreenProps> = ({ posts: initialPosts, stories, profileImage, onBack, onItemClick, onViewProfile }) => {
+const FeedScreen: React.FC<FeedScreenProps> = ({ posts: initialPosts, stories, profileImage, onBack, onItemClick, onAddToCartMultiple, onBuyMultiple, onViewProfile }) => {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
-  // FIX: Changed state to track the index of the post to view, aligning with ImageViewModal's props.
   const [viewingPostIndex, setViewingPostIndex] = useState<number | null>(null);
+  const [shoppingPost, setShoppingPost] = useState<Post | null>(null);
 
   const handleLike = (postId: string) => {
     setPosts(prevPosts =>
@@ -72,6 +75,10 @@ const FeedScreen: React.FC<FeedScreenProps> = ({ posts: initialPosts, stories, p
 
   const handleClosePostView = () => {
     setViewingPostIndex(null);
+  };
+
+  const handleShopTheLook = (post: Post) => {
+    setShoppingPost(post);
   };
 
 
@@ -99,6 +106,7 @@ const FeedScreen: React.FC<FeedScreenProps> = ({ posts: initialPosts, stories, p
                 post={post}
                 onLike={() => handleLike(post.id)}
                 onItemClick={onItemClick}
+                onShopTheLook={() => handleShopTheLook(post)}
                 onViewProfile={() => onViewProfile(post.user.id)}
                 onImageClick={() => handleViewPost(index)}
               />
@@ -106,7 +114,6 @@ const FeedScreen: React.FC<FeedScreenProps> = ({ posts: initialPosts, stories, p
           </div>
         </div>
       </div>
-      {/* FIX: Updated ImageViewModal call to pass the correct props (posts, startIndex) instead of the incorrect `imageUrl`. */}
       {viewingPostIndex !== null && (
         <ImageViewModal
           posts={posts}
@@ -115,6 +122,17 @@ const FeedScreen: React.FC<FeedScreenProps> = ({ posts: initialPosts, stories, p
           onLike={handleLike}
           onItemClick={onItemClick}
           onViewProfile={onViewProfile}
+        />
+      )}
+      {shoppingPost && (
+        <ShopTheLookModal
+          post={shoppingPost}
+          onClose={() => setShoppingPost(null)}
+          onAddToCart={(items) => {
+            onAddToCartMultiple(items);
+            setShoppingPost(null);
+          }}
+          onBuyNow={(items) => onBuyMultiple(items)}
         />
       )}
     </>

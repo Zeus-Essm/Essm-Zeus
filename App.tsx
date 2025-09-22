@@ -481,6 +481,17 @@ const App: React.FC = () => {
             setIsCartAnimating(false);
         }, 500); // Animation duration
     };
+
+    const handleAddToCartMultiple = (items: Item[]) => {
+        if (items.length === 0) return;
+        setCartItems(prevItems => [...prevItems, ...items]);
+        setToast(`${items.length} iten(s) adicionado(s) ao carrinho!`);
+        setTimeout(() => setToast(null), 3000);
+
+        setIsCartAnimating(true);
+        setTimeout(() => setIsCartAnimating(false), 500);
+    };
+
     const handleRemoveFromCart = (indexToRemove: number) => {
         setCartItems(prevItems => prevItems.filter((_, index) => index !== indexToRemove));
     };
@@ -674,6 +685,8 @@ const App: React.FC = () => {
                             profileImage={profile?.profile_image_url || null}
                             onBack={handleNavigateToProfile}
                             onItemClick={handleItemClick}
+                            onAddToCartMultiple={handleAddToCartMultiple}
+                            onBuyMultiple={handleBuyLook}
                             onViewProfile={handleViewProfile}
                         />;
             case Screen.MyLooks:

@@ -1,16 +1,17 @@
 import React from 'react';
 import type { Post, Item } from '../types';
-import { HeartIcon, ShareIcon } from './IconComponents';
+import { HeartIcon, ShareIcon, ShoppingBagIcon } from './IconComponents';
 
 interface PostCardProps {
   post: Post;
   onLike: () => void;
   onItemClick: (item: Item) => void;
+  onShopTheLook: () => void;
   onViewProfile: () => void;
   onImageClick: () => void;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onViewProfile, onImageClick }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTheLook, onViewProfile, onImageClick }) => {
   return (
     <div className="bg-black flex flex-col animate-fadeIn border-b border-gray-800">
       {/* Card Header */}
@@ -32,6 +33,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onViewPr
               className={`w-7 h-7 ${post.isLiked ? 'text-red-500' : 'text-white'}`} 
               fill={post.isLiked ? 'currentColor' : 'none'}
             />
+          </button>
+          <button onClick={onShopTheLook} className="transform hover:scale-110 transition-transform" aria-label="Comprar o look">
+            <ShoppingBagIcon className="w-7 h-7 text-white" />
           </button>
           <button className="transform hover:scale-110 transition-transform" aria-label="Compartilhar">
             <ShareIcon className="w-7 h-7 text-white" />
