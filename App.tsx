@@ -149,6 +149,7 @@ const App: React.FC = () => {
     const [viewedProfileId, setViewedProfileId] = React.useState<string | null>(null);
     const [userImage, setUserImage] = React.useState<string | null>(null);
     const [generatedImage, setGeneratedImage] = React.useState<string | null>(null);
+    const [imageHistory, setImageHistory] = React.useState<string[]>([]);
     const [navigationStack, setNavigationStack] = React.useState<(Category | SubCategory)[]>([]);
     const [collectionIdentifier, setCollectionIdentifier] = React.useState<{id: string, name: string} | null>(null);
     const [wornItems, setWornItems] = React.useState<Item[]>([]);
@@ -174,6 +175,7 @@ const App: React.FC = () => {
                 setProfile(profileData);
                 if (profileData) {
                     setPosts(assignDemoPostsToUser(profileData));
+                    // FIX: Called assignDemoLooksToUser which takes no arguments, instead of assignDemoPostsToUser.
                     setSavedLooks(assignDemoLooksToUser());
                 }
             }
@@ -189,6 +191,7 @@ const App: React.FC = () => {
                 setProfile(profileData);
                 if (profileData) {
                     setPosts(assignDemoPostsToUser(profileData));
+                    // FIX: Called assignDemoLooksToUser which takes no arguments, instead of assignDemoPostsToUser.
                     setSavedLooks(assignDemoLooksToUser());
                 }
             } else {
@@ -215,6 +218,7 @@ const App: React.FC = () => {
         setSession(mockSession);
         setProfile(mockProfile);
         setPosts(assignDemoPostsToUser(mockProfile));
+        // FIX: Called assignDemoLooksToUser which takes no arguments, instead of assignDemoPostsToUser.
         setSavedLooks(assignDemoLooksToUser());
         setAuthLoading(false);
     };
@@ -334,6 +338,7 @@ const App: React.FC = () => {
             
             setUserImage(squaredImageDataUrl);
             setGeneratedImage(squaredImageDataUrl);
+            setImageHistory([squaredImageDataUrl]); // Initialize history
             setWornItems([]);
             
             const currentCategory = navigationStack.length > 0 ? navigationStack[0] as Category : null;
@@ -407,6 +412,7 @@ const App: React.FC = () => {
         try {
             const newImage = await generateTryOnImage(baseImage, item, existingItems);
             setGeneratedImage(newImage);
+            setImageHistory(prev => [...prev, newImage]); // Add to history
             setWornItems(prevItems => [...prevItems, item]);
             setCurrentScreen(Screen.Result);
         } catch (err: any) {
@@ -429,6 +435,7 @@ const App: React.FC = () => {
         try {
             const newImage = await generateTryOnImage(userImage, item, []);
             setGeneratedImage(newImage);
+            setImageHistory([userImage, newImage]);
             setWornItems([item]);
             setCurrentScreen(Screen.Result);
         } catch (err: any) {
@@ -440,18 +447,45 @@ const App: React.FC = () => {
     };
 
     const handleUndoLastItem = () => {
-        if (collectionIdentifier) {
-             setCurrentScreen(Screen.ItemSelection);
+        if (imageHistory.length > 1 && wornItems.length > 0) {
+            const newHistory = [...imageHistory];
+            newHistory.pop();
+            const newWornItems = [...wornItems];
+            newWornItems.pop();
+
+            setImageHistory(newHistory);
+            setGeneratedImage(newHistory[newHistory.length - 1]);
+            setWornItems(newWornItems);
+
+            if (newWornItems.length === 0) {
+                 if (collectionIdentifier) {
+                    setCurrentScreen(Screen.ItemSelection);
+                } else {
+                    handleBack();
+                }
+            }
+            // Stay on ResultScreen if there are still items left
         } else {
-            handleBack();
+             if (collectionIdentifier) {
+                setCurrentScreen(Screen.ItemSelection);
+            } else {
+                handleBack();
+            }
         }
     };
+
 
     const handleContinueStyling = () => {
         if (collectionIdentifier) {
             setCurrentScreen(Screen.ItemSelection);
         } else {
-            handleNavigateToProfile();
+            // This case might happen if coming from a non-standard flow.
+            // Safest bet is to go back to the subcategory selection or home.
+            if (navigationStack.length > 0) {
+                setCurrentScreen(Screen.SubCategorySelection);
+            } else {
+                handleNavigateToProfile();
+            }
         }
     };
     
@@ -573,6 +607,7 @@ const App: React.FC = () => {
     const resetToHome = () => {
         setGeneratedImage(userImage);
         setWornItems([]);
+        setImageHistory(userImage ? [userImage] : []);
         setNavigationStack([]);
         setCollectionIdentifier(null);
         handleNavigateToProfile();
@@ -674,7 +709,12 @@ const App: React.FC = () => {
                         onContinueStyling={handleContinueStyling}
                     />;
                 }
-                handleNavigateToProfile();
+                // If we land here with no items, it means we undid the last one.
+                if (collectionIdentifier) {
+                    setCurrentScreen(Screen.ItemSelection);
+                } else {
+                    handleBack();
+                }
                 return null;
             case Screen.Confirmation:
                 return <ConfirmationScreen message={confirmationMessage} onHome={resetToHome} />;
