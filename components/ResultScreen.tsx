@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import type { Item } from '../types';
 import GradientButton from './GradientButton';
@@ -7,25 +8,38 @@ import { ShoppingBagIcon, PlusIcon, UndoIcon, ShareIcon, BookmarkIcon, DownloadI
 
 interface ResultScreenProps {
   generatedImage: string;
-  items: Item[]; // Agora recebe uma lista de itens
-  onPostToFeed: () => void; // Renomeado de onSave
+  items: Item[]; // A lista de itens vestidos
+  categoryItems: Item[]; // A lista de todos os itens na categoria atual
+  onPostToFeed: () => void;
   onBuy: (items: Item[]) => void;
-  onBack: () => void;
+  onUndo: () => void;
   onSaveLook: () => void;
   onSaveImage: () => void;
-  onContinueStyling: () => void;
+  onItemSelect: (item: Item) => void;
 }
 
-const ResultScreen: React.FC<ResultScreenProps> = ({ generatedImage, items, onPostToFeed, onBuy, onBack, onSaveLook, onSaveImage, onContinueStyling }) => {
+const ResultScreen: React.FC<ResultScreenProps> = ({ 
+    generatedImage, 
+    items, 
+    categoryItems, 
+    onPostToFeed, 
+    onBuy, 
+    onUndo, 
+    onSaveLook, 
+    onSaveImage,
+    onItemSelect 
+}) => {
   const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
-  const lastItem = items[items.length - 1];
+  
+  const wornItemIds = new Set(items.map(i => i.id));
+  const suggestedItems = categoryItems.filter(i => !wornItemIds.has(i.id));
 
   return (
     <div className="w-full h-full flex flex-col text-white animate-fadeIn bg-black">
       <Header title="Seu Look" />
       <div className="flex-grow pt-20 flex flex-col items-center p-4 overflow-y-auto">
         <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl shadow-black/30 mb-6 bg-gray-900 flex-shrink-0">
-            <img src={generatedImage} alt={`Você vestindo ${lastItem.name}`} className="w-full h-auto animate-imageAppear" />
+            <img src={generatedImage} alt={`Você vestindo ${items[items.length - 1]?.name}`} className="w-full h-auto animate-imageAppear" />
         </div>
         
         <div className="w-full max-w-sm bg-gray-900 rounded-xl p-4 mb-4">
@@ -48,26 +62,40 @@ const ResultScreen: React.FC<ResultScreenProps> = ({ generatedImage, items, onPo
                 </span>
             </div>
         </div>
+
+        {/* Carrossel de Itens Sugeridos */}
+        {suggestedItems.length > 0 && (
+          <div className="w-full max-w-sm mt-2">
+            <h3 className="text-lg font-bold mb-3 text-gray-200">Experimente também:</h3>
+            <div className="flex overflow-x-auto gap-3 pb-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {suggestedItems.map(item => (
+                <div 
+                  key={item.id} 
+                  onClick={() => onItemSelect(item)} 
+                  className="flex-shrink-0 w-32 bg-gray-900 rounded-lg overflow-hidden cursor-pointer group transform hover:scale-105 transition-transform"
+                >
+                   <img src={item.image} alt={item.name} className="w-full h-32 object-cover"/>
+                   <div className="p-2">
+                    <h4 className="text-xs font-semibold truncate group-hover:text-blue-400 transition-colors">{item.name}</h4>
+                    <p className="text-xs text-gray-400">Provar</p>
+                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
       </div>
       <div className="p-4 flex-shrink-0 space-y-2 bg-black border-t border-gray-800">
-        <div className="flex gap-2">
-            <button
-                onClick={onContinueStyling}
-                className="flex-1 flex items-center justify-center text-white font-bold py-3 px-4 rounded-lg bg-blue-500 hover:bg-blue-600 transition-colors"
-            >
-               <PlusIcon className="w-4 h-4 mr-2" />
-                Adicionar Peças
-            </button>
-            <GradientButton onClick={() => onBuy(items)} className="flex-1 !py-3">
-                <div className="flex items-center justify-center">
-                     <ShoppingBagIcon className="w-4 h-4 mr-2" />
-                    Comprar Look
-                </div>
-            </GradientButton>
-        </div>
+        <GradientButton onClick={() => onBuy(items)} className="w-full !py-3">
+            <div className="flex items-center justify-center">
+                 <ShoppingBagIcon className="w-4 h-4 mr-2" />
+                Comprar Look
+            </div>
+        </GradientButton>
         <div className="flex gap-1.5">
              <button
-                onClick={onBack}
+                onClick={onUndo}
                 className="flex-1 flex flex-col items-center justify-center text-white font-semibold py-1 px-1 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
                 aria-label="Desfazer última peça"
             >

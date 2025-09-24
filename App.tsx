@@ -1,12 +1,11 @@
 
-
 import React from 'react';
 // FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
 import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile } from './types';
 import { generateTryOnImage, expandImageToSquare } from './services/geminiService';
-import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES } from './constants';
+import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, ITEMS } from './constants';
 
 // Screen Components
 import SplashScreen from './components/SplashScreen';
@@ -206,12 +205,24 @@ const App: React.FC = () => {
         };
 
         const setupAuth = async () => {
+            const isOAuthRedirect = window.location.hash.includes('access_token');
+            
+            // On OAuth redirect, enforce a 3-second splash screen as requested.
+            if (isOAuthRedirect) {
+                await new Promise(resolve => setTimeout(resolve, 3000));
+            }
+
             const { data: { session } } = await supabase.auth.getSession();
             setSession(session);
             if (session) {
                 await fetchAndSetUserData(session);
             }
             setAuthLoading(false);
+
+            // Clean the URL hash after processing to prevent this logic from re-running on refresh.
+            if (isOAuthRedirect) {
+                 window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            }
         };
 
         setupAuth();
@@ -502,21 +513,6 @@ const App: React.FC = () => {
         }
     };
 
-
-    const handleContinueStyling = () => {
-        if (collectionIdentifier) {
-            setCurrentScreen(Screen.ItemSelection);
-        } else {
-            // This case might happen if coming from a non-standard flow.
-            // Safest bet is to go back to the subcategory selection or home.
-            if (navigationStack.length > 0) {
-                setCurrentScreen(Screen.SubCategorySelection);
-            } else {
-                handleNavigateToProfile();
-            }
-        }
-    };
-    
     const handleUseCamera = () => setCurrentScreen(Screen.Camera);
     const handleStartTryOn = () => {
         setNavigationStack([]);
@@ -780,15 +776,19 @@ const App: React.FC = () => {
                  return <LoadingIndicator userImage={generatedImage || userImage!} />;
             case Screen.Result:
                 if (generatedImage && wornItems.length > 0) {
+                    const categoryItems = collectionIdentifier 
+                        ? ITEMS.filter(item => item.category === collectionIdentifier.id) 
+                        : [];
                     return <ResultScreen
                         generatedImage={generatedImage}
                         items={wornItems}
+                        categoryItems={categoryItems}
+                        onItemSelect={handleItemSelect}
                         onPostToFeed={handlePostToFeed}
                         onBuy={handleBuyLook}
-                        onBack={handleUndoLastItem}
+                        onUndo={handleUndoLastItem}
                         onSaveLook={handleSaveLook}
                         onSaveImage={handleSaveImage}
-                        onContinueStyling={handleContinueStyling}
                     />;
                 }
                 // If we land here with no items, it means we undid the last one.

@@ -41,11 +41,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
         setLoading(true);
         setError(null);
         try {
+            // REMOVED the hardcoded redirectTo option. Supabase will now use the current URL.
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: provider,
-                options: {
-                    redirectTo: 'https://meu-estilo-45473940960.us-west1.run.app/',
-                },
             });
             if (error) throw error;
         } catch (err: any) {
