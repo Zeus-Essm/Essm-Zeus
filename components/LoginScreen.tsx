@@ -1,4 +1,5 @@
 
+
 // FIX: Replaced placeholder content with a functional LoginScreen component.
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
@@ -86,7 +87,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
                 </GradientButton>
             </form>
 
-            {/*
+            
             <div className="my-6 flex items-center w-full">
                 <div className="flex-grow border-t border-gray-700"></div>
                 <span className="flex-shrink mx-4 text-gray-500 text-sm">OU</span>
@@ -111,7 +112,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
                     <span className="font-semibold">{isSignUp ? 'Continue com Facebook' : 'Entrar com Facebook'}</span>
                 </button>
             </div>
-            */}
+            
             
             <div className="my-4 text-center text-sm">
                 <button onClick={onContinueAsVisitor} className="font-semibold text-gray-400 hover:text-white underline transition-colors">
