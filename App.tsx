@@ -23,6 +23,8 @@ import CameraScreen from './components/CameraScreen';
 import ImageSourceSelectionScreen from './components/ImageSourceSelectionScreen';
 import CartScreen from './components/CartScreen';
 import RewardsScreen from './components/RewardsScreen';
+import GradientButton from './components/GradientButton';
+import { XCircleIcon } from './components/IconComponents';
 
 declare global {
   interface Window {}
@@ -167,17 +169,47 @@ const App: React.FC = () => {
 
     // Auth effect
     React.useEffect(() => {
+        const fetchAndSetUserData = async (session: Session) => {
+            const profileData = await getOrCreateProfile(session, setError);
+            setProfile(profileData);
+            if (profileData) {
+                setPosts(assignDemoPostsToUser(profileData));
+                
+                // Check for mock user
+                if (session.user.id.startsWith('mock_')) {
+                    setSavedLooks(assignDemoLooksToUser());
+                } else {
+                    // Fetch real saved looks for authenticated user
+                    try {
+                        const { data, error } = await supabase
+                            .from('saved_looks')
+                            .select('*')
+                            .eq('user_id', session.user.id)
+                            .order('created_at', { ascending: false });
+
+                        if (error) throw error;
+                        
+                        // Map db response to SavedLook type
+                        const userLooks: SavedLook[] = data.map(look => ({
+                            id: look.id,
+                            image: look.image_url,
+                            items: look.items,
+                        }));
+                        setSavedLooks(userLooks);
+                    } catch (err: any) {
+                        console.error("Error fetching saved looks:", err.message);
+                        setError("Não foi possível carregar os looks salvos.");
+                        setSavedLooks([]); // Reset on error
+                    }
+                }
+            }
+        };
+
         const setupAuth = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             setSession(session);
             if (session) {
-                const profileData = await getOrCreateProfile(session, setError);
-                setProfile(profileData);
-                if (profileData) {
-                    setPosts(assignDemoPostsToUser(profileData));
-                    // FIX: Called assignDemoLooksToUser which takes no arguments, instead of assignDemoPostsToUser.
-                    setSavedLooks(assignDemoLooksToUser());
-                }
+                await fetchAndSetUserData(session);
             }
             setAuthLoading(false);
         };
@@ -185,15 +217,11 @@ const App: React.FC = () => {
         setupAuth();
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            // Reset error on auth change to avoid showing old errors
+            setError(null);
             setSession(session);
             if (session) {
-                const profileData = await getOrCreateProfile(session, setError);
-                setProfile(profileData);
-                if (profileData) {
-                    setPosts(assignDemoPostsToUser(profileData));
-                    // FIX: Called assignDemoLooksToUser which takes no arguments, instead of assignDemoPostsToUser.
-                    setSavedLooks(assignDemoLooksToUser());
-                }
+                await fetchAndSetUserData(session);
             } else {
                 setProfile(null);
                 setViewedProfileId(null);
@@ -268,7 +296,7 @@ const App: React.FC = () => {
     
     const uploadImage = async (bucket: string, imageDataUrl: string): Promise<string | null> => {
         if (!session || session.user.id.startsWith('mock_')) {
-            setToast('Função desativada para visitantes.');
+            setToast('Função de upload desativada para visitantes.');
             return null;
         }
         try {
@@ -551,16 +579,70 @@ const App: React.FC = () => {
         }
     };
 
-    const handleSaveLook = () => {
-        if (generatedImage && wornItems.length > 0) {
+    const handleSaveLook = async () => {
+        if (!generatedImage || wornItems.length === 0 || !session || !profile) return;
+    
+        // Handle visitor mode: save locally for the session
+        if (session.user.id.startsWith('mock_')) {
             const newLook: SavedLook = {
                 id: `look_${Date.now()}`,
                 image: generatedImage,
                 items: wornItems,
             };
             setSavedLooks(prevLooks => [newLook, ...prevLooks]);
-            setConfirmationMessage('Look salvo com sucesso na sua galeria!');
+            setConfirmationMessage('Look salvo localmente para esta sessão!');
             setCurrentScreen(Screen.Confirmation);
+            setToast('Faça login para salvar looks permanentemente.');
+            setTimeout(() => setToast(null), 4000);
+            return;
+        }
+    
+        setIsLoading(true);
+        setLoadingMessage('Salvando seu look...');
+        setError(null);
+    
+        try {
+            // 1. Upload the generated image (data URL) to Supabase Storage
+            const publicUrl = await uploadImage('looks', generatedImage);
+            if (!publicUrl) {
+                throw new Error('Falha ao fazer upload da imagem do look.');
+            }
+    
+            // 2. Prepare the data for insertion
+            const lookData = {
+                user_id: session.user.id,
+                image_url: publicUrl,
+                items: wornItems, // Supabase client handles JSON stringification
+            };
+    
+            // 3. Insert into the 'saved_looks' table
+            const { data: newSavedLook, error } = await supabase
+                .from('saved_looks')
+                .insert(lookData)
+                .select()
+                .single();
+    
+            if (error) throw error;
+    
+            // 4. Update local state with the new look from the database
+            const lookToAdd: SavedLook = {
+                id: newSavedLook.id,
+                image: newSavedLook.image_url,
+                items: newSavedLook.items,
+            };
+            setSavedLooks(prevLooks => [lookToAdd, ...prevLooks]);
+    
+            // 5. Show confirmation
+            setConfirmationMessage('Look salvo com sucesso no seu perfil!');
+            setCurrentScreen(Screen.Confirmation);
+    
+        } catch (err: any) {
+            console.error("Error saving look:", err);
+            setError(`Não foi possível salvar o look: ${err.message}`);
+            setCurrentScreen(Screen.Result); // Go back to the result screen on failure
+        } finally {
+            setIsLoading(false);
+            setLoadingMessage(null);
         }
     };
 
@@ -771,8 +853,24 @@ const App: React.FC = () => {
         if (!session) {
             return <LoginScreen onContinueAsVisitor={handleContinueAsVisitor} />;
         }
+        // Handle profile fetch failure after login
+        if (!profile && error) {
+            return (
+                <div className="flex flex-col items-center justify-center h-full w-full p-6 text-white text-center animate-fadeIn bg-black">
+                    <XCircleIcon className="w-24 h-24 text-red-400 mb-6" />
+                    <h1 className="text-2xl font-bold mb-2">Falha ao Carregar Perfil</h1>
+                    <p className="text-gray-300 text-base mb-6">{error}</p>
+                    <p className="text-gray-400 text-sm mb-10 bg-gray-900 p-3 rounded-lg border border-gray-700">
+                       <strong>Dica:</strong> Este erro geralmente ocorre porque as Políticas de Segurança de Nível de Linha (RLS) não estão configuradas corretamente na sua tabela <code>profiles</code> no Supabase. Certifique-se de que os usuários autenticados tenham permissão para ler e criar seus próprios perfis.
+                    </p>
+                    <GradientButton onClick={handleSignOut}>
+                        Voltar ao Login
+                    </GradientButton>
+                </div>
+            );
+        }
         if (!profile) {
-            // Profile is being fetched or failed to fetch, show a loader
+            // Profile is being fetched, show a loader
             return <SplashScreen />;
         }
         return renderScreen();
@@ -780,7 +878,6 @@ const App: React.FC = () => {
 
     return (
         <div className="h-screen w-screen max-w-md mx-auto bg-black overflow-hidden relative shadow-2xl shadow-purple-500/30">
-            {error && <div className="absolute top-0 left-0 right-0 p-2 bg-red-500 text-white text-center z-50">{error}</div>}
             {renderContent()}
             {toast && (
                 <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-green-500/90 backdrop-blur-sm text-white px-5 py-2.5 rounded-full shadow-lg z-50 animate-fadeIn text-sm font-semibold">

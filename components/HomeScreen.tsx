@@ -1,4 +1,5 @@
 
+
 import React, { useRef, useState, useEffect } from 'react';
 import type { Category, Profile, Post } from '../types';
 import { supabase } from '../services/supabaseClient';
@@ -143,16 +144,18 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
     const container = scrollContainerRef.current;
     if (container) {
-        Array.from(container.children).forEach((child) => {
+        // FIX: Replaced Array.from().forEach with a for...of loop to resolve a TypeScript type inference issue where `child` was incorrectly typed as `unknown`.
+        for (const child of container.children) {
             observer.observe(child);
-        });
+        }
     }
 
     return () => {
         if (container) {
-            Array.from(container.children).forEach((child) => {
+            // FIX: Replaced Array.from().forEach with a for...of loop to resolve a TypeScript type inference issue where `child` was incorrectly typed as `unknown`.
+            for (const child of container.children) {
                 observer.unobserve(child);
-            });
+            }
         }
     };
   }, [isOwner]);

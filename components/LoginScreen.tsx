@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 import GradientButton from './GradientButton';
-import { FacebookIcon } from './IconComponents';
+import { FacebookIcon, GoogleIcon } from './IconComponents';
 
 interface LoginScreenProps {
     onContinueAsVisitor: () => void;
@@ -37,14 +37,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
         }
     };
     
-    const handleSocialLogin = async () => {
+    const handleSocialLogin = async (provider: 'facebook' | 'google') => {
         setLoading(true);
         setError(null);
         try {
             const { error } = await supabase.auth.signInWithOAuth({
-                provider: 'facebook',
+                provider: provider,
                 options: {
-                    redirectTo: 'https://essm-zeus.vercel.app',
+                    redirectTo: 'https://meu-estilo-45473940960.us-west1.run.app/',
                 },
             });
             if (error) throw error;
@@ -93,15 +93,25 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
                 <span className="flex-shrink mx-4 text-gray-500 text-sm">OU</span>
                 <div className="flex-grow border-t border-gray-700"></div>
             </div>
-
-            <button
-                onClick={handleSocialLogin}
-                className="w-full flex items-center justify-center gap-3 p-4 bg-gray-900 rounded-lg border-2 border-gray-700 hover:border-blue-600 transition-colors"
-                disabled={loading}
-            >
-                <FacebookIcon className="w-6 h-6 text-[#1877F2]" />
-                <span className="font-semibold">{isSignUp ? 'Continue com Facebook' : 'Entrar com Facebook'}</span>
-            </button>
+            
+            <div className="w-full space-y-3">
+                <button
+                    onClick={() => handleSocialLogin('google')}
+                    className="w-full flex items-center justify-center gap-3 p-4 bg-gray-900 rounded-lg border-2 border-gray-700 hover:border-gray-500 transition-colors"
+                    disabled={loading}
+                >
+                    <GoogleIcon className="w-6 h-6" />
+                    <span className="font-semibold">{isSignUp ? 'Continue com Google' : 'Entrar com Google'}</span>
+                </button>
+                <button
+                    onClick={() => handleSocialLogin('facebook')}
+                    className="w-full flex items-center justify-center gap-3 p-4 bg-gray-900 rounded-lg border-2 border-gray-700 hover:border-blue-600 transition-colors"
+                    disabled={loading}
+                >
+                    <FacebookIcon className="w-6 h-6 text-[#1877F2]" />
+                    <span className="font-semibold">{isSignUp ? 'Continue com Facebook' : 'Entrar com Facebook'}</span>
+                </button>
+            </div>
             
             <div className="my-4 text-center text-sm">
                 <button onClick={onContinueAsVisitor} className="font-semibold text-gray-400 hover:text-white underline transition-colors">
