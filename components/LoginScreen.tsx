@@ -1,5 +1,3 @@
-
-
 // FIX: Replaced placeholder content with a functional LoginScreen component.
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
@@ -56,7 +54,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
 
     return (
         <div className="flex flex-col items-center justify-center h-full w-full bg-black text-white p-6 animate-fadeIn">
-            <img src="https://i.postimg.cc/htGw97By/Sem-Ti-tulo-1.png" alt="MEU ESTILO Logo" className="w-24 h-auto mb-8" />
+            <img src="https://i.postimg.cc/htGw97By/Sem-Ti-ulo-1.png" alt="MEU ESTILO Logo" className="w-24 h-auto mb-8" />
             
             <h1 className="text-3xl font-bold mb-2">{isSignUp ? 'Crie sua Conta' : 'Bem-vindo de Volta!'}</h1>
             <p className="text-gray-400 mb-8">{isSignUp ? 'Comece sua jornada de estilo.' : 'Faça login para continuar.'}</p>
@@ -88,6 +86,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
             </form>
 
             
+            {/*
             <div className="my-6 flex items-center w-full">
                 <div className="flex-grow border-t border-gray-700"></div>
                 <span className="flex-shrink mx-4 text-gray-500 text-sm">OU</span>
@@ -112,6 +111,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
                     <span className="font-semibold">{isSignUp ? 'Continue com Facebook' : 'Entrar com Facebook'}</span>
                 </button>
             </div>
+            */}
             
             
             <div className="my-4 text-center text-sm">
