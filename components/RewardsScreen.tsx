@@ -63,7 +63,7 @@ const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
                 <div className="text-center mb-4">
                     <img src="https://i.postimg.cc/wjyHYD8S/moeda.png" alt="Recompensas" className="w-16 h-16 mx-auto mb-2"/>
                     <p className="text-[var(--text-tertiary)]">
-                        Ganhe pontos usando itens de cada coleção. Alcance 1000 pontos para desbloquear uma recompensa exclusiva!
+                        Ganhe pontos usando itens de cada marca. Alcance 1000 pontos para desbloquear uma recompensa exclusiva!
                     </p>
                 </div>
 

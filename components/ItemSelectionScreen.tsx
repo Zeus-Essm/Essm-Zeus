@@ -1,6 +1,7 @@
 
 
 
+
 import React, { useMemo, useState, useRef } from 'react';
 import type { Item, MarketplaceType } from '../types';
 import { ITEMS } from '../constants';
@@ -45,9 +46,6 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
     setQuickViewItem(null);
   };
 
-  const buttonText = collectionType === 'fashion' ? 'PROVAR' : 'REPOSTAR';
-
-
   return (
     <>
       <div className="w-full h-full flex flex-col text-[var(--text-primary)] animate-fadeIn bg-[var(--bg-main)]">
@@ -82,7 +80,7 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
                             onClick={() => onItemSelect(item)}
                             className="flex-grow text-xs text-center font-bold uppercase tracking-wider py-2 px-2 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] hover:bg-yellow-500 transition-colors transform hover:scale-105"
                         >
-                            {buttonText}
+                            {collectionType === 'fashion' || item.isTryOn ? 'PROVAR' : 'REPOSTAR'}
                         </button>
                         <button
                             onClick={() => onAddToCart(item)}

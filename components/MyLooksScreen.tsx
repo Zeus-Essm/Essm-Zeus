@@ -2,7 +2,7 @@
 
 import React from 'react';
 import Header from './Header';
-import { LooksIcon, ShareIcon, ShoppingBagIcon, UploadIcon } from './IconComponents';
+import { BookmarkIcon, ShareIcon, ShoppingBagIcon, UploadIcon } from './IconComponents';
 import type { SavedLook, Item } from '../types';
 
 interface MyLooksScreenProps {
@@ -53,7 +53,7 @@ const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClic
 
   return (
     <div className="w-full h-full flex flex-col text-[var(--text-primary)] animate-fadeIn bg-[var(--bg-main)]">
-      <Header title="Meus Looks" onBack={onBack} />
+      <Header title="Itens Salvos" onBack={onBack} />
       <div className="flex-grow pt-16 overflow-y-auto">
         {looks.length > 0 ? (
           <div className="space-y-4 p-2">
@@ -110,10 +110,10 @@ const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClic
           </div>
         ) : (
           <div className="flex-grow h-full flex flex-col items-center justify-center text-center p-8">
-            <LooksIcon className="w-24 h-24 text-[var(--accent-primary)]/70 mb-6" />
-            <h2 className="text-2xl font-bold">Nenhum Look Salvo</h2>
+            <BookmarkIcon className="w-24 h-24 text-[var(--accent-primary)]/70 mb-6" />
+            <h2 className="text-2xl font-bold">Nenhum Item Salvo</h2>
             <p className="text-[var(--text-secondary)] mt-2">
-              Looks que você salva aparecem aqui para você rever e comprar quando quiser.
+              Itens que você salva aparecem aqui para você rever e comprar quando quiser.
             </p>
           </div>
         )}

@@ -60,7 +60,7 @@ const CartScreen: React.FC<CartScreenProps> = ({ cartItems, onBack, onRemoveItem
             <ShoppingBagIcon className="w-24 h-24 text-zinc-600 mb-6" />
             <h2 className="text-2xl font-bold">Seu Carrinho está Vazio</h2>
             <p className="text-[var(--text-secondary)] mt-2">
-              Adicione itens das coleções para vê-los aqui.
+              Adicione itens do mercado para vê-los aqui.
             </p>
           </div>
         )}

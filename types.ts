@@ -4,6 +4,7 @@ export enum Screen {
   Splash,
   Login,
   Home,
+  Settings,
   SubCategorySelection, // Nova tela
   ItemSelection,
   Generating,
@@ -40,6 +41,8 @@ export interface Item {
   category: string;
   image: string;
   price: number;
+  isTryOn?: boolean; // Can this item be virtually tried on?
+  beautyType?: 'lipstick' | 'eyeshadow' | 'wig' | 'general'; // Specific type for beauty items
 }
 
 // Novo tipo para um post no feed

@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+
+import React, { useState } from 'react';
 import type { Post, Item, Story, MarketplaceType, Category } from '../types';
 import { CATEGORIES } from '../constants';
 import Header from './Header';
@@ -60,53 +61,6 @@ const FeedScreen: React.FC<FeedScreenProps> = ({ posts: initialPosts, stories, p
   const [viewingPostIndex, setViewingPostIndex] = useState<number | null>(null);
   const [shoppingPost, setShoppingPost] = useState<{post: Post, type: MarketplaceType} | null>(null);
 
-  // Carousel state
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  // New featured categories list
-  const featuredCategories: Category[] = [
-      CATEGORIES.find(c => c.id === 'lv')!,
-      CATEGORIES.find(c => c.id === 'new_feeling')!,
-  ].filter(Boolean);
-  
-   // Carousel observer effect
-  useEffect(() => {
-    const container = scrollContainerRef.current;
-    if (!container || featuredCategories.length === 0) return;
-
-    const observer = new IntersectionObserver(
-        (entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const index = parseInt(entry.target.getAttribute('data-index') || '0', 10);
-                    setCurrentIndex(index);
-                }
-            });
-        },
-        {
-            root: container,
-            threshold: 0.6,
-        }
-    );
-
-    const children = Array.from(container.children);
-    children.forEach(child => {
-        if (child instanceof Element) {
-            observer.observe(child);
-        }
-    });
-
-    return () => {
-        children.forEach(child => {
-            if (child instanceof Element) {
-                observer.unobserve(child);
-            }
-        });
-    };
-  }, [featuredCategories.length]);
-
-
   const handleLike = (postId: string) => {
     setPosts(prevPosts =>
       prevPosts.map(post =>
@@ -128,30 +82,6 @@ const FeedScreen: React.FC<FeedScreenProps> = ({ posts: initialPosts, stories, p
     setShoppingPost({ post, type });
   };
   
-  const handlePrev = () => {
-    if (scrollContainerRef.current) {
-        const container = scrollContainerRef.current;
-        const newIndex = Math.max(0, currentIndex - 1);
-        const item = container.children[newIndex] as HTMLElement;
-        if (item) {
-            const scrollLeft = item.offsetLeft - container.offsetLeft - (container.offsetWidth - item.offsetWidth) / 2;
-            container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
-        }
-    }
-  };
-
-  const handleNext = () => {
-      if (scrollContainerRef.current) {
-          const container = scrollContainerRef.current;
-          const newIndex = Math.min(featuredCategories.length - 1, currentIndex + 1);
-          const item = container.children[newIndex] as HTMLElement;
-          if (item) {
-              const scrollLeft = item.offsetLeft - container.offsetLeft - (container.offsetWidth - item.offsetWidth) / 2;
-              container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
-          }
-      }
-  };
-
 
   return (
     <>
@@ -169,67 +99,6 @@ const FeedScreen: React.FC<FeedScreenProps> = ({ posts: initialPosts, stories, p
                 />
               ))}
             </div>
-          </div>
-
-          {/* Featured Section */}
-          <div className="relative border-b border-[var(--border-primary)]">
-              <h2 className="text-xl font-bold px-4 mb-3 pt-4 text-[var(--accent-primary)] text-glow tracking-wide">Destaques</h2>
-              <div
-                  ref={scrollContainerRef}
-                  className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 space-x-4 pl-4 pr-16 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-              >
-                  {featuredCategories.map((category, index) => (
-                      <div
-                          key={category.id}
-                          onClick={() => onSelectCategory(category)}
-                          className="relative flex-shrink-0 w-[85%] h-80 snap-center"
-                          data-index={index}
-                      >
-                          <div className="relative w-full h-full rounded-2xl overflow-hidden cursor-pointer group transform hover:scale-[1.02] transition-transform duration-300 shadow-lg shadow-black/30">
-                              {category.video ? (
-                                  <video 
-                                      src={category.video} 
-                                      autoPlay 
-                                      loop 
-                                      muted 
-                                      playsInline 
-                                      className="w-full h-full object-cover"
-                                  />
-                              ) : (
-                                  <img src={category.image} alt={category.name} className="w-full h-full object-cover" />
-                              )}
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-5">
-                                  <h3 className="text-4xl font-black tracking-tighter uppercase leading-tight text-glow text-white">{category.name}</h3>
-                              </div>
-                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                  <span className="text-xl font-bold border-2 border-yellow-400 text-yellow-400 rounded-full px-6 py-3">Ver</span>
-                              </div>
-                          </div>
-                      </div>
-                  ))}
-              </div>
-              {currentIndex > 0 && (
-                  <button
-                      onClick={handlePrev}
-                      className="absolute left-1 top-1/2 -translate-y-1/2 mt-2 p-2 bg-black/40 rounded-full hover:bg-black/70 backdrop-blur-sm transition-all z-10"
-                      aria-label="Anterior"
-                  >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6 text-yellow-300">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                      </svg>
-                  </button>
-              )}
-              {currentIndex < featuredCategories.length - 1 && (
-                  <button
-                      onClick={handleNext}
-                      className="absolute right-1 top-1/2 -translate-y-1/2 mt-2 p-2 bg-black/40 rounded-full hover:bg-black/70 backdrop-blur-sm transition-all z-10"
-                      aria-label="Próximo"
-                  >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6 text-yellow-300">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                      </svg>
-                  </button>
-              )}
           </div>
 
           <div className="space-y-2 pt-2">

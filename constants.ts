@@ -1,4 +1,3 @@
-
 import type { Category, Item, Post, Story } from './types';
 
 // Sub-categorias de Roupas reutilizáveis
@@ -39,26 +38,13 @@ const KID_CLOTHING_SUBCATEGORIES = [
 ];
 
 // NOVAS Sub-categorias para novos marketplaces
-const BEAUTY_SUBCATEGORIES = [
-    { id: 'sephora', name: 'Sephora', image: 'https://i.postimg.cc/k5yL5f6f/sephora-logo.jpg' },
-    { id: 'rituals', name: 'Rituals', image: 'https://i.postimg.cc/Qd11TjGT/rituals-logo.jpg' },
+const DELICIAS_DA_LEANDRA_SUBCATEGORIES = [
+    { id: 'bolos', name: 'Bolos', image: 'https://i.postimg.cc/L5BvGFbb/PHOTO-2025-07-14-23-58-55.jpg' },
 ];
 
-const SUPERMARKET_SUBCATEGORIES = [
-    { id: 'continente', name: 'Continente', image: 'https://i.postimg.cc/0j7z1bC7/continente-logo.png' },
-    { id: 'pingo', name: 'Pingo Doce', image: 'https://i.postimg.cc/W3dK9zJj/pingo-doce-logo.png' },
+const CLUB_S_SUBCATEGORIES = [
+    { id: 'pratos', name: 'Pratos', image: 'https://i.postimg.cc/XYJ6b4NT/Gemini-Generated-Image-1eva5i1eva5i1eva-1.png' },
 ];
-
-const RESTAURANT_SUBCATEGORIES = [
-    { id: 'mcdonalds', name: 'McDonald\'s', image: 'https://i.postimg.cc/pXj2R9B1/mcdonalds-logo.png' },
-    { id: 'kfc', name: 'KFC', image: 'https://i.postimg.cc/y8g90kLf/kfc-logo.png' },
-];
-
-const TECHNOLOGY_SUBCATEGORIES = [
-    { id: 'apple', name: 'Apple', image: 'https://i.postimg.cc/13jWvx11/apple-logo.png' },
-    { id: 'samsung', name: 'Samsung', image: 'https://i.postimg.cc/Kz4Y5YjB/samsung-logo.png' },
-];
-
 
 // Helper para criar subcategorias com IDs únicos
 const createSubCategories = (parentId: string, subCategories: {id: string, name: string, image: string}[]) => {
@@ -66,7 +52,7 @@ const createSubCategories = (parentId: string, subCategories: {id: string, name:
 };
 
 
-// As categorias de coleções
+// As categorias do mercado
 export const CATEGORIES: Category[] = [
   { 
     id: 'lv', 
@@ -118,31 +104,44 @@ export const CATEGORIES: Category[] = [
   },
   {
     id: 'restaurantes',
-    name: 'Restaurantes',
-    image: 'https://i.postimg.cc/W12b0kvy/restaurantes.jpg',
+    name: 'Delicias da Leandra',
+    image: 'https://i.postimg.cc/WzRfQnbd/Delicias-da-Leandra.jpg',
     type: 'restaurant',
-    subCategories: createSubCategories('restaurantes', RESTAURANT_SUBCATEGORIES)
+    subCategories: createSubCategories('restaurantes', DELICIAS_DA_LEANDRA_SUBCATEGORIES)
+  },
+  {
+    id: 'clubs',
+    name: 'Club S',
+    image: 'https://i.postimg.cc/Yq8BZhk2/Gemini-Generated-Image-dc3csmdc3csmdc3c.png',
+    type: 'restaurant',
+    subCategories: createSubCategories('clubs', CLUB_S_SUBCATEGORIES)
   },
   {
     id: 'supermercados',
-    name: 'Supermercados',
-    image: 'https://i.postimg.cc/GpcG2YKY/supermercado.jpg',
+    name: 'Kero',
+    image: 'https://i.postimg.cc/15GyPwVS/Gemini-Generated-Image-euq60jeuq60jeuq6.png',
     type: 'supermarket',
-    subCategories: createSubCategories('supermercados', SUPERMARKET_SUBCATEGORIES)
+    subCategories: [
+        { id: 'supermercados_gasosa', name: 'Gasosa', image: 'https://i.postimg.cc/tC39yWny/Gemini-Generated-Image-henwbohenwbohenw.png' }
+    ]
   },
   {
     id: 'beleza',
-    name: 'Beleza',
-    image: 'https://i.postimg.cc/cHyvJ7J9/beleza.jpg',
+    name: 'Bonita',
+    image: 'https://i.postimg.cc/k5QnMSp1/Gemini-Generated-Image-a9r49ea9r49ea9r4.png',
     type: 'beauty',
-    subCategories: createSubCategories('beleza', BEAUTY_SUBCATEGORIES)
+    subCategories: [
+        { id: 'beleza_linda', name: 'Linda', image: 'https://i.postimg.cc/YS6p2Fsd/Gemini-Generated-Image-fz7zo1fz7zo1fz7z.png' }
+    ]
   },
   {
     id: 'tecnologia',
-    name: 'Tecnologia',
-    image: 'https://i.postimg.cc/6pM0Y4jN/tecnologia.jpg',
+    name: 'Apple',
+    image: 'https://i.postimg.cc/rFZ2qjFs/Gemini_Generated_Image_uvwovcuvwovcuvwo.png',
     type: 'technology',
-    subCategories: createSubCategories('tecnologia', TECHNOLOGY_SUBCATEGORIES)
+    subCategories: [
+        { id: 'tecnologia_Iphone', name: 'Iphone', image: 'https://i.postimg.cc/ZKszJHKK/Gemini_Generated_Image_lrcnu0lrcnu0lrcn.png' }
+    ]
   }
 ];
 
@@ -190,19 +189,49 @@ export const ITEMS: Item[] = [
     { id: 'item-tshirt-1', name: 't-shirt 1', description: 'T-shirt exclusiva da coleção Louis Vuitton.', category: 'lv_masculino_tshirt', image: 'https://i.postimg.cc/TPR4dpBg/louis-vuitton-camiseta-de-algodao-bordada-HTY18-WNPG651-PM2-Front-view.webp', price: 10000 },
     { id: 'item-tshirt-2', name: 't-shirt 2', description: 'T-shirt exclusiva da coleção Louis Vuitton.', category: 'lv_masculino_tshirt', image: 'https://i.postimg.cc/6pVPxdbB/Louis-Vuitton-LV-Monogram-Gradient-Black-White-T-Shirt-Crepslocker-Front-1.webp', price: 10000 },
     // NOVOS ITENS DE NOVAS CATEGORIAS
-    // Restaurantes - McDonald's
-    { id: 'item-mc-1', name: 'Big Mac', description: 'O clássico hambúrguer do McDonald\'s com dois hambúrgueres, alface, queijo, molho especial, cebola e picles num pão com gergelim.', category: 'restaurantes_mcdonalds', image: 'https://i.postimg.cc/BbrHJS59/big-mac.png', price: 35 },
-    { id: 'item-mc-2', name: 'McFlurry Oreo', description: 'Cremoso sorvete de baunilha com pedaços de bolacha Oreo.', category: 'restaurantes_mcdonalds', image: 'https://i.postimg.cc/J0BwLzWq/mcflurry.png', price: 15 },
-    // Restaurantes - KFC
-    { id: 'item-kfc-1', name: 'Balde Original 8 Pcs', description: '8 pedaços da receita original do Coronel Sanders.', category: 'restaurantes_kfc', image: 'https://i.postimg.cc/WbF3h3hC/kfc-bucket.png', price: 80 },
-    // Supermercados - Continente
-    { id: 'item-cont-1', name: 'Leite Mimosa Meio-Gordo', description: 'Pack de 6 garrafas de 1L de leite UHT Meio-Gordo.', category: 'supermercados_continente', image: 'https://i.postimg.cc/L85Y23j7/leite-mimosa.png', price: 5.49 },
-    // Supermercados - Pingo Doce
-    { id: 'item-pingo-1', name: 'Maçã Royal Gala', description: 'Maçã Royal Gala fresca e crocante, vendida ao Kg.', category: 'supermercados_pingo', image: 'https://i.postimg.cc/7LBkDP1S/maca-royal-gala.png', price: 1.99 },
-    // Beleza - Sephora
-    { id: 'item-sephora-1', name: 'Fenty Beauty Gloss Bomb', description: 'Brilho labial universal para um acabamento explosivo.', category: 'beleza_sephora', image: 'https://i.postimg.cc/VvPq8fQ9/fenty-gloss.png', price: 120 },
-    // Tecnologia - Apple
-    { id: 'item-apple-1', name: 'iPhone 15 Pro', description: 'O mais recente smartphone da Apple com chip A17 Pro.', category: 'tecnologia_apple', image: 'https://i.postimg.cc/y8B1YtSc/iphone-15-pro.png', price: 9999 },
+    // Delicias da Leandra - Bolos
+    { id: 'item-bolo-1', name: 'Bolo 1', description: 'Bolo artesanal delicioso, feito com ingredientes frescos.', category: 'restaurantes_bolos', image: 'https://i.postimg.cc/L5BvGFbb/PHOTO-2025-07-14-23-58-55.jpg', price: 20000 },
+    { id: 'item-bolo-2', name: 'Bolo 2', description: 'Bolo de festa espetacular para celebrar momentos especiais.', category: 'restaurantes_bolos', image: 'https://i.postimg.cc/VvB42PVh/PHOTO-2025-03-03-19-26-45.jpg', price: 100000 },
+    // Club S - Pratos
+    { id: 'item-prato-1', name: 'prato 1', description: 'Prato delicioso do Club S.', category: 'clubs_pratos', image: 'https://i.postimg.cc/XYJ6b4NT/Gemini-Generated-Image-1eva5i1eva5i1eva-1.png', price: 20000 },
+    { id: 'item-prato-2', name: 'prato 2', description: 'Prato especial do Club S.', category: 'clubs_pratos', image: 'https://i.postimg.cc/HsqHQjwp/Gemini-Generated-Image-sa7g1ysa7g1ysa7g.png', price: 100000 },
+    // Kero - Gasosa
+    { id: 'item-kero-gasosa-1', name: 'produ 1', description: 'Produto de qualidade do Kero.', category: 'supermercados_gasosa', image: 'https://i.postimg.cc/tC39yWny/Gemini-Generated-Image-henwbohenwbohenw.png', price: 20000 },
+    { id: 'item-kero-gasosa-2', name: 'produ 2', description: 'Produto exclusivo do Kero.', category: 'supermercados_gasosa', image: 'https://i.postimg.cc/28QCmhLC/Gemini-Generated-Image-uei117uei117uei1.png', price: 100000 },
+    // Bonita - Linda (UPDATED FOR VIRTUAL TRY-ON)
+    { 
+      id: 'item-beleza-linda-1',
+      name: 'Batom Vermelho Intenso',
+      description: 'Batom vermelho vibrante com acabamento matte para um look poderoso.',
+      category: 'beleza_linda',
+      image: 'https://i.postimg.cc/YS6p2Fsd/Gemini-Generated-Image-fz7zo1fz7zo1fz7z.png',
+      price: 150,
+      isTryOn: true,
+      beautyType: 'lipstick'
+    },
+    {
+      id: 'item-beleza-linda-2',
+      name: 'Peruca Loira Ondulada',
+      description: 'Peruca loira com ondas naturais e aparência realista para uma mudança de visual instantânea.',
+      category: 'beleza_linda',
+      image: 'https://i.postimg.cc/BvTqZFVN/Gemini-Generated-Image-3ps4k73ps4k73ps4.png',
+      price: 1200,
+      isTryOn: true,
+      beautyType: 'wig'
+    },
+    {
+      id: 'item-beleza-linda-3',
+      name: 'Sombra Noite Estrelada',
+      description: 'Paleta de sombras com tons escuros e brilhantes para um olhar marcante.',
+      category: 'beleza_linda',
+      image: 'https://i.postimg.cc/J0bJbJgQ/Gemini-Generated-Image-2.png',
+      price: 250,
+      isTryOn: true,
+      beautyType: 'eyeshadow'
+    },
+    // Apple - Iphone
+    { id: 'item-tec-iphone-1', name: 'Iphone 1', description: 'Iphone exclusivo da Apple.', category: 'tecnologia_Iphone', image: 'https://i.postimg.cc/ZKszJHKK/Gemini_Generated_Image_lrcnu0lrcnu0lrcn.png', price: 20000 },
+    { id: 'item-tec-iphone-2', name: 'Iphone 2', description: 'Iphone exclusivo da Apple.', category: 'tecnologia_Iphone', image: 'https://i.postimg.cc/ncSfn2cL/Gemini_Generated_Image_c2upgec2upgec2up.png', price: 100000 },
 ];
 
 export const INITIAL_STORIES: Story[] = [

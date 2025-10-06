@@ -97,7 +97,16 @@ export const expandImageToSquare = async (userImage: string): Promise<string> =>
             },
         });
 
-        for (const part of response.candidates[0].content.parts) {
+        const candidate = response.candidates?.[0];
+        if (!candidate || !candidate.content || !candidate.content.parts) {
+            const blockReason = response.promptFeedback?.blockReason || candidate?.finishReason;
+            if (blockReason) {
+                throw new Error(`Falha ao expandir a imagem. Motivo: ${blockReason}. Tente uma imagem diferente.`);
+            }
+            throw new Error('A IA não retornou uma imagem expandida válida. A resposta pode ter sido bloqueada ou estar vazia.');
+        }
+
+        for (const part of candidate.content.parts) {
             if (part.inlineData) {
                 const base64ImageBytes: string = part.inlineData.data;
                 return `data:${part.inlineData.mimeType};base64,${base64ImageBytes}`;
@@ -111,6 +120,116 @@ export const expandImageToSquare = async (userImage: string): Promise<string> =>
             throw new Error(`Falha ao expandir a imagem: ${error.message}`);
         }
         throw new Error('Falha ao expandir a imagem. Verifique o console para mais detalhes.');
+    }
+};
+
+const getBeautyPrompt = (item: Item): string => {
+       const basePrompt = `Sua tarefa é ser um especialista em edição de imagem de alta precisão e maquiagem/estilo virtual. O objetivo é aplicar o produto da IMAGEM 2 na pessoa da IMAGEM 1 de forma ultra-realista.
+
+REGRA MAIS IMPORTANTE E INQUEBRÁVEL: FIDELIDADE TOTAL À ILUMINAÇÃO
+A iluminação da foto original (IMAGEM 1) é a verdade absoluta. A nova aplicação DEVE parecer que foi fotografada no mesmo local, no mesmo instante e com a mesma câmera. Replique EXATAMENTE:
+- **Direção e Suavidade das Sombras:** As sombras projetadas pelo produto devem corresponder perfeitamente às sombras existentes no rosto e no ambiente.
+- **Brilhos e Reflexos:** Qualquer brilho de fonte de luz deve ser aplicado de forma realista ao produto.
+- **Temperatura de Cor e Contraste:** O produto não pode parecer artificialmente mais claro, escuro ou com cor diferente do resto da cena.
+
+IMAGENS FORNECIDAS:
+- IMAGEM 1: A foto da pessoa, com suas condições de iluminação.
+- IMAGEM 2: O produto a ser aplicado: '${item.name}'.
+
+REGRAS ADICIONAIS:
+1.  **NÃO CORTE A IMAGEM:** A imagem final DEVE ter **exatamente as mesmas dimensões da IMAGEM 1 original.**
+2.  **PRESERVAÇÃO TOTAL:** O rosto (exceto a área de aplicação), corpo, roupas, pose e fundo devem permanecer COMPLETAMENTE inalterados.`;
+
+       switch (item.beautyType) {
+           case 'lipstick':
+               return `${basePrompt}
+
+**MISSÃO ESPECÍFICA: APLICAR BATOM**
+1.  **Identifique os Lábios:** Localize com precisão os lábios da pessoa na IMAGEM 1.
+2.  **Aplicação Realista:** Aplique a cor e a textura do batom da IMAGEM 2 aos lábios. Respeite os contornos naturais, incluindo o arco do cupido. A cobertura deve ser uniforme mas com variações sutis de luz e sombra para parecer real.
+3.  **Integração Perfeita:** O acabamento (matte, brilhante, etc.) deve interagir realisticamente com a luz da foto.`;
+           case 'wig':
+               return `${basePrompt}
+
+**MISSÃO ESPECÍFICA: APLICAR PERUCA**
+1.  **Posicionamento Natural:** Coloque a peruca da IMAGEM 2 na cabeça da pessoa. A linha do cabelo da peruca deve parecer natural e se fundir de forma crível com a testa.
+2.  **Cobertura Total:** O cabelo original da pessoa deve ser completamente coberto pela peruca.
+3.  **Sombreamento Crítico:** Crie sombras realistas que a peruca projetaria no rosto, pescoço e ombros da pessoa, consistentes com a fonte de luz da IMAGEM 1.
+4.  **Fios Realistas:** Certifique-se de que alguns fios de cabelo finos e imperfeições sutis estejam presentes para evitar uma aparência de "capacete".`;
+           case 'eyeshadow':
+               return `${basePrompt}
+
+**MISSÃO ESPECÍFICA: APLICAR SOMBRA DE OLHOS**
+1.  **Identifique os Olhos:** Localize com precisão as pálpebras e a área dos olhos da pessoa na IMAGEM 1.
+2.  **Aplicação Suave:** Aplique os tons de sombra da IMAGEM 2 nas pálpebras, esfumando as bordas para uma transição suave com a pele. A aplicação deve seguir o formato natural dos olhos.
+3.  **Não Altere Outros Traços:** Mantenha cílios, sobrancelhas e a cor dos olhos inalterados, a menos que seja para integrar a sombra de forma mais realista (ex: uma leve sombra nos cílios inferiores).`;
+           default:
+               return `${basePrompt}
+
+**MISSÃO:** Aplique o produto de beleza da IMAGEM 2 na pessoa da IMAGEM 1 da forma mais realista possível.`;
+       }
+};
+
+export const generateBeautyTryOnImage = async (userImage: string, newItem: Item): Promise<string> => {
+    if (!process.env.API_KEY) {
+        console.warn("API_KEY is not set. Returning original image as a placeholder.");
+        return new Promise(resolve => setTimeout(() => resolve(userImage), 2000));
+    }
+
+    try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        
+        const { base64: userBase64, mimeType: userMimeType } = getBase64Parts(userImage);
+        const itemDataUrl = await imageUrlToDataUrl(newItem.image);
+        const { base64: itemBase64, mimeType: itemMimeType } = getBase64Parts(itemDataUrl);
+
+        const promptText = getBeautyPrompt(newItem);
+
+        const response: GenerateContentResponse = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: {
+                parts: [
+                    {
+                        inlineData: { data: userBase64, mimeType: userMimeType },
+                    },
+                    {
+                        inlineData: { data: itemBase64, mimeType: itemMimeType },
+                    },
+                    {
+                        text: promptText,
+                    },
+                ],
+            },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
+        });
+
+        const candidate = response.candidates?.[0];
+        if (!candidate || !candidate.content || !candidate.content.parts) {
+            const blockReason = response.promptFeedback?.blockReason || candidate?.finishReason;
+            if (blockReason) {
+                throw new Error(`A IA não retornou uma imagem. Motivo: ${blockReason}. Tente uma imagem ou item diferente.`);
+            }
+            throw new Error('A IA não retornou uma imagem válida. A resposta pode ter sido bloqueada ou estar vazia.');
+        }
+
+
+        for (const part of candidate.content.parts) {
+            if (part.inlineData) {
+                const base64ImageBytes: string = part.inlineData.data;
+                return `data:${part.inlineData.mimeType};base64,${base64ImageBytes}`;
+            }
+        }
+
+        throw new Error('A IA não retornou uma imagem. Tente novamente.');
+
+    } catch (error) {
+        console.error('Error calling Gemini API for beauty try-on:', error);
+        if (error instanceof Error) {
+            throw new Error(`Falha ao aplicar o produto de beleza: ${error.message}`);
+        }
+        throw new Error('Falha ao aplicar o produto de beleza. Verifique o console para mais detalhes.');
     }
 };
 
@@ -185,7 +304,16 @@ OUTRAS REGRAS CRÍTICAS:
       },
     });
 
-    for (const part of response.candidates[0].content.parts) {
+    const candidate = response.candidates?.[0];
+    if (!candidate || !candidate.content || !candidate.content.parts) {
+        const blockReason = response.promptFeedback?.blockReason || candidate?.finishReason;
+        if (blockReason) {
+            throw new Error(`A IA não retornou uma imagem. Motivo: ${blockReason}. Tente uma imagem ou item diferente.`);
+        }
+        throw new Error('A IA não retornou uma imagem válida. A resposta pode ter sido bloqueada ou estar vazia.');
+    }
+
+    for (const part of candidate.content.parts) {
       if (part.inlineData) {
         const base64ImageBytes: string = part.inlineData.data;
         return `data:${part.inlineData.mimeType};base64,${base64ImageBytes}`;

@@ -13,7 +13,7 @@ const SubCategorySelectionScreen: React.FC<SubCategorySelectionScreenProps> = ({
     <div className="w-full h-full flex flex-col text-[var(--text-primary)] animate-fadeIn bg-[var(--bg-main)]">
       <Header title={node.name} onBack={onBack} />
       <main className="flex-grow overflow-y-auto pt-20 p-4">
-        <h2 className="text-2xl font-bold mb-4 text-[var(--text-tertiary)]">Escolha uma coleção</h2>
+        <h2 className="text-2xl font-bold mb-4 text-[var(--text-tertiary)]">Escolha uma seção</h2>
         <div className="grid grid-cols-2 gap-4 pb-4">
             {(node.subCategories || []).map((subCategory) => (
               <div

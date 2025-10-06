@@ -1,17 +1,19 @@
 
 
+
 import React from 'react';
 // FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
 import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType } from './types';
-import { generateTryOnImage, expandImageToSquare } from './services/geminiService';
+import { generateTryOnImage, expandImageToSquare, generateBeautyTryOnImage } from './services/geminiService';
 import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, ITEMS } from './constants';
 
 // Screen Components
 import SplashScreen from './components/SplashScreen';
 import LoginScreen from './components/LoginScreen';
 import HomeScreen from './components/HomeScreen';
+import SettingsScreen from './components/SettingsScreen';
 import SubCategorySelectionScreen from './components/SubCategorySelectionScreen';
 import ItemSelectionScreen from './components/ItemSelectionScreen';
 import LoadingIndicator from './components/LoadingIndicator';
@@ -266,7 +268,7 @@ const App: React.FC = () => {
         const mockProfile: Profile = {
             id: 'mock_user_123',
             username: 'BV (blue sky)',
-            bio: 'Bem-vindo(a) ao MEU ESTILO! Explore as coleções e prove roupas virtualmente.',
+            bio: 'Bem-vindo(a) ao MEU ESTILO! Explore o mercado e prove roupas virtualmente.',
             profile_image_url: 'https://i.postimg.cc/pL7M6Vgv/bv.jpg',
             cover_image_url: 'https://i.postimg.cc/wTQh27Rt/Captura-de-Tela-2025-09-19-a-s-2-10-14-PM.png',
         };
@@ -422,7 +424,7 @@ const App: React.FC = () => {
 
     const handleSelectCategory = (category: Category) => {
         setNavigationStack([category]);
-        if (!userImage && category.type === 'fashion') {
+        if (!userImage && (category.type === 'fashion' || category.type === 'beauty')) {
             setCurrentScreen(Screen.ImageSourceSelection);
             return;
         }
@@ -464,15 +466,31 @@ const App: React.FC = () => {
     const handleItemSelect = async (item: Item) => {
         const itemType = getCategoryTypeFromItem(item);
 
-        if (itemType === 'fashion') {
-            if (!userImage) return;
-            const baseImage = generatedImage || userImage;
+        if (itemType === 'fashion' || item.isTryOn) {
+            if (!userImage) {
+                 if (profile) setUserImage(profile.profile_image_url); // Fallback to profile picture if no image is set
+                 else {
+                    setError("Por favor, carregue uma foto primeiro.");
+                    setCurrentScreen(Screen.ImageSourceSelection);
+                    return;
+                 }
+            }
+            const baseImage = generatedImage || userImage!;
             const existingItems = [...wornItems];
             setLoadingMessage(null);
             setIsLoading(true);
             setError(null);
             try {
-                const newImage = await generateTryOnImage(baseImage, item, existingItems);
+                // Determine which AI service to call
+                const generatorFunction = item.isTryOn && itemType === 'beauty' 
+                    ? (userImg: string, newItem: Item) => generateBeautyTryOnImage(userImg, newItem)
+                    : generateTryOnImage;
+
+                // The beauty function doesn't need existingItems, so we adapt the call signature
+                const newImage = await (generatorFunction === generateTryOnImage
+                    ? generatorFunction(baseImage, item, existingItems)
+                    : (generatorFunction as (userImg: string, newItem: Item) => Promise<string>)(baseImage, item));
+                
                 setGeneratedImage(newImage);
                 setImageHistory(prev => [...prev, newImage]);
                 setWornItems(prevItems => [...prevItems, item]);
@@ -484,12 +502,12 @@ const App: React.FC = () => {
                 setIsLoading(false);
             }
         } else {
-            // New "repost" logic for non-fashion items
+            // "repost" logic for non-fashion, non-try-on items
             if (profile) {
                 const newPost: Post = {
                     id: `post_${Date.now()}`,
                     user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || `https://i.pravatar.cc/150?u=${profile.id}` },
-                    image: item.image, // Use item image for non-fashion posts
+                    image: item.image,
                     items: [item],
                     likes: 0,
                     isLiked: false,
@@ -748,6 +766,7 @@ const App: React.FC = () => {
 
     const handleNavigateToMyLooks = () => setCurrentScreen(Screen.MyLooks);
     const handleNavigateToRewards = () => setCurrentScreen(Screen.Rewards);
+    const handleNavigateToSettings = () => setCurrentScreen(Screen.Settings);
 
     const handleNavigateToProfile = () => {
         setViewedProfileId(null);
@@ -787,6 +806,7 @@ const App: React.FC = () => {
                             onNavigateToMyLooks={handleNavigateToMyLooks}
                             onNavigateToCart={handleNavigateToCart}
                             onNavigateToRewards={handleNavigateToRewards}
+                            onNavigateToSettings={handleNavigateToSettings}
                             onStartTryOn={handleStartTryOn}
                             onSignOut={handleSignOut}
                             isCartAnimating={isCartAnimating}
@@ -796,6 +816,10 @@ const App: React.FC = () => {
                             posts={posts}
                             onItemClick={handleItemClick}
                             onViewProfile={handleViewProfile}
+                        />;
+            case Screen.Settings:
+                return <SettingsScreen 
+                            onBack={handleNavigateToProfile}
                             theme={theme}
                             onToggleTheme={toggleTheme}
                         />;
