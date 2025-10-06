@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import Header from './Header';
 import { LooksIcon, ShareIcon, ShoppingBagIcon, UploadIcon } from './IconComponents';
@@ -51,13 +52,13 @@ const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClic
 
 
   return (
-    <div className="w-full h-full flex flex-col text-white animate-fadeIn bg-black">
+    <div className="w-full h-full flex flex-col text-[var(--text-primary)] animate-fadeIn bg-[var(--bg-main)]">
       <Header title="Meus Looks" onBack={onBack} />
       <div className="flex-grow pt-16 overflow-y-auto">
         {looks.length > 0 ? (
           <div className="space-y-4 p-2">
             {looks.map(look => (
-              <div key={look.id} className="bg-gray-900 rounded-lg overflow-hidden flex flex-col">
+              <div key={look.id} className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg overflow-hidden flex flex-col">
                 {/* Image */}
                 <div className="w-full bg-black">
                     <img src={look.image} alt="Look salvo" className="w-full h-auto" />
@@ -65,13 +66,13 @@ const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClic
 
                 {/* Items List */}
                 <div className="p-4 text-sm">
-                    <h3 className="font-bold mb-2 text-gray-200">Itens neste look:</h3>
+                    <h3 className="font-bold mb-2 text-[var(--accent-primary)] opacity-90">Itens neste look:</h3>
                     <ul className="list-disc list-inside space-y-1">
                         {look.items.map(item => (
                              <li key={item.id}>
                                 <button
                                     onClick={() => onItemClick(item)}
-                                    className="text-gray-300 hover:text-white hover:underline text-left"
+                                    className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:underline text-left"
                                 >
                                     {item.name}
                                 </button>
@@ -81,24 +82,24 @@ const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClic
                 </div>
 
                  {/* Actions */}
-                <div className="p-3 flex gap-2 border-t border-gray-800 bg-gray-900/50">
+                <div className="p-3 flex gap-2 border-t border-[var(--border-primary)] bg-black/50">
                     <button
                         onClick={() => onBuyLook(look.items)}
-                        className="flex-1 flex items-center justify-center text-white font-bold py-2.5 px-4 rounded-lg bg-blue-500 hover:bg-blue-600 transition-colors"
+                        className="flex-1 flex items-center justify-center text-[var(--accent-primary-text)] font-bold py-2.5 px-4 rounded-lg bg-[var(--accent-primary)] hover:bg-yellow-500 transition-colors"
                     >
                         <ShoppingBagIcon className="w-5 h-5 mr-2" />
                         Comprar
                     </button>
                     <button
                         onClick={() => onPostLook(look)}
-                        className="flex-1 flex items-center justify-center text-white font-bold py-2.5 px-4 rounded-lg bg-green-600 hover:bg-green-700 transition-colors"
+                        className="flex-1 flex items-center justify-center text-[var(--text-primary)] font-bold py-2.5 px-4 rounded-lg bg-[var(--bg-tertiary)] hover:brightness-95 transition-colors"
                     >
                         <UploadIcon className="w-5 h-5 mr-2" />
                         Postar
                     </button>
                     <button
                         onClick={() => handleShare(look)}
-                        className="flex-1 flex items-center justify-center text-white font-bold py-2.5 px-4 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors"
+                        className="flex-1 flex items-center justify-center text-[var(--text-primary)] font-bold py-2.5 px-4 rounded-lg bg-[var(--bg-tertiary)] hover:brightness-95 transition-colors"
                     >
                         <ShareIcon className="w-5 h-5 mr-2" />
                         Compartilhar
@@ -109,9 +110,9 @@ const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClic
           </div>
         ) : (
           <div className="flex-grow h-full flex flex-col items-center justify-center text-center p-8">
-            <LooksIcon className="w-24 h-24 text-blue-400 mb-6" />
+            <LooksIcon className="w-24 h-24 text-[var(--accent-primary)]/70 mb-6" />
             <h2 className="text-2xl font-bold">Nenhum Look Salvo</h2>
-            <p className="text-gray-400 mt-2">
+            <p className="text-[var(--text-secondary)] mt-2">
               Looks que você salva aparecem aqui para você rever e comprar quando quiser.
             </p>
           </div>

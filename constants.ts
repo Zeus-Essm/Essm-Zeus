@@ -38,6 +38,28 @@ const KID_CLOTHING_SUBCATEGORIES = [
     { id: 'acessorios', name: 'Acessórios', image: 'https://i.postimg.cc/jjg7FSNR/ICONS5.jpg' },
 ];
 
+// NOVAS Sub-categorias para novos marketplaces
+const BEAUTY_SUBCATEGORIES = [
+    { id: 'sephora', name: 'Sephora', image: 'https://i.postimg.cc/k5yL5f6f/sephora-logo.jpg' },
+    { id: 'rituals', name: 'Rituals', image: 'https://i.postimg.cc/Qd11TjGT/rituals-logo.jpg' },
+];
+
+const SUPERMARKET_SUBCATEGORIES = [
+    { id: 'continente', name: 'Continente', image: 'https://i.postimg.cc/0j7z1bC7/continente-logo.png' },
+    { id: 'pingo', name: 'Pingo Doce', image: 'https://i.postimg.cc/W3dK9zJj/pingo-doce-logo.png' },
+];
+
+const RESTAURANT_SUBCATEGORIES = [
+    { id: 'mcdonalds', name: 'McDonald\'s', image: 'https://i.postimg.cc/pXj2R9B1/mcdonalds-logo.png' },
+    { id: 'kfc', name: 'KFC', image: 'https://i.postimg.cc/y8g90kLf/kfc-logo.png' },
+];
+
+const TECHNOLOGY_SUBCATEGORIES = [
+    { id: 'apple', name: 'Apple', image: 'https://i.postimg.cc/13jWvx11/apple-logo.png' },
+    { id: 'samsung', name: 'Samsung', image: 'https://i.postimg.cc/Kz4Y5YjB/samsung-logo.png' },
+];
+
+
 // Helper para criar subcategorias com IDs únicos
 const createSubCategories = (parentId: string, subCategories: {id: string, name: string, image: string}[]) => {
     return subCategories.map(sc => ({ ...sc, id: `${parentId}_${sc.id}` }));
@@ -50,7 +72,8 @@ export const CATEGORIES: Category[] = [
     id: 'lv', 
     name: 'Louis Vuitton', 
     image: 'https://i.postimg.cc/xCknv8vV/pexels-rdne-6224633.jpg',
-    video: 'https://cdn-1.limewire.com/video/QmR7P4i2rTsqc9g99rM5895X3Lw9x9Y9jJ3k5t9x4f8w2q?filename=video-f0f80e72-d599-4c07-b649-14a5b51259ab-1718820876.mp4',
+    video: 'https://files.catbox.moe/ctk28a.mp4',
+    type: 'fashion',
     subCategories: [
         { id: 'lv_masculino', name: 'Masculino', image: 'https://i.postimg.cc/zD9nNvQB/homem.jpg', subCategories: createSubCategories('lv_masculino', MALE_CLOTHING_SUBCATEGORIES) },
         { id: 'lv_feminino', name: 'Feminino', image: 'https://i.postimg.cc/y8T90P8g/mulher.jpg', subCategories: createSubCategories('lv_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
@@ -61,6 +84,8 @@ export const CATEGORIES: Category[] = [
     id: 'new_feeling',
     name: 'NEW FEELING',
     image: 'https://i.postimg.cc/P5K1G2Py/new.jpg',
+    video: 'https://files.catbox.moe/joiet2.mp4',
+    type: 'fashion',
     subCategories: [
         { id: 'nf_masculino', name: 'Masculino', image: 'https://i.postimg.cc/zD9nNvQB/homem.jpg', subCategories: createSubCategories('nf_masculino', MALE_CLOTHING_SUBCATEGORIES) },
         { id: 'nf_feminino', name: 'Feminino', image: 'https://i.postimg.cc/y8T90P8g/mulher.jpg', subCategories: createSubCategories('nf_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
@@ -71,22 +96,53 @@ export const CATEGORIES: Category[] = [
     id: 'noivas',
     name: 'Noivas',
     image: 'https://i.postimg.cc/G3vH75kZ/465687536-1138426001618419-59111119315795457782-n.jpg',
+    type: 'fashion',
     subCategories: createSubCategories('noivas', FEMALE_CLOTHING_SUBCATEGORIES.filter(c => ['vestido', 'sapatos', 'acessorios'].includes(c.id)))
   },
   {
     id: 'lilas',
     name: 'Lilás',
     image: 'https://i.postimg.cc/7Z9pT8Wk/L.jpg',
+    type: 'fashion',
     subCategories: createSubCategories('lilas', FEMALE_CLOTHING_SUBCATEGORIES)
   },
   {
     id: 'adidas',
     name: 'Adidas',
     image: 'https://i.postimg.cc/LXmdq4H2/D.jpg',
+    type: 'fashion',
     subCategories: [
         { id: 'ad_masculino', name: 'Masculino', image: 'https://i.postimg.cc/zD9nNvQB/homem.jpg', subCategories: createSubCategories('ad_masculino', MALE_CLOTHING_SUBCATEGORIES) },
         { id: 'ad_feminino', name: 'Feminino', image: 'https://i.postimg.cc/y8T90P8g/mulher.jpg', subCategories: createSubCategories('ad_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
     ]
+  },
+  {
+    id: 'restaurantes',
+    name: 'Restaurantes',
+    image: 'https://i.postimg.cc/W12b0kvy/restaurantes.jpg',
+    type: 'restaurant',
+    subCategories: createSubCategories('restaurantes', RESTAURANT_SUBCATEGORIES)
+  },
+  {
+    id: 'supermercados',
+    name: 'Supermercados',
+    image: 'https://i.postimg.cc/GpcG2YKY/supermercado.jpg',
+    type: 'supermarket',
+    subCategories: createSubCategories('supermercados', SUPERMARKET_SUBCATEGORIES)
+  },
+  {
+    id: 'beleza',
+    name: 'Beleza',
+    image: 'https://i.postimg.cc/cHyvJ7J9/beleza.jpg',
+    type: 'beauty',
+    subCategories: createSubCategories('beleza', BEAUTY_SUBCATEGORIES)
+  },
+  {
+    id: 'tecnologia',
+    name: 'Tecnologia',
+    image: 'https://i.postimg.cc/6pM0Y4jN/tecnologia.jpg',
+    type: 'technology',
+    subCategories: createSubCategories('tecnologia', TECHNOLOGY_SUBCATEGORIES)
   }
 ];
 
@@ -133,6 +189,20 @@ export const ITEMS: Item[] = [
     // Louis Vuitton - Masculino - T-shirt (NOVOS)
     { id: 'item-tshirt-1', name: 't-shirt 1', description: 'T-shirt exclusiva da coleção Louis Vuitton.', category: 'lv_masculino_tshirt', image: 'https://i.postimg.cc/TPR4dpBg/louis-vuitton-camiseta-de-algodao-bordada-HTY18-WNPG651-PM2-Front-view.webp', price: 10000 },
     { id: 'item-tshirt-2', name: 't-shirt 2', description: 'T-shirt exclusiva da coleção Louis Vuitton.', category: 'lv_masculino_tshirt', image: 'https://i.postimg.cc/6pVPxdbB/Louis-Vuitton-LV-Monogram-Gradient-Black-White-T-Shirt-Crepslocker-Front-1.webp', price: 10000 },
+    // NOVOS ITENS DE NOVAS CATEGORIAS
+    // Restaurantes - McDonald's
+    { id: 'item-mc-1', name: 'Big Mac', description: 'O clássico hambúrguer do McDonald\'s com dois hambúrgueres, alface, queijo, molho especial, cebola e picles num pão com gergelim.', category: 'restaurantes_mcdonalds', image: 'https://i.postimg.cc/BbrHJS59/big-mac.png', price: 35 },
+    { id: 'item-mc-2', name: 'McFlurry Oreo', description: 'Cremoso sorvete de baunilha com pedaços de bolacha Oreo.', category: 'restaurantes_mcdonalds', image: 'https://i.postimg.cc/J0BwLzWq/mcflurry.png', price: 15 },
+    // Restaurantes - KFC
+    { id: 'item-kfc-1', name: 'Balde Original 8 Pcs', description: '8 pedaços da receita original do Coronel Sanders.', category: 'restaurantes_kfc', image: 'https://i.postimg.cc/WbF3h3hC/kfc-bucket.png', price: 80 },
+    // Supermercados - Continente
+    { id: 'item-cont-1', name: 'Leite Mimosa Meio-Gordo', description: 'Pack de 6 garrafas de 1L de leite UHT Meio-Gordo.', category: 'supermercados_continente', image: 'https://i.postimg.cc/L85Y23j7/leite-mimosa.png', price: 5.49 },
+    // Supermercados - Pingo Doce
+    { id: 'item-pingo-1', name: 'Maçã Royal Gala', description: 'Maçã Royal Gala fresca e crocante, vendida ao Kg.', category: 'supermercados_pingo', image: 'https://i.postimg.cc/7LBkDP1S/maca-royal-gala.png', price: 1.99 },
+    // Beleza - Sephora
+    { id: 'item-sephora-1', name: 'Fenty Beauty Gloss Bomb', description: 'Brilho labial universal para um acabamento explosivo.', category: 'beleza_sephora', image: 'https://i.postimg.cc/VvPq8fQ9/fenty-gloss.png', price: 120 },
+    // Tecnologia - Apple
+    { id: 'item-apple-1', name: 'iPhone 15 Pro', description: 'O mais recente smartphone da Apple com chip A17 Pro.', category: 'tecnologia_apple', image: 'https://i.postimg.cc/y8B1YtSc/iphone-15-pro.png', price: 9999 },
 ];
 
 export const INITIAL_STORIES: Story[] = [

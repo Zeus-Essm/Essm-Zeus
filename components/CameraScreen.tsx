@@ -67,7 +67,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ onPhotoTaken, onBack }) => 
   };
 
   return (
-    <div className="w-full h-full flex flex-col bg-black text-white">
+    <div className="w-full h-full flex flex-col bg-[var(--bg-main)] text-[var(--text-primary)]">
       <Header title="Tire uma Foto" onBack={onBack} />
       <div className="relative flex-grow flex items-center justify-center pt-16">
         {error ? (
@@ -84,11 +84,11 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ onPhotoTaken, onBack }) => 
         )}
         <canvas ref={canvasRef} className="hidden" />
       </div>
-      <div className="flex-shrink-0 p-4 bg-black/50 backdrop-blur-sm">
+      <div className="flex-shrink-0 p-4 bg-[var(--bg-header)] backdrop-blur-sm border-t border-[var(--border-primary)]">
         <button
           onClick={handleCapture}
           disabled={!stream}
-          className="w-20 h-20 mx-auto rounded-full border-4 border-white bg-white/30 flex items-center justify-center disabled:opacity-50 transition-transform transform active:scale-90"
+          className="w-20 h-20 mx-auto rounded-full border-4 border-[var(--accent-primary)] bg-yellow-400/20 flex items-center justify-center disabled:opacity-50 transition-transform transform active:scale-90 hover:bg-yellow-400/30"
           aria-label="Tirar foto"
         >
             <CameraIcon className="w-10 h-10 text-white" />

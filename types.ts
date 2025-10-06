@@ -1,3 +1,5 @@
+export type MarketplaceType = 'fashion' | 'beauty' | 'supermarket' | 'restaurant' | 'technology';
+
 export enum Screen {
   Splash,
   Login,
@@ -27,6 +29,7 @@ export interface Category {
   name: string;
   image: string;
   video?: string;
+  type: MarketplaceType;
   subCategories?: SubCategory[]; // Adicionado: Sub-categorias opcionais
 }
 

@@ -34,13 +34,13 @@ const LoadingIndicator: React.FC<LoadingIndicatorProps> = ({ userImage, customMe
     }, [customMessage]);
 
     return (
-        <div className="flex flex-col items-center justify-center h-full w-full text-white text-center p-6 animate-fadeIn">
-            <div className="relative w-48 h-64 rounded-2xl mb-8 animate-gradient-pulse">
+        <div className="flex flex-col items-center justify-center h-full w-full text-[var(--text-primary)] text-center p-6 animate-fadeIn">
+            <div className="relative w-48 h-64 rounded-2xl mb-8 animate-gold-pulse">
                 <img src={userImage} alt="Sua foto sendo processada" className="w-full h-full object-cover rounded-2xl" />
-                <div className="absolute inset-0 bg-gray-900/30 rounded-2xl"></div>
+                <div className="absolute inset-0 bg-black/30 rounded-2xl"></div>
             </div>
-            <h2 className="text-2xl font-bold mb-2">Gerando seu visual...</h2>
-            <p className="text-sky-300 transition-opacity duration-500">{message}</p>
+            <h2 className="text-2xl font-bold mb-2 text-glow text-[var(--accent-primary)] opacity-90">Gerando seu visual...</h2>
+            <p className="text-[var(--accent-primary)]/80 transition-opacity duration-500">{message}</p>
         </div>
     );
 };

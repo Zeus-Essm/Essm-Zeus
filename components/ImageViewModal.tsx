@@ -97,7 +97,7 @@ const ImageViewModal: React.FC<ImageViewModalProps> = ({ posts, startIndex, onCl
                                 <div className="flex flex-col items-center gap-4">
                                     <button onClick={() => onLike(post.id)} className="transform hover:scale-110 transition-transform" aria-label="Curtir">
                                         <HeartIcon 
-                                            className={`w-8 h-8 ${post.isLiked ? 'text-red-500' : 'text-white'}`} 
+                                            className={`w-8 h-8 ${post.isLiked ? 'text-yellow-400' : 'text-white'}`} 
                                             fill={post.isLiked ? 'currentColor' : 'none'}
                                         />
                                     </button>

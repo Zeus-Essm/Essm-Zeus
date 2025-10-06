@@ -1,9 +1,10 @@
 
+
 import React from 'react';
 // FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
-import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile } from './types';
+import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType } from './types';
 import { generateTryOnImage, expandImageToSquare } from './services/geminiService';
 import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, ITEMS } from './constants';
 
@@ -138,6 +139,12 @@ const assignDemoLooksToUser = (): SavedLook[] => {
         }));
 };
 
+const getCategoryTypeFromItem = (item: Item): MarketplaceType => {
+    const rootCategoryId = item.category.split('_')[0];
+    const category = CATEGORIES.find(c => c.id === rootCategoryId);
+    return category?.type || 'fashion'; // Default to fashion if not found
+};
+
 
 const App: React.FC = () => {
     // Auth & Profile state
@@ -147,12 +154,13 @@ const App: React.FC = () => {
 
     // App Navigation and UI state
     const [currentScreen, setCurrentScreen] = React.useState<Screen>(Screen.Home);
+    const [theme, setTheme] = React.useState<'light' | 'dark'>('dark');
     const [viewedProfileId, setViewedProfileId] = React.useState<string | null>(null);
     const [userImage, setUserImage] = React.useState<string | null>(null);
     const [generatedImage, setGeneratedImage] = React.useState<string | null>(null);
     const [imageHistory, setImageHistory] = React.useState<string[]>([]);
     const [navigationStack, setNavigationStack] = React.useState<(Category | SubCategory)[]>([]);
-    const [collectionIdentifier, setCollectionIdentifier] = React.useState<{id: string, name: string} | null>(null);
+    const [collectionIdentifier, setCollectionIdentifier] = React.useState<{id: string, name: string, type: MarketplaceType} | null>(null);
     const [wornItems, setWornItems] = React.useState<Item[]>([]);
     const [posts, setPosts] = React.useState<Post[]>(INITIAL_POSTS);
     const [stories, setStories] = React.useState<Story[]>(INITIAL_STORIES);
@@ -165,6 +173,16 @@ const App: React.FC = () => {
     const [error, setError] = React.useState<string | null>(null);
     const [isCartAnimating, setIsCartAnimating] = React.useState(false);
     const [isPreviewingAsVisitor, setIsPreviewingAsVisitor] = React.useState(false);
+
+    React.useEffect(() => {
+        const root = window.document.documentElement;
+        root.classList.remove('light', 'dark');
+        root.classList.add(theme);
+    }, [theme]);
+
+    const toggleTheme = () => {
+        setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+    };
 
     // Auth effect
     React.useEffect(() => {
@@ -404,14 +422,14 @@ const App: React.FC = () => {
 
     const handleSelectCategory = (category: Category) => {
         setNavigationStack([category]);
-        if (!userImage) {
+        if (!userImage && category.type === 'fashion') {
             setCurrentScreen(Screen.ImageSourceSelection);
             return;
         }
         if (category.subCategories && category.subCategories.length > 0) {
             setCurrentScreen(Screen.SubCategorySelection);
         } else {
-            setCollectionIdentifier({ id: category.id, name: category.name });
+            setCollectionIdentifier({ id: category.id, name: category.name, type: category.type });
             setCurrentScreen(Screen.ItemSelection);
         }
     };
@@ -420,7 +438,9 @@ const App: React.FC = () => {
         if (subCategory.subCategories && subCategory.subCategories.length > 0) {
             setNavigationStack(prev => [...prev, subCategory]);
         } else {
-            setCollectionIdentifier({ id: subCategory.id, name: subCategory.name });
+            const rootCategoryId = subCategory.id.split('_')[0];
+            const rootCategory = CATEGORIES.find(c => c.id === rootCategoryId);
+            setCollectionIdentifier({ id: subCategory.id, name: subCategory.name, type: rootCategory?.type || 'fashion' });
             setCurrentScreen(Screen.ItemSelection);
         }
     };
@@ -442,23 +462,44 @@ const App: React.FC = () => {
     };
 
     const handleItemSelect = async (item: Item) => {
-        if (!userImage) return;
-        const baseImage = generatedImage || userImage;
-        const existingItems = [...wornItems];
-        setLoadingMessage(null);
-        setIsLoading(true);
-        setError(null);
-        try {
-            const newImage = await generateTryOnImage(baseImage, item, existingItems);
-            setGeneratedImage(newImage);
-            setImageHistory(prev => [...prev, newImage]); // Add to history
-            setWornItems(prevItems => [...prevItems, item]);
-            setCurrentScreen(Screen.Result);
-        } catch (err: any) {
-            setError(err.message || 'An unknown error occurred.');
-            setCurrentScreen(Screen.ItemSelection);
-        } finally {
-            setIsLoading(false);
+        const itemType = getCategoryTypeFromItem(item);
+
+        if (itemType === 'fashion') {
+            if (!userImage) return;
+            const baseImage = generatedImage || userImage;
+            const existingItems = [...wornItems];
+            setLoadingMessage(null);
+            setIsLoading(true);
+            setError(null);
+            try {
+                const newImage = await generateTryOnImage(baseImage, item, existingItems);
+                setGeneratedImage(newImage);
+                setImageHistory(prev => [...prev, newImage]);
+                setWornItems(prevItems => [...prevItems, item]);
+                setCurrentScreen(Screen.Result);
+            } catch (err: any) {
+                setError(err.message || 'An unknown error occurred.');
+                setCurrentScreen(Screen.ItemSelection);
+            } finally {
+                setIsLoading(false);
+            }
+        } else {
+            // New "repost" logic for non-fashion items
+            if (profile) {
+                const newPost: Post = {
+                    id: `post_${Date.now()}`,
+                    user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || `https://i.pravatar.cc/150?u=${profile.id}` },
+                    image: item.image, // Use item image for non-fashion posts
+                    items: [item],
+                    likes: 0,
+                    isLiked: false,
+                };
+                setPosts(prevPosts => [newPost, ...prevPosts]);
+                setConfirmationMessage(`${item.name} foi postado no seu feed!`);
+                setCurrentScreen(Screen.Confirmation);
+            } else {
+                setError("Você precisa estar logado para postar.");
+            }
         }
     };
     
@@ -482,6 +523,15 @@ const App: React.FC = () => {
             setCurrentScreen(Screen.Cart);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const handleNavigateToAddMoreItems = () => {
+        if (collectionIdentifier) {
+            setCurrentScreen(Screen.ItemSelection);
+        } else {
+            // This is a fallback, but on ResultScreen, collectionIdentifier should exist.
+            handleBack(); 
         }
     };
 
@@ -683,12 +733,17 @@ const App: React.FC = () => {
     };
 
     const resetToHome = () => {
+        const fromRepost = confirmationMessage.includes('postado no seu feed');
         setGeneratedImage(userImage);
         setWornItems([]);
         setImageHistory(userImage ? [userImage] : []);
         setNavigationStack([]);
         setCollectionIdentifier(null);
-        handleNavigateToProfile();
+        if (fromRepost) {
+            setCurrentScreen(Screen.Feed);
+        } else {
+            handleNavigateToProfile();
+        }
     };
 
     const handleNavigateToMyLooks = () => setCurrentScreen(Screen.MyLooks);
@@ -715,7 +770,7 @@ const App: React.FC = () => {
     };
 
     const renderScreen = () => {
-        if (isLoading) return <LoadingIndicator userImage={userImage!} customMessage={loadingMessage} />;
+        if (isLoading) return <LoadingIndicator userImage={userImage || 'https://i.postimg.cc/htGw97By/Sem-Ti-tulo-1.png'} customMessage={loadingMessage} />;
 
         const currentNode = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1] : null;
 
@@ -741,6 +796,8 @@ const App: React.FC = () => {
                             posts={posts}
                             onItemClick={handleItemClick}
                             onViewProfile={handleViewProfile}
+                            theme={theme}
+                            onToggleTheme={toggleTheme}
                         />;
             case Screen.ImageSourceSelection:
                  return <ImageSourceSelectionScreen 
@@ -759,11 +816,14 @@ const App: React.FC = () => {
                  handleNavigateToProfile();
                  return null;
             case Screen.ItemSelection:
-                if (userImage && collectionIdentifier) {
+                if (collectionIdentifier) {
+                    // For non-fashion, we still need a user image placeholder for the UI.
+                    const displayImage = userImage || (profile?.profile_image_url || 'https://i.postimg.cc/htGw97By/Sem-Ti-tulo-1.png');
                     return <ItemSelectionScreen
-                        userImage={userImage}
+                        userImage={displayImage}
                         collectionId={collectionIdentifier.id}
                         collectionName={collectionIdentifier.name}
+                        collectionType={collectionIdentifier.type}
                         onItemSelect={handleItemSelect}
                         onBack={() => setCurrentScreen(Screen.SubCategorySelection)}
                         onBuy={handleBuy}
@@ -789,6 +849,7 @@ const App: React.FC = () => {
                         onUndo={handleUndoLastItem}
                         onSaveLook={handleSaveLook}
                         onSaveImage={handleSaveImage}
+                        onAddMoreItems={handleNavigateToAddMoreItems}
                     />;
                 }
                 // If we land here with no items, it means we undid the last one.
@@ -810,6 +871,7 @@ const App: React.FC = () => {
                             onAddToCartMultiple={handleAddToCartMultiple}
                             onBuyMultiple={handleBuyLook}
                             onViewProfile={handleViewProfile}
+                            onSelectCategory={handleSelectCategory}
                         />;
             case Screen.MyLooks:
                 return <MyLooksScreen 
@@ -856,11 +918,11 @@ const App: React.FC = () => {
         // Handle profile fetch failure after login
         if (!profile && error) {
             return (
-                <div className="flex flex-col items-center justify-center h-full w-full p-6 text-white text-center animate-fadeIn bg-black">
+                <div className="flex flex-col items-center justify-center h-full w-full p-6 text-[var(--text-primary)] text-center animate-fadeIn bg-[var(--bg-main)]">
                     <XCircleIcon className="w-24 h-24 text-red-400 mb-6" />
                     <h1 className="text-2xl font-bold mb-2">Falha ao Carregar Perfil</h1>
-                    <p className="text-gray-300 text-base mb-6">{error}</p>
-                    <p className="text-gray-400 text-sm mb-10 bg-gray-900 p-3 rounded-lg border border-gray-700">
+                    <p className="text-[var(--text-tertiary)] text-base mb-6">{error}</p>
+                    <p className="text-[var(--text-secondary)] text-sm mb-10 bg-[var(--bg-secondary)] p-3 rounded-lg border border-zinc-700">
                        <strong>Dica:</strong> Este erro geralmente ocorre porque as Políticas de Segurança de Nível de Linha (RLS) não estão configuradas corretamente na sua tabela <code>profiles</code> no Supabase. Certifique-se de que os usuários autenticados tenham permissão para ler e criar seus próprios perfis.
                     </p>
                     <GradientButton onClick={handleSignOut}>
@@ -877,10 +939,10 @@ const App: React.FC = () => {
     };
 
     return (
-        <div className="h-screen w-screen max-w-md mx-auto bg-black overflow-hidden relative shadow-2xl shadow-purple-500/30">
+        <div className="h-screen w-screen max-w-md mx-auto bg-[var(--bg-main)] overflow-hidden relative shadow-2xl shadow-yellow-500/20">
             {renderContent()}
             {toast && (
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-green-500/90 backdrop-blur-sm text-white px-5 py-2.5 rounded-full shadow-lg z-50 animate-fadeIn text-sm font-semibold">
+                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-yellow-500/90 backdrop-blur-sm text-black px-5 py-2.5 rounded-full shadow-lg z-50 animate-fadeIn text-sm font-semibold">
                     {toast}
                 </div>
             )}

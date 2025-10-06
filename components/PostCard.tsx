@@ -13,10 +13,10 @@ interface PostCardProps {
 
 const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTheLook, onViewProfile, onImageClick }) => {
   return (
-    <div className="bg-black flex flex-col animate-fadeIn border-b border-gray-800">
+    <div className="bg-[var(--bg-main)] flex flex-col animate-fadeIn border-b border-[var(--border-primary)]">
       {/* Card Header */}
-      <button onClick={onViewProfile} className="p-3 flex items-center gap-3 text-left hover:bg-gray-900/50 transition-colors">
-        <img src={post.user.avatar} alt={post.user.name} className="w-10 h-10 rounded-full object-cover border-2 border-gray-700" />
+      <button onClick={onViewProfile} className="p-3 flex items-center gap-3 text-left hover:bg-yellow-400/10 transition-colors">
+        <img src={post.user.avatar} alt={post.user.name} className="w-10 h-10 rounded-full object-cover border-2 border-zinc-700" />
         <span className="font-bold text-sm">{post.user.name}</span>
       </button>
 
@@ -30,15 +30,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
         <div className="flex items-center gap-4">
           <button onClick={onLike} className="transform hover:scale-110 transition-transform" aria-label="Curtir">
             <HeartIcon 
-              className={`w-7 h-7 ${post.isLiked ? 'text-red-500' : 'text-white'}`} 
+              className={`w-7 h-7 ${post.isLiked ? 'text-[var(--accent-primary)]' : 'text-[var(--text-primary)]'}`} 
               fill={post.isLiked ? 'currentColor' : 'none'}
             />
           </button>
           <button onClick={onShopTheLook} className="transform hover:scale-110 transition-transform" aria-label="Comprar o look">
-            <ShoppingBagIcon className="w-7 h-7 text-white" />
+            <ShoppingBagIcon className="w-7 h-7 text-[var(--text-primary)]" />
           </button>
           <button className="transform hover:scale-110 transition-transform" aria-label="Compartilhar">
-            <ShareIcon className="w-7 h-7 text-white" />
+            <ShareIcon className="w-7 h-7 text-[var(--text-primary)]" />
           </button>
         </div>
         <p className="text-sm font-semibold mt-2">{post.likes.toLocaleString()} curtidas</p>
@@ -53,7 +53,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
             <React.Fragment key={item.id}>
               <button 
                 onClick={() => onItemClick(item)}
-                className="font-semibold text-blue-400 hover:underline focus:outline-none"
+                className="font-semibold text-yellow-500 hover:underline focus:outline-none"
               >
                 {item.name}
               </button>

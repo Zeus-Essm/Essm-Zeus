@@ -32,19 +32,19 @@ const QuickViewModal: React.FC<QuickViewModalProps> = ({ item, onClose, onBuy, o
 
   return (
     <div
-      className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 animate-modalFadeIn"
+      className="fixed inset-0 bg-[var(--bg-modal-overlay)] backdrop-blur-sm flex items-center justify-center z-50 animate-modalFadeIn"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="quick-view-title"
     >
       <div
-        className="bg-gray-900 rounded-2xl w-11/12 max-w-sm p-6 text-white animate-modalZoomIn relative flex flex-col max-h-[90vh]"
+        className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-2xl w-11/12 max-w-sm p-6 text-[var(--text-primary)] animate-modalZoomIn relative flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 p-2 rounded-full bg-gray-800 hover:bg-gray-700 transition-colors z-10"
+          className="absolute top-3 right-3 p-2 rounded-full bg-[var(--bg-tertiary)] hover:brightness-95 transition-colors z-10"
           aria-label="Fechar"
         >
           <XIcon className="w-5 h-5" />
@@ -55,26 +55,26 @@ const QuickViewModal: React.FC<QuickViewModalProps> = ({ item, onClose, onBuy, o
         </div>
         
         <div className="flex-grow overflow-y-auto pr-2">
-            <h2 id="quick-view-title" className="text-2xl font-bold mb-2">{item.name}</h2>
-            <p className="text-gray-400 mb-4">{item.description}</p>
+            <h2 id="quick-view-title" className="text-2xl font-bold mb-2 text-[var(--accent-primary)] opacity-90 text-glow">{item.name}</h2>
+            <p className="text-[var(--text-secondary)] mb-4">{item.description}</p>
         </div>
 
-        <div className="flex-shrink-0 mt-4 pt-4 border-t border-gray-700">
+        <div className="flex-shrink-0 mt-4 pt-4 border-t border-[var(--border-primary)]">
             <div className="flex justify-between items-center mb-4">
-                <span className="text-gray-400">Preço</span>
-                <span className="text-xl font-bold text-blue-400">
+                <span className="text-[var(--text-secondary)]">Preço</span>
+                <span className="text-xl font-bold text-[var(--accent-primary)] text-glow">
                     {item.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                 </span>
             </div>
             <div className="flex gap-3">
                  <button
                     onClick={() => onAddToCart(item)}
-                    className="flex-1 flex items-center justify-center text-white font-bold py-3 px-4 rounded-lg bg-gray-800 hover:bg-gray-700 transition-colors"
+                    className="flex-1 flex items-center justify-center text-[var(--text-primary)] font-bold py-3 px-4 rounded-lg bg-[var(--bg-tertiary)] hover:brightness-95 transition-colors"
                 >
                    <ShoppingBagIcon className="w-5 h-5 mr-2" />
                     Carrinho
                 </button>
-                <GradientButton onClick={() => onBuy(item)} className="flex-1 py-3">
+                <GradientButton onClick={() => onBuy(item)} className="flex-1 !py-3 !text-[var(--accent-primary-text)] !bg-[var(--accent-primary)] !border-[var(--accent-primary)] hover:!bg-yellow-500">
                     Comprar Agora
                 </GradientButton>
             </div>

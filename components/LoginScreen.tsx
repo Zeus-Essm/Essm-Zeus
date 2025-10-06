@@ -53,11 +53,11 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center h-full w-full bg-black text-white p-6 animate-fadeIn">
-            <img src="https://i.postimg.cc/htGw97By/Sem-Ti-ulo-1.png" alt="MEU ESTILO Logo" className="w-24 h-auto mb-8" />
+        <div className="flex flex-col items-center justify-center h-full w-full bg-[var(--bg-main)] text-[var(--text-primary)] p-6 animate-fadeIn">
+            <img src="https://i.postimg.cc/htGw97By/Sem-Ti-tulo-1.png" alt="MEU ESTILO Logo" className="w-24 h-auto mb-8 animate-logo-pulse" />
             
-            <h1 className="text-3xl font-bold mb-2">{isSignUp ? 'Crie sua Conta' : 'Bem-vindo de Volta!'}</h1>
-            <p className="text-gray-400 mb-8">{isSignUp ? 'Comece sua jornada de estilo.' : 'Faça login para continuar.'}</p>
+            <h1 className="text-3xl font-bold mb-2 text-glow text-[var(--accent-primary)] opacity-90">{isSignUp ? 'Crie sua Conta' : 'Bem-vindo de Volta!'}</h1>
+            <p className="text-[var(--text-secondary)] mb-8">{isSignUp ? 'Comece sua jornada de estilo.' : 'Faça login para continuar.'}</p>
             
             {error && <p className="bg-red-500/20 text-red-400 p-3 rounded-lg mb-4 text-sm w-full text-center">{error}</p>}
 
@@ -67,7 +67,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
                     placeholder="Email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full p-4 bg-gray-900 rounded-lg border-2 border-gray-700 focus:border-blue-500 focus:outline-none transition-colors"
+                    className="w-full p-4 bg-[var(--bg-secondary)] rounded-lg border-2 border-[var(--border-primary)] focus:border-[var(--accent-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-primary)] transition-colors"
                     disabled={loading}
                     required
                 />
@@ -76,7 +76,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
                     placeholder="Senha"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full p-4 bg-gray-900 rounded-lg border-2 border-gray-700 focus:border-blue-500 focus:outline-none transition-colors"
+                    className="w-full p-4 bg-[var(--bg-secondary)] rounded-lg border-2 border-[var(--border-primary)] focus:border-[var(--accent-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent-primary)] transition-colors"
                     disabled={loading}
                     required
                 />
@@ -88,15 +88,15 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
             
             {/*
             <div className="my-6 flex items-center w-full">
-                <div className="flex-grow border-t border-gray-700"></div>
-                <span className="flex-shrink mx-4 text-gray-500 text-sm">OU</span>
-                <div className="flex-grow border-t border-gray-700"></div>
+                <div className="flex-grow border-t border-yellow-400/20"></div>
+                <span className="flex-shrink mx-4 text-zinc-500 text-sm">OU</span>
+                <div className="flex-grow border-t border-yellow-400/20"></div>
             </div>
             
             <div className="w-full space-y-3">
                 <button
                     onClick={() => handleSocialLogin('google')}
-                    className="w-full flex items-center justify-center gap-3 p-4 bg-gray-900 rounded-lg border-2 border-gray-700 hover:border-gray-500 transition-colors"
+                    className="w-full flex items-center justify-center gap-3 p-4 bg-[#0a0a0a] rounded-lg border-2 border-yellow-400/20 hover:border-yellow-400/70 transition-colors"
                     disabled={loading}
                 >
                     <GoogleIcon className="w-6 h-6" />
@@ -104,7 +104,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
                 </button>
                 <button
                     onClick={() => handleSocialLogin('facebook')}
-                    className="w-full flex items-center justify-center gap-3 p-4 bg-gray-900 rounded-lg border-2 border-gray-700 hover:border-blue-600 transition-colors"
+                    className="w-full flex items-center justify-center gap-3 p-4 bg-[#0a0a0a] rounded-lg border-2 border-yellow-400/20 hover:border-yellow-400/70 transition-colors"
                     disabled={loading}
                 >
                     <FacebookIcon className="w-6 h-6 text-[#1877F2]" />
@@ -115,14 +115,14 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
             
             
             <div className="my-4 text-center text-sm">
-                <button onClick={onContinueAsVisitor} className="font-semibold text-gray-400 hover:text-white underline transition-colors">
+                <button onClick={onContinueAsVisitor} className="font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] underline transition-colors">
                     Continuar como Visitante
                 </button>
             </div>
 
-            <p className="mt-4 text-gray-400">
+            <p className="mt-4 text-[var(--text-secondary)]">
                 {isSignUp ? 'Já tem uma conta? ' : 'Não tem uma conta? '}
-                <button onClick={() => setIsSignUp(!isSignUp)} className="font-semibold text-blue-400 hover:underline">
+                <button onClick={() => setIsSignUp(!isSignUp)} className="font-semibold text-[var(--accent-primary)] hover:underline">
                     {isSignUp ? 'Faça Login' : 'Inscreva-se'}
                 </button>
             </p>

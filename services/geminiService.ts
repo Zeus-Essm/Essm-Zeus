@@ -78,7 +78,7 @@ export const expandImageToSquare = async (userImage: string): Promise<string> =>
 7.  **RESULTADO FINAL:** Uma fotografia quadrada, com a imagem original ocupando toda a altura, centralizada, e com as laterais expandidas de forma ultra-realista.`;
 
         const response: GenerateContentResponse = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image-preview',
+            model: 'gemini-2.5-flash-image',
             contents: {
                 parts: [
                     {
@@ -160,7 +160,7 @@ OUTRAS REGRAS CRÍTICAS:
 4.  **FUNDO INTOCÁVEL:** O fundo da IMAGEM 1 deve ser perfeitamente preservado, sem nenhuma alteração.`;
 
     const response: GenerateContentResponse = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-image-preview',
+      model: 'gemini-2.5-flash-image',
       contents: {
         parts: [
           { // 1. The person's image
