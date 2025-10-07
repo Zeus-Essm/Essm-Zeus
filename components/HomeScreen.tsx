@@ -6,7 +6,85 @@ import {
     PencilIcon, CameraIcon, ShoppingBagIcon, UserIcon, CompassIcon, 
     GiftIcon, PlusIcon, EllipsisVerticalIcon
 } from './IconComponents';
-import ImageViewModal from './ImageViewModal';
+
+// Self-contained modal for viewing profile posts in an Instagram-style overlay.
+const ProfilePostModal: React.FC<{
+    posts: Post[];
+    startIndex: number;
+    onClose: () => void;
+}> = ({ posts, startIndex, onClose }) => {
+    const [currentIndex, setCurrentIndex] = useState(startIndex);
+    const post = posts[currentIndex];
+
+    const goToPrevious = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setCurrentIndex(prev => (prev > 0 ? prev - 1 : posts.length - 1));
+    };
+
+    const goToNext = (e: React.MouseEvent) => {
+        e.stopPropagation();
+        setCurrentIndex(prev => (prev < posts.length - 1 ? prev + 1 : 0));
+    };
+
+    useEffect(() => {
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') onClose();
+            if (event.key === 'ArrowLeft') goToPrevious(new MouseEvent('click') as any);
+            if (event.key === 'ArrowRight') goToNext(new MouseEvent('click') as any);
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [currentIndex]); // Re-bind to get the latest currentIndex
+
+    if (!post) return null;
+
+    return (
+        <div
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 animate-modalFadeIn"
+            onClick={onClose}
+        >
+             {/* Close Button */}
+            <button
+                onClick={onClose}
+                className="absolute top-4 right-4 p-2 rounded-full bg-black/50 hover:bg-black/80 transition-colors z-20"
+                aria-label="Fechar"
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-white"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+            
+            {/* Left Arrow */}
+            {posts.length > 1 && (
+                 <button
+                    onClick={goToPrevious}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/40 rounded-full hover:bg-black/70 backdrop-blur-sm transition-all z-20"
+                    aria-label="Anterior"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6 text-white">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+                    </svg>
+                </button>
+            )}
+
+            {/* Content */}
+            <div className="w-[90vw] max-w-xl aspect-square bg-black animate-modalZoomIn" onClick={(e) => e.stopPropagation()}>
+                <img src={post.image} alt="Post" className="w-full h-full object-contain" />
+            </div>
+
+            {/* Right Arrow */}
+             {posts.length > 1 && (
+                <button
+                    onClick={goToNext}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/40 rounded-full hover:bg-black/70 backdrop-blur-sm transition-all z-20"
+                    aria-label="Próximo"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6 text-white">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                </button>
+            )}
+        </div>
+    );
+};
 
 
 // Props definition based on App.tsx usage
@@ -475,19 +553,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
       </nav>
 
       {viewingPostIndex !== null && (
-        <ImageViewModal
+        <ProfilePostModal
             posts={localProfilePosts}
             startIndex={viewingPostIndex}
             onClose={() => setViewingPostIndex(null)}
-            onLike={handleLike}
-            onItemClick={(item) => {
-                setViewingPostIndex(null);
-                onItemClick(item);
-            }}
-            onViewProfile={(profileId) => {
-                setViewingPostIndex(null);
-                onViewProfile(profileId);
-            }}
         />
       )}
     </div>
