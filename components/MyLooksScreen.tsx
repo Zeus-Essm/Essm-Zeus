@@ -15,7 +15,7 @@ interface MyLooksScreenProps {
 
 const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClick, onBuyLook, onPostLook }) => {
   const handleShare = async (look: SavedLook) => {
-    const text = `Confira meu novo look criado com o app MEU ESTILO! Itens: ${look.items.map(i => i.name).join(', ')}.`;
+    const text = `Confira meu novo look criado com o app PUMP! Itens: ${look.items.map(i => i.name).join(', ')}.`;
 
     // The Web Share API is the preferred method, but it requires HTTPS and user interaction.
     // It also has limitations on sharing files directly from data URLs.
@@ -28,14 +28,14 @@ const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClic
 
         if (navigator.canShare && navigator.canShare({ files: [file] })) {
           await navigator.share({
-            title: 'Meu Look MEU ESTILO',
+            title: 'Meu Look PUMP',
             text: text,
             files: [file],
           });
         } else {
           // Fallback if files cannot be shared
           await navigator.share({
-            title: 'Meu Look MEU ESTILO',
+            title: 'Meu Look PUMP',
             text: text,
             url: window.location.href, // Share the app's URL instead
           });
@@ -46,7 +46,7 @@ const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClic
       }
     } else {
       // Fallback for browsers that do not support the Web Share API
-      alert('Seu navegador não suporta a função de compartilhamento. Tente salvar a imagem e compartilhar manualmente.');
+      alert('Seu navegador não suporta a função de compartilhamento. Tente salvar a imagem e compartilhar manually.');
     }
   };
 
@@ -85,7 +85,7 @@ const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClic
                 <div className="p-3 flex gap-2 border-t border-[var(--border-primary)] bg-black/50">
                     <button
                         onClick={() => onBuyLook(look.items)}
-                        className="flex-1 flex items-center justify-center text-[var(--accent-primary-text)] font-bold py-2.5 px-4 rounded-lg bg-[var(--accent-primary)] hover:bg-yellow-500 transition-colors"
+                        className="flex-1 flex items-center justify-center text-[var(--accent-primary-text)] font-bold py-2.5 px-4 rounded-lg bg-[var(--accent-primary)] hover:brightness-125 transition-colors"
                     >
                         <ShoppingBagIcon className="w-5 h-5 mr-2" />
                         Comprar

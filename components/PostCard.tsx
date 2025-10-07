@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { Post, Item } from '../types';
 import { HeartIcon, ShareIcon, ShoppingBagIcon } from './IconComponents';
@@ -15,7 +16,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
   return (
     <div className="bg-[var(--bg-main)] flex flex-col animate-fadeIn border-b border-[var(--border-primary)]">
       {/* Card Header */}
-      <button onClick={onViewProfile} className="p-3 flex items-center gap-3 text-left hover:bg-yellow-400/10 transition-colors">
+      <button onClick={onViewProfile} className="p-3 flex items-center gap-3 text-left hover:bg-[var(--accent-primary)]/10 transition-colors">
         <img src={post.user.avatar} alt={post.user.name} className="w-10 h-10 rounded-full object-cover border-2 border-zinc-700" />
         <span className="font-bold text-sm">{post.user.name}</span>
       </button>
@@ -53,7 +54,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
             <React.Fragment key={item.id}>
               <button 
                 onClick={() => onItemClick(item)}
-                className="font-semibold text-yellow-500 hover:underline focus:outline-none"
+                className="font-semibold text-[var(--accent-primary)] hover:underline focus:outline-none"
               >
                 {item.name}
               </button>

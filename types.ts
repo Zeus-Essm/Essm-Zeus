@@ -1,11 +1,12 @@
-export type MarketplaceType = 'fashion' | 'beauty' | 'supermarket' | 'restaurant' | 'technology';
+// FIX: Removed circular import and defined MarketplaceType.
+export type MarketplaceType = 'fashion' | 'restaurant' | 'supermarket' | 'beauty' | 'technology';
 
 export enum Screen {
   Splash,
   Login,
   Home,
   Settings,
-  SubCategorySelection, // Nova tela
+  SubCategorySelection,
   ItemSelection,
   Generating,
   Result,
@@ -16,6 +17,8 @@ export enum Screen {
   ImageSourceSelection,
   Cart,
   Rewards,
+  ChatList, // Nova tela de lista de chats
+  Chat,     // Nova tela de chat individual
 }
 
 export interface SubCategory {
@@ -31,7 +34,7 @@ export interface Category {
   image: string;
   video?: string;
   type: MarketplaceType;
-  subCategories?: SubCategory[]; // Adicionado: Sub-categorias opcionais
+  subCategories?: SubCategory[];
 }
 
 export interface Item {
@@ -41,32 +44,29 @@ export interface Item {
   category: string;
   image: string;
   price: number;
-  isTryOn?: boolean; // Can this item be virtually tried on?
-  beautyType?: 'lipstick' | 'eyeshadow' | 'wig' | 'general'; // Specific type for beauty items
+  isTryOn?: boolean;
+  beautyType?: 'lipstick' | 'eyeshadow' | 'wig' | 'general';
 }
 
-// Novo tipo para um post no feed
 export interface Post {
   id: string;
   user: {
-    id: string; // ID do usuário que postou
+    id: string;
     name: string;
-    avatar: string; // URL da imagem de avatar
+    avatar: string;
   };
-  image: string; // A imagem do look gerado
-  items: Item[]; // Os itens usados no look
+  image: string;
+  items: Item[];
   likes: number;
-  isLiked: boolean; // Para controlar o estado de curtida no cliente
+  isLiked: boolean;
 }
 
-// Novo tipo para um look salvo
 export interface SavedLook {
   id: string;
   image: string;
   items: Item[];
 }
 
-// Novo tipo para um story no feed
 export interface Story {
   id: string;
   user: {
@@ -76,11 +76,38 @@ export interface Story {
   backgroundImage: string;
 }
 
-// Novo tipo para o perfil do usuário do Supabase
 export interface Profile {
   id: string;
   username: string;
   bio?: string;
   profile_image_url?: string;
   cover_image_url?: string;
+}
+
+export interface AppNotification {
+  id: string;
+  message: string;
+  read: boolean;
+  createdAt: Date;
+  relatedCategoryId?: string;
+}
+
+// Novo tipo para mensagens de chat
+export interface Message {
+  id: string;
+  text: string;
+  senderId: string; // ID do usuário que enviou
+  timestamp: string; // Usar string para facilitar a serialização
+}
+
+// Novo tipo para conversas
+export interface Conversation {
+  id: string;
+  participant: {
+    id: string;
+    name: string;
+    avatar: string;
+  };
+  lastMessage: Message;
+  unreadCount: number;
 }

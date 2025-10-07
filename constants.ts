@@ -1,4 +1,4 @@
-import type { Category, Item, Post, Story } from './types';
+import type { Category, Item, Post, Story, Conversation } from './types';
 
 // Sub-categorias de Roupas reutilizáveis
 const MALE_CLOTHING_SUBCATEGORIES = [
@@ -298,4 +298,40 @@ export const INITIAL_POSTS: Post[] = [
         likes: 4200,
         isLiked: false,
     },
+];
+
+export const INITIAL_CONVERSATIONS: Conversation[] = [
+    {
+        id: 'conv1',
+        participant: { id: 'user1', name: 'Ana Clara', avatar: 'https://i.pravatar.cc/150?u=anaclara' },
+        lastMessage: {
+            id: 'msg1',
+            text: 'Olá! Adorei seu último look, ficou incrível!',
+            senderId: 'user1',
+            timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString(), // 5 minutes ago
+        },
+        unreadCount: 1,
+    },
+    {
+        id: 'conv2',
+        participant: { id: 'user2', name: 'Bruno Gomes', avatar: 'https://i.pravatar.cc/150?u=bruno' },
+        lastMessage: {
+            id: 'msg2',
+            text: 'Com certeza! Te vejo lá.',
+            senderId: 'currentUser', // Mock current user
+            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+        },
+        unreadCount: 0,
+    },
+    {
+        id: 'conv3',
+        participant: { id: 'user3', name: 'Carla Dias', avatar: 'https://i.pravatar.cc/150?u=carla' },
+        lastMessage: {
+            id: 'msg3',
+            text: 'Onde você comprou aquela saia?',
+            senderId: 'user3',
+            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+        },
+        unreadCount: 0,
+    }
 ];

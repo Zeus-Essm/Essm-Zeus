@@ -54,7 +54,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
 
     return (
         <div className="flex flex-col items-center justify-center h-full w-full bg-[var(--bg-main)] text-[var(--text-primary)] p-6 animate-fadeIn">
-            <img src="https://i.postimg.cc/htGw97By/Sem-Ti-tulo-1.png" alt="MEU ESTILO Logo" className="w-24 h-auto mb-8 animate-logo-pulse" />
+            <img src="https://i.postimg.cc/XJf6gckX/Pump_STARTAP.png" alt="PUMP Logo" className="w-24 h-auto mb-8 animate-logo-pulse" />
             
             <h1 className="text-3xl font-bold mb-2 text-glow text-[var(--accent-primary)] opacity-90">{isSignUp ? 'Crie sua Conta' : 'Bem-vindo de Volta!'}</h1>
             <p className="text-[var(--text-secondary)] mb-8">{isSignUp ? 'Comece sua jornada de estilo.' : 'Faça login para continuar.'}</p>
@@ -88,15 +88,15 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
             
             {/*
             <div className="my-6 flex items-center w-full">
-                <div className="flex-grow border-t border-yellow-400/20"></div>
+                <div className="flex-grow border-t border-[var(--accent-primary)]/20"></div>
                 <span className="flex-shrink mx-4 text-zinc-500 text-sm">OU</span>
-                <div className="flex-grow border-t border-yellow-400/20"></div>
+                <div className="flex-grow border-t border-[var(--accent-primary)]/20"></div>
             </div>
             
             <div className="w-full space-y-3">
                 <button
                     onClick={() => handleSocialLogin('google')}
-                    className="w-full flex items-center justify-center gap-3 p-4 bg-[#0a0a0a] rounded-lg border-2 border-yellow-400/20 hover:border-yellow-400/70 transition-colors"
+                    className="w-full flex items-center justify-center gap-3 p-4 bg-[#0a0a0a] rounded-lg border-2 border-[var(--accent-primary)]/20 hover:border-[var(--accent-primary)]/70 transition-colors"
                     disabled={loading}
                 >
                     <GoogleIcon className="w-6 h-6" />
@@ -104,7 +104,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
                 </button>
                 <button
                     onClick={() => handleSocialLogin('facebook')}
-                    className="w-full flex items-center justify-center gap-3 p-4 bg-[#0a0a0a] rounded-lg border-2 border-yellow-400/20 hover:border-yellow-400/70 transition-colors"
+                    className="w-full flex items-center justify-center gap-3 p-4 bg-[#0a0a0a] rounded-lg border-2 border-[var(--accent-primary)]/20 hover:border-[var(--accent-primary)]/70 transition-colors"
                     disabled={loading}
                 >
                     <FacebookIcon className="w-6 h-6 text-[#1877F2]" />

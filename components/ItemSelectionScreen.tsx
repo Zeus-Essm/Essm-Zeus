@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useRef } from 'react';
 import type { Item, MarketplaceType } from '../types';
 import { ITEMS } from '../constants';
@@ -46,7 +47,7 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
     <>
       <div className="w-full h-full flex flex-col text-[var(--text-primary)] animate-fadeIn bg-[var(--bg-main)]">
         <Header title={collectionName} onBack={onBack} />
-        <div className="pt-20 px-4 flex-shrink-0">
+        <div className="pt-16 px-4 flex-shrink-0">
            <div className="relative w-32 h-48 mx-auto rounded-lg overflow-hidden shadow-lg shadow-black/20 mb-6 border-2 border-[var(--border-primary)]">
               <img src={userImage} alt="Sua foto" className="w-full h-full object-cover" />
                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
@@ -60,7 +61,7 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
               {categoryItems.map(item => (
                 <div 
                     key={item.id}
-                    className={`bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-xl p-2 flex flex-col hover:bg-yellow-400/5 cursor-pointer transition-all duration-200 ease-out ${pressedItemId === item.id ? 'transform scale-105 shadow-lg shadow-yellow-500/20' : ''}`}
+                    className={`bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-xl p-2 flex flex-col hover:bg-[var(--accent-primary)]/5 cursor-pointer transition-all duration-200 ease-out ${pressedItemId === item.id ? 'transform scale-105 shadow-lg shadow-[var(--accent-primary)]/20' : ''}`}
                     onMouseDown={() => handlePressStart(item)}
                     onMouseUp={handlePressEnd}
                     onMouseLeave={handlePressEnd}
@@ -74,7 +75,7 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
                     <div className="mt-2 flex items-center gap-2">
                         <button
                             onClick={() => onItemSelect(item)}
-                            className="flex-grow text-xs text-center font-bold uppercase tracking-wider py-2 px-2 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] hover:bg-yellow-500 transition-colors transform hover:scale-105"
+                            className="flex-grow text-xs text-center font-bold uppercase tracking-wider py-2 px-2 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] hover:brightness-125 transition-colors transform hover:scale-105"
                         >
                             {collectionType === 'fashion' || item.isTryOn ? 'PROVAR' : 'REPOSTAR'}
                         </button>

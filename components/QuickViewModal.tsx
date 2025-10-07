@@ -1,3 +1,4 @@
+
 import React from 'react';
 import type { Item } from '../types';
 import GradientButton from './GradientButton';
@@ -74,7 +75,7 @@ const QuickViewModal: React.FC<QuickViewModalProps> = ({ item, onClose, onBuy, o
                    <ShoppingBagIcon className="w-5 h-5 mr-2" />
                     Carrinho
                 </button>
-                <GradientButton onClick={() => onBuy(item)} className="flex-1 !py-3 !text-[var(--accent-primary-text)] !bg-[var(--accent-primary)] !border-[var(--accent-primary)] hover:!bg-yellow-500">
+                <GradientButton onClick={() => onBuy(item)} className="flex-1 !py-3 !text-[var(--accent-primary-text)] !bg-[var(--accent-primary)] !border-[var(--accent-primary)] hover:!brightness-125">
                     Comprar Agora
                 </GradientButton>
             </div>

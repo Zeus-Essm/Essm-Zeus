@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import type { Post, Item, MarketplaceType } from '../types';
 import GradientButton from './GradientButton';
@@ -111,7 +112,7 @@ const ShopTheLookModal: React.FC<ShopTheLookModalProps> = ({ post, postType, onC
                     type="checkbox"
                     checked={selectedItemIds.length === post.items.length && post.items.length > 0}
                     onChange={handleSelectAllToggle}
-                    className="h-5 w-5 rounded bg-zinc-700 border-zinc-600 text-yellow-500 focus:ring-yellow-500"
+                    className="h-5 w-5 rounded bg-zinc-700 border-zinc-600 text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]"
                 />
                 <span className="font-semibold text-[var(--text-tertiary)]">Selecionar Todos os Itens</span>
             </label>
@@ -121,7 +122,7 @@ const ShopTheLookModal: React.FC<ShopTheLookModalProps> = ({ post, postType, onC
                         type="checkbox"
                         checked={selectedItemIds.includes(item.id)}
                         onChange={() => handleToggleItem(item.id)}
-                        className="h-5 w-5 rounded bg-zinc-700 border-zinc-600 text-yellow-500 focus:ring-yellow-500"
+                        className="h-5 w-5 rounded bg-zinc-700 border-zinc-600 text-[var(--accent-primary)] focus:ring-[var(--accent-primary)]"
                     />
                     <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-md flex-shrink-0"/>
                     <div className="flex-grow overflow-hidden">
@@ -160,7 +161,7 @@ const ShopTheLookModal: React.FC<ShopTheLookModalProps> = ({ post, postType, onC
                 <GradientButton 
                     onClick={() => onBuyNow(selectedItems)} 
                     disabled={selectedItems.length === 0}
-                    className="flex-1 !py-3 !bg-[var(--accent-primary)] !text-[var(--accent-primary-text)] hover:!bg-yellow-500"
+                    className="flex-1 !py-3 !bg-[var(--accent-primary)] !text-[var(--accent-primary-text)] hover:!brightness-125"
                 >
                     {primaryActionText}
                 </GradientButton>

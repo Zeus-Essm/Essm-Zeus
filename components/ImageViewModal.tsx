@@ -1,4 +1,5 @@
 
+
 import React, { useRef, useEffect } from 'react';
 import type { Post, Item } from '../types';
 import { HeartIcon, ShareIcon } from './IconComponents';
@@ -84,7 +85,7 @@ const ImageViewModal: React.FC<ImageViewModalProps> = ({ posts, startIndex, onCl
                             <div className="flex items-center gap-4">
                                 <button onClick={() => onLike(post.id)} className="transform hover:scale-110 transition-transform" aria-label="Curtir">
                                     <HeartIcon 
-                                        className={`w-7 h-7 ${post.isLiked ? 'text-yellow-400' : 'text-white'}`} 
+                                        className={`w-7 h-7 ${post.isLiked ? 'text-[var(--accent-primary)]' : 'text-white'}`} 
                                         fill={post.isLiked ? 'currentColor' : 'none'}
                                     />
                                 </button>
@@ -101,7 +102,7 @@ const ImageViewModal: React.FC<ImageViewModalProps> = ({ posts, startIndex, onCl
                                         <React.Fragment key={item.id}>
                                         <button 
                                             onClick={() => onItemClick(item)}
-                                            className="font-semibold hover:underline text-yellow-400 focus:outline-none"
+                                            className="font-semibold hover:underline text-[var(--accent-primary)] focus:outline-none"
                                         >
                                             {item.name}
                                         </button>

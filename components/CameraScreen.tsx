@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import Header from './Header';
 import { CameraIcon } from './IconComponents';
@@ -88,7 +89,7 @@ const CameraScreen: React.FC<CameraScreenProps> = ({ onPhotoTaken, onBack }) => 
         <button
           onClick={handleCapture}
           disabled={!stream}
-          className="w-20 h-20 mx-auto rounded-full border-4 border-[var(--accent-primary)] bg-yellow-400/20 flex items-center justify-center disabled:opacity-50 transition-transform transform active:scale-90 hover:bg-yellow-400/30"
+          className="w-20 h-20 mx-auto rounded-full border-4 border-[var(--accent-primary)] bg-[var(--accent-primary)]/20 flex items-center justify-center disabled:opacity-50 transition-transform transform active:scale-90 hover:bg-[var(--accent-primary)]/30"
           aria-label="Tirar foto"
         >
             <CameraIcon className="w-10 h-10 text-white" />

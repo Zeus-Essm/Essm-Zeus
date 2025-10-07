@@ -35,12 +35,12 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onImageUpload }) => {
 
   return (
     <div className="flex flex-col items-center justify-center h-full w-full p-6 text-[var(--text-primary)] text-center animate-fadeIn">
-      <h1 className="text-4xl font-bold mb-2 text-glow text-yellow-300">Primeiro Passo</h1>
+      <h1 className="text-4xl font-bold mb-2 text-glow text-[var(--accent-primary)]">Primeiro Passo</h1>
       <p className="text-[var(--text-secondary)] mb-8">Carregue uma foto sua de corpo inteiro.</p>
 
       <div
         onClick={openFilePicker}
-        className="w-full h-80 border-2 border-dashed border-yellow-400/50 rounded-2xl flex flex-col items-center justify-center mb-8 cursor-pointer bg-black/20 hover:bg-yellow-400/10 hover:border-yellow-400 transition-all"
+        className="w-full h-80 border-2 border-dashed border-[var(--accent-primary)]/50 rounded-2xl flex flex-col items-center justify-center mb-8 cursor-pointer bg-black/20 hover:bg-[var(--accent-primary)]/10 hover:border-[var(--accent-primary)] transition-all"
       >
         <input
           type="file"
@@ -53,7 +53,7 @@ const UploadScreen: React.FC<UploadScreenProps> = ({ onImageUpload }) => {
           <img src={preview} alt="Pré-visualização" className="w-full h-full object-contain rounded-2xl p-2" />
         ) : (
           <div className="text-center text-zinc-500">
-            <UploadIcon className="w-16 h-16 mx-auto mb-4 text-yellow-400/70" />
+            <UploadIcon className="w-16 h-16 mx-auto mb-4 text-[var(--accent-primary)]/70" />
             <p className="font-semibold">Clique para selecionar uma imagem</p>
             <p className="text-sm">PNG ou JPG</p>
           </div>

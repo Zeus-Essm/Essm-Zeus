@@ -1,3 +1,4 @@
+
 import React from 'react';
 import Header from './Header';
 import { ShoppingBagIcon, XCircleIcon } from './IconComponents';
@@ -42,7 +43,7 @@ const CartScreen: React.FC<CartScreenProps> = ({ cartItems, onBack, onRemoveItem
                         </button>
                         <button
                           onClick={() => onBuyItem(item, index)}
-                          className="text-xs font-bold py-1.5 px-4 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] hover:bg-yellow-500 transition-colors"
+                          className="text-xs font-bold py-1.5 px-4 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] hover:brightness-125 transition-colors"
                           aria-label={`Comprar ${item.name}`}
                         >
                           Comprar
@@ -73,7 +74,7 @@ const CartScreen: React.FC<CartScreenProps> = ({ cartItems, onBack, onRemoveItem
               {totalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </span>
           </div>
-          <GradientButton onClick={onCheckout} className="!bg-[var(--accent-primary)] !text-[var(--accent-primary-text)] hover:!bg-yellow-500">
+          <GradientButton onClick={onCheckout} className="!bg-[var(--accent-primary)] !text-[var(--accent-primary-text)] hover:!brightness-125">
             <div className="flex items-center justify-center gap-2">
               <ShoppingBagIcon className="w-5 h-5" />
               Finalizar Compra

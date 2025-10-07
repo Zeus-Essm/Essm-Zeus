@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Header from './Header';
 import { CATEGORIES } from '../constants';
@@ -28,8 +29,8 @@ const BrandProgress: React.FC<BrandProgressProps> = ({ brandName, currentPoints,
             <div className="relative flex items-center gap-3">
                 <div className="w-full h-3 bg-zinc-700 rounded-full overflow-hidden">
                     <div 
-                        className={`h-full rounded-full transition-all duration-500 ${hasReachedGoal ? 'bg-[var(--accent-primary)]' : 'bg-yellow-600'}`}
-                        style={{ width: `${progressPercentage}%`, boxShadow: hasReachedGoal ? '0 0 8px rgba(251, 191, 36, 0.7)' : 'none' }}
+                        className={`h-full rounded-full transition-all duration-500 bg-[var(--accent-primary)]`}
+                        style={{ width: `${progressPercentage}%`, boxShadow: hasReachedGoal ? '0 0 8px var(--accent-primary-glow)' : 'none' }}
                     />
                 </div>
                 <GiftIcon className={`w-8 h-8 flex-shrink-0 ${hasReachedGoal ? 'text-[var(--accent-primary)]' : 'text-zinc-600'}`} />
@@ -59,7 +60,7 @@ const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
     return (
         <div className="w-full h-full flex flex-col text-[var(--text-primary)] animate-fadeIn bg-[var(--bg-main)]">
             <Header title="Recompensas" onBack={onBack} />
-            <div className="flex-grow pt-16 overflow-y-auto p-4 space-y-4">
+            <div className="flex-grow pt-16 overflow-y-auto px-4 pb-20 space-y-4">
                 <div className="text-center mb-4">
                     <img src="https://i.postimg.cc/wjyHYD8S/moeda.png" alt="Recompensas" className="w-16 h-16 mx-auto mb-2"/>
                     <p className="text-[var(--text-tertiary)]">

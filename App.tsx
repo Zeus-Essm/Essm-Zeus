@@ -1,13 +1,11 @@
 
-
-
 import React from 'react';
 // FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
-import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType } from './types';
+import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType, AppNotification, Conversation } from './types';
 import { generateTryOnImage, expandImageToSquare, generateBeautyTryOnImage } from './services/geminiService';
-import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, ITEMS } from './constants';
+import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, ITEMS, INITIAL_CONVERSATIONS } from './constants';
 
 // Screen Components
 import SplashScreen from './components/SplashScreen';
@@ -26,6 +24,10 @@ import ImageSourceSelectionScreen from './components/ImageSourceSelectionScreen'
 import CartScreen from './components/CartScreen';
 import RewardsScreen from './components/RewardsScreen';
 import GradientButton from './components/GradientButton';
+import NotificationsPanel from './components/NotificationsPanel';
+import BottomNavBar from './components/BottomNavBar';
+import ChatListScreen from './components/ChatListScreen';
+import ChatScreen from './components/ChatScreen';
 import { XCircleIcon } from './components/IconComponents';
 
 declare global {
@@ -147,6 +149,8 @@ const getCategoryTypeFromItem = (item: Item): MarketplaceType => {
     return category?.type || 'fashion'; // Default to fashion if not found
 };
 
+const SCREENS_WITH_NAVBAR = [Screen.Home, Screen.Feed, Screen.Cart, Screen.ChatList];
+
 
 const App: React.FC = () => {
     // Auth & Profile state
@@ -156,7 +160,7 @@ const App: React.FC = () => {
 
     // App Navigation and UI state
     const [currentScreen, setCurrentScreen] = React.useState<Screen>(Screen.Home);
-    const [theme, setTheme] = React.useState<'light' | 'dark'>('dark');
+    const [theme, setTheme] = React.useState<'light' | 'dark'>('light');
     const [viewedProfileId, setViewedProfileId] = React.useState<string | null>(null);
     const [userImage, setUserImage] = React.useState<string | null>(null);
     const [generatedImage, setGeneratedImage] = React.useState<string | null>(null);
@@ -175,6 +179,15 @@ const App: React.FC = () => {
     const [error, setError] = React.useState<string | null>(null);
     const [isCartAnimating, setIsCartAnimating] = React.useState(false);
     const [isPreviewingAsVisitor, setIsPreviewingAsVisitor] = React.useState(false);
+    
+    // Notifications & Messages State
+    const [notifications, setNotifications] = React.useState<AppNotification[]>([]);
+    const [showNotificationsPanel, setShowNotificationsPanel] = React.useState(false);
+    const [conversations, setConversations] = React.useState<Conversation[]>(INITIAL_CONVERSATIONS);
+    const [selectedConversation, setSelectedConversation] = React.useState<Conversation | null>(null);
+
+    const unreadNotificationCount = notifications.filter(n => !n.read).length;
+    const unreadMessagesCount = conversations.reduce((acc, conv) => acc + conv.unreadCount, 0);
 
     React.useEffect(() => {
         const root = window.document.documentElement;
@@ -221,7 +234,30 @@ const App: React.FC = () => {
                         setSavedLooks([]); // Reset on error
                     }
                 }
+                 // Simulate notifications after user is logged in
+                setTimeout(() => {
+                    const newNotification: AppNotification = {
+                        id: `notif_${Date.now()}`,
+                        message: 'Nova coleção de verão da Louis Vuitton já disponível!',
+                        read: false,
+                        createdAt: new Date(),
+                        relatedCategoryId: 'lv',
+                    };
+                    setNotifications(prev => [newNotification, ...prev]);
+                }, 5000);
+
+                setTimeout(() => {
+                    const newNotification: AppNotification = {
+                        id: `notif_${Date.now() + 1}`,
+                        message: 'Os ténis mais vendidos da Adidas estão de volta ao stock.',
+                        read: false,
+                        createdAt: new Date(),
+                        relatedCategoryId: 'adidas',
+                    };
+                    setNotifications(prev => [newNotification, ...prev]);
+                }, 15000);
             }
+            setCurrentScreen(Screen.Feed); // Go to Feed after login
         };
 
         const setupAuth = async () => {
@@ -264,11 +300,34 @@ const App: React.FC = () => {
         return () => subscription?.unsubscribe();
     }, []);
     
+    // Effect to simulate receiving a new message
+    React.useEffect(() => {
+        if (!session) return; // Only run if logged in
+
+        const timer = setTimeout(() => {
+            setConversations(prevConvos => {
+                const newConvos = JSON.parse(JSON.stringify(prevConvos));
+                const convoToUpdate = newConvos.find((c: Conversation) => c.id === 'conv1');
+                if (convoToUpdate) {
+                    convoToUpdate.unreadCount += 1;
+                    convoToUpdate.lastMessage.text = "Hey, você viu a nova coleção?";
+                    convoToUpdate.lastMessage.timestamp = new Date().toISOString();
+                }
+                return newConvos;
+            });
+            setToast("Nova mensagem de Ana Clara!");
+            setTimeout(() => setToast(null), 3000);
+        }, 10000);
+
+        return () => clearTimeout(timer);
+    }, [session]); // Re-run if session changes
+
+
     const handleContinueAsVisitor = () => {
         const mockProfile: Profile = {
             id: 'mock_user_123',
-            username: 'BV (blue sky)',
-            bio: 'Bem-vindo(a) ao MEU ESTILO! Explore o mercado e prove roupas virtualmente.',
+            username: 'Leandra Sardinha',
+            bio: 'A melhor confeiteira do mundo\nMelhor mulher e mãe',
             profile_image_url: 'https://i.postimg.cc/pL7M6Vgv/bv.jpg',
             cover_image_url: 'https://i.postimg.cc/wTQh27Rt/Captura-de-Tela-2025-09-19-a-s-2-10-14-PM.png',
         };
@@ -277,20 +336,18 @@ const App: React.FC = () => {
         setSession(mockSession);
         setProfile(mockProfile);
         setPosts(assignDemoPostsToUser(mockProfile));
-        // FIX: Called assignDemoLooksToUser which takes no arguments, instead of assignDemoPostsToUser.
         setSavedLooks(assignDemoLooksToUser());
         setAuthLoading(false);
+        setCurrentScreen(Screen.Feed); // Go to Feed for visitor
     };
 
 
     // Profile Management
     const handleSignOut = async () => {
-        // FIX: Added error handling for `signOut` for more robust code.
         const { error } = await supabase.auth.signOut();
         if (error) {
             console.error("Error signing out:", error.message);
         }
-        // Clearing local state for visitor mode
         if (session?.user.id.startsWith('mock_')) {
             setSession(null);
             setProfile(null);
@@ -298,13 +355,12 @@ const App: React.FC = () => {
         }
         setViewedProfileId(null);
         setIsPreviewingAsVisitor(false);
-        setCurrentScreen(Screen.Home); // Reset screen state
+        setCurrentScreen(Screen.Home);
     };
 
     const handleUpdateProfile = async (updates: { username?: string, bio?: string }) => {
         if (!session || session.user.id.startsWith('mock_')) {
             setToast('Função desativada para visitantes.');
-            // Optimistically update local state for demo purposes
             if (profile) {
                 setProfile({ ...profile, ...updates });
             }
@@ -347,7 +403,6 @@ const App: React.FC = () => {
     };
 
     const handleUpdateProfileImage = async (imageDataUrl: string) => {
-        // Optimistically update for mock user
         if (session?.user.id.startsWith('mock_') && profile) {
             setProfile({ ...profile, profile_image_url: imageDataUrl });
             return;
@@ -367,7 +422,6 @@ const App: React.FC = () => {
     };
     
     const handleUpdateCoverImage = async (imageDataUrl: string) => {
-        // Optimistically update for mock user
         if (session?.user.id.startsWith('mock_') && profile) {
             setProfile({ ...profile, cover_image_url: imageDataUrl });
             return;
@@ -385,6 +439,27 @@ const App: React.FC = () => {
             else if (data) setProfile(data);
         }
     };
+
+    // Notification Handlers
+    const handleOpenNotificationsPanel = () => {
+        setShowNotificationsPanel(true);
+        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    };
+
+    const handleCloseNotificationsPanel = () => {
+        setShowNotificationsPanel(false);
+    };
+
+    const handleNotificationClick = (notification: AppNotification) => {
+        setShowNotificationsPanel(false);
+        if (notification.relatedCategoryId) {
+            const category = CATEGORIES.find(c => c.id === notification.relatedCategoryId);
+            if (category) {
+                handleSelectCategory(category);
+            }
+        }
+    };
+
 
     // App Logic Handlers
     const handleImageUpload = async (imageDataUrl: string) => {
@@ -764,9 +839,30 @@ const App: React.FC = () => {
         }
     };
 
+    // Navigation handlers
     const handleNavigateToMyLooks = () => setCurrentScreen(Screen.MyLooks);
     const handleNavigateToRewards = () => setCurrentScreen(Screen.Rewards);
     const handleNavigateToSettings = () => setCurrentScreen(Screen.Settings);
+
+    const handleNavigateToChat = () => setCurrentScreen(Screen.ChatList);
+
+    const handleSelectConversation = (conversation: Conversation) => {
+        setSelectedConversation(conversation);
+        // Mark messages as read
+        setConversations(prev => prev.map(c => c.id === conversation.id ? { ...c, unreadCount: 0 } : c));
+        setCurrentScreen(Screen.Chat);
+    };
+
+    const handleSendMessage = (text: string, conversationId: string) => {
+        // This is a mock implementation. In a real app, this would send to a backend.
+        const newMessage = {
+            id: `msg_${Date.now()}`,
+            text,
+            senderId: profile!.id,
+            timestamp: new Date().toISOString(),
+        };
+        setConversations(prev => prev.map(c => c.id === conversationId ? { ...c, lastMessage: newMessage } : c));
+    };
 
     const handleNavigateToProfile = () => {
         setViewedProfileId(null);
@@ -793,19 +889,23 @@ const App: React.FC = () => {
 
         const currentNode = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1] : null;
 
+        const notificationProps = {
+            unreadNotificationCount: unreadNotificationCount,
+            onNotificationsClick: handleOpenNotificationsPanel,
+        };
+
         switch (currentScreen) {
             case Screen.Home:
                 return <HomeScreen 
                             loggedInProfile={profile!}
                             viewedProfileId={viewedProfileId}
                             onUpdateProfileImage={handleUpdateProfileImage}
-                            onUpdateCoverImage={handleUpdateCoverImage}
                             onUpdateProfile={handleUpdateProfile}
                             onSelectCategory={handleSelectCategory} 
                             onNavigateToFeed={() => setCurrentScreen(Screen.Feed)}
                             onNavigateToMyLooks={handleNavigateToMyLooks}
                             onNavigateToCart={handleNavigateToCart}
-                            onNavigateToRewards={handleNavigateToRewards}
+                            onNavigateToChat={handleNavigateToChat}
                             onNavigateToSettings={handleNavigateToSettings}
                             onStartTryOn={handleStartTryOn}
                             onSignOut={handleSignOut}
@@ -816,6 +916,9 @@ const App: React.FC = () => {
                             posts={posts}
                             onItemClick={handleItemClick}
                             onViewProfile={handleViewProfile}
+                            unreadNotificationCount={unreadNotificationCount}
+                            unreadMessagesCount={unreadMessagesCount}
+                            onOpenNotificationsPanel={handleOpenNotificationsPanel}
                         />;
             case Screen.Settings:
                 return <SettingsScreen 
@@ -896,6 +999,7 @@ const App: React.FC = () => {
                             onBuyMultiple={handleBuyLook}
                             onViewProfile={handleViewProfile}
                             onSelectCategory={handleSelectCategory}
+                            {...notificationProps}
                         />;
             case Screen.MyLooks:
                 return <MyLooksScreen 
@@ -926,6 +1030,27 @@ const App: React.FC = () => {
                 />;
             case Screen.Rewards:
                 return <RewardsScreen onBack={handleNavigateToProfile} />;
+            case Screen.ChatList:
+                return <ChatListScreen
+                            conversations={conversations}
+                            onBack={handleNavigateToProfile}
+                            onSelectConversation={handleSelectConversation}
+                        />;
+            case Screen.Chat:
+                if (selectedConversation && profile) {
+                    return <ChatScreen
+                                conversation={selectedConversation}
+                                currentUser={profile}
+                                onBack={() => {
+                                    setSelectedConversation(null);
+                                    setCurrentScreen(Screen.ChatList);
+                                }}
+                                onSendMessage={handleSendMessage}
+                           />;
+                }
+                // Fallback if no conversation is selected
+                setCurrentScreen(Screen.ChatList);
+                return null;
             default:
                 handleNavigateToProfile();
                 return null;
@@ -959,16 +1084,45 @@ const App: React.FC = () => {
             // Profile is being fetched, show a loader
             return <SplashScreen />;
         }
-        return renderScreen();
+        
+        const screenComponent = renderScreen();
+        const showNavBar = SCREENS_WITH_NAVBAR.includes(currentScreen);
+
+        return (
+            <>
+                {screenComponent}
+                {showNavBar && (
+                    <div className="absolute bottom-0 left-0 right-0 z-20">
+                        <BottomNavBar
+                            activeScreen={currentScreen}
+                            onNavigateToFeed={() => setCurrentScreen(Screen.Feed)}
+                            onNavigateToCart={handleNavigateToCart}
+                            onNavigateToChat={handleNavigateToChat}
+                            onNavigateToProfile={handleNavigateToProfile}
+                            onStartTryOn={handleStartTryOn}
+                            isCartAnimating={isCartAnimating}
+                            unreadMessagesCount={unreadMessagesCount}
+                        />
+                    </div>
+                )}
+            </>
+        );
     };
 
     return (
-        <div className="h-screen w-screen max-w-md mx-auto bg-[var(--bg-main)] overflow-hidden relative shadow-2xl shadow-yellow-500/20">
+        <div className="h-screen w-screen max-w-md mx-auto bg-[var(--bg-main)] overflow-hidden relative shadow-2xl shadow-[var(--accent-primary)]/20">
             {renderContent()}
             {toast && (
-                <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-yellow-500/90 backdrop-blur-sm text-black px-5 py-2.5 rounded-full shadow-lg z-50 animate-fadeIn text-sm font-semibold">
+                <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-[var(--accent-primary)]/90 backdrop-blur-sm text-white px-5 py-2.5 rounded-full shadow-lg z-50 animate-fadeIn text-sm font-semibold">
                     {toast}
                 </div>
+            )}
+            {showNotificationsPanel && (
+                <NotificationsPanel
+                    notifications={notifications}
+                    onClose={handleCloseNotificationsPanel}
+                    onNotificationClick={handleNotificationClick}
+                />
             )}
         </div>
     );

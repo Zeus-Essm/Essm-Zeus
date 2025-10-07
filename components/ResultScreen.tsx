@@ -1,6 +1,5 @@
 
 
-
 import React from 'react';
 import type { Item } from '../types';
 import GradientButton from './GradientButton';
@@ -40,7 +39,7 @@ const ResultScreen: React.FC<ResultScreenProps> = ({
   return (
     <div className="w-full h-full flex flex-col text-[var(--text-primary)] animate-fadeIn bg-[var(--bg-main)]">
       <Header title="Seu Look" />
-      <div className="flex-grow pt-20 flex flex-col items-center p-4 overflow-y-auto">
+      <div className="flex-grow pt-16 flex flex-col items-center p-4 overflow-y-auto">
         <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl shadow-black/30 mb-6 bg-[var(--bg-secondary)] border border-[var(--border-primary)] flex-shrink-0">
             <img src={generatedImage} alt={`Você vestindo ${items[items.length - 1]?.name}`} className="w-full h-auto animate-imageAppear" />
         </div>
@@ -75,7 +74,7 @@ const ResultScreen: React.FC<ResultScreenProps> = ({
                 <div 
                   key={item.id} 
                   onClick={() => onItemSelect(item)} 
-                  className="flex-shrink-0 w-32 bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg overflow-hidden cursor-pointer group transform hover:scale-105 transition-transform hover:border-yellow-400/40"
+                  className="flex-shrink-0 w-32 bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg overflow-hidden cursor-pointer group transform hover:scale-105 transition-transform hover:border-[var(--accent-primary)]/40"
                 >
                    <img src={item.image} alt={item.name} className="w-full h-32 object-cover"/>
                    <div className="p-2">
