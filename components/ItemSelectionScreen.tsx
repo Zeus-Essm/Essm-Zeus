@@ -1,7 +1,3 @@
-
-
-
-
 import React, { useMemo, useState, useRef } from 'react';
 import type { Item, MarketplaceType } from '../types';
 import { ITEMS } from '../constants';

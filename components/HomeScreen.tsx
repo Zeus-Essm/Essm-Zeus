@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import type { Profile, Category, Post, Item, MarketplaceType } from '../types';
@@ -8,7 +6,8 @@ import {
     PencilIcon, CameraIcon, ShoppingBagIcon, UserIcon, CompassIcon, 
     GiftIcon, PlusIcon, EllipsisVerticalIcon
 } from './IconComponents';
-import GradientButton from './GradientButton';
+import ImageViewModal from './ImageViewModal';
+
 
 // Props definition based on App.tsx usage
 interface HomeScreenProps {
@@ -65,6 +64,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const marketplaceTypesContainerRef = useRef<HTMLDivElement>(null);
+
+  const [localProfilePosts, setLocalProfilePosts] = useState<Post[]>([]);
+  const [viewingPostIndex, setViewingPostIndex] = useState<number | null>(null);
 
   const isMyProfile = !viewedProfileId || viewedProfileId === loggedInProfile.id;
 
@@ -153,6 +155,22 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     fetchProfile();
   }, [viewedProfileId, loggedInProfile]);
   
+  useEffect(() => {
+      if (profile) {
+          setLocalProfilePosts(posts.filter(p => p.user.id === profile.id));
+      } else {
+          setLocalProfilePosts([]);
+      }
+  }, [profile, posts]);
+
+  const handleLike = (postId: string) => {
+    setLocalProfilePosts(prevPosts =>
+      prevPosts.map(post =>
+        post.id === postId ? { ...post, likes: post.isLiked ? post.likes - 1 : post.likes + 1, isLiked: !post.isLiked } : post
+      )
+    );
+  };
+
   const handlePrev = () => {
     if (scrollContainerRef.current) {
         const container = scrollContainerRef.current;
@@ -225,8 +243,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
       }
     }
   };
-  
-  const profilePosts = posts.filter(post => post.user.id === (profile?.id || ''));
 
   if (loading) {
     return <div className="flex items-center justify-center h-full w-full bg-[var(--bg-main)] text-[var(--text-primary)]">Carregando perfil...</div>;
@@ -312,7 +328,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
 
         <div className="px-4 py-3 my-4 flex justify-around text-center">
-            <div><span className="font-bold">{profilePosts.length}</span><p className="text-xs text-[var(--text-secondary)]">Publicações</p></div>
+            <div><span className="font-bold">{localProfilePosts.length}</span><p className="text-xs text-[var(--text-secondary)]">Publicações</p></div>
             <div><span className="font-bold">1.2M</span><p className="text-xs text-[var(--text-secondary)]">Seguidores</p></div>
             <div><span className="font-bold">150</span><p className="text-xs text-[var(--text-secondary)]">Seguindo</p></div>
         </div>
@@ -423,8 +439,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                 </div>
             ) : (
                 <div className="grid grid-cols-3 gap-1 p-1">
-                    {profilePosts.map(post => (
-                        <div key={post.id} onClick={() => onItemClick(post.items[0])} className="aspect-w-1 aspect-h-1 bg-zinc-800 rounded-sm cursor-pointer">
+                    {localProfilePosts.map((post, index) => (
+                        <div key={post.id} onClick={() => setViewingPostIndex(index)} className="aspect-w-1 aspect-h-1 bg-zinc-800 rounded-sm cursor-pointer">
                            {post.image && <img src={post.image} alt="Post" className="w-full h-full object-cover"/>}
                         </div>
                     ))}
@@ -457,6 +473,23 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           <span className="text-[10px]">Perfil</span>
         </button>
       </nav>
+
+      {viewingPostIndex !== null && (
+        <ImageViewModal
+            posts={localProfilePosts}
+            startIndex={viewingPostIndex}
+            onClose={() => setViewingPostIndex(null)}
+            onLike={handleLike}
+            onItemClick={(item) => {
+                setViewingPostIndex(null);
+                onItemClick(item);
+            }}
+            onViewProfile={(profileId) => {
+                setViewingPostIndex(null);
+                onViewProfile(profileId);
+            }}
+        />
+      )}
     </div>
   );
 };
