@@ -48,6 +48,17 @@ export interface Item {
   beautyType?: 'lipstick' | 'eyeshadow' | 'wig' | 'general';
 }
 
+export interface Comment {
+  id: string;
+  user: {
+    id: string;
+    name: string;
+    avatar: string;
+  };
+  text: string;
+  timestamp: string; // ISO string
+}
+
 export interface Post {
   id: string;
   user: {
@@ -55,10 +66,13 @@ export interface Post {
     name: string;
     avatar: string;
   };
-  image: string;
+  image: string; // Thumbnail/poster for videos
+  video?: string; // Optional video URL
   items: Item[];
   likes: number;
   isLiked: boolean;
+  comments: Comment[];
+  commentCount: number;
 }
 
 export interface SavedLook {

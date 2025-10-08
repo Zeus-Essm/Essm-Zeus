@@ -249,6 +249,11 @@ export const INITIAL_POSTS: Post[] = [
         items: [ITEMS[0]], // Vestido de Gala LV
         likes: 1250,
         isLiked: false,
+        comments: [
+            { id: 'c1-1', user: { id: 'user2', name: 'Bruno Gomes', avatar: 'https://i.pravatar.cc/150?u=bruno' }, text: 'Uau, que vestido lindo!', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() },
+            { id: 'c1-2', user: { id: 'user3', name: 'Carla Dias', avatar: 'https://i.pravatar.cc/150?u=carla' }, text: 'Amei a cor!', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
+        ],
+        commentCount: 2,
     },
     {
         id: 'post2',
@@ -257,6 +262,10 @@ export const INITIAL_POSTS: Post[] = [
         items: [ITEMS[4]], // Adidas Ultraboost
         likes: 850,
         isLiked: true,
+        comments: [
+            { id: 'c2-1', user: { id: 'user1', name: 'Ana Clara', avatar: 'https://i.pravatar.cc/150?u=anaclara' }, text: 'Esse ténis é super confortável!', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString() },
+        ],
+        commentCount: 1,
     },
     {
         id: 'post3',
@@ -265,6 +274,8 @@ export const INITIAL_POSTS: Post[] = [
         items: [ITEMS[2]], // Saia Jeans New Feeling
         likes: 2300,
         isLiked: false,
+        comments: [],
+        commentCount: 0,
     },
     {
         id: 'post4',
@@ -273,6 +284,8 @@ export const INITIAL_POSTS: Post[] = [
         items: [], // Placeholder, will be replaced with new t-shirt
         likes: 980,
         isLiked: false,
+        comments: [],
+        commentCount: 0,
     },
     {
         id: 'post5',
@@ -281,6 +294,8 @@ export const INITIAL_POSTS: Post[] = [
         items: [ITEMS[6]], // Vestido de Noiva Sereia
         likes: 5400,
         isLiked: true,
+        comments: [],
+        commentCount: 0,
     },
     {
         id: 'post6',
@@ -289,6 +304,8 @@ export const INITIAL_POSTS: Post[] = [
         items: [ITEMS[1]], // Vestido Casual Monograma
         likes: 1800,
         isLiked: false,
+        comments: [],
+        commentCount: 0,
     },
      {
         id: 'post7',
@@ -297,6 +314,8 @@ export const INITIAL_POSTS: Post[] = [
         items: [ITEMS[5]], // Adidas Superstar
         likes: 4200,
         isLiked: false,
+        comments: [],
+        commentCount: 0,
     },
 ];
 

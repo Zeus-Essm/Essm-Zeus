@@ -4,7 +4,7 @@ import React from 'react';
 import type { Item } from '../types';
 import GradientButton from './GradientButton';
 import Header from './Header';
-import { ShoppingBagIcon, PlusIcon, UndoIcon, ShareIcon, BookmarkIcon, DownloadIcon } from './IconComponents';
+import { ShoppingBagIcon, PlusIcon, UndoIcon, ShareIcon, BookmarkIcon, DownloadIcon, VideoCameraIcon } from './IconComponents';
 
 interface ResultScreenProps {
   generatedImage: string;
@@ -17,6 +17,7 @@ interface ResultScreenProps {
   onSaveImage: () => void;
   onItemSelect: (item: Item) => void;
   onAddMoreItems: () => void;
+  onGenerateVideo: () => void;
 }
 
 const ResultScreen: React.FC<ResultScreenProps> = ({ 
@@ -29,7 +30,8 @@ const ResultScreen: React.FC<ResultScreenProps> = ({
     onSaveLook, 
     onSaveImage,
     onItemSelect,
-    onAddMoreItems
+    onAddMoreItems,
+    onGenerateVideo
 }) => {
   const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
   
@@ -113,18 +115,19 @@ const ResultScreen: React.FC<ResultScreenProps> = ({
                 <span className="text-[9px] tracking-wider uppercase">Adicionar</span>
             </button>
             <button
+                onClick={onGenerateVideo}
+                className="flex-1 flex flex-col items-center justify-center text-[var(--text-primary)] font-semibold py-2 px-1 rounded-lg bg-[var(--bg-tertiary)] hover:brightness-95 transition-colors"
+                aria-label="Criar Vídeo do Look"
+            >
+                <VideoCameraIcon className="w-5 h-5 mb-0.5" />
+                <span className="text-[9px] tracking-wider uppercase">Vídeo</span>
+            </button>
+            <button
                 onClick={onSaveLook}
                 className="flex-1 flex flex-col items-center justify-center text-[var(--text-primary)] font-semibold py-2 px-1 rounded-lg bg-[var(--bg-tertiary)] hover:brightness-95 transition-colors"
             >
                <BookmarkIcon className="w-5 h-5 mb-0.5" />
                 <span className="text-[9px] tracking-wider uppercase">Salvar</span>
-            </button>
-             <button
-                onClick={onPostToFeed}
-                className="flex-1 flex flex-col items-center justify-center text-[var(--text-primary)] font-semibold py-2 px-1 rounded-lg bg-[var(--bg-tertiary)] hover:brightness-95 transition-colors"
-            >
-               <ShareIcon className="w-5 h-5 mb-0.5" />
-                <span className="text-[9px] tracking-wider uppercase">Postar</span>
             </button>
             <button
                 onClick={onSaveImage}

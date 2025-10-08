@@ -241,7 +241,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     return <div className="flex items-center justify-center h-full w-full bg-[var(--bg-main)] text-red-400 p-4">{error || "Perfil não encontrado."}</div>;
   }
   
-  const defaultAvatar = 'https://i.postimg.cc/pL7M6Vgv/bv.jpg';
+  const defaultAvatar = 'https://i.postimg.cc/jSVNgmm4/IMG-2069.jpg';
   
   const marketplaceTypes: { type: MarketplaceType; label: string }[] = [
     { type: 'fashion', label: 'Moda' },
@@ -257,7 +257,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
       <header className="px-4 pt-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-1">
               <h1 className="text-lg font-extrabold">{profile.username}</h1>
-              <VerifiedIcon className="w-5 h-5 text-blue-500" />
+              <VerifiedIcon className="w-5 h-5 text-[var(--accent-primary)]" />
               <ChevronDownIcon className="w-3 h-3" />
           </div>
           <div className="flex items-center gap-5 relative">
@@ -363,9 +363,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                             <img src={category.image} alt={category.name} className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4">
                             <h3 className="text-2xl font-black tracking-tighter uppercase text-white">{category.name}</h3>
-                            </div>
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <span className="text-lg font-bold border-2 border-[var(--accent-primary)] text-[var(--accent-primary)] rounded-full px-5 py-2">Ver</span>
                             </div>
                         </div>
                         ))}

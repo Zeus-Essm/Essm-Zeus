@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Modality, GenerateContentResponse } from '@google/genai';
 import type { Item } from '../types';
 
@@ -233,6 +234,65 @@ export const generateBeautyTryOnImage = async (userImage: string, newItem: Item)
     }
 };
 
+export const generateFashionVideo = async (baseImage: string): Promise<string> => {
+    if (!process.env.API_KEY) {
+        throw new Error("API_KEY não configurada. A geração de vídeo está desativada.");
+    }
+
+    try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const { base64, mimeType } = getBase64Parts(baseImage);
+        
+        const prompt = `Gere um vídeo vertical com proporção de 9:16 e 5 segundos de duração da pessoa na imagem. Ela é uma modelo de alta-costura em uma sessão de fotos profissional. O vídeo deve consistir em uma série de mudanças de pose lentas, sutis e elegantes, como se um fotógrafo estivesse tirando várias fotos. Movimento mínimo, foco em poses confiantes e estilosas. O fundo deve permanecer consistente com a imagem original.`;
+
+        let operation = await ai.models.generateVideos({
+            model: 'veo-2.0-generate-001',
+            prompt: prompt,
+            image: {
+                imageBytes: base64,
+                mimeType: mimeType,
+            },
+            config: {
+                numberOfVideos: 1,
+            },
+        });
+
+        // Poll for the result
+        while (!operation.done) {
+            await new Promise(resolve => setTimeout(resolve, 10000)); // Wait 10 seconds before checking again
+            operation = await ai.operations.getVideosOperation({ operation: operation });
+        }
+
+        const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+        if (!downloadLink) {
+            throw new Error('A geração de vídeo falhou em produzir um link para download.');
+        }
+
+        // Fetch the video using the download link and the API key
+        const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+        if (!response.ok) {
+            throw new Error(`Falha ao baixar o vídeo: ${response.statusText}`);
+        }
+
+        const videoBlob = await response.blob();
+        return URL.createObjectURL(videoBlob); // Create a local URL for the video blob
+    } catch (error: any) {
+        console.error('Erro ao chamar a API Gemini para geração de vídeo:', error);
+
+        // More robustly check for the quota error, as its structure can vary.
+        const errorString = JSON.stringify(error);
+        const isQuotaError = errorString.includes('RESOURCE_EXHAUSTED') || errorString.includes('"code":429');
+
+        if (isQuotaError) {
+            throw new Error('O serviço de geração de vídeo atingiu seu limite de uso. Por favor, tente novamente mais tarde.');
+        }
+
+        if (error instanceof Error) {
+            throw new Error(`Falha ao gerar o vídeo: ${error.message}`);
+        }
+        throw new Error('Falha ao gerar o vídeo. Verifique o console para mais detalhes.');
+    }
+};
 
 export const generateTryOnImage = async (userImage: string, newItem: Item, existingItems: Item[]): Promise<string> => {
   if (!process.env.API_KEY) {

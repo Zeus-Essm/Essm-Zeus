@@ -1,8 +1,6 @@
-
-
 import React, { useRef, useEffect } from 'react';
 import type { Post, Item } from '../types';
-import { HeartIcon, ShareIcon } from './IconComponents';
+import { HeartIcon, ChatBubbleIcon } from './IconComponents';
 
 interface ImageViewModalProps {
   posts: Post[];
@@ -11,6 +9,7 @@ interface ImageViewModalProps {
   onLike: (postId: string) => void;
   onItemClick: (item: Item) => void;
   onViewProfile: (profileId: string) => void;
+  onComment: (postId: string) => void;
 }
 
 const XIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -19,7 +18,7 @@ const XIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
     </svg>
 );
 
-const ImageViewModal: React.FC<ImageViewModalProps> = ({ posts, startIndex, onClose, onLike, onItemClick, onViewProfile }) => {
+const ImageViewModal: React.FC<ImageViewModalProps> = ({ posts, startIndex, onClose, onLike, onItemClick, onViewProfile, onComment }) => {
     const scrollContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -73,10 +72,22 @@ const ImageViewModal: React.FC<ImageViewModalProps> = ({ posts, startIndex, onCl
                             </button>
                         </div>
                         
-                        {/* Image Wrapper */}
+                        {/* Image or Video Wrapper */}
                         <div className="flex-grow flex items-center justify-center min-h-0">
                             <div className="w-full aspect-square bg-zinc-900">
-                                <img src={post.image} alt={`Look by ${post.user.name}`} className="w-full h-full object-cover" />
+                                {post.video ? (
+                                    <video
+                                        src={post.video}
+                                        loop
+                                        playsInline
+                                        controls
+                                        autoPlay
+                                        poster={post.image}
+                                        className="w-full h-full object-contain"
+                                    />
+                                ) : (
+                                    <img src={post.image} alt={`Look by ${post.user.name}`} className="w-full h-full object-contain" />
+                                )}
                             </div>
                         </div>
 
@@ -89,15 +100,20 @@ const ImageViewModal: React.FC<ImageViewModalProps> = ({ posts, startIndex, onCl
                                         fill={post.isLiked ? 'currentColor' : 'none'}
                                     />
                                 </button>
-                                <button className="transform hover:scale-110 transition-transform" aria-label="Compartilhar">
-                                    <ShareIcon className="w-7 h-7 text-white" />
+                                <button onClick={() => onComment(post.id)} className="transform hover:scale-110 transition-transform" aria-label="Comentar">
+                                    <ChatBubbleIcon className="w-7 h-7 text-white" />
                                 </button>
                             </div>
                             <p className="text-sm font-semibold mt-2 text-white">{post.likes.toLocaleString()} curtidas</p>
+                            {post.commentCount > 0 && (
+                                <button onClick={() => onComment(post.id)} className="text-sm text-zinc-400 mt-1 hover:underline">
+                                    Ver todos os {post.commentCount} comentários
+                                </button>
+                            )}
                             <div className="text-sm text-white mt-1">
                                 <p>
                                     <button onClick={() => onViewProfile(post.user.id)} className="font-bold mr-2 hover:underline text-white">{post.user.name}</button>
-                                    vestindo{' '}
+                                     {post.items.length > 0 ? (post.video ? 'apresentando ' : 'vestindo ') : 'compartilhou um novo vídeo.'}
                                     {post.items.map((item, index) => (
                                         <React.Fragment key={item.id}>
                                         <button 

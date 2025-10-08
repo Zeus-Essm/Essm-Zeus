@@ -1,23 +1,29 @@
 
+
+
+
 import React, { useState, useRef, useEffect } from 'react';
-import type { Post, Item, Story, MarketplaceType, Category } from '../types';
+import type { Post, Item, Story, MarketplaceType, Category, Profile, Comment } from '../types';
 import { CATEGORIES } from '../constants';
 import Header from './Header';
 import PostCard from './PostCard';
 import { PlusIcon } from './IconComponents';
 import ImageViewModal from './ImageViewModal';
 import ShopTheLookModal from './ShopTheLookModal';
+import CommentsModal from './CommentsModal';
 
 interface FeedScreenProps {
   posts: Post[];
   stories: Story[];
-  profileImage: string | null;
+  profile: Profile;
   onBack: () => void;
   onItemClick: (item: Item) => void;
   onAddToCartMultiple: (items: Item[]) => void;
   onBuyMultiple: (items: Item[]) => void;
   onViewProfile: (profileId: string) => void;
   onSelectCategory: (category: Category) => void;
+  onLikePost: (postId: string) => void;
+  onAddComment: (postId: string, text: string) => void;
   unreadNotificationCount: number;
   onNotificationsClick: () => void;
 }
@@ -59,21 +65,23 @@ const getCategoryTypeFromItem = (item: Item): MarketplaceType => {
 
 
 const FeedScreen: React.FC<FeedScreenProps> = ({ 
-    posts: initialPosts, 
+    posts, 
     stories, 
-    profileImage, 
+    profile, 
     onBack, 
     onItemClick, 
     onAddToCartMultiple, 
     onBuyMultiple, 
     onViewProfile, 
     onSelectCategory,
+    onLikePost,
+    onAddComment,
     unreadNotificationCount,
     onNotificationsClick,
  }) => {
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
   const [viewingPostIndex, setViewingPostIndex] = useState<number | null>(null);
   const [shoppingPost, setShoppingPost] = useState<{post: Post, type: MarketplaceType} | null>(null);
+  const [commentingPost, setCommentingPost] = useState<Post | null>(null);
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -117,6 +125,19 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
         });
     };
   }, [featuredCategories.length]);
+  
+  // Keep commentingPost state in sync with the main posts state
+  useEffect(() => {
+    if (commentingPost) {
+        const updatedPost = posts.find(p => p.id === commentingPost.id);
+        if (updatedPost) {
+            setCommentingPost(updatedPost);
+        } else {
+            // The post might have been deleted, so close the modal
+            setCommentingPost(null);
+        }
+    }
+  }, [posts, commentingPost]);
 
   const handlePrev = () => {
     if (scrollContainerRef.current) {
@@ -142,14 +163,6 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
       }
   };
 
-  const handleLike = (postId: string) => {
-    setPosts(prevPosts =>
-      prevPosts.map(post =>
-        post.id === postId ? { ...post, likes: post.isLiked ? post.likes - 1 : post.likes + 1, isLiked: !post.isLiked } : post
-      )
-    );
-  };
-
   const handleViewPost = (index: number) => {
     setViewingPostIndex(index);
   };
@@ -163,6 +176,12 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
     setShoppingPost({ post, type });
   };
   
+  const handleOpenComments = (postId: string) => {
+    const postToComment = posts.find(p => p.id === postId);
+    if (postToComment) {
+        setCommentingPost(postToComment);
+    }
+  };
 
   return (
     <>
@@ -177,7 +196,7 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
           {/* Stories Section */}
           <div className="py-4 border-b border-[var(--border-primary)]">
             <div className="flex items-start space-x-4 px-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory scroll-smooth">
-              <YourStoryCard profileImage={profileImage} />
+              <YourStoryCard profileImage={profile?.profile_image_url || null} />
               {stories.map(story => (
                 <StoryCard 
                   key={story.id} 
@@ -217,9 +236,6 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-5">
                                 <h3 className="text-4xl font-black tracking-tighter uppercase leading-tight text-glow text-white">{category.name}</h3>
                             </div>
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                <span className="text-xl font-bold border-2 border-[var(--accent-primary)] text-[var(--accent-primary)] rounded-full px-6 py-3">Ver</span>
-                            </div>
                         </div>
                     </div>
                 ))}
@@ -253,11 +269,12 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
               <PostCard
                 key={post.id}
                 post={post}
-                onLike={() => handleLike(post.id)}
+                onLike={() => onLikePost(post.id)}
                 onItemClick={onItemClick}
                 onShopTheLook={() => handleShopTheLook(post)}
                 onViewProfile={() => onViewProfile(post.user.id)}
                 onImageClick={() => handleViewPost(index)}
+                onComment={() => handleOpenComments(post.id)}
               />
             ))}
           </div>
@@ -268,9 +285,10 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
           posts={posts}
           startIndex={viewingPostIndex}
           onClose={handleClosePostView}
-          onLike={handleLike}
+          onLike={onLikePost}
           onItemClick={onItemClick}
           onViewProfile={onViewProfile}
+          onComment={handleOpenComments}
         />
       )}
       {shoppingPost && (
@@ -284,6 +302,14 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
           }}
           onBuyNow={(items) => onBuyMultiple(items)}
         />
+      )}
+      {commentingPost && (
+          <CommentsModal
+            post={commentingPost}
+            currentUser={profile}
+            onClose={() => setCommentingPost(null)}
+            onAddComment={onAddComment}
+          />
       )}
     </>
   );

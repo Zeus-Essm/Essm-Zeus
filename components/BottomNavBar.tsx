@@ -33,9 +33,9 @@ const NavItem: React.FC<{
     <button onClick={onClick} className={`relative flex flex-col items-center p-1 w-1/5 transition-colors ${isActive ? activeClass : inactiveClass}`}>
       {icon}
       {badgeCount && badgeCount > 0 && (
-        <span className="absolute top-0 right-[22%] flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">{badgeCount}</span>
+        <span className="absolute top-0 right-[20%] flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white">{badgeCount > 9 ? '9+' : badgeCount}</span>
       )}
-      <span className="text-[10px]">{label}</span>
+      <span className="text-[9px] mt-0.5">{label}</span>
     </button>
   );
 };
@@ -53,27 +53,27 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({
   const isCartActive = activeScreen === Screen.Cart;
 
   return (
-    <nav className="flex justify-around items-center p-2 bg-[var(--bg-header)] border-t border-[var(--border-primary)] backdrop-blur-md">
+    <nav className="flex justify-around items-center py-1 px-2 bg-[var(--bg-header)] border-t border-[var(--border-primary)] backdrop-blur-md">
       <NavItem 
-        icon={<CompassIcon className="w-7 h-7" />}
+        icon={<CompassIcon className="w-6 h-6" />}
         label="Feed"
         isActive={activeScreen === Screen.Feed}
         onClick={onNavigateToFeed}
       />
       
       <button onClick={onNavigateToCart} className={`relative flex flex-col items-center p-1 w-1/5 transition-colors ${isCartActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-secondary)] hover:text-white'}`}>
-        <ShoppingBagIcon className={`w-7 h-7 transition-transform ${isCartAnimating ? 'scale-125' : ''}`} />
-        <span className="text-[10px]">Carrinho</span>
+        <ShoppingBagIcon className={`w-6 h-6 transition-transform ${isCartAnimating ? 'scale-125' : ''}`} />
+        <span className="text-[9px] mt-0.5">Carrinho</span>
       </button>
 
       <button onClick={onStartTryOn} className="w-1/5 flex justify-center">
-          <div className="p-3 bg-[var(--accent-primary)] rounded-xl transform hover:scale-110 transition-transform">
-              <PlusIcon className="w-7 h-7 text-[var(--accent-primary-text)]" />
+          <div className="p-2.5 bg-[var(--accent-primary)] rounded-lg transform hover:scale-110 transition-transform">
+              <PlusIcon className="w-6 h-6 text-[var(--accent-primary-text)]" />
           </div>
       </button>
 
       <NavItem 
-        icon={<ChatBubbleIcon className="w-7 h-7" />}
+        icon={<ChatBubbleIcon className="w-6 h-6" />}
         label="Mensagens"
         isActive={activeScreen === Screen.ChatList || activeScreen === Screen.Chat}
         onClick={onNavigateToChat}
@@ -81,7 +81,7 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({
       />
 
       <NavItem 
-        icon={<UserIcon className="w-7 h-7" />}
+        icon={<UserIcon className="w-6 h-6" />}
         label="Perfil"
         isActive={activeScreen === Screen.Home}
         onClick={onNavigateToProfile}

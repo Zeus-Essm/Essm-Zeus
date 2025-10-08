@@ -3,8 +3,8 @@ import React from 'react';
 // FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
-import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType, AppNotification, Conversation } from './types';
-import { generateTryOnImage, expandImageToSquare, generateBeautyTryOnImage } from './services/geminiService';
+import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType, AppNotification, Conversation, Comment } from './types';
+import { generateTryOnImage, expandImageToSquare, generateBeautyTryOnImage, generateFashionVideo } from './services/geminiService';
 import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, ITEMS, INITIAL_CONVERSATIONS } from './constants';
 
 // Screen Components
@@ -29,6 +29,7 @@ import BottomNavBar from './components/BottomNavBar';
 import ChatListScreen from './components/ChatListScreen';
 import ChatScreen from './components/ChatScreen';
 import { XCircleIcon } from './components/IconComponents';
+import VideoPlayerModal from './components/VideoPlayerModal';
 
 declare global {
   interface Window {}
@@ -164,6 +165,9 @@ const App: React.FC = () => {
     const [viewedProfileId, setViewedProfileId] = React.useState<string | null>(null);
     const [userImage, setUserImage] = React.useState<string | null>(null);
     const [generatedImage, setGeneratedImage] = React.useState<string | null>(null);
+    const [generatedVideoUrl, setGeneratedVideoUrl] = React.useState<string | null>(null);
+    const [showVideoPlayer, setShowVideoPlayer] = React.useState(false);
+    const [isPublishing, setIsPublishing] = React.useState(false);
     const [imageHistory, setImageHistory] = React.useState<string[]>([]);
     const [navigationStack, setNavigationStack] = React.useState<(Category | SubCategory)[]>([]);
     const [collectionIdentifier, setCollectionIdentifier] = React.useState<{id: string, name: string, type: MarketplaceType} | null>(null);
@@ -320,7 +324,17 @@ const App: React.FC = () => {
         }, 10000);
 
         return () => clearTimeout(timer);
-    }, [session]); // Re-run if session changes
+    }, [session]);
+    
+    // Effect to auto-dismiss errors
+    React.useEffect(() => {
+        if (error) {
+            const timer = setTimeout(() => {
+                setError(null);
+            }, 10000); // Auto-dismiss after 10 seconds
+            return () => clearTimeout(timer);
+        }
+    }, [error]);
 
 
     const handleContinueAsVisitor = () => {
@@ -328,7 +342,7 @@ const App: React.FC = () => {
             id: 'mock_user_123',
             username: 'Leandra Sardinha',
             bio: 'A melhor confeiteira do mundo\nMelhor mulher e mãe',
-            profile_image_url: 'https://i.postimg.cc/pL7M6Vgv/bv.jpg',
+            profile_image_url: 'https://i.postimg.cc/jSVNgmm4/IMG-2069.jpg',
             cover_image_url: 'https://i.postimg.cc/wTQh27Rt/Captura-de-Tela-2025-09-19-a-s-2-10-14-PM.png',
         };
         const mockSession = { user: { id: 'mock_user_123' } } as Session;
@@ -586,6 +600,8 @@ const App: React.FC = () => {
                     items: [item],
                     likes: 0,
                     isLiked: false,
+                    comments: [],
+                    commentCount: 0,
                 };
                 setPosts(prevPosts => [newPost, ...prevPosts]);
                 setConfirmationMessage(`${item.name} foi postado no seu feed!`);
@@ -656,6 +672,109 @@ const App: React.FC = () => {
         }
     };
 
+    const handleGenerateVideo = async () => {
+        if (!generatedImage) return;
+
+        setIsLoading(true);
+        setLoadingMessage("Criando seu vídeo de passarela... Isso pode levar alguns minutos.");
+        setError(null);
+        try {
+            const videoUrl = await generateFashionVideo(generatedImage);
+            setGeneratedVideoUrl(videoUrl);
+            setShowVideoPlayer(true);
+        } catch (err: any) {
+            setError(err.message || 'Falha ao gerar o vídeo.');
+        } finally {
+            setIsLoading(false);
+            setLoadingMessage(null);
+        }
+    };
+
+    const handleSaveVideo = () => {
+        if (!generatedVideoUrl) return;
+        const link = document.createElement('a');
+        link.href = generatedVideoUrl;
+        link.download = `pump-video-${Date.now()}.mp4`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        setToast('Vídeo salvo nos seus downloads!');
+        setTimeout(() => setToast(null), 3000);
+    };
+
+    const handlePublishVideo = async () => {
+        if (!generatedVideoUrl || !profile || !generatedImage || !session) {
+            setError("Não foi possível publicar. Faltam informações do look.");
+            return;
+        }
+
+        if (session.user.id.startsWith('mock_')) {
+            const newPost: Post = {
+                id: `post_video_${Date.now()}`,
+                user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || `https://i.pravatar.cc/150?u=${profile.id}` },
+                image: generatedImage, // Thumbnail
+                video: generatedVideoUrl, // Blob URL
+                items: wornItems,
+                likes: 0,
+                isLiked: false,
+                comments: [],
+                commentCount: 0,
+            };
+            setPosts(prevPosts => [newPost, ...prevPosts]);
+            setShowVideoPlayer(false);
+            setGeneratedVideoUrl(null);
+            setCurrentScreen(Screen.Feed);
+            setToast('Vídeo publicado no seu feed!');
+             setTimeout(() => setToast(null), 3000);
+            return;
+        }
+
+        setIsPublishing(true);
+        setError(null);
+
+        try {
+            const response = await fetch(generatedVideoUrl);
+            const videoBlob = await response.blob();
+            
+            const fileExt = videoBlob.type.split('/')[1] || 'mp4';
+            const filePath = `${session.user.id}/videos/${Date.now()}.${fileExt}`;
+            const { error: uploadError } = await supabase.storage.from('looks').upload(filePath, videoBlob, {
+                cacheControl: '3600',
+                upsert: false
+            });
+            if (uploadError) throw uploadError;
+
+            const { data: publicUrlData } = supabase.storage.from('looks').getPublicUrl(filePath);
+            const publicVideoUrl = publicUrlData.publicUrl;
+            if (!publicVideoUrl) throw new Error('Falha ao obter URL pública do vídeo.');
+
+            const newPost: Post = {
+                id: `post_video_${Date.now()}`,
+                user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || `https://i.pravatar.cc/150?u=${profile.id}` },
+                image: generatedImage,
+                video: publicVideoUrl,
+                items: wornItems,
+                likes: 0,
+                isLiked: false,
+                comments: [],
+                commentCount: 0,
+            };
+            
+            setPosts(prevPosts => [newPost, ...prevPosts]);
+            setShowVideoPlayer(false);
+            setGeneratedVideoUrl(null);
+            setCurrentScreen(Screen.Feed);
+            setToast('Vídeo publicado no seu feed!');
+            setTimeout(() => setToast(null), 3000);
+
+        } catch (err: any) {
+            console.error("Error publishing video:", err);
+            setError(`Falha ao publicar vídeo: ${err.message}`);
+        } finally {
+            setIsPublishing(false);
+        }
+    };
+
     const handleUseCamera = () => setCurrentScreen(Screen.Camera);
     const handleStartTryOn = () => {
         setNavigationStack([]);
@@ -712,6 +831,8 @@ const App: React.FC = () => {
                 items: wornItems,
                 likes: 0,
                 isLiked: false,
+                comments: [],
+                commentCount: 0,
             };
             setPosts(prevPosts => [newPost, ...prevPosts]);
             setCurrentScreen(Screen.Feed);
@@ -794,6 +915,8 @@ const App: React.FC = () => {
             items: look.items,
             likes: 0,
             isLiked: false,
+            comments: [],
+            commentCount: 0,
         };
         setPosts(prevPosts => [newPost, ...prevPosts]);
         setToast('Look postado no feed com sucesso!');
@@ -823,6 +946,37 @@ const App: React.FC = () => {
             if (userImage) setGeneratedImage(userImage);
             handleSelectCategory(parentCategory);
         }
+    };
+
+    const handleLikePost = (postId: string) => {
+        setPosts(prevPosts =>
+            prevPosts.map(post =>
+                post.id === postId ? { ...post, likes: post.isLiked ? post.likes - 1 : post.likes + 1, isLiked: !post.isLiked } : post
+            )
+        );
+    };
+
+    const handleAddComment = (postId: string, text: string) => {
+        if (!profile) {
+            setToast("Você precisa estar logado para comentar.");
+            setTimeout(() => setToast(null), 3000);
+            return;
+        }
+        const newComment: Comment = {
+            id: `comment_${Date.now()}`,
+            user: {
+                id: profile.id,
+                name: profile.username,
+                avatar: profile.profile_image_url || `https://i.pravatar.cc/150?u=${profile.id}`
+            },
+            text,
+            timestamp: new Date().toISOString()
+        };
+        setPosts(prevPosts => prevPosts.map(p => 
+            p.id === postId 
+                ? { ...p, comments: [...p.comments, newComment], commentCount: p.commentCount + 1 } 
+                : p
+        ));
     };
 
     const resetToHome = () => {
@@ -977,6 +1131,7 @@ const App: React.FC = () => {
                         onSaveLook={handleSaveLook}
                         onSaveImage={handleSaveImage}
                         onAddMoreItems={handleNavigateToAddMoreItems}
+                        onGenerateVideo={handleGenerateVideo}
                     />;
                 }
                 // If we land here with no items, it means we undid the last one.
@@ -992,13 +1147,15 @@ const App: React.FC = () => {
                  return <FeedScreen 
                             posts={posts}
                             stories={stories}
-                            profileImage={profile?.profile_image_url || null}
+                            profile={profile!}
                             onBack={handleNavigateToProfile}
                             onItemClick={handleItemClick}
                             onAddToCartMultiple={handleAddToCartMultiple}
                             onBuyMultiple={handleBuyLook}
                             onViewProfile={handleViewProfile}
                             onSelectCategory={handleSelectCategory}
+                            onLikePost={handleLikePost}
+                            onAddComment={handleAddComment}
                             {...notificationProps}
                         />;
             case Screen.MyLooks:
@@ -1117,11 +1274,34 @@ const App: React.FC = () => {
                     {toast}
                 </div>
             )}
+            {error && (
+                <div className="absolute top-16 left-4 right-4 bg-red-900/50 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg shadow-lg z-50 flex items-center justify-between animate-fadeIn backdrop-blur-sm">
+                    <p className="text-sm flex-grow pr-2">{error}</p>
+                    <button onClick={() => setError(null)} className="p-1 rounded-full hover:bg-red-500/30 flex-shrink-0">
+                        <XCircleIcon className="w-6 h-6" />
+                    </button>
+                </div>
+            )}
             {showNotificationsPanel && (
                 <NotificationsPanel
                     notifications={notifications}
                     onClose={handleCloseNotificationsPanel}
                     onNotificationClick={handleNotificationClick}
+                />
+            )}
+            {showVideoPlayer && generatedVideoUrl && (
+                <VideoPlayerModal
+                    videoUrl={generatedVideoUrl}
+                    onClose={() => {
+                        if (generatedVideoUrl) {
+                            URL.revokeObjectURL(generatedVideoUrl);
+                        }
+                        setShowVideoPlayer(false);
+                        setGeneratedVideoUrl(null);
+                    }}
+                    onPublish={handlePublishVideo}
+                    onSave={handleSaveVideo}
+                    isPublishing={isPublishing}
                 />
             )}
         </div>

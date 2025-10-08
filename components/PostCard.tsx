@@ -1,7 +1,6 @@
-
 import React from 'react';
 import type { Post, Item } from '../types';
-import { HeartIcon, ShareIcon, ShoppingBagIcon } from './IconComponents';
+import { HeartIcon, ShoppingBagIcon, ChatBubbleIcon } from './IconComponents';
 
 interface PostCardProps {
   post: Post;
@@ -10,9 +9,10 @@ interface PostCardProps {
   onShopTheLook: () => void;
   onViewProfile: () => void;
   onImageClick: () => void;
+  onComment: () => void;
 }
 
-const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTheLook, onViewProfile, onImageClick }) => {
+const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTheLook, onViewProfile, onImageClick, onComment }) => {
   return (
     <div className="bg-[var(--bg-main)] flex flex-col animate-fadeIn border-b border-[var(--border-primary)]">
       {/* Card Header */}
@@ -21,9 +21,22 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
         <span className="font-bold text-sm">{post.user.name}</span>
       </button>
 
-      {/* Post Image */}
-      <div onClick={onImageClick} className="aspect-w-1 aspect-h-1 cursor-pointer">
-        <img src={post.image} alt={`Look by ${post.user.name}`} className="w-full h-full object-cover" />
+      {/* Post Image or Video */}
+      <div className="aspect-w-1 aspect-h-1 bg-black">
+        {post.video ? (
+            <video
+                src={post.video}
+                loop
+                playsInline
+                controls
+                poster={post.image}
+                className="w-full h-full object-cover"
+            />
+        ) : (
+            <div onClick={onImageClick} className="w-full h-full cursor-pointer">
+                <img src={post.image} alt={`Look by ${post.user.name}`} className="w-full h-full object-cover" />
+            </div>
+        )}
       </div>
 
       {/* Action Buttons & Likes */}
@@ -35,11 +48,11 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
               fill={post.isLiked ? 'currentColor' : 'none'}
             />
           </button>
+           <button onClick={onComment} className="transform hover:scale-110 transition-transform" aria-label="Comentar">
+            <ChatBubbleIcon className="w-7 h-7 text-[var(--text-primary)]" />
+          </button>
           <button onClick={onShopTheLook} className="transform hover:scale-110 transition-transform" aria-label="Comprar o look">
             <ShoppingBagIcon className="w-7 h-7 text-[var(--text-primary)]" />
-          </button>
-          <button className="transform hover:scale-110 transition-transform" aria-label="Compartilhar">
-            <ShareIcon className="w-7 h-7 text-[var(--text-primary)]" />
           </button>
         </div>
         <p className="text-sm font-semibold mt-2">{post.likes.toLocaleString()} curtidas</p>
@@ -47,9 +60,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
 
       {/* Caption / Item List */}
       <div className="px-3 pb-4 text-sm">
+         {post.commentCount > 0 && (
+            <button onClick={onComment} className="text-[var(--text-secondary)] mb-1 hover:underline">
+                Ver todos os {post.commentCount} comentários
+            </button>
+        )}
         <p>
           <button onClick={onViewProfile} className="font-bold mr-2 hover:underline">{post.user.name}</button>
-          vestindo{' '}
+          {post.items.length > 0 ? (post.video ? 'apresentando ' : 'vestindo ') : 'compartilhou um novo vídeo.'}
           {post.items.map((item, index) => (
             <React.Fragment key={item.id}>
               <button 
