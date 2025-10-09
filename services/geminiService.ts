@@ -1,3 +1,5 @@
+
+
 import { GoogleGenAI, Modality, GenerateContentResponse } from '@google/genai';
 import type { Item } from '../types';
 
@@ -46,14 +48,48 @@ const imageUrlToDataUrl = async (url: string): Promise<string> => {
   }
 };
 
-export const expandImageToSquare = async (userImage: string): Promise<string> => {
+// --- NEW ASPECT RATIO LOGIC ---
+const SUPPORTED_ASPECT_RATIOS = [
+  // Portrait
+  { ratio: 9 / 16, label: '9:16' }, // 0.5625
+  { ratio: 2 / 3, label: '2:3' },   // 0.6667
+  { ratio: 3 / 4, label: '3:4' },   // 0.75
+  { ratio: 4 / 5, label: '4:5' },   // 0.8
+  // Square
+  { ratio: 1 / 1, label: '1:1' },   // 1.0
+  // Flexible / Landscape
+  { ratio: 5 / 4, label: '5:4' },   // 1.25
+  { ratio: 4 / 3, label: '4:3' },   // 1.3333
+  { ratio: 3 / 2, label: '3:2' },   // 1.5
+  { ratio: 16 / 9, label: '16:9' }, // 1.7778
+  { ratio: 21 / 9, label: '21:9' }, // 2.3333
+];
+
+const getClosestAspectRatio = (width: number, height: number): string => {
+  if (height === 0) return '1:1'; // Avoid division by zero
+  const originalRatio = width / height;
+
+  const closest = SUPPORTED_ASPECT_RATIOS.reduce((prev, curr) => {
+    return (Math.abs(curr.ratio - originalRatio) < Math.abs(prev.ratio - originalRatio) ? curr : prev);
+  });
+
+  return closest.label;
+};
+
+export const normalizeImageAspectRatio = async (userImage: string): Promise<string> => {
     if (!process.env.API_KEY) {
-        console.warn("API_KEY not set. Cannot expand image. Returning original.");
+        console.warn("API_KEY not set. Cannot normalize image aspect ratio. Returning original.");
         return userImage;
     }
 
     const { width, height } = await getImageDimensions(userImage);
-    if (width === height) {
+    const targetAspectRatio = getClosestAspectRatio(width, height);
+
+    // Check if the aspect ratio is already close enough to a supported one
+    const originalRatio = width / height;
+    const targetRatioValue = SUPPORTED_ASPECT_RATIOS.find(r => r.label === targetAspectRatio)!.ratio;
+    if (Math.abs(originalRatio - targetRatioValue) < 0.02) { // Allow a small tolerance
+        console.log(`Image aspect ratio is already close to ${targetAspectRatio}. Skipping normalization.`);
         return userImage;
     }
 
@@ -61,21 +97,13 @@ export const expandImageToSquare = async (userImage: string): Promise<string> =>
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const { base64: userBase64, mimeType: userMimeType } = getBase64Parts(userImage);
         
-        const promptText = `Sua tarefa é ser um especialista em edição de imagem para expandir uma imagem retangular para um formato perfeitamente quadrado (proporção 1:1) de forma ultra-realista.
+        const promptText = `Sua tarefa é ser um editor de imagens especialista. Ajuste a imagem fornecida para uma proporção de aspecto exata de **${targetAspectRatio}**.
 
-**A REGRA MAIS IMPORTANTE E INQUEBRÁVEL É SOBRE A DIREÇÃO DA EXPANSÃO:**
-- A expansão SÓ PODE acontecer NAS LATERAIS (esquerda e direita).
-- É ABSOLUTAMENTE PROIBIDO adicionar qualquer conteúdo na parte SUPERIOR ou INFERIOR.
-- A ALTURA da imagem original deve ser 100% PRESERVADA. A imagem final deve ter exatamente a mesma altura da original.
-
-**SUA MISSÃO DETALHADA:**
-1.  **MANTER A ALTURA ORIGINAL:** A imagem que você gerar deve ter exatamente a mesma altura da imagem fornecida. Nenhuma expansão vertical.
-2.  **CRIAR UM QUADRADO:** A largura da imagem final deve ser igual à altura, resultando em um quadrado perfeito.
-3.  **EXPANDIR APENAS PARA OS LADOS:** Centralize a imagem original. Sua tarefa é preencher de forma realista as áreas vazias que agora existem APENAS nas laterais.
-4.  **PREENCHIMENTO REALISTA:** O preenchimento lateral deve ser uma continuação natural e imperceptível do fundo existente na foto.
-5.  **FIDELIDADE TOTAL À ILUMINAÇÃO (CRÍTICO):** A iluminação do fundo expandido (sombras, brilhos, etc.) deve corresponder **exatamente** à iluminação da foto original.
-6.  **NÃO ALTERE O CONTEÚDO ORIGINAL:** A pessoa e os objetos na imagem original devem ser mantidos 100% intactos.
-7.  **RESULTADO FINAL:** Uma fotografia quadrada, com a imagem original ocupando toda a altura, centralizada, e com as laterais expandidas de forma ultra-realista.`;
+**REGRAS CRÍTICAS E INQUEBRÁVEIS:**
+1.  **PROPORÇÃO FINAL:** A imagem de saída DEVE ter exatamente a proporção de **${targetAspectRatio}**.
+2.  **PRESERVAÇÃO DO ASSUNTO:** O assunto principal (pessoa, objetos) na imagem original deve ser mantido 100% intacto. Não corte, distorça, estique ou altere o assunto de forma alguma.
+3.  **EXPANSÃO REALISTA:** Se a imagem precisar ser expandida para atingir a proporção alvo, preencha as novas áreas com conteúdo que estenda o fundo existente de forma ultra-realista e imperceptível. A iluminação, textura e sombras da área expandida devem corresponder perfeitamente à imagem original.
+4.  **RESULTADO LIMPO:** Forneça apenas a imagem finalizada, sem texto adicional.`;
 
         const response: GenerateContentResponse = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image',
@@ -101,9 +129,9 @@ export const expandImageToSquare = async (userImage: string): Promise<string> =>
         if (!candidate || !candidate.content || !candidate.content.parts) {
             const blockReason = response.promptFeedback?.blockReason || candidate?.finishReason;
             if (blockReason) {
-                throw new Error(`Falha ao expandir a imagem. Motivo: ${blockReason}. Tente uma imagem diferente.`);
+                throw new Error(`Falha ao ajustar a imagem. Motivo: ${blockReason}. Tente uma imagem diferente.`);
             }
-            throw new Error('A IA não retornou uma imagem expandida válida. A resposta pode ter sido bloqueada ou estar vazia.');
+            throw new Error('A IA não retornou uma imagem ajustada válida. A resposta pode ter sido bloqueada ou estar vazia.');
         }
 
         for (const part of candidate.content.parts) {
@@ -113,13 +141,13 @@ export const expandImageToSquare = async (userImage: string): Promise<string> =>
             }
         }
 
-        throw new Error('A IA não retornou uma imagem expandida.');
+        throw new Error('A IA não retornou uma imagem ajustada.');
     } catch (error) {
-        console.error('Error calling Gemini API for image expansion:', error);
+        console.error('Error calling Gemini API for image aspect ratio normalization:', error);
         if (error instanceof Error) {
-            throw new Error(`Falha ao expandir a imagem: ${error.message}`);
+            throw new Error(`Falha ao normalizar a proporção da imagem: ${error.message}`);
         }
-        throw new Error('Falha ao expandir a imagem. Verifique o console para mais detalhes.');
+        throw new Error('Falha ao normalizar a proporção da imagem. Verifique o console para mais detalhes.');
     }
 };
 
@@ -329,33 +357,31 @@ export const generateTryOnImage = async (userImage: string, newItem: Item, exist
 
     const existingItemNames = existingItems.map(i => i.name).join(', ') || 'as roupas que a pessoa já está vestindo na foto';
 
-    const promptText = `Sua tarefa é ser um estilista virtual e especialista em edição de imagem de alta precisão. O objetivo é vestir uma nova peça de roupa em uma pessoa de forma ultra-realista.
+    const promptText = `**SISTEMA DE ANÁLISE AVANÇADA: Fit Check**
 
-REGRA MAIS IMPORTANTE E INQUEBRÁVEL: FIDELIDADE TOTAL À ILUMINAÇÃO
-A iluminação da foto original (IMAGEM 1) é a verdade absoluta e NÃO PODE ser alterada. Sua única missão é fazer com que a nova peça de roupa (da IMAGEM 2) se integre perfeitamente a essa iluminação existente. A nova peça DEVE parecer que foi fotografada no mesmo local, no mesmo instante e com a mesma câmera.
-Isto significa replicar EXATAMENTE:
-- **Direção e Suavidade das Sombras:** As sombras projetadas sobre a nova peça devem corresponder perfeitamente às sombras existentes no corpo e no ambiente da foto original.
-- **Brilhos e Reflexos:** Qualquer brilho de fonte de luz ou reflexo visível na pessoa ou no ambiente deve ser aplicado de forma realista à nova peça de roupa.
-- **Temperatura de Cor:** A tonalidade da luz (seja quente, fria ou neutra) deve ser idêntica na nova peça e no resto da imagem.
-- **Contraste Geral:** A peça não pode parecer artificialmente mais clara ou escura que o resto da cena. A integração de contraste deve ser perfeita.
+**MISSÃO:** Sua única função é ser o motor do sistema "Fit Check", um especialista em provador virtual de altíssima precisão. Você deve vestir a pessoa na **IMAGEM 1** com a peça de roupa da **IMAGEM 2**. O resultado deve ser indistinguível de uma fotografia real.
 
-IMAGENS FORNECIDAS:
-- IMAGEM 1: A foto da pessoa, com suas condições de iluminação, sombras e ambiente. A pessoa pode já estar vestindo: ${existingItemNames}.
-- IMAGEM 2: A nova peça de roupa que você deve adicionar ao visual: '${newItem.name}'.
+**DADOS DE ENTRADA:**
+*   **IMAGEM 1:** A foto da pessoa, incluindo sua pose, tipo de corpo e iluminação ambiente. A pessoa já está vestindo: ${existingItemNames}.
+*   **IMAGEM 2:** A imagem de catálogo da nova peça de roupa a ser vestida: '${newItem.name}'.
 
-SUA MISSÃO:
-Analisar a IMAGEM 1 para identificar o que a pessoa está vestindo e, em seguida, integrar a nova peça ('${newItem.name}') da IMAGEM 2 de forma inteligente e realista.
+**DIRETRIZES CRÍTICAS DO FIT CHECK (NÃO-NEGOCIÁVEIS):**
 
-REGRA DE VESTIR INTELIGENTE (ESSENCIAL):
-1.  ANÁLISE E SUBSTITUIÇÃO: Primeiro, olhe para a IMAGEM 1 e identifique a peça de roupa principal que a pessoa está usando na parte superior do corpo (ex: uma camisa, uma T-shirt, um casaco). Se a nova peça ('${newItem.name}') for do mesmo tipo (ex: você está adicionando uma T-shirt e a pessoa já usa uma camisa), você DEVE REMOVER COMPLETAMENTE a peça antiga e TROCÁ-LA pela nova. A substituição deve ser perfeita, como se a pessoa tivesse trocado de roupa. NÃO sobreponha uma T-shirt sobre outra T-shirt ou camisa.
-2.  SOBREPOSIÇÃO REALISTA: Se a nova peça for um item que se usa POR CIMA dos outros (ex: uma jaqueta sobre uma T-shirt que já foi adicionada), adicione-a realisticamente, criando dobras e sombras corretas sobre a roupa de baixo.
-3.  O objetivo final é uma imagem que pareça uma fotografia 100% real, não uma colagem digital. O realismo é a prioridade máxima.
+1.  **ANÁLISE CORPORAL E FÍSICA DO TECIDO (PRIORIDADE MÁXIMA):**
+    *   **MAPEIE O CORPO:** Analise a silhueta, curvas e pose da pessoa na IMAGEM 1.
+    *   **SIMULE O CAIMENTO:** A nova peça (IMAGEM 2) deve "vestir" o corpo de forma realista. Crie dobras, vincos, sombras e tensões no tecido exatamente onde eles ocorreriam naturalmente devido à pose e ao formato do corpo. O tecido não pode parecer um adesivo plano.
+    *   **LÓGICA DE CAMADAS:** Se a pessoa já estiver vestindo roupas, a nova peça deve ser colocada por cima (como uma jaqueta sobre uma camisa) ou substituir a peça existente (uma nova camisa substitui a antiga) de forma lógica e fisicamente crível.
 
-OUTRAS REGRAS CRÍTICAS:
-1.  **NÃO CORTE A IMAGEM:** A imagem final que você gera DEVE ter **exatamente as mesmas dimensões (largura e altura em pixels) da IMAGEM 1 original.** É proibido fazer zoom, cortar (crop) ou reenquadrar a imagem. A pessoa inteira, da cabeça aos pés, e todo o fundo original DEVEM ser 100% preservados e visíveis.
-2.  **FIDELIDADE TOTAL AO PRODUTO:** Você DEVE usar a imagem EXATA da nova peça da IMAGEM 2. Cor, textura, padrão, e logotipos DEVEM ser idênticos.
-3.  **PRESERVAÇÃO DA PESSOA E ROUPAS NÃO AFETADAS:** O rosto, cabelo, corpo, pose e quaisquer outras roupas que a pessoa esteja vestindo (e que não foram substituídas) devem permanecer COMPLETAMENTE inalterados.
-4.  **FUNDO INTOCÁVEL:** O fundo da IMAGEM 1 deve ser perfeitamente preservado, sem nenhuma alteração.`;
+2.  **INTEGRAÇÃO FOTOREALISTA COM A CENA:**
+    *   **ILUMINAÇÃO IDÊNTICA:** A luz que incide na nova peça DEVE ser uma réplica exata da iluminação da IMAGEM 1. As sombras projetadas pela nova peça no corpo e as sombras no próprio tecido devem corresponder perfeitamente à direção, intensidade e cor da luz ambiente.
+    *   **CORES E TEXTURAS FIÉIS:** A cor, estampa e textura da nova peça devem ser 100% fiéis à IMAGEM 2, mas ajustadas à iluminação da IMAGEM 1.
+
+3.  **PRESERVAÇÃO ABSOLUTA DO ORIGINAL:**
+    *   **NÃO ALTERE O FUNDO, ROSTO OU CORPO:** O rosto da pessoa, seu cabelo, sua pose, o fundo da imagem e quaisquer outras peças de roupa que não foram substituídas devem permanecer **ABSOLUTAMENTE INTOCADOS**.
+    *   **DIMENSÕES ORIGINAIS:** A imagem final deve ter exatamente as mesmas dimensões da IMAGEM 1. Não corte a imagem.
+
+**SAÍDA ESPERADA:**
+Apenas a imagem final, sem nenhum texto. Uma única fotografia mostrando a pessoa da IMAGEM 1 vestindo perfeitamente a peça da IMAGEM 2.`;
 
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: 'gemini-2.5-flash-image',

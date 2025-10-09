@@ -3,7 +3,7 @@ import React from 'react';
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
 import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType, AppNotification, Conversation, Comment } from './types';
-import { generateTryOnImage, expandImageToSquare, generateBeautyTryOnImage, generateFashionVideo } from './services/geminiService';
+import { generateTryOnImage, normalizeImageAspectRatio, generateBeautyTryOnImage, generateFashionVideo } from './services/geminiService';
 import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, ITEMS, INITIAL_CONVERSATIONS } from './constants';
 
 // Screen Components
@@ -477,15 +477,15 @@ const App: React.FC = () => {
     // App Logic Handlers
     const handleImageUpload = async (imageDataUrl: string) => {
         setUserImage(imageDataUrl);
-        setLoadingMessage("Expandindo sua foto com IA. Isso pode levar um momento...");
+        setLoadingMessage("Analisando e ajustando sua foto com IA...");
         setIsLoading(true);
         setError(null);
         try {
-            const squaredImageDataUrl = await expandImageToSquare(imageDataUrl);
+            const normalizedImageDataUrl = await normalizeImageAspectRatio(imageDataUrl);
             
-            setUserImage(squaredImageDataUrl);
-            setGeneratedImage(squaredImageDataUrl);
-            setImageHistory([squaredImageDataUrl]); // Initialize history
+            setUserImage(normalizedImageDataUrl);
+            setGeneratedImage(normalizedImageDataUrl);
+            setImageHistory([normalizedImageDataUrl]); // Initialize history
             setWornItems([]);
             
             const currentCategory = navigationStack.length > 0 ? navigationStack[0] as Category : null;
@@ -501,7 +501,7 @@ const App: React.FC = () => {
                 }
             }
         } catch (err: any) {
-            console.error("Erro ao expandir a imagem:", err);
+            console.error("Erro ao normalizar a proporção da imagem:", err);
             setError("Houve um problema ao preparar sua foto. Por favor, tente novamente.");
             setCurrentScreen(Screen.ImageSourceSelection); 
         } finally {
