@@ -24,6 +24,49 @@ const getImageDimensions = (dataUrl: string): Promise<{ width: number; height: n
   });
 };
 
+// NEW: Helper to resize an image using canvas
+const resizeImage = (
+  dataUrl: string,
+  maxDimension: number,
+  quality: number = 0.9
+): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      let { width, height } = img;
+
+      // Only resize if the image is larger than the max dimension
+      if (width > maxDimension || height > maxDimension) {
+        if (width > height) {
+          height = Math.round((height * maxDimension) / width);
+          width = maxDimension;
+        } else {
+          width = Math.round((width * maxDimension) / height);
+          height = maxDimension;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        return reject(new Error('Não foi possível obter o contexto do canvas para redimensionar a imagem.'));
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+
+      // Get the data URL for the resized image (JPEG for better compression)
+      const resizedDataUrl = canvas.toDataURL('image/jpeg', quality);
+      resolve(resizedDataUrl);
+    };
+    img.onerror = () => {
+      reject(new Error("Falha ao carregar a imagem para redimensionamento."));
+    };
+    img.src = dataUrl;
+  });
+};
+
 
 // Fetches an image from a URL and converts it into a data URL (base64 encoded string).
 const imageUrlToDataUrl = async (url: string): Promise<string> => {
@@ -266,14 +309,13 @@ const RUNWAY_PROXY_BASE = "https://runway-proxy-45473940960.us-west1.run.app";
 const createCorsProxyUrl = (targetUrl: string) => `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
 
 async function createRunwayJob(imageDataUrl: string) {
-  const { base64 } = getBase64Parts(imageDataUrl);
   const targetUrl = `${RUNWAY_PROXY_BASE}/runway/create`;
   
   const response = await fetch(createCorsProxyUrl(targetUrl), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      image: base64,
+      image: imageDataUrl,
       model: "gen3-turbo",
       options: { duration: 6, ratio: "9:16" }
     })
@@ -323,8 +365,12 @@ async function checkRunwayStatus(id: string) {
 
 export const generateFashionVideo = async (imageDataUrl: string, onTick?: (s: string) => void): Promise<string> => {
     try {
+        onTick?.("Preparando imagem para o vídeo...");
+        // Resize the image to a max dimension of 1024px to prevent "Payload Too Large" errors.
+        const resizedImageDataUrl = await resizeImage(imageDataUrl, 1024);
+
         onTick?.("Iniciando a criação do vídeo com o Runway...");
-        const jobId = await createRunwayJob(imageDataUrl);
+        const jobId = await createRunwayJob(resizedImageDataUrl); // Use the resized image
         onTick?.(`Job enviado (ID: ${jobId}). Aguardando processamento...`);
         
         let delay = 2000;
