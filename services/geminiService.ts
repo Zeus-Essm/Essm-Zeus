@@ -1,11 +1,5 @@
-
-
 import { GoogleGenAI, Modality, GenerateContentResponse } from '@google/genai';
 import type { Item } from '../types';
-
-// Runway API key provided by the user.
-const RUNWAY_API_KEY = 'key_1fbb4fbf091a0a79fd1e84ab33c4057aa4345a9f84e0de90ab5eb35995d1cfa0436adb535bafeb8fa2b43cdecaecb2fd1d5bd81274ce673bbae2448c108bc289';
-
 
 // Utility to convert a data URL string into its base64 and mimeType parts.
 const getBase64Parts = (dataUrl: string): { base64: string; mimeType: string } => {
@@ -165,7 +159,7 @@ REGRAS ADICIONAIS:
            case 'eyeshadow':
                return `${basePrompt}
 
-**MISSÃO ESPECÍFICA: APLICAR SOMBRA DE OLHOS**
+**MISSÃO ESPECÍFICA: APLICAR SOMRA DE OLHOS**
 1.  **Identifique os Olhos:** Localize com precisão as pálpebras e a área dos olhos da pessoa na IMAGEM 1.
 2.  **Aplicação Suave:** Aplique os tons de sombra da IMAGEM 2 nas pálpebras, esfumando as bordas para uma transição suave com a pele. A aplicação deve seguir o formato natural dos olhos.
 3.  **Não Altere Outros Traços:** Mantenha cílios, sobrancelhas e a cor dos olhos inalterados, a menos que seja para integrar a sombra de forma mais realista (ex: uma leve sombra nos cílios inferiores).`;
@@ -239,122 +233,85 @@ export const generateBeautyTryOnImage = async (userImage: string, newItem: Item)
     }
 };
 
-export const generateFashionVideo = async (baseImage: string): Promise<string> => {
-    if (!RUNWAY_API_KEY) {
-        throw new Error("RUNWAY_API_KEY não configurada. A geração de vídeo está desativada.");
-    }
+// --- NEW VIDEO GENERATION LOGIC ---
 
-    const PROXY_URL = 'https://corsproxy.io/?';
-    const RUNWAY_API_URL = 'https://api.dev.runwayml.com/v2';
-    const VERSIONS_TO_TRY = ['2025-10-08'];
+const API_BASE = "https://essm-zeus.vercel.app";
+const PROXY_URL = 'https://corsproxy.io/?';
 
-    let submitResponse: Response | null = null;
-    let successfulVersion: string | null = null;
-    let lastErrorBody = '';
+type CreateResp = { id?: string; status?: string; error?: string };
+type StatusResp = { id?: string; status?: string; videoUrl?: string; publicUrl?: string; error?: string };
 
+async function criarJobRunway(prompt: string, model = "gen3-turbo") {
+  const res = await fetch(`${PROXY_URL}${API_BASE}/api/runway/create`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, model, options: { duration: 6, ratio: "9:16" } }),
+  });
+  const data: CreateResp = await res.json();
+  if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+  if (!data.id) throw new Error("Servidor não retornou ID do job.");
+  return data.id as string;
+}
+
+async function consultarStatusRunway(id: string) {
+  const res = await fetch(`${PROXY_URL}${API_BASE}/api/runway/status?id=${encodeURIComponent(id)}`, {
+    method: "GET",
+  });
+  const data: StatusResp = await res.json();
+  if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
+  return data;
+}
+
+export const generateFashionVideo = async (baseImage: string, onTick?: (s:string)=>void): Promise<string> => {
     try {
-        // Step 1: Submit the generation task, trying different API versions.
-        for (const version of VERSIONS_TO_TRY) {
-            const response = await fetch(`${PROXY_URL}${encodeURIComponent(`${RUNWAY_API_URL}/tasks`)}`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${RUNWAY_API_KEY}`,
-                    'Content-Type': 'application/json',
-                    'X-Runway-Version': version,
-                },
-                body: JSON.stringify({
-                    model: 'gen-2',
-                    input: {
-                        image: baseImage,
-                    },
-                }),
-            });
+        const id = await criarJobRunway(baseImage);
+        onTick?.(`Job criado: ${id.substring(0, 8)}... • Aguardando`);
 
-            if (response.ok) {
-                submitResponse = response;
-                successfulVersion = version;
-                break; // Found a working version, exit the loop
+        const started = Date.now();
+        const timeout = 6 * 60 * 1000; // 6min
+        let delay = 3000; // Start polling after 3s
+
+        while (Date.now() - started < timeout) {
+            await new Promise(r => setTimeout(r, delay));
+            
+            const st = await consultarStatusRunway(id);
+            onTick?.(`Status: ${st.status}`);
+
+            if (st.status === "completed") {
+                const finalUrl = st.publicUrl || st.videoUrl;
+                if (!finalUrl) {
+                    throw new Error("Geração concluída, mas nenhuma URL de vídeo foi retornada.");
+                }
+
+                onTick?.(`Download do vídeo...`);
+                // Use a CORS proxy for the final download to avoid potential cross-origin issues.
+                const videoResponse = await fetch(`${PROXY_URL}${encodeURIComponent(finalUrl)}`);
+                if (!videoResponse.ok) {
+                    throw new Error(`Falha ao baixar o vídeo gerado: ${videoResponse.statusText}`);
+                }
+                const videoBlob = await videoResponse.blob();
+                return URL.createObjectURL(videoBlob);
             }
 
-            lastErrorBody = await response.text();
-            // If it's a 400 error specifically about the version, continue to the next one.
-            if (response.status === 400 && lastErrorBody.toLowerCase().includes('x-runway-version')) {
-                console.warn(`Runway API version '${version}' failed. Trying next...`);
-                continue;
+            if (st.status === "failed") {
+                throw new Error("A geração falhou no Runway.");
             }
             
-            // For any other error, stop and throw immediately.
-            throw new Error(`Falha ao submeter a tarefa de geração de vídeo: ${response.status} ${response.statusText} - ${lastErrorBody}`);
+            // Increase delay for subsequent polls to avoid spamming the server
+            delay = Math.min(Math.floor(delay * 1.5), 8000);
         }
 
-        if (!submitResponse || !successfulVersion) {
-            throw new Error(`Nenhuma versão da API da Runway foi aceita. Último erro: ${lastErrorBody}`);
-        }
+        throw new Error("Timeout: A geração do vídeo demorou mais que o esperado.");
 
-        const submitResult = await submitResponse.json();
-        const taskId = submitResult.uuid;
-        if (!taskId) {
-            throw new Error('A API da Runway não retornou um ID de tarefa.');
-        }
-
-        // Step 2: Poll for the result using the successful version.
-        let taskStatus = 'PENDING';
-        let taskResult;
-        const maxPolls = 60;
-        let pollCount = 0;
-
-        while (taskStatus !== 'SUCCEEDED' && taskStatus !== 'FAILED') {
-            pollCount++;
-            if (pollCount > maxPolls) {
-                throw new Error("A geração de vídeo demorou muito tempo e atingiu o tempo limite.");
-            }
-            
-            await new Promise(resolve => setTimeout(resolve, 5000));
-            
-            const pollResponse = await fetch(`${PROXY_URL}${encodeURIComponent(`${RUNWAY_API_URL}/tasks/${taskId}`)}`, {
-                headers: {
-                    'Authorization': `Bearer ${RUNWAY_API_KEY}`,
-                    'X-Runway-Version': successfulVersion,
-                },
-            });
-
-            if (!pollResponse.ok) {
-                throw new Error(`Falha ao consultar o estado da tarefa: ${pollResponse.status} ${pollResponse.statusText}`);
-            }
-
-            taskResult = await pollResponse.json();
-            taskStatus = taskResult.status;
-        }
-
-        if (taskStatus === 'FAILED') {
-            throw new Error(`A geração de vídeo falhou. Motivo: ${taskResult?.failure_reason || 'Erro desconhecido'}`);
-        }
-        
-        const videoUrl = taskResult?.output?.video;
-        if (!videoUrl) {
-            throw new Error('A geração de vídeo foi bem-sucedida, mas não foi encontrada nenhuma URL de vídeo.');
-        }
-
-        // Step 3: Fetch the generated video from its URL.
-        const videoResponse = await fetch(`${PROXY_URL}${encodeURIComponent(videoUrl)}`);
-        if (!videoResponse.ok) {
-            throw new Error(`Falha ao baixar o vídeo gerado: ${videoResponse.statusText}`);
-        }
-
-        const videoBlob = await videoResponse.blob();
-        return URL.createObjectURL(videoBlob);
-
-    } catch (error: any) {
-        console.error('Erro ao chamar a API da Runway para geração de vídeo:', error);
+    } catch (error) {
+        console.error('Erro no fluxo de geração de vídeo:', error);
         if (error instanceof Error) {
-            if (error.message.includes('Failed to fetch')) {
-                throw new Error('Falha de rede ao conectar-se à API de vídeo. Verifique sua conexão ou tente mais tarde.');
-            }
-            throw new Error(`Falha ao gerar o vídeo: ${error.message}`);
+             throw new Error(error.message);
         }
-        throw new Error('Falha ao gerar o vídeo. Verifique o console para mais detalhes.');
+        throw new Error('Ocorreu um erro desconhecido ao gerar o vídeo.');
     }
 };
+
 
 export const generateTryOnImage = async (userImage: string, newItem: Item, existingItems: Item[]): Promise<string> => {
   if (!process.env.API_KEY) {
