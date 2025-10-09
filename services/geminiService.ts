@@ -1,5 +1,4 @@
 
-
 import { GoogleGenAI, Modality, GenerateContentResponse } from '@google/genai';
 import type { Item } from '../types';
 
@@ -261,80 +260,104 @@ export const generateBeautyTryOnImage = async (userImage: string, newItem: Item)
     }
 };
 
-// --- NEW VIDEO GENERATION LOGIC ---
+// --- Runway Video Generation via Cloud Run Proxy ---
+const RUNWAY_PROXY_BASE = "https://runway-proxy-45473940960.us-west1.run.app";
 
-const API_BASE = "https://essm-zeus.vercel.app";
-const PROXY_URL = 'https://corsproxy.io/?';
+const createCorsProxyUrl = (targetUrl: string) => `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
 
-type CreateResp = { id?: string; status?: string; error?: string };
-type StatusResp = { id?: string; status?: string; videoUrl?: string; publicUrl?: string; error?: string };
-
-async function criarJobRunway(prompt: string, model = "gen3-turbo") {
-  const res = await fetch(`${PROXY_URL}${API_BASE}/api/runway/create`, {
+async function createRunwayJob(imageDataUrl: string) {
+  const { base64 } = getBase64Parts(imageDataUrl);
+  const targetUrl = `${RUNWAY_PROXY_BASE}/runway/create`;
+  
+  const response = await fetch(createCorsProxyUrl(targetUrl), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt, model, options: { duration: 6, ratio: "9:16" } }),
+    body: JSON.stringify({
+      image: base64,
+      model: "gen3-turbo",
+      options: { duration: 6, ratio: "9:16" }
+    })
   });
-  const data: CreateResp = await res.json();
-  if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
-  if (!data.id) throw new Error("Servidor não retornou ID do job.");
+  
+  const contentType = response.headers.get("content-type");
+
+  if (!response.ok || !contentType || !contentType.includes("application/json")) {
+    const errorText = await response.text();
+    console.error("Runway Proxy Response (not JSON):", errorText); 
+    throw new Error(`Erro na comunicação com o servidor Runway (status: ${response.status}). A resposta não foi um JSON válido. Verifique o console do navegador para mais detalhes.`);
+  }
+
+  const data = await response.json();
+  
+  if (data.error) {
+     throw new Error(`Erro retornado pela API do Runway: ${JSON.stringify(data.error)}`);
+  }
+  
+  if (!data.id) {
+    throw new Error("A resposta da API do Runway não incluiu um ID de job.");
+  }
+
   return data.id as string;
 }
 
-async function consultarStatusRunway(id: string) {
-  const res = await fetch(`${PROXY_URL}${API_BASE}/api/runway/status?id=${encodeURIComponent(id)}`, {
-    method: "GET",
-  });
-  const data: StatusResp = await res.json();
-  if (!res.ok) throw new Error(data?.error || `HTTP ${res.status}`);
-  return data;
+async function checkRunwayStatus(id: string) {
+  const targetUrl = `${RUNWAY_PROXY_BASE}/runway/status?id=${encodeURIComponent(id)}`;
+  const response = await fetch(createCorsProxyUrl(targetUrl));
+  
+  const contentType = response.headers.get("content-type");
+
+  if (!response.ok || !contentType || !contentType.includes("application/json")) {
+    const errorText = await response.text();
+    console.error("Runway Proxy Response (not JSON):", errorText);
+    throw new Error(`Erro ao verificar o status do vídeo (status: ${response.status}). A resposta não foi um JSON válido. Verifique o console do navegador para detalhes.`);
+  }
+
+  const data = await response.json();
+
+  if (data.error) {
+     throw new Error(`Erro retornado pela API de status do Runway: ${JSON.stringify(data.error)}`);
+  }
+
+  return data as { id: string; status: string; videoUrl?: string; supabaseUrl?: string };
 }
 
-export const generateFashionVideo = async (baseImage: string, onTick?: (s:string)=>void): Promise<string> => {
+export const generateFashionVideo = async (imageDataUrl: string, onTick?: (s: string) => void): Promise<string> => {
     try {
-        const id = await criarJobRunway(baseImage);
-        onTick?.(`Job criado: ${id.substring(0, 8)}... • Aguardando`);
+        onTick?.("Iniciando a criação do vídeo com o Runway...");
+        const jobId = await createRunwayJob(imageDataUrl);
+        onTick?.(`Job enviado (ID: ${jobId}). Aguardando processamento...`);
+        
+        let delay = 2000;
+        const maxAttempts = 25;
 
-        const started = Date.now();
-        const timeout = 6 * 60 * 1000; // 6min
-        let delay = 3000; // Start polling after 3s
-
-        while (Date.now() - started < timeout) {
-            await new Promise(r => setTimeout(r, delay));
+        for (let i = 0; i < maxAttempts; i++) {
+            const status = await checkRunwayStatus(jobId);
             
-            const st = await consultarStatusRunway(id);
-            onTick?.(`Status: ${st.status}`);
+            onTick?.(`Status: ${status.status}... Verificação ${i + 1}/${maxAttempts}`);
 
-            if (st.status === "completed") {
-                const finalUrl = st.publicUrl || st.videoUrl;
-                if (!finalUrl) {
+            if (status.status === "completed") {
+                const videoUrl = status.supabaseUrl || status.videoUrl;
+                if (!videoUrl) {
                     throw new Error("Geração concluída, mas nenhuma URL de vídeo foi retornada.");
                 }
-
-                onTick?.(`Download do vídeo...`);
-                // Use a CORS proxy for the final download to avoid potential cross-origin issues.
-                const videoResponse = await fetch(`${PROXY_URL}${encodeURIComponent(finalUrl)}`);
-                if (!videoResponse.ok) {
-                    throw new Error(`Falha ao baixar o vídeo gerado: ${videoResponse.statusText}`);
-                }
-                const videoBlob = await videoResponse.blob();
-                return URL.createObjectURL(videoBlob);
-            }
-
-            if (st.status === "failed") {
-                throw new Error("A geração falhou no Runway.");
+                onTick?.("Vídeo gerado com sucesso!");
+                return videoUrl;
             }
             
-            // Increase delay for subsequent polls to avoid spamming the server
-            delay = Math.min(Math.floor(delay * 1.5), 8000);
+            if (status.status === "failed" || status.status === "canceled") {
+                throw new Error(`A geração do vídeo falhou com o status: ${status.status}`);
+            }
+
+            await new Promise(resolve => setTimeout(resolve, delay));
+            delay = Math.min(delay * 1.3, 7000);
         }
 
-        throw new Error("Timeout: A geração do vídeo demorou mais que o esperado.");
+        throw new Error("Tempo limite atingido ao aguardar a geração do vídeo pelo Runway.");
 
     } catch (error) {
-        console.error('Erro no fluxo de geração de vídeo:', error);
+        console.error('Erro no fluxo de geração de vídeo do Runway:', error);
         if (error instanceof Error) {
-             throw new Error(error.message);
+            throw new Error(`Falha na geração do vídeo: ${error.message}`);
         }
         throw new Error('Ocorreu um erro desconhecido ao gerar o vídeo.');
     }

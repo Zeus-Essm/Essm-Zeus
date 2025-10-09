@@ -1,3 +1,4 @@
+
 import React from 'react';
 // FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
 import { Session } from '@supabase/supabase-js';
@@ -672,8 +673,10 @@ const App: React.FC = () => {
     };
 
     const handleGenerateVideo = async () => {
-        if (!generatedImage) return;
-
+        if (!generatedImage) {
+            setError("Não há imagem de look para gerar o vídeo.");
+            return;
+        }
         setIsLoading(true);
         setLoadingMessage("Iniciando a criação do vídeo...");
         setError(null);
