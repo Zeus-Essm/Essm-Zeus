@@ -1293,7 +1293,7 @@ const App: React.FC = () => {
                     onNotificationClick={handleNotificationClick}
                 />
             )}
-            {showVideoPlayer && generatedVideoUrl && (
+            {showVideoPlayer && generatedVideoUrl && profile && (
                 <VideoPlayerModal
                     videoUrl={generatedVideoUrl}
                     onClose={() => {
