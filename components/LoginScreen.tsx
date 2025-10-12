@@ -40,9 +40,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
         setLoading(true);
         setError(null);
         try {
-            // REMOVED the hardcoded redirectTo option. Supabase will now use the current URL.
+            // FIX: Explicitly set the redirectTo option to ensure the OAuth provider returns to the app's root URL.
+            // This prevents "Page not found" errors on servers not configured for SPAs.
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: provider,
+                options: {
+                    redirectTo: window.location.origin,
+                },
             });
             if (error) throw error;
         } catch (err: any) {
@@ -86,7 +90,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
             </form>
 
             
-            
+            {/*
             <div className="my-6 flex items-center w-full">
                 <div className="flex-grow border-t border-[var(--accent-primary)]/20"></div>
                 <span className="flex-shrink mx-4 text-zinc-500 text-sm">OU</span>
@@ -111,7 +115,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
                     <span className="font-semibold">{isSignUp ? 'Continue com Facebook' : 'Entrar com Facebook'}</span>
                 </button>
             </div>
-            
+            */}
             
             
             <div className="my-4 text-center text-sm">
