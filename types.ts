@@ -1,24 +1,10 @@
-// FIX: Removed circular import and defined MarketplaceType.
+
 export type MarketplaceType = 'fashion' | 'restaurant' | 'supermarket' | 'beauty' | 'technology';
 
-export enum Screen {
-  Splash,
-  Login,
-  Home,
-  Settings,
-  SubCategorySelection,
-  ItemSelection,
-  Generating,
-  Result,
-  Confirmation,
-  Feed,
-  MyLooks,
-  Camera,
-  ImageSourceSelection,
-  Cart,
-  Rewards,
-  ChatList, // Nova tela de lista de chats
-  Chat,     // Nova tela de chat individual
+export interface User {
+  id: string;
+  name: string;
+  avatar: string;
 }
 
 export interface SubCategory {
@@ -28,13 +14,9 @@ export interface SubCategory {
   subCategories?: SubCategory[];
 }
 
-export interface Category {
-  id:string;
-  name: string;
-  image: string;
+export interface Category extends SubCategory {
   video?: string;
   type: MarketplaceType;
-  subCategories?: SubCategory[];
 }
 
 export interface Item {
@@ -45,29 +27,23 @@ export interface Item {
   image: string;
   price: number;
   isTryOn?: boolean;
-  beautyType?: 'lipstick' | 'eyeshadow' | 'wig' | 'general';
+  beautyType?: 'lipstick' | 'wig' | 'eyeshadow';
+  gender?: 'male' | 'female' | 'kid' | 'unisex';
+  vendorSubCategory?: string;
 }
 
 export interface Comment {
-  id: string;
-  user: {
     id: string;
-    name: string;
-    avatar: string;
-  };
-  text: string;
-  timestamp: string; // ISO string
+    user: User;
+    text: string;
+    timestamp: string;
 }
 
 export interface Post {
   id: string;
-  user: {
-    id: string;
-    name: string;
-    avatar: string;
-  };
-  image: string; // Thumbnail/poster for videos
-  video?: string; // Optional video URL
+  user: User;
+  image: string;
+  video?: string;
   items: Item[];
   likes: number;
   isLiked: boolean;
@@ -75,53 +51,91 @@ export interface Post {
   commentCount: number;
 }
 
-export interface SavedLook {
-  id: string;
-  image: string;
-  items: Item[];
-}
-
 export interface Story {
   id: string;
-  user: {
-    name: string;
-    avatar: string;
-  };
+  user: { name: string; avatar: string };
   backgroundImage: string;
+}
+
+export interface Message {
+    id: string;
+    text: string;
+    senderId: string;
+    timestamp: string;
+}
+
+export interface Conversation {
+    id: string;
+    participant: User;
+    lastMessage: Message;
+    unreadCount: number;
+}
+
+export interface SavedLook {
+    id: string;
+    image: string;
+    items: Item[];
 }
 
 export interface Profile {
   id: string;
   username: string;
-  bio?: string;
-  profile_image_url?: string;
-  cover_image_url?: string;
+  bio: string | null;
+  profile_image_url: string | null;
+  cover_image_url: string | null;
+  account_type: 'personal' | 'business' | null;
+}
+
+export interface BusinessProfile {
+    id: string;
+    business_name: string;
+    business_category: string;
+    description: string;
+    logo_url: string;
+}
+
+export enum Screen {
+  Splash,
+  Login,
+  AccountTypeSelection,
+  BusinessOnboarding,
+  VendorDashboard,
+  VendorAnalytics,
+  VendorProducts,
+  VendorAffiliates,
+  Home,
+  Settings,
+  ImageSourceSelection,
+  Camera,
+  SubCategorySelection,
+  ItemSelection,
+  Generating,
+  Result,
+  Confirmation,
+  Feed,
+  MyLooks,
+  Cart,
+  Rewards,
+  ChatList,
+  Chat
 }
 
 export interface AppNotification {
-  id: string;
-  message: string;
-  read: boolean;
-  createdAt: Date;
-  relatedCategoryId?: string;
-}
-
-// Novo tipo para mensagens de chat
-export interface Message {
-  id: string;
-  text: string;
-  senderId: string; // ID do usuário que enviou
-  timestamp: string; // Usar string para facilitar a serialização
-}
-
-// Novo tipo para conversas
-export interface Conversation {
-  id: string;
-  participant: {
     id: string;
-    name: string;
-    avatar: string;
-  };
-  lastMessage: Message;
-  unreadCount: number;
+    message: string;
+    read: boolean;
+    createdAt: Date;
+    relatedCategoryId?: string;
+}
+
+export interface InfluencerAffiliationRequest {
+    id: string;
+    influencer: {
+        id: string;
+        name: string;
+        avatar: string;
+        followers: number;
+    };
+    status: 'pending' | 'approved' | 'rejected';
+    requestedAt: string;
 }

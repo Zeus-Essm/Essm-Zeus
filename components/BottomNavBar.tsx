@@ -5,7 +5,8 @@ import {
     ShoppingBagIcon, 
     PlusIcon, 
     UserIcon,
-    ChatBubbleIcon
+    ChatBubbleIcon,
+    ChartBarIcon
 } from './IconComponents';
 
 interface BottomNavBarProps {
@@ -17,6 +18,8 @@ interface BottomNavBarProps {
   onStartTryOn: () => void;
   isCartAnimating: boolean;
   unreadMessagesCount: number;
+  accountType?: 'personal' | 'business' | null;
+  onNavigateToVendorAnalytics: () => void;
 }
 
 const NavItem: React.FC<{
@@ -49,6 +52,8 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({
   onStartTryOn,
   isCartAnimating,
   unreadMessagesCount,
+  accountType,
+  onNavigateToVendorAnalytics
 }) => {
   const isCartActive = activeScreen === Screen.Cart;
 
@@ -61,10 +66,19 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({
         onClick={onNavigateToFeed}
       />
       
-      <button onClick={onNavigateToCart} className={`relative flex flex-col items-center p-1 w-1/5 transition-colors ${isCartActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-secondary)] hover:text-white'}`}>
-        <ShoppingBagIcon className={`w-6 h-6 transition-transform ${isCartAnimating ? 'scale-125' : ''}`} />
-        <span className="text-[9px] mt-0.5">Carrinho</span>
-      </button>
+      {accountType === 'business' ? (
+        <NavItem
+          icon={<ChartBarIcon className="w-6 h-6" />}
+          label="Visão Geral"
+          isActive={activeScreen === Screen.VendorAnalytics}
+          onClick={onNavigateToVendorAnalytics}
+        />
+      ) : (
+        <button onClick={onNavigateToCart} className={`relative flex flex-col items-center p-1 w-1/5 transition-colors ${isCartActive ? 'text-[var(--accent-primary)]' : 'text-[var(--text-secondary)] hover:text-white'}`}>
+            <ShoppingBagIcon className={`w-6 h-6 transition-transform ${isCartAnimating ? 'scale-125' : ''}`} />
+            <span className="text-[9px] mt-0.5">Carrinho</span>
+        </button>
+      )}
 
       <button onClick={onStartTryOn} className="w-1/5 flex justify-center">
           <div className="p-2.5 bg-[var(--accent-primary)] rounded-lg transform hover:scale-110 transition-transform">
@@ -83,7 +97,7 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({
       <NavItem 
         icon={<UserIcon className="w-6 h-6" />}
         label="Perfil"
-        isActive={activeScreen === Screen.Home}
+        isActive={activeScreen === Screen.Home || activeScreen === Screen.VendorDashboard}
         onClick={onNavigateToProfile}
       />
     </nav>

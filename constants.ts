@@ -1,7 +1,8 @@
 import type { Category, Item, Post, Story, Conversation } from './types';
 
 // Sub-categorias de Roupas reutilizáveis
-const MALE_CLOTHING_SUBCATEGORIES = [
+// FIX: Exported constant arrays for use in other components.
+export const MALE_CLOTHING_SUBCATEGORIES = [
     { id: 'fato', name: 'Fato', image: 'https://i.postimg.cc/fLHkb25Z/ICONS8.jpg' },
     { id: 'tshirt', name: 'T-shirt', image: 'https://i.postimg.cc/gJxZFbq8/ICONS3.jpg' },
     { id: 'camisa', name: 'Camisa', image: 'https://i.postimg.cc/yNG84gNY/ICONS9.jpg' },
@@ -12,7 +13,8 @@ const MALE_CLOTHING_SUBCATEGORIES = [
     { id: 'acessorios', name: 'Acessórios', image: 'https://i.postimg.cc/jjg7FSNR/ICONS5.jpg' },
 ];
 
-const FEMALE_CLOTHING_SUBCATEGORIES = [
+// FIX: Exported constant arrays for use in other components.
+export const FEMALE_CLOTHING_SUBCATEGORIES = [
     { id: 'tshirt', name: 'T-shirt', image: 'https://i.postimg.cc/gJxZFbq8/ICONS3.jpg' },
     { id: 'camisa', name: 'Camisa', image: 'https://i.postimg.cc/yNG84gNY/ICONS9.jpg' },
     { id: 'calca', name: 'Calça', image: 'https://i.postimg.cc/sXbZ3Hw8/ICONS4.jpg' },
@@ -24,7 +26,8 @@ const FEMALE_CLOTHING_SUBCATEGORIES = [
     { id: 'acessorios', name: 'Acessórios', image: 'https://i.postimg.cc/jjg7FSNR/ICONS5.jpg' },
 ];
 
-const KID_CLOTHING_SUBCATEGORIES = [
+// FIX: Exported constant arrays for use in other components.
+export const KID_CLOTHING_SUBCATEGORIES = [
     { id: 'fato', name: 'Fato', image: 'https://i.postimg.cc/fLHkb25Z/ICONS8.jpg' },
     { id: 'tshirt', name: 'T-shirt', image: 'https://i.postimg.cc/gJxZFbq8/ICONS3.jpg' },
     { id: 'camisa', name: 'Camisa', image: 'https://i.postimg.cc/yNG84gNY/ICONS9.jpg' },

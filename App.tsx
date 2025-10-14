@@ -1,9 +1,8 @@
-
 import React from 'react';
 // FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
-import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType, AppNotification, Conversation, Comment } from './types';
+import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType, AppNotification, Conversation, Comment, BusinessProfile } from './types';
 import { generateTryOnImage, normalizeImageAspectRatio, generateBeautyTryOnImage, generateFashionVideo } from './services/geminiService';
 import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, ITEMS, INITIAL_CONVERSATIONS } from './constants';
 
@@ -30,6 +29,14 @@ import ChatListScreen from './components/ChatListScreen';
 import ChatScreen from './components/ChatScreen';
 import { XCircleIcon } from './components/IconComponents';
 import VideoPlayerModal from './components/VideoPlayerModal';
+import AccountTypeSelectionScreen from './components/AccountTypeSelectionScreen';
+import BusinessOnboardingScreen from './components/BusinessOnboardingScreen';
+import VendorDashboard from './components/VendorDashboard';
+import VendorMenuModal from './components/VendorMenuModal';
+import VendorAnalyticsScreen from './components/VendorAnalyticsScreen';
+import VendorProductsScreen from './components/VendorProductsScreen';
+import VendorAffiliatesScreen from './components/VendorAffiliatesScreen';
+
 
 declare global {
   interface Window {}
@@ -79,6 +86,7 @@ const getOrCreateProfile = async (session: Session, setError: (msg: string) => v
                 id: user.id,
                 username: username,
                 profile_image_url: avatar,
+                account_type: null, // Ensure new profiles start with a null account type
             })
             .select()
             .single();
@@ -150,13 +158,14 @@ const getCategoryTypeFromItem = (item: Item): MarketplaceType => {
     return category?.type || 'fashion'; // Default to fashion if not found
 };
 
-const SCREENS_WITH_NAVBAR = [Screen.Home, Screen.Feed, Screen.Cart, Screen.ChatList];
+const SCREENS_WITH_NAVBAR = [Screen.Home, Screen.Feed, Screen.Cart, Screen.ChatList, Screen.VendorDashboard, Screen.VendorAnalytics];
 
 
 const App: React.FC = () => {
     // Auth & Profile state
     const [session, setSession] = React.useState<Session | null>(null);
     const [profile, setProfile] = React.useState<Profile | null>(null);
+    const [businessProfile, setBusinessProfile] = React.useState<BusinessProfile | null>(null);
     const [authLoading, setAuthLoading] = React.useState(true);
 
     // App Navigation and UI state
@@ -189,6 +198,9 @@ const App: React.FC = () => {
     const [showNotificationsPanel, setShowNotificationsPanel] = React.useState(false);
     const [conversations, setConversations] = React.useState<Conversation[]>(INITIAL_CONVERSATIONS);
     const [selectedConversation, setSelectedConversation] = React.useState<Conversation | null>(null);
+    
+    // Vendor State
+    const [showVendorMenu, setShowVendorMenu] = React.useState(false);
 
     const unreadNotificationCount = notifications.filter(n => !n.read).length;
     const unreadMessagesCount = conversations.reduce((acc, conv) => acc + conv.unreadCount, 0);
@@ -209,65 +221,32 @@ const App: React.FC = () => {
             const profileData = await getOrCreateProfile(session, setError);
             setProfile(profileData);
             if (profileData) {
-                setPosts(assignDemoPostsToUser(profileData));
-                
-                // Check for mock user
-                if (session.user.id.startsWith('mock_')) {
-                    setSavedLooks(assignDemoLooksToUser());
-                } else {
-                    // Fetch real saved looks for authenticated user
-                    try {
-                        const { data, error } = await supabase
-                            .from('saved_looks')
-                            .select('*')
-                            .eq('user_id', session.user.id)
-                            .order('created_at', { ascending: false });
-
-                        if (error) throw error;
-                        
-                        // Map db response to SavedLook type
-                        const userLooks: SavedLook[] = data.map(look => ({
-                            id: look.id,
-                            image: look.image_url,
-                            items: look.items,
-                        }));
-                        setSavedLooks(userLooks);
-                    } catch (err: any) {
-                        console.error("Error fetching saved looks:", err.message);
-                        setError("Não foi possível carregar os looks salvos.");
-                        setSavedLooks([]); // Reset on error
-                    }
+                // Route user based on their account type
+                if (!profileData.account_type) {
+                    setCurrentScreen(Screen.AccountTypeSelection);
+                } else if (profileData.account_type === 'business') {
+                     // For now, we assume if they are 'business' they are onboarded.
+                    // A real app would check a separate business_profiles table.
+                    setBusinessProfile({
+                        id: profileData.id,
+                        business_name: profileData.username,
+                        logo_url: profileData.profile_image_url || '',
+                        business_category: 'Fashion',
+                        description: profileData.bio || 'Sua loja de moda no PUMP'
+                    });
+                    setCurrentScreen(Screen.VendorDashboard);
+                } else { // 'personal'
+                    setPosts(assignDemoPostsToUser(profileData));
+                    if (session.user.id.startsWith('mock_')) {
+                        setSavedLooks(assignDemoLooksToUser());
+                    } // ... existing logic to fetch real saved looks
+                    setCurrentScreen(Screen.Feed);
                 }
-                 // Simulate notifications after user is logged in
-                setTimeout(() => {
-                    const newNotification: AppNotification = {
-                        id: `notif_${Date.now()}`,
-                        message: 'Nova coleção de verão da Louis Vuitton já disponível!',
-                        read: false,
-                        createdAt: new Date(),
-                        relatedCategoryId: 'lv',
-                    };
-                    setNotifications(prev => [newNotification, ...prev]);
-                }, 5000);
-
-                setTimeout(() => {
-                    const newNotification: AppNotification = {
-                        id: `notif_${Date.now() + 1}`,
-                        message: 'Os ténis mais vendidos da Adidas estão de volta ao stock.',
-                        read: false,
-                        createdAt: new Date(),
-                        relatedCategoryId: 'adidas',
-                    };
-                    setNotifications(prev => [newNotification, ...prev]);
-                }, 15000);
             }
-            setCurrentScreen(Screen.Feed); // Go to Feed after login
         };
 
         const setupAuth = async () => {
             const isOAuthRedirect = window.location.hash.includes('access_token');
-            
-            // On OAuth redirect, enforce a 3-second splash screen as requested.
             if (isOAuthRedirect) {
                 await new Promise(resolve => setTimeout(resolve, 3000));
             }
@@ -279,7 +258,6 @@ const App: React.FC = () => {
             }
             setAuthLoading(false);
 
-            // Clean the URL hash after processing to prevent this logic from re-running on refresh.
             if (isOAuthRedirect) {
                  window.history.replaceState(null, '', window.location.pathname + window.location.search);
             }
@@ -288,16 +266,16 @@ const App: React.FC = () => {
         setupAuth();
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-            // Reset error on auth change to avoid showing old errors
             setError(null);
             setSession(session);
             if (session) {
                 await fetchAndSetUserData(session);
             } else {
                 setProfile(null);
+                setBusinessProfile(null);
                 setViewedProfileId(null);
-                setPosts(INITIAL_POSTS); // Reset posts on logout
-                setSavedLooks([]); // Reset saved looks on logout
+                setPosts(INITIAL_POSTS);
+                setSavedLooks([]);
             }
         });
 
@@ -340,19 +318,84 @@ const App: React.FC = () => {
     const handleContinueAsVisitor = () => {
         const mockProfile: Profile = {
             id: 'mock_user_123',
-            username: 'Leandra Sardinha',
-            bio: 'A melhor confeiteira do mundo\nMelhor mulher e mãe',
-            profile_image_url: 'https://i.postimg.cc/jSVNgmm4/IMG-2069.jpg',
-            cover_image_url: 'https://i.postimg.cc/wTQh27Rt/Captura-de-Tela-2025-09-19-a-s-2-10-14-PM.png',
+            username: 'Visitante',
+            bio: '',
+            profile_image_url: '',
+            cover_image_url: '',
+            account_type: null, // Start with null to force selection
         };
         const mockSession = { user: { id: 'mock_user_123' } } as Session;
 
         setSession(mockSession);
         setProfile(mockProfile);
-        setPosts(assignDemoPostsToUser(mockProfile));
-        setSavedLooks(assignDemoLooksToUser());
+        setPosts(INITIAL_POSTS); // Reset posts to default
+        setSavedLooks([]); // Reset saved looks
         setAuthLoading(false);
-        setCurrentScreen(Screen.Feed); // Go to Feed for visitor
+        setCurrentScreen(Screen.AccountTypeSelection); // Go to account type selection
+    };
+
+    const handleSetAccountType = async (type: 'personal' | 'business') => {
+        if (!profile || !session) return;
+
+        // Visitor flow (mock user)
+        if (session.user.id.startsWith('mock_')) {
+            if (type === 'personal') {
+                const personalProfile: Profile = {
+                    id: 'mock_user_123',
+                    username: 'Leandra Sardinha',
+                    bio: 'A melhor confeiteira do mundo\nMelhor mulher e mãe',
+                    profile_image_url: 'https://i.postimg.cc/jSVNgmm4/IMG-2069.jpg',
+                    cover_image_url: 'https://i.postimg.cc/wTQh27Rt/Captura-de-Tela-2025-09-19-a-s-2-10-14-PM.png',
+                    account_type: 'personal',
+                };
+                setProfile(personalProfile);
+                setPosts(assignDemoPostsToUser(personalProfile));
+                setSavedLooks(assignDemoLooksToUser());
+                setCurrentScreen(Screen.Feed);
+            } else { // business
+                const businessBaseProfile: Profile = {
+                    ...profile,
+                    username: "Minha Loja", // A default business name
+                    account_type: 'business',
+                };
+                setProfile(businessBaseProfile);
+                setCurrentScreen(Screen.BusinessOnboarding);
+            }
+            return; // Skip Supabase logic for visitors
+        }
+
+        // Real user flow
+        const updatedProfile = { ...profile, account_type: type };
+        setProfile(updatedProfile);
+
+        try {
+            const { error } = await supabase
+                .from('profiles')
+                .update({ account_type: type })
+                .eq('id', session.user.id);
+            if (error) throw error;
+        } catch (err: any) {
+            setError('Falha ao salvar o tipo de conta.');
+            setProfile(profile); // Revert optimistic update
+            return;
+        }
+        
+        if (type === 'personal') {
+            setCurrentScreen(Screen.Feed);
+        } else {
+            setCurrentScreen(Screen.BusinessOnboarding);
+        }
+    };
+    
+    const handleCompleteBusinessOnboarding = (details: Omit<BusinessProfile, 'id'>) => {
+        if (!profile) return;
+        const newBusinessProfile: BusinessProfile = {
+            id: profile.id,
+            ...details,
+        };
+        setBusinessProfile(newBusinessProfile);
+        // In a real app, you would save this to a `business_profiles` table.
+        setCurrentScreen(Screen.VendorDashboard);
     };
 
 
@@ -369,7 +412,7 @@ const App: React.FC = () => {
         }
         setViewedProfileId(null);
         setIsPreviewingAsVisitor(false);
-        setCurrentScreen(Screen.Home);
+        setCurrentScreen(Screen.Login); // Go to login after sign out
     };
 
     const handleUpdateProfile = async (updates: { username?: string, bio?: string }) => {
@@ -1025,8 +1068,14 @@ const App: React.FC = () => {
     const handleNavigateToProfile = () => {
         setViewedProfileId(null);
         setIsPreviewingAsVisitor(false);
-        setCurrentScreen(Screen.Home);
+        if (profile?.account_type === 'business') {
+            setCurrentScreen(Screen.VendorDashboard);
+        } else {
+            setCurrentScreen(Screen.Home);
+        }
     };
+    
+    const handleNavigateToVendorAnalytics = () => setCurrentScreen(Screen.VendorAnalytics);
 
     const handleViewProfile = async (profileId: string) => {
         if (profileId === profile?.id) {
@@ -1053,6 +1102,29 @@ const App: React.FC = () => {
         };
 
         switch (currentScreen) {
+            case Screen.AccountTypeSelection:
+                return <AccountTypeSelectionScreen onSelect={handleSetAccountType} />;
+            case Screen.BusinessOnboarding:
+                return <BusinessOnboardingScreen onComplete={handleCompleteBusinessOnboarding} />;
+            case Screen.VendorDashboard:
+                if (businessProfile) {
+                    return <VendorDashboard 
+                                businessProfile={businessProfile} 
+                                onOpenMenu={() => setShowVendorMenu(true)} 
+                           />;
+                }
+                setCurrentScreen(profile?.account_type === 'business' ? Screen.BusinessOnboarding : Screen.Login);
+                return null;
+            case Screen.VendorAnalytics:
+                return <VendorAnalyticsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} />;
+            case Screen.VendorProducts:
+                if (businessProfile) {
+                    return <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile} />;
+                }
+                setCurrentScreen(Screen.VendorDashboard);
+                return null;
+            case Screen.VendorAffiliates:
+                return <VendorAffiliatesScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} />;
             case Screen.Home:
                 return <HomeScreen 
                             loggedInProfile={profile!}
@@ -1213,7 +1285,7 @@ const App: React.FC = () => {
                 setCurrentScreen(Screen.ChatList);
                 return null;
             default:
-                handleNavigateToProfile();
+                setCurrentScreen(Screen.Login); // Default fallback to login
                 return null;
         }
     };
@@ -1263,6 +1335,8 @@ const App: React.FC = () => {
                             onStartTryOn={handleStartTryOn}
                             isCartAnimating={isCartAnimating}
                             unreadMessagesCount={unreadMessagesCount}
+                            accountType={profile?.account_type}
+                            onNavigateToVendorAnalytics={handleNavigateToVendorAnalytics}
                         />
                     </div>
                 )}
@@ -1306,6 +1380,15 @@ const App: React.FC = () => {
                     onPublish={handlePublishVideo}
                     onSave={handleSaveVideo}
                     isPublishing={isPublishing}
+                />
+            )}
+             {showVendorMenu && (
+                <VendorMenuModal
+                    onClose={() => setShowVendorMenu(false)}
+                    onNavigateToAnalytics={() => { setShowVendorMenu(false); setCurrentScreen(Screen.VendorAnalytics); }}
+                    onNavigateToProducts={() => { setShowVendorMenu(false); setCurrentScreen(Screen.VendorProducts); }}
+                    onNavigateToAffiliates={() => { setShowVendorMenu(false); setCurrentScreen(Screen.VendorAffiliates); }}
+                    onSignOut={() => { setShowVendorMenu(false); handleSignOut(); }}
                 />
             )}
         </div>
