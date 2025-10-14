@@ -117,7 +117,9 @@ export enum Screen {
   Cart,
   Rewards,
   ChatList,
-  Chat
+  Chat,
+  Search,
+  AllHighlights
 }
 
 export interface AppNotification {

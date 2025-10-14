@@ -1,12 +1,23 @@
 import React, { useState, useMemo, useRef } from 'react';
-import type { BusinessProfile, Item, Post } from '../types';
-import { MenuIcon, CameraIcon, PencilIcon, PlusIcon, StarIcon, XCircleIcon } from './IconComponents';
+import type { BusinessProfile, Item, Post, MarketplaceType } from '../types';
+import { MenuIcon, CameraIcon, PencilIcon, PlusIcon, StarIcon, XCircleIcon, BellIcon } from './IconComponents';
 import BioEditModal from './BioEditModal';
-import { MALE_CLOTHING_SUBCATEGORIES, FEMALE_CLOTHING_SUBCATEGORIES, KID_CLOTHING_SUBCATEGORIES } from '../constants';
+import GradientButton from './GradientButton';
+import PromotionModal from './PromotionModal';
+import { 
+    MALE_CLOTHING_SUBCATEGORIES, 
+    FEMALE_CLOTHING_SUBCATEGORIES, 
+    KID_CLOTHING_SUBCATEGORIES,
+    RESTAURANT_SHOP_CATEGORIES,
+    SUPERMARKET_SHOP_CATEGORIES,
+    BEAUTY_SHOP_CATEGORIES,
+    TECHNOLOGY_SHOP_CATEGORIES
+} from '../constants';
 
 
 // Dummy Data - In a real app, this would be fetched
 const INITIAL_VENDOR_ITEMS: Item[] = [
+    // Fashion
     { id: 'vendor-item-1', name: 'T-shirt Gráfica Exclusiva', description: '...', category: '...', image: 'https://i.postimg.cc/TPR4dpBg/louis-vuitton-camiseta-de-algodao-bordada-HTY18-WNPG651-PM2-Front-view.webp', price: 350, gender: 'male', vendorSubCategory: 'tshirt' },
     { id: 'vendor-item-2', name: 'Calça Cargo Techwear', description: '...', category: '...', image: 'https://i.postimg.cc/W1tdQn1k/dddd.webp', price: 890, gender: 'male', vendorSubCategory: 'calca' },
     { id: 'vendor-item-3', name: 'Ténis Urbano V2', description: '...', category: '...', image: 'https://i.postimg.cc/VvTx5mX1/louis-vuitton-sneaker-lv-skate-BO9-U3-PMI31-PM2-Front-view.webp', price: 1250, gender: 'unisex', vendorSubCategory: 'tenis' },
@@ -15,6 +26,15 @@ const INITIAL_VENDOR_ITEMS: Item[] = [
     { id: 'vendor-item-6', name: 'Vestido Casual Monograma', description: 'Vestido confortável para o dia a dia, com padrão monograma.', category: '...', image: 'https://i.postimg.cc/C1QZ8L1k/vestido-lv-fem-2.jpg', price: 7500, gender: 'female', vendorSubCategory: 'vestido' },
     { id: 'vendor-item-7', name: 'Conjunto Infantil', description: 'Conjunto confortável para crianças.', category: '...', image: 'https://i.postimg.cc/DyL1wFVc/pequeno.jpg', price: 450, gender: 'kid', vendorSubCategory: 'fato' },
     { id: 'vendor-item-8', name: 'Saia Jeans New Feeling', description: 'Saia jeans moderna e despojada.', category: '...', image: 'https://i.postimg.cc/8z7xQ9WY/saia-nf-fem-1.jpg', price: 250, gender: 'female', vendorSubCategory: 'saia' },
+    // Restaurant
+    { id: 'vendor-item-r1', name: 'Bife à Parmegiana', description: 'Delicioso bife empanado com queijo e molho de tomate.', category: 'restaurant-items', image: 'https://i.postimg.cc/XYJ6b4NT/Gemini-Generated-Image-1eva5i1eva5i1eva-1.png', price: 85, vendorSubCategory: 'pratos' },
+    { id: 'vendor-item-r2', name: 'Petit Gâteau', description: 'Bolo de chocolate com interior cremoso.', category: 'restaurant-items', image: 'https://i.postimg.cc/L5BvGFbb/PHOTO-2025-07-14-23-58-55.jpg', price: 35, vendorSubCategory: 'sobremesas' },
+    // Supermarket
+    { id: 'vendor-item-s1', name: 'Coca-Cola 2L', description: 'Refrigerante de cola.', category: 'supermarket-items', image: 'https://i.postimg.cc/tC39yWny/Gemini-Generated-Image-henwbohenwbohenw.png', price: 12, vendorSubCategory: 'bebidas' },
+    // Beauty
+    { id: 'vendor-item-b1', name: 'Batom Vermelho Intenso', description: 'Batom com acabamento matte.', category: 'beauty-items', image: 'https://i.postimg.cc/YS6p2Fsd/Gemini-Generated-Image-fz7zo1fz7zo1fz7z.png', price: 99, vendorSubCategory: 'maquilhagem' },
+    // Technology
+    { id: 'vendor-item-t1', name: 'iPhone 15 Pro', description: 'O mais novo smartphone da Apple.', category: 'technology-items', image: 'https://i.postimg.cc/ZKszJHKK/Gemini_Generated_Image_lrcnu0lrcnu0lrcn.png', price: 9999, vendorSubCategory: 'telemoveis' },
 ];
 
 const VENDOR_POSTS: Post[] = [
@@ -38,13 +58,17 @@ const VENDOR_POSTS: Post[] = [
 interface VendorDashboardProps {
   businessProfile: BusinessProfile;
   onOpenMenu: () => void;
+  unreadNotificationCount: number;
+  onOpenNotificationsPanel: () => void;
+  onConfirmPromotion: (tier: { id: number; budget: number; duration: number; reach: string; }) => void;
 }
 
-const VendorDashboard: React.FC<VendorDashboardProps> = ({ businessProfile, onOpenMenu }) => {
+const VendorDashboard: React.FC<VendorDashboardProps> = ({ businessProfile, onOpenMenu, unreadNotificationCount, onOpenNotificationsPanel, onConfirmPromotion }) => {
     const [activeTab, setActiveTab] = useState<'shop' | 'posts'>('shop');
     const [activeGenderTab, setActiveGenderTab] = useState<'male' | 'female' | 'kid'>('male');
-    const [activeSubCategory, setActiveSubCategory] = useState<{ id: string; name: string } | null>(null);
+    const [activeShopCategory, setActiveShopCategory] = useState<{ id: string; name: string } | null>(null);
     const [isEditingBio, setIsEditingBio] = useState(false);
+    const [isPromotionModalOpen, setIsPromotionModalOpen] = useState(false);
     
     const [localProfile, setLocalProfile] = useState(businessProfile);
     const [vendorItems, setVendorItems] = useState<Item[]>(INITIAL_VENDOR_ITEMS);
@@ -52,25 +76,25 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ businessProfile, onOp
     
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleAddPieceClick = () => {
+    const handleAddItemClick = () => {
         fileInputRef.current?.click();
     };
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
-        if (file && activeSubCategory) {
+        if (file && activeShopCategory) {
             const reader = new FileReader();
             reader.onloadend = () => {
                 const newImage = reader.result as string;
                 const newItem: Item = {
                     id: `vendor-item-${Date.now()}`,
-                    name: "Nova Peça",
+                    name: "Novo Item",
                     description: "Adicione uma descrição",
                     category: 'vendor-items', // Placeholder
                     image: newImage,
                     price: 0,
-                    gender: activeGenderTab,
-                    vendorSubCategory: activeSubCategory.id,
+                    gender: businessProfile.business_category === 'fashion' ? activeGenderTab : 'unisex',
+                    vendorSubCategory: activeShopCategory.id,
                 };
                 setVendorItems(prevItems => [newItem, ...prevItems]);
             };
@@ -97,48 +121,150 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ businessProfile, onOp
         setHighlightedItems(prev => prev.filter(item => item.id !== itemIdToRemove));
     };
 
+    const handleGenderTabClick = (gender: 'male' | 'female' | 'kid') => {
+        setActiveGenderTab(gender);
+        setActiveShopCategory(null); // Reset sub-category when changing gender
+    };
+
+    const handleBackToPrimaryCategories = () => {
+        setActiveShopCategory(null);
+    };
+    
+    const filteredItems = useMemo(() => {
+        if (!activeShopCategory) return [];
+        if (businessProfile.business_category === 'fashion') {
+             return vendorItems.filter(item => {
+                const genderMatch = (activeGenderTab === 'male' && (item.gender === 'male' || item.gender === 'unisex')) ||
+                                    (activeGenderTab === 'female' && (item.gender === 'female' || item.gender === 'unisex')) ||
+                                    (activeGenderTab === 'kid' && (item.gender === 'kid' || item.gender === 'unisex'));
+                const subCategoryMatch = item.vendorSubCategory === activeShopCategory.id;
+                return genderMatch && subCategoryMatch;
+            });
+        } else {
+            return vendorItems.filter(item => item.vendorSubCategory === activeShopCategory.id);
+        }
+    }, [activeGenderTab, activeShopCategory, vendorItems, businessProfile.business_category]);
+
+    const renderShopInterface = () => {
+        const categoryType = businessProfile.business_category as MarketplaceType | 'fashion';
+
+        const shopCategoryMap = {
+            restaurant: RESTAURANT_SHOP_CATEGORIES,
+            supermarket: SUPERMARKET_SHOP_CATEGORIES,
+            beauty: BEAUTY_SHOP_CATEGORIES,
+            technology: TECHNOLOGY_SHOP_CATEGORIES,
+        };
+        
+        const fashionSubCategoryMap = {
+            male: MALE_CLOTHING_SUBCATEGORIES,
+            female: FEMALE_CLOTHING_SUBCATEGORIES,
+            kid: KID_CLOTHING_SUBCATEGORIES,
+        };
+
+        const renderItemGrid = (buttonText: string) => (
+            <div>
+                <div className="px-4 py-2 flex items-center gap-2 text-sm border-b border-[var(--border-primary)]">
+                    <button onClick={handleBackToPrimaryCategories} className="text-[var(--text-secondary)] hover:underline">
+                        {categoryType === 'fashion' ? genderTabs.find(g => g.id === activeGenderTab)?.label : businessProfile.business_name}
+                    </button>
+                    <span className="text-[var(--text-secondary)]">/</span>
+                    <span className="font-semibold text-[var(--text-primary)]">{activeShopCategory!.name}</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 p-2">
+                    <button
+                        onClick={handleAddItemClick}
+                        className="aspect-w-1 aspect-h-1 rounded-md border-2 border-dashed border-[var(--border-primary)] text-[var(--text-secondary)] flex flex-col items-center justify-center hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)] transition-colors"
+                    >
+                        <PlusIcon className="w-8 h-8 mb-2" />
+                        <span className="text-xs font-semibold">{buttonText}</span>
+                    </button>
+                    {filteredItems.map(item => (
+                        <div key={item.id} className="relative aspect-w-1 aspect-h-1 bg-zinc-800 rounded-md group cursor-pointer">
+                            <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-md"/>
+                            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2">
+                                <button 
+                                    onClick={() => handleAddToHighlights(item)}
+                                    className="flex items-center gap-2 px-3 py-1.5 bg-black/70 rounded-full text-white hover:bg-[var(--accent-primary)] hover:text-black transition-colors text-xs font-semibold backdrop-blur-sm"
+                                    title="Adicionar aos Destaques"
+                                >
+                                    <StarIcon className="w-4 h-4" />
+                                    Destaque
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        );
+        
+        const renderCategoryGrid = (categories: {id: string; name: string; image: string;}[]) => (
+             <div className="grid grid-cols-2 gap-4 p-4">
+                {categories.map(cat => (
+                     <div
+                        key={cat.id}
+                        onClick={() => setActiveShopCategory({id: cat.id, name: cat.name})}
+                        className="relative w-full h-48 rounded-2xl overflow-hidden cursor-pointer group transform hover:scale-105 transition-transform duration-300 shadow-md hover:shadow-[var(--accent-primary)]/20"
+                      >
+                        <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:blur-sm transition-all duration-300" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4">
+                          <h2 className="text-2xl font-black tracking-tighter uppercase text-white">{cat.name}</h2>
+                        </div>
+                        <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <span className="text-xl font-bold text-[var(--accent-primary)]">Ver Itens</span>
+                        </div>
+                      </div>
+                ))}
+            </div>
+        );
+
+        if (categoryType === 'fashion') {
+            return (
+                <div>
+                    <div className="px-4 py-2 border-b border-[var(--border-primary)] flex justify-around">
+                        {genderTabs.map(tab => (
+                            <button
+                                key={tab.id}
+                                onClick={() => handleGenderTabClick(tab.id as any)}
+                                className={`py-2 px-3 text-sm font-semibold whitespace-nowrap rounded-md transition-colors ${
+                                activeGenderTab === tab.id
+                                    ? 'bg-[var(--accent-primary)] text-[var(--accent-primary-text)]'
+                                    : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--accent-primary)]/10'
+                                }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+                    {activeShopCategory ? renderItemGrid("Adicionar Peça") : renderCategoryGrid(fashionSubCategoryMap[activeGenderTab])}
+                </div>
+            );
+        } else {
+             const currentShopCategories = shopCategoryMap[categoryType as keyof typeof shopCategoryMap] || [];
+             return activeShopCategory ? renderItemGrid("Adicionar Item") : renderCategoryGrid(currentShopCategories);
+        }
+    };
+
     const genderTabs = [
         { id: 'male', label: 'Masculino' },
         { id: 'female', label: 'Feminino' },
         { id: 'kid', label: 'Criança' },
     ];
     
-    const subCategoryMap = {
-        male: MALE_CLOTHING_SUBCATEGORIES,
-        female: FEMALE_CLOTHING_SUBCATEGORIES,
-        kid: KID_CLOTHING_SUBCATEGORIES,
-    };
-
-    const filteredItems = useMemo(() => {
-        if (!activeSubCategory) return [];
-        return vendorItems.filter(item => {
-            const genderMatch = (activeGenderTab === 'male' && (item.gender === 'male' || item.gender === 'unisex')) ||
-                                (activeGenderTab === 'female' && (item.gender === 'female' || item.gender === 'unisex')) ||
-                                (activeGenderTab === 'kid' && (item.gender === 'kid' || item.gender === 'unisex'));
-            const subCategoryMatch = item.vendorSubCategory === activeSubCategory.id;
-            return genderMatch && subCategoryMatch;
-        });
-    }, [activeGenderTab, activeSubCategory, vendorItems]);
-
-    const handleGenderTabClick = (gender: 'male' | 'female' | 'kid') => {
-        setActiveGenderTab(gender);
-        setActiveSubCategory(null); // Reset sub-category when changing gender
-    };
-    
     return (
         <div className="w-full h-full flex flex-col bg-[var(--bg-main)] text-[var(--text-primary)]">
-            {/* Hidden file input for uploading new pieces */}
-            <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                accept="image/*"
-                className="hidden"
-            />
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept="image/*" className="hidden" />
             
             <header className="px-4 pt-4 flex items-center justify-between flex-shrink-0">
                 <h1 className="text-lg font-extrabold">{localProfile.business_name}</h1>
                 <div className="flex items-center gap-5 relative">
+                    <button onClick={onOpenNotificationsPanel} className="relative">
+                        <BellIcon className="w-7 h-7" />
+                        {unreadNotificationCount > 0 && (
+                            <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-[var(--bg-main)]">
+                                {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                            </span>
+                        )}
+                    </button>
                     <button onClick={() => alert("Criar novo post")}><PlusIcon className="w-7 h-7" /></button>
                     <button onClick={onOpenMenu}><MenuIcon className="w-7 h-7" /></button>
                 </div>
@@ -173,8 +299,16 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ businessProfile, onOp
                     <div><span className="text-lg font-bold">6.989</span><p className="text-sm text-[var(--text-secondary)]">seguindo</p></div>
                 </div>
 
+                 <div className="px-4 mt-4">
+                    <GradientButton onClick={() => setIsPromotionModalOpen(true)} className="!py-2.5 text-sm">
+                        Promover Perfil
+                    </GradientButton>
+                </div>
+
                 <div className="px-4 pt-4">
-                    <h3 className="text-md font-bold mb-2">Destaques</h3>
+                    <div className="flex justify-between items-center mb-2">
+                        <h3 className="text-md font-bold">Destaques</h3>
+                    </div>
                      <div className="flex overflow-x-auto gap-3 pb-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         {highlightedItems.map(item => (
                             <div key={item.id} className="flex-shrink-0 w-24 h-24 bg-zinc-800 rounded-lg cursor-pointer overflow-hidden relative group">
@@ -203,78 +337,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ businessProfile, onOp
 
                 <div>
                     {activeTab === 'shop' ? (
-                        <div>
-                            <div className="px-4 py-2 border-b border-[var(--border-primary)] flex justify-around">
-                                {genderTabs.map(tab => (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => handleGenderTabClick(tab.id as any)}
-                                        className={`py-2 px-3 text-sm font-semibold whitespace-nowrap rounded-md transition-colors ${
-                                        activeGenderTab === tab.id
-                                            ? 'bg-[var(--accent-primary)] text-[var(--accent-primary-text)]'
-                                            : 'bg-transparent text-[var(--text-secondary)] hover:bg-[var(--accent-primary)]/10'
-                                        }`}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
-                            </div>
-                            
-                            {!activeSubCategory ? (
-                                <div className="grid grid-cols-2 gap-4 p-4">
-                                    {subCategoryMap[activeGenderTab].map(subCat => (
-                                         <div
-                                            key={subCat.id}
-                                            onClick={() => setActiveSubCategory({id: subCat.id, name: subCat.name})}
-                                            className="relative w-full h-48 rounded-2xl overflow-hidden cursor-pointer group transform hover:scale-105 transition-transform duration-300 shadow-md hover:shadow-[var(--accent-primary)]/20"
-                                          >
-                                            <img src={subCat.image} alt={subCat.name} className="w-full h-full object-cover group-hover:blur-sm transition-all duration-300" />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4">
-                                              <h2 className="text-2xl font-black tracking-tighter uppercase text-white">{subCat.name}</h2>
-                                            </div>
-                                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                                                <span className="text-xl font-bold text-[var(--accent-primary)]">Ver Itens</span>
-                                            </div>
-                                          </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div>
-                                    <div className="px-4 py-2 flex items-center gap-2 text-sm border-b border-[var(--border-primary)]">
-                                        <button onClick={() => setActiveSubCategory(null)} className="text-[var(--text-secondary)] hover:underline">
-                                            {genderTabs.find(g => g.id === activeGenderTab)?.label}
-                                        </button>
-                                        <span className="text-[var(--text-secondary)]">/</span>
-                                        <span className="font-semibold text-[var(--text-primary)]">{activeSubCategory.name}</span>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-2 p-2">
-                                        <button
-                                            onClick={handleAddPieceClick}
-                                            className="aspect-w-1 aspect-h-1 rounded-md border-2 border-dashed border-[var(--border-primary)] text-[var(--text-secondary)] flex flex-col items-center justify-center hover:border-[var(--accent-primary)] hover:text-[var(--accent-primary)] transition-colors"
-                                        >
-                                            <PlusIcon className="w-8 h-8 mb-2" />
-                                            <span className="text-xs font-semibold">Adicionar Peça</span>
-                                        </button>
-                                        {filteredItems.map(item => (
-                                            <div key={item.id} className="relative aspect-w-1 aspect-h-1 bg-zinc-800 rounded-md group cursor-pointer">
-                                                <img src={item.image} alt={item.name} className="w-full h-full object-cover rounded-md"/>
-                                                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2">
-                                                    <button 
-                                                        onClick={() => handleAddToHighlights(item)}
-                                                        className="flex items-center gap-2 px-3 py-1.5 bg-black/70 rounded-full text-white hover:bg-[var(--accent-primary)] hover:text-black transition-colors text-xs font-semibold backdrop-blur-sm"
-                                                        title="Adicionar aos Destaques"
-                                                    >
-                                                        <StarIcon className="w-4 h-4" />
-                                                        Destaque
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-
-                        </div>
+                        renderShopInterface()
                     ) : (
                         <div className="grid grid-cols-3 gap-1 p-1">
                              {VENDOR_POSTS.map((post) => (
@@ -294,6 +357,17 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ businessProfile, onOp
                     onSave={(newBio) => {
                         setLocalProfile(prev => ({ ...prev, description: newBio }));
                         setIsEditingBio(false);
+                    }}
+                />
+            )}
+
+            {isPromotionModalOpen && (
+                <PromotionModal
+                    businessProfile={localProfile}
+                    onClose={() => setIsPromotionModalOpen(false)}
+                    onConfirm={(tier) => {
+                        onConfirmPromotion(tier);
+                        setIsPromotionModalOpen(false);
                     }}
                 />
             )}

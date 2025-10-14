@@ -290,3 +290,9 @@ export const StarIcon: React.FC<IconProps> = (props) => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.324l5.584.426a.563.563 0 01.31.958l-4.12 3.822a.563.563 0 00-.162.522l1.08 5.547a.563.563 0 01-.84.61l-4.99-2.903a.563.563 0 00-.58 0l-4.99 2.903a.563.563 0 01-.84-.61l1.08-5.547a.563.563 0 00-.162-.522L3.484 9.318a.563.563 0 01.31-.958l5.584-.426a.563.563 0 00.475-.324L11.48 3.5z" />
   </svg>
 );
+
+export const LinkIcon: React.FC<IconProps> = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
+  </svg>
+);

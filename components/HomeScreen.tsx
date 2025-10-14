@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import type { Profile, Category, Post, Item, MarketplaceType } from '../types';
@@ -9,6 +10,7 @@ import {
     BellIcon, PencilIcon, ChatBubbleIcon
 } from './IconComponents';
 import BioEditModal from './BioEditModal';
+import GradientButton from './GradientButton';
 
 // Self-contained modal for viewing profile posts in an Instagram-style overlay.
 const ProfilePostModal: React.FC<{
@@ -101,6 +103,7 @@ interface HomeScreenProps {
   onNavigateToMyLooks: () => void;
   onNavigateToCart: () => void;
   onNavigateToChat: () => void;
+  onNavigateToRewards: () => void;
   onStartTryOn: () => void;
   isCartAnimating: boolean;
   onBack: () => void;
@@ -126,6 +129,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   onNavigateToMyLooks,
   onNavigateToCart,
   onNavigateToChat,
+  onNavigateToRewards,
   onStartTryOn,
   isCartAnimating,
   onBack,
@@ -148,6 +152,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   const [localProfilePosts, setLocalProfilePosts] = useState<Post[]>([]);
   const [viewingPostIndex, setViewingPostIndex] = useState<number | null>(null);
   const [isEditingBio, setIsEditingBio] = useState(false);
+  const [affiliationStatus, setAffiliationStatus] = useState<'none' | 'pending'>('none');
 
   const isMyProfile = !viewedProfileId || viewedProfileId === loggedInProfile.id;
 
@@ -255,7 +260,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     <div className="w-full h-full flex flex-col bg-[var(--bg-main)] text-[var(--text-primary)]">
       {/* --- NEW FIXED TOP BAR --- */}
       <header className="px-4 pt-4 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
               <h1 className="text-lg font-extrabold">{profile.username}</h1>
               <VerifiedIcon className="w-5 h-5 text-[var(--accent-primary)]" />
               <ChevronDownIcon className="w-3 h-3" />
@@ -264,13 +269,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
               <button onClick={onNavigateToChat} className="relative">
                   <ChatBubbleIcon className="w-7 h-7" />
                   {unreadMessagesCount > 0 && (
-                     <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">{unreadMessagesCount}</span>
+                     <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-[var(--bg-main)]">
+                        {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
+                     </span>
                   )}
               </button>
               <button onClick={onOpenNotificationsPanel} className="relative">
                 <BellIcon className="w-7 h-7" />
                 {unreadNotificationCount > 0 && (
-                    <span className="absolute top-0 right-0 block w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[var(--bg-main)]"></span>
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-[var(--bg-main)]">
+                        {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                    </span>
                 )}
               </button>
               <button onClick={onNavigateToSettings}><MenuIcon className="w-7 h-7" /></button>
@@ -279,44 +288,46 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
       {/* Main Content */}
       <main className="flex-grow overflow-y-auto pb-20 pt-4">
-        {/* --- PROFILE INFO SECTION (Pic + Name/Bio) --- */}
-        <div className="px-4 flex items-start gap-4">
-            {/* Profile Picture */}
-            <div className="relative flex-shrink-0">
-                <div className="w-24 h-24 rounded-full p-0.5 bg-gradient-to-tr from-yellow-300 via-amber-500 to-orange-500">
-                    <img src={profile.profile_image_url || defaultAvatar} alt="Profile" className="w-full h-full object-cover rounded-full border-2 border-[var(--bg-main)]" />
-                </div>
-                {isMyProfile && (
-                <>
-                    <button 
-                        onClick={() => profileImageInputRef.current?.click()} 
-                        className="absolute bottom-0 -right-1 p-1.5 bg-black/60 rounded-full border-2 border-[var(--bg-main)] hover:bg-black/80 transition-colors"
-                        aria-label="Alterar foto de perfil"
-                    >
-                        <CameraIcon className="w-5 h-5 text-white" />
-                    </button>
-                    <input type="file" accept="image/*" ref={profileImageInputRef} onChange={(e) => handleFileChange(e, onUpdateProfileImage)} className="hidden" />
-                </>
-                )}
-            </div>
-
-            {/* Name & Bio Section */}
-            <div className="flex-grow pt-2">
-                <div className="flex justify-between items-start gap-2">
-                    <div className="flex-grow">
-                      <p className="font-semibold text-sm">{profile.username}</p>
-                      {profile.bio && <p className="text-sm text-[var(--text-tertiary)] whitespace-pre-line">{profile.bio}</p>}
+        {/* --- PROFILE INFO SECTION (Pic + Name/Bio + Icons) --- */}
+        <div className="px-4 flex items-start justify-between">
+            {/* Left side content: Picture, Name, Bio */}
+            <div className="flex items-start gap-4">
+                {/* Profile Picture */}
+                <div className="relative flex-shrink-0">
+                    <div className="w-24 h-24 rounded-full p-0.5 bg-gradient-to-tr from-yellow-300 via-amber-500 to-orange-500">
+                        <img src={profile.profile_image_url || defaultAvatar} alt="Profile" className="w-full h-full object-cover rounded-full border-2 border-[var(--bg-main)]" />
                     </div>
                     {isMyProfile && (
-                      <button 
-                        onClick={() => setIsEditingBio(true)}
-                        className="p-2 -mr-2 -mt-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors flex-shrink-0"
-                        aria-label="Editar biografia"
-                      >
-                          <PencilIcon className="w-5 h-5" />
-                      </button>
+                    <>
+                        <button 
+                            onClick={() => profileImageInputRef.current?.click()} 
+                            className="absolute bottom-0 -right-1 p-1.5 bg-black/60 rounded-full border-2 border-[var(--bg-main)] hover:bg-black/80 transition-colors"
+                            aria-label="Alterar foto de perfil"
+                        >
+                            <CameraIcon className="w-5 h-5 text-white" />
+                        </button>
+                        <input type="file" accept="image/*" ref={profileImageInputRef} onChange={(e) => handleFileChange(e, onUpdateProfileImage)} className="hidden" />
+                    </>
                     )}
                 </div>
+
+                {/* Name & Bio Section */}
+                <div className="flex-grow pt-2">
+                    <p className="font-semibold text-sm">{profile.username}</p>
+                    {profile.bio && <p className="text-sm text-[var(--text-tertiary)] whitespace-pre-line mt-1">{profile.bio}</p>}
+                </div>
+            </div>
+
+            {/* Right side content: Action Icons */}
+            <div className="flex flex-col items-center space-y-4 pt-2 flex-shrink-0">
+                {isMyProfile && (
+                    <button onClick={() => setIsEditingBio(true)} className="p-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors" aria-label="Editar biografia">
+                        <PencilIcon className="w-5 h-5" />
+                    </button>
+                )}
+                <button onClick={onNavigateToRewards}>
+                    <img src="https://i.postimg.cc/YqhLvSCM/moeda-pump-coin.png" alt="Recompensas" className="w-10 h-10" />
+                </button>
             </div>
         </div>
         
@@ -326,8 +337,29 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             <div><span className="text-lg font-bold">25,5 mil</span><p className="text-sm text-[var(--text-secondary)]">seguidores</p></div>
             <div><span className="text-lg font-bold">6.989</span><p className="text-sm text-[var(--text-secondary)]">seguindo</p></div>
         </div>
+        
+        {/* --- ACTION BUTTONS (Visible when viewing another profile) --- */}
+        {!isMyProfile && (
+            <div className="px-4 mt-4 flex items-center gap-2">
+                <GradientButton onClick={() => alert('Agora você está seguindo este perfil!')} className="flex-1 !py-2.5 text-xs">
+                    Seguir
+                </GradientButton>
+                <GradientButton onClick={onNavigateToChat} className="flex-1 !py-2.5 text-xs">
+                    Mensagem
+                </GradientButton>
+                {profile.account_type === 'business' && (
+                    <GradientButton
+                        onClick={() => setAffiliationStatus('pending')}
+                        disabled={affiliationStatus === 'pending'}
+                        className="flex-1 !py-2.5 text-xs whitespace-nowrap"
+                    >
+                        {affiliationStatus === 'pending' ? 'Solicitação Enviada' : 'Solicitar Afiliação'}
+                    </GradientButton>
+                )}
+            </div>
+        )}
 
-        <div className="border-b border-[var(--border-primary)] flex">
+        <div className="border-b border-[var(--border-primary)] flex mt-4">
           <button onClick={() => setActiveTab('market')} className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${activeTab === 'market' ? 'text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}>Mercado</button>
           <button onClick={() => setActiveTab('posts')} className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${activeTab === 'posts' ? 'text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}>Publicações</button>
         </div>

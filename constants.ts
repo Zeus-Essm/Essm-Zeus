@@ -49,6 +49,32 @@ const CLUB_S_SUBCATEGORIES = [
     { id: 'pratos', name: 'Pratos', image: 'https://i.postimg.cc/XYJ6b4NT/Gemini-Generated-Image-1eva5i1eva5i1eva-1.png' },
 ];
 
+// NOVAS categorias para o painel do Vendedor
+export const RESTAURANT_SHOP_CATEGORIES = [
+    { id: 'pratos', name: 'Pratos', image: 'https://i.postimg.cc/XYJ6b4NT/Gemini-Generated-Image-1eva5i1eva5i1eva-1.png' },
+    { id: 'sobremesas', name: 'Sobremesas', image: 'https://i.postimg.cc/L5BvGFbb/PHOTO-2025-07-14-23-58-55.jpg' },
+    { id: 'bebidas', name: 'Bebidas', image: 'https://i.postimg.cc/tC39yWny/Gemini-Generated-Image-henwbohenwbohenw.png' },
+];
+
+export const SUPERMARKET_SHOP_CATEGORIES = [
+    { id: 'mercearia', name: 'Mercearia', image: 'https://i.postimg.cc/15GyPwVS/Gemini-Generated-Image-euq60jeuq60jeuq6.png' },
+    { id: 'padaria', name: 'Padaria', image: 'https://i.postimg.cc/VvB42PVh/PHOTO-2025-03-03-19-26-45.jpg' },
+    { id: 'talho', name: 'Talho', image: 'https://i.postimg.cc/HsqHQjwp/Gemini-Generated-Image-sa7g1ysa7g1ysa7g.png' },
+    { id: 'bebidas', name: 'Bebidas', image: 'https://i.postimg.cc/tC39yWny/Gemini-Generated-Image-henwbohenwbohenw.png' },
+];
+
+export const BEAUTY_SHOP_CATEGORIES = [
+    { id: 'maquilhagem', name: 'Maquilhagem', image: 'https://i.postimg.cc/YS6p2Fsd/Gemini-Generated-Image-fz7zo1fz7zo1fz7z.png' },
+    { id: 'cabelo', name: 'Cabelo', image: 'https://i.postimg.cc/BvTqZFVN/Gemini-Generated-Image-3ps4k73ps4k73ps4.png' },
+    { id: 'pele', name: 'Pele', image: 'https://i.postimg.cc/k5QnMSp1/Gemini-Generated-Image-a9r49ea9r49ea9r4.png' },
+];
+
+export const TECHNOLOGY_SHOP_CATEGORIES = [
+    { id: 'telemoveis', name: 'Telemóveis', image: 'https://i.postimg.cc/ZKszJHKK/Gemini_Generated_Image_lrcnu0lrcnu0lrcn.png' },
+    { id: 'computadores', name: 'Computadores', image: 'https://i.postimg.cc/rFZ2qjFs/Gemini_Generated_Image_uvwovcuvwovcuvwo.png' },
+    { id: 'acessorios', name: 'Acessórios', image: 'https://i.postimg.cc/zvBNVxMw/louis-vuitton-1-1-millionaires-Z1165-E-PM2-Front-view.webp' },
+];
+
 // Helper para criar subcategorias com IDs únicos
 const createSubCategories = (parentId: string, subCategories: {id: string, name: string, image: string}[]) => {
     return subCategories.map(sc => ({ ...sc, id: `${parentId}_${sc.id}` }));

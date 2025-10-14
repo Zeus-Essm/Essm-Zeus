@@ -36,6 +36,9 @@ import VendorMenuModal from './components/VendorMenuModal';
 import VendorAnalyticsScreen from './components/VendorAnalyticsScreen';
 import VendorProductsScreen from './components/VendorProductsScreen';
 import VendorAffiliatesScreen from './components/VendorAffiliatesScreen';
+import AllHighlightsScreen from './components/AllHighlightsScreen';
+import SearchScreen from './components/SearchScreen';
+import CommentsModal from './components/CommentsModal';
 
 
 declare global {
@@ -158,7 +161,7 @@ const getCategoryTypeFromItem = (item: Item): MarketplaceType => {
     return category?.type || 'fashion'; // Default to fashion if not found
 };
 
-const SCREENS_WITH_NAVBAR = [Screen.Home, Screen.Feed, Screen.Cart, Screen.ChatList, Screen.VendorDashboard, Screen.VendorAnalytics];
+const SCREENS_WITH_NAVBAR = [Screen.Home, Screen.Feed, Screen.Search, Screen.Cart, Screen.ChatList, Screen.VendorDashboard, Screen.VendorAnalytics, Screen.AllHighlights];
 
 
 const App: React.FC = () => {
@@ -198,9 +201,11 @@ const App: React.FC = () => {
     const [showNotificationsPanel, setShowNotificationsPanel] = React.useState(false);
     const [conversations, setConversations] = React.useState<Conversation[]>(INITIAL_CONVERSATIONS);
     const [selectedConversation, setSelectedConversation] = React.useState<Conversation | null>(null);
+    const [commentingPost, setCommentingPost] = React.useState<Post | null>(null);
     
     // Vendor State
     const [showVendorMenu, setShowVendorMenu] = React.useState(false);
+    const [isProfilePromoted, setIsProfilePromoted] = React.useState(false);
 
     const unreadNotificationCount = notifications.filter(n => !n.read).length;
     const unreadMessagesCount = conversations.reduce((acc, conv) => acc + conv.unreadCount, 0);
@@ -313,6 +318,19 @@ const App: React.FC = () => {
             return () => clearTimeout(timer);
         }
     }, [error]);
+
+    // Keep commentingPost state in sync with the main posts state
+    React.useEffect(() => {
+        if (commentingPost) {
+            const updatedPost = posts.find(p => p.id === commentingPost.id);
+            if (updatedPost) {
+                setCommentingPost(updatedPost);
+            } else {
+                // The post might have been deleted, so close the modal
+                setCommentingPost(null);
+            }
+        }
+    }, [posts, commentingPost]);
 
 
     const handleContinueAsVisitor = () => {
@@ -1025,6 +1043,13 @@ const App: React.FC = () => {
                 : p
         ));
     };
+    
+    const handleOpenComments = (postId: string) => {
+        const post = posts.find(p => p.id === postId);
+        if (post) {
+            setCommentingPost(post);
+        }
+    };
 
     const resetToHome = () => {
         const fromRepost = confirmationMessage.includes('postado no seu feed');
@@ -1044,8 +1069,10 @@ const App: React.FC = () => {
     const handleNavigateToMyLooks = () => setCurrentScreen(Screen.MyLooks);
     const handleNavigateToRewards = () => setCurrentScreen(Screen.Rewards);
     const handleNavigateToSettings = () => setCurrentScreen(Screen.Settings);
+    const handleNavigateToSearch = () => setCurrentScreen(Screen.Search);
 
     const handleNavigateToChat = () => setCurrentScreen(Screen.ChatList);
+    const handleNavigateToAllHighlights = () => setCurrentScreen(Screen.AllHighlights);
 
     const handleSelectConversation = (conversation: Conversation) => {
         setSelectedConversation(conversation);
@@ -1090,6 +1117,13 @@ const App: React.FC = () => {
     const handleToggleVisitorPreview = () => {
         setIsPreviewingAsVisitor(prev => !prev);
     };
+    
+    const handleConfirmPromotion = (tier: { budget: number; duration: number; }) => {
+        setIsProfilePromoted(true);
+        // In a real app, you would also close the modal here.
+        setToast(`Promoção ativada! Orçamento de R$${tier.budget} por ${tier.duration} dias.`);
+        setTimeout(() => setToast(null), 5000);
+    };
 
     const renderScreen = () => {
         if (isLoading) return <LoadingIndicator userImage={userImage || 'https://i.postimg.cc/htGw97By/Sem-Ti-tulo-1.png'} customMessage={loadingMessage} />;
@@ -1110,13 +1144,16 @@ const App: React.FC = () => {
                 if (businessProfile) {
                     return <VendorDashboard 
                                 businessProfile={businessProfile} 
-                                onOpenMenu={() => setShowVendorMenu(true)} 
+                                onOpenMenu={() => setShowVendorMenu(true)}
+                                unreadNotificationCount={unreadNotificationCount}
+                                onOpenNotificationsPanel={handleOpenNotificationsPanel}
+                                onConfirmPromotion={handleConfirmPromotion}
                            />;
                 }
                 setCurrentScreen(profile?.account_type === 'business' ? Screen.BusinessOnboarding : Screen.Login);
                 return null;
             case Screen.VendorAnalytics:
-                return <VendorAnalyticsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} />;
+                return <VendorAnalyticsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} isProfilePromoted={isProfilePromoted} />;
             case Screen.VendorProducts:
                 if (businessProfile) {
                     return <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile} />;
@@ -1137,6 +1174,7 @@ const App: React.FC = () => {
                             onNavigateToCart={handleNavigateToCart}
                             onNavigateToChat={handleNavigateToChat}
                             onNavigateToSettings={handleNavigateToSettings}
+                            onNavigateToRewards={handleNavigateToRewards}
                             onStartTryOn={handleStartTryOn}
                             onSignOut={handleSignOut}
                             isCartAnimating={isCartAnimating}
@@ -1189,64 +1227,58 @@ const App: React.FC = () => {
                 }
                 handleNavigateToProfile();
                 return null;
-            case Screen.Generating:
-                 return <LoadingIndicator userImage={generatedImage || userImage!} />;
+            case Screen.Camera:
+                return <CameraScreen onPhotoTaken={handleImageUpload} onBack={() => setCurrentScreen(Screen.ImageSourceSelection)} />;
             case Screen.Result:
-                if (generatedImage && wornItems.length > 0) {
-                    const categoryItems = collectionIdentifier 
-                        ? ITEMS.filter(item => item.category === collectionIdentifier.id) 
-                        : [];
+                if (generatedImage && collectionIdentifier) {
+                    const categoryItems = ITEMS.filter(item => item.category.startsWith(collectionIdentifier.id.split('_')[0]));
                     return <ResultScreen
                         generatedImage={generatedImage}
                         items={wornItems}
                         categoryItems={categoryItems}
-                        onItemSelect={handleItemSelect}
                         onPostToFeed={handlePostToFeed}
                         onBuy={handleBuyLook}
                         onUndo={handleUndoLastItem}
                         onSaveLook={handleSaveLook}
                         onSaveImage={handleSaveImage}
+                        onItemSelect={handleItemSelect}
                         onAddMoreItems={handleNavigateToAddMoreItems}
                         onGenerateVideo={handleGenerateVideo}
                     />;
                 }
-                // If we land here with no items, it means we undid the last one.
-                if (collectionIdentifier) {
-                    setCurrentScreen(Screen.ItemSelection);
-                } else {
-                    handleBack();
-                }
+                // Fallback if we get to result screen without an image
+                setCurrentScreen(Screen.Home);
                 return null;
             case Screen.Confirmation:
                 return <ConfirmationScreen message={confirmationMessage} onHome={resetToHome} />;
             case Screen.Feed:
-                 return <FeedScreen 
-                            posts={posts}
-                            stories={stories}
-                            profile={profile!}
-                            onBack={handleNavigateToProfile}
-                            onItemClick={handleItemClick}
-                            onAddToCartMultiple={handleAddToCartMultiple}
-                            onBuyMultiple={handleBuyLook}
-                            onViewProfile={handleViewProfile}
-                            onSelectCategory={handleSelectCategory}
-                            onLikePost={handleLikePost}
-                            onAddComment={handleAddComment}
-                            {...notificationProps}
-                        />;
+                return <FeedScreen
+                    posts={posts}
+                    stories={stories}
+                    profile={profile!}
+                    businessProfile={businessProfile}
+                    isProfilePromoted={isProfilePromoted}
+                    onBack={handleNavigateToProfile}
+                    onItemClick={handleItemClick}
+                    onAddToCartMultiple={handleAddToCartMultiple}
+                    onBuyMultiple={handleBuyLook}
+                    onViewProfile={handleViewProfile}
+                    onSelectCategory={handleSelectCategory}
+                    onLikePost={handleLikePost}
+                    onAddComment={handleAddComment}
+                    onNavigateToAllHighlights={handleNavigateToAllHighlights}
+                    unreadNotificationCount={unreadNotificationCount}
+                    onNotificationsClick={handleOpenNotificationsPanel}
+                    onSearchClick={handleNavigateToSearch}
+                />;
             case Screen.MyLooks:
-                return <MyLooksScreen 
-                            looks={savedLooks} 
-                            onBack={handleNavigateToProfile} 
-                            onItemClick={handleItemClick}
-                            onBuyLook={handleBuyLook}
-                            onPostLook={handlePostLookFromSaved}
-                        />;
-            case Screen.Camera:
-                return <CameraScreen 
-                           onPhotoTaken={handleImageUpload} 
-                           onBack={() => setCurrentScreen(Screen.ImageSourceSelection)} 
-                       />;
+                return <MyLooksScreen
+                    looks={savedLooks}
+                    onBack={handleNavigateToProfile}
+                    onItemClick={handleItemClick}
+                    onBuyLook={handleBuyLook}
+                    onPostLook={handlePostLookFromSaved}
+                />;
             case Screen.Cart:
                 return <CartScreen
                     cartItems={cartItems}
@@ -1254,112 +1286,103 @@ const App: React.FC = () => {
                     onRemoveItem={handleRemoveFromCart}
                     onBuyItem={handleBuySingleItemFromCart}
                     onTryOnItem={handleStartNewTryOnSession}
-                    onCheckout={() => {
-                        if (cartItems.length > 0) {
-                            handleBuyLook(cartItems);
-                            setCartItems([]);
-                        }
-                    }}
+                    onCheckout={() => handleBuyLook(cartItems)}
                 />;
             case Screen.Rewards:
                 return <RewardsScreen onBack={handleNavigateToProfile} />;
             case Screen.ChatList:
                 return <ChatListScreen
-                            conversations={conversations}
-                            onBack={handleNavigateToProfile}
-                            onSelectConversation={handleSelectConversation}
-                        />;
+                    conversations={conversations}
+                    onBack={handleNavigateToProfile}
+                    onSelectConversation={handleSelectConversation}
+                />;
             case Screen.Chat:
-                if (selectedConversation && profile) {
+                if (selectedConversation) {
                     return <ChatScreen
-                                conversation={selectedConversation}
-                                currentUser={profile}
-                                onBack={() => {
-                                    setSelectedConversation(null);
-                                    setCurrentScreen(Screen.ChatList);
-                                }}
-                                onSendMessage={handleSendMessage}
-                           />;
+                        conversation={selectedConversation}
+                        currentUser={profile!}
+                        onBack={() => setCurrentScreen(Screen.ChatList)}
+                        onSendMessage={handleSendMessage}
+                    />;
                 }
-                // Fallback if no conversation is selected
                 setCurrentScreen(Screen.ChatList);
                 return null;
+            case Screen.Search:
+                return <SearchScreen 
+                    onBack={() => setCurrentScreen(Screen.Feed)} 
+                    posts={posts}
+                    onViewProfile={handleViewProfile}
+                    onLikePost={handleLikePost}
+                    onItemClick={handleItemClick}
+                    onOpenComments={handleOpenComments}
+                />;
+            case Screen.AllHighlights:
+                return <AllHighlightsScreen 
+                    categories={CATEGORIES}
+                    onBack={() => setCurrentScreen(Screen.Feed)}
+                    onSelectCategory={handleSelectCategory}
+                />;
             default:
-                setCurrentScreen(Screen.Login); // Default fallback to login
+                setCurrentScreen(Screen.Feed);
                 return null;
         }
     };
-    
-    const renderContent = () => {
-        if (authLoading) {
-            return <SplashScreen />;
-        }
-        if (!session) {
-            return <LoginScreen onContinueAsVisitor={handleContinueAsVisitor} />;
-        }
-        // Handle profile fetch failure after login
-        if (!profile && error) {
-            return (
-                <div className="flex flex-col items-center justify-center h-full w-full p-6 text-[var(--text-primary)] text-center animate-fadeIn bg-[var(--bg-main)]">
-                    <XCircleIcon className="w-24 h-24 text-red-400 mb-6" />
-                    <h1 className="text-2xl font-bold mb-2">Falha ao Carregar Perfil</h1>
-                    <p className="text-[var(--text-tertiary)] text-base mb-6">{error}</p>
-                    <p className="text-[var(--text-secondary)] text-sm mb-10 bg-[var(--bg-secondary)] p-3 rounded-lg border border-zinc-700">
-                       <strong>Dica:</strong> Este erro geralmente ocorre porque as Políticas de Segurança de Nível de Linha (RLS) não estão configuradas corretamente na sua tabela <code>profiles</code> no Supabase. Certifique-se de que os usuários autenticados tenham permissão para ler e criar seus próprios perfis.
-                    </p>
-                    <GradientButton onClick={handleSignOut}>
-                        Voltar ao Login
-                    </GradientButton>
-                </div>
-            );
-        }
-        if (!profile) {
-            // Profile is being fetched, show a loader
-            return <SplashScreen />;
-        }
-        
-        const screenComponent = renderScreen();
-        const showNavBar = SCREENS_WITH_NAVBAR.includes(currentScreen);
 
+    if (authLoading) {
+        return <SplashScreen />;
+    }
+
+    if (!session) {
+        return <LoginScreen onContinueAsVisitor={handleContinueAsVisitor} />;
+    }
+    
+    if (!profile) {
         return (
-            <>
-                {screenComponent}
-                {showNavBar && (
-                    <div className="absolute bottom-0 left-0 right-0 z-20">
-                        <BottomNavBar
-                            activeScreen={currentScreen}
-                            onNavigateToFeed={() => setCurrentScreen(Screen.Feed)}
-                            onNavigateToCart={handleNavigateToCart}
-                            onNavigateToChat={handleNavigateToChat}
-                            onNavigateToProfile={handleNavigateToProfile}
-                            onStartTryOn={handleStartTryOn}
-                            isCartAnimating={isCartAnimating}
-                            unreadMessagesCount={unreadMessagesCount}
-                            accountType={profile?.account_type}
-                            onNavigateToVendorAnalytics={handleNavigateToVendorAnalytics}
-                        />
-                    </div>
-                )}
-            </>
+            <div className="flex items-center justify-center h-full w-full bg-[var(--bg-main)] text-[var(--text-primary)]">
+                Carregando...
+            </div>
         );
-    };
+    }
+    
+    const showNavBar = SCREENS_WITH_NAVBAR.includes(currentScreen) || 
+        (profile.account_type === 'business' && [Screen.VendorDashboard, Screen.VendorAnalytics].includes(currentScreen));
 
     return (
-        <div className="h-screen w-screen max-w-md mx-auto bg-[var(--bg-main)] overflow-hidden relative shadow-2xl shadow-[var(--accent-primary)]/20">
-            {renderContent()}
+        <div className="h-full w-full max-w-lg mx-auto bg-[var(--bg-main)] flex flex-col relative font-sans">
+            <div className="flex-grow overflow-hidden relative">
+                {renderScreen()}
+            </div>
+            
+            {showNavBar && (
+                <div className="flex-shrink-0">
+                    <BottomNavBar
+                        activeScreen={currentScreen}
+                        onNavigateToFeed={() => setCurrentScreen(Screen.Feed)}
+                        onNavigateToCart={handleNavigateToCart}
+                        onNavigateToChat={handleNavigateToChat}
+                        onNavigateToProfile={handleNavigateToProfile}
+                        onStartTryOn={handleStartTryOn}
+                        isCartAnimating={isCartAnimating}
+                        unreadMessagesCount={unreadMessagesCount}
+                        accountType={profile.account_type}
+                        onNavigateToVendorAnalytics={handleNavigateToVendorAnalytics}
+                    />
+                </div>
+            )}
+
             {toast && (
-                <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-[var(--accent-primary)]/90 backdrop-blur-sm text-white px-5 py-2.5 rounded-full shadow-lg z-50 animate-fadeIn text-sm font-semibold">
+                <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-full text-sm animate-fadeIn z-50">
                     {toast}
                 </div>
             )}
+            
             {error && (
-                <div className="absolute top-16 left-4 right-4 bg-red-900/50 border border-red-500/50 text-red-300 px-4 py-3 rounded-lg shadow-lg z-50 flex items-center justify-between animate-fadeIn backdrop-blur-sm">
-                    <p className="text-sm flex-grow pr-2">{error}</p>
-                    <button onClick={() => setError(null)} className="p-1 rounded-full hover:bg-red-500/30 flex-shrink-0">
-                        <XCircleIcon className="w-6 h-6" />
-                    </button>
+                <div className="absolute top-0 left-0 right-0 p-3 bg-red-500/90 text-white text-sm flex justify-between items-center z-50">
+                    <span>{error}</span>
+                    <button onClick={() => setError(null)}><XCircleIcon className="w-5 h-5"/></button>
                 </div>
             )}
+            
             {showNotificationsPanel && (
                 <NotificationsPanel
                     notifications={notifications}
@@ -1367,30 +1390,48 @@ const App: React.FC = () => {
                     onNotificationClick={handleNotificationClick}
                 />
             )}
-            {showVideoPlayer && generatedVideoUrl && profile && (
+            
+            {showVideoPlayer && generatedVideoUrl && (
                 <VideoPlayerModal
                     videoUrl={generatedVideoUrl}
-                    onClose={() => {
-                        if (generatedVideoUrl) {
-                            URL.revokeObjectURL(generatedVideoUrl);
-                        }
-                        setShowVideoPlayer(false);
-                        setGeneratedVideoUrl(null);
-                    }}
+                    onClose={() => setShowVideoPlayer(false)}
                     onPublish={handlePublishVideo}
                     onSave={handleSaveVideo}
                     isPublishing={isPublishing}
                 />
             )}
-             {showVendorMenu && (
-                <VendorMenuModal
+            
+            {showVendorMenu && (
+                 <VendorMenuModal
                     onClose={() => setShowVendorMenu(false)}
-                    onNavigateToAnalytics={() => { setShowVendorMenu(false); setCurrentScreen(Screen.VendorAnalytics); }}
-                    onNavigateToProducts={() => { setShowVendorMenu(false); setCurrentScreen(Screen.VendorProducts); }}
-                    onNavigateToAffiliates={() => { setShowVendorMenu(false); setCurrentScreen(Screen.VendorAffiliates); }}
-                    onSignOut={() => { setShowVendorMenu(false); handleSignOut(); }}
+                    onNavigateToAnalytics={() => {
+                        setCurrentScreen(Screen.VendorAnalytics);
+                        setShowVendorMenu(false);
+                    }}
+                    onNavigateToProducts={() => {
+                        setCurrentScreen(Screen.VendorProducts);
+                        setShowVendorMenu(false);
+                    }}
+                    onNavigateToAffiliates={() => {
+                        setCurrentScreen(Screen.VendorAffiliates);
+                        setShowVendorMenu(false);
+                    }}
+                    onSignOut={() => {
+                        setShowVendorMenu(false);
+                        handleSignOut();
+                    }}
                 />
             )}
+            
+            {commentingPost && profile && (
+                 <CommentsModal
+                    post={commentingPost}
+                    currentUser={profile}
+                    onClose={() => setCommentingPost(null)}
+                    onAddComment={handleAddComment}
+                 />
+            )}
+
         </div>
     );
 };

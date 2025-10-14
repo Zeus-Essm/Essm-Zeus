@@ -62,7 +62,7 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({
       <NavItem 
         icon={<CompassIcon className="w-6 h-6" />}
         label="Feed"
-        isActive={activeScreen === Screen.Feed}
+        isActive={activeScreen === Screen.Feed || activeScreen === Screen.AllHighlights}
         onClick={onNavigateToFeed}
       />
       

@@ -1,21 +1,20 @@
-
-
-
-
 import React, { useState, useRef, useEffect } from 'react';
-import type { Post, Item, Story, MarketplaceType, Category, Profile, Comment } from '../types';
-import { CATEGORIES } from '../constants';
+import type { Post, Item, Story, MarketplaceType, Category, Profile, Comment, BusinessProfile } from '../types';
+import { CATEGORIES, INITIAL_POSTS } from '../constants';
 import Header from './Header';
 import PostCard from './PostCard';
 import { PlusIcon } from './IconComponents';
 import ImageViewModal from './ImageViewModal';
 import ShopTheLookModal from './ShopTheLookModal';
 import CommentsModal from './CommentsModal';
+import PromotedProfileCard from './PromotedProfileCard';
 
 interface FeedScreenProps {
   posts: Post[];
   stories: Story[];
   profile: Profile;
+  businessProfile: BusinessProfile | null;
+  isProfilePromoted: boolean;
   onBack: () => void;
   onItemClick: (item: Item) => void;
   onAddToCartMultiple: (items: Item[]) => void;
@@ -24,8 +23,10 @@ interface FeedScreenProps {
   onSelectCategory: (category: Category) => void;
   onLikePost: (postId: string) => void;
   onAddComment: (postId: string, text: string) => void;
+  onNavigateToAllHighlights: () => void;
   unreadNotificationCount: number;
   onNotificationsClick: () => void;
+  onSearchClick: () => void;
 }
 
 const YourStoryCard: React.FC<{ profileImage: string | null }> = ({ profileImage }) => (
@@ -68,6 +69,8 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
     posts, 
     stories, 
     profile, 
+    businessProfile,
+    isProfilePromoted,
     onBack, 
     onItemClick, 
     onAddToCartMultiple, 
@@ -76,8 +79,10 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
     onSelectCategory,
     onLikePost,
     onAddComment,
+    onNavigateToAllHighlights,
     unreadNotificationCount,
     onNotificationsClick,
+    onSearchClick,
  }) => {
   const [viewingPostIndex, setViewingPostIndex] = useState<number | null>(null);
   const [shoppingPost, setShoppingPost] = useState<{post: Post, type: MarketplaceType} | null>(null);
@@ -90,7 +95,7 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
       CATEGORIES.find(c => c.id === 'lv')!,
       CATEGORIES.find(c => c.id === 'new_feeling')!,
   ].filter(Boolean);
-
+  
   useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container || featuredCategories.length === 0) return;
@@ -191,6 +196,7 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
             showLogo={true}
             unreadNotificationCount={unreadNotificationCount}
             onNotificationsClick={onNotificationsClick}
+            onSearchClick={onSearchClick}
         />
         <div className="flex-grow pt-16 overflow-y-auto scroll-smooth pb-20">
           {/* Stories Section */}
@@ -208,7 +214,22 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
           
           {/* Featured Categories (Highlights) Section */}
           <div className="relative border-b border-[var(--border-primary)] py-4">
-            <h2 className="text-xl font-bold px-4 mb-3 text-[var(--accent-primary)] text-glow tracking-wide">Destaques</h2>
+            <div className="px-4 flex justify-between items-center mb-3">
+                <button
+                    onClick={onNavigateToAllHighlights}
+                    className="text-left hover:opacity-80 transition-opacity"
+                >
+                    <h2 className="text-xl font-bold text-[var(--accent-primary)] text-glow tracking-wide">
+                        Marcas e produtos
+                    </h2>
+                </button>
+                <button
+                    onClick={onNavigateToAllHighlights}
+                    className="text-sm font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                >
+                    Ver todos
+                </button>
+            </div>
             <div
                 ref={scrollContainerRef}
                 className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 space-x-4 pl-4 pr-16 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
@@ -263,19 +284,31 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
                 </button>
             )}
           </div>
+          
+           {/* For You Section */}
+          <div className="px-4 pt-4">
+              <h2 className="text-xl font-bold text-[var(--accent-primary)] text-glow tracking-wide">Para você</h2>
+          </div>
 
           <div className="space-y-2 pt-2">
             {posts.map((post, index) => (
-              <PostCard
-                key={post.id}
-                post={post}
-                onLike={() => onLikePost(post.id)}
-                onItemClick={onItemClick}
-                onShopTheLook={() => handleShopTheLook(post)}
-                onViewProfile={() => onViewProfile(post.user.id)}
-                onImageClick={() => handleViewPost(index)}
-                onComment={() => handleOpenComments(post.id)}
-              />
+              <React.Fragment key={post.id}>
+                <PostCard
+                    post={post}
+                    onLike={() => onLikePost(post.id)}
+                    onItemClick={onItemClick}
+                    onShopTheLook={() => handleShopTheLook(post)}
+                    onViewProfile={() => onViewProfile(post.user.id)}
+                    onImageClick={() => handleViewPost(index)}
+                    onComment={() => handleOpenComments(post.id)}
+                />
+                {index === 1 && isProfilePromoted && businessProfile && (
+                    <PromotedProfileCard
+                        businessProfile={businessProfile}
+                        onVisit={() => onViewProfile(businessProfile.id)}
+                    />
+                )}
+              </React.Fragment>
             ))}
           </div>
         </div>

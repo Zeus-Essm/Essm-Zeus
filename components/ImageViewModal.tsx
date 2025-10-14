@@ -45,17 +45,17 @@ const ImageViewModal: React.FC<ImageViewModalProps> = ({ posts, startIndex, onCl
 
     return (
         <div
-            className="fixed inset-0 bg-black z-50 animate-modalFadeIn"
+            className="fixed inset-0 bg-[var(--bg-main)] z-50 animate-modalFadeIn"
             role="dialog"
             aria-modal="true"
             aria-label="Visualização de posts"
         >
             <button
                 onClick={onClose}
-                className="absolute top-4 right-4 p-2 rounded-full bg-black/50 hover:bg-black/80 transition-colors z-20"
+                className="absolute top-4 right-4 p-2 rounded-full bg-[var(--bg-tertiary)]/50 hover:bg-[var(--bg-tertiary)]/80 transition-colors z-20"
                 aria-label="Fechar visualização"
             >
-                <XIcon className="w-6 h-6 text-white" />
+                <XIcon className="w-6 h-6 text-[var(--text-primary)]" />
             </button>
 
             <div
@@ -67,14 +67,14 @@ const ImageViewModal: React.FC<ImageViewModalProps> = ({ posts, startIndex, onCl
                         {/* Header */}
                         <div className="p-4 flex-shrink-0">
                             <button onClick={() => onViewProfile(post.user.id)} className="flex items-center gap-3 text-left">
-                                <img src={post.user.avatar} alt={post.user.name} className="w-10 h-10 rounded-full object-cover border-2 border-white/80" />
-                                <span className="font-bold text-sm text-white">{post.user.name}</span>
+                                <img src={post.user.avatar} alt={post.user.name} className="w-10 h-10 rounded-full object-cover border-2 border-[var(--text-primary)]/80" />
+                                <span className="font-bold text-sm text-[var(--text-primary)]">{post.user.name}</span>
                             </button>
                         </div>
                         
                         {/* Image or Video Wrapper */}
                         <div className="flex-grow flex items-center justify-center min-h-0">
-                            <div className="w-full aspect-square bg-zinc-900">
+                            <div className="w-full aspect-square bg-[var(--bg-secondary)]">
                                 {post.video ? (
                                     <video
                                         src={post.video}
@@ -96,23 +96,23 @@ const ImageViewModal: React.FC<ImageViewModalProps> = ({ posts, startIndex, onCl
                             <div className="flex items-center gap-4">
                                 <button onClick={() => onLike(post.id)} className="transform hover:scale-110 transition-transform" aria-label="Curtir">
                                     <HeartIcon 
-                                        className={`w-7 h-7 ${post.isLiked ? 'text-[var(--accent-primary)]' : 'text-white'}`} 
+                                        className={`w-7 h-7 ${post.isLiked ? 'text-[var(--accent-primary)]' : 'text-[var(--text-primary)]'}`} 
                                         fill={post.isLiked ? 'currentColor' : 'none'}
                                     />
                                 </button>
                                 <button onClick={() => onComment(post.id)} className="transform hover:scale-110 transition-transform" aria-label="Comentar">
-                                    <ChatBubbleIcon className="w-7 h-7 text-white" />
+                                    <ChatBubbleIcon className="w-7 h-7 text-[var(--text-primary)]" />
                                 </button>
                             </div>
-                            <p className="text-sm font-semibold mt-2 text-white">{post.likes.toLocaleString()} curtidas</p>
+                            <p className="text-sm font-semibold mt-2 text-[var(--text-primary)]">{post.likes.toLocaleString()} curtidas</p>
                             {post.commentCount > 0 && (
-                                <button onClick={() => onComment(post.id)} className="text-sm text-zinc-400 mt-1 hover:underline">
+                                <button onClick={() => onComment(post.id)} className="text-sm text-[var(--text-secondary)] mt-1 hover:underline">
                                     Ver todos os {post.commentCount} comentários
                                 </button>
                             )}
-                            <div className="text-sm text-white mt-1">
+                            <div className="text-sm text-[var(--text-primary)] mt-1">
                                 <p>
-                                    <button onClick={() => onViewProfile(post.user.id)} className="font-bold mr-2 hover:underline text-white">{post.user.name}</button>
+                                    <button onClick={() => onViewProfile(post.user.id)} className="font-bold mr-2 hover:underline text-[var(--text-primary)]">{post.user.name}</button>
                                      {post.items.length > 0 ? (post.video ? 'apresentando ' : 'vestindo ') : 'compartilhou um novo vídeo.'}
                                     {post.items.map((item, index) => (
                                         <React.Fragment key={item.id}>

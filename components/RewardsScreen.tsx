@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import Header from './Header';
 import { CATEGORIES } from '../constants';
-import { GiftIcon } from './IconComponents';
+import { GiftIcon, LinkIcon } from './IconComponents';
 
 interface RewardsScreenProps {
   onBack: () => void;
@@ -12,16 +11,24 @@ interface BrandProgressProps {
   brandName: string;
   currentPoints: number;
   maxPoints?: number;
+  isAffiliated: boolean;
 }
 
-const BrandProgress: React.FC<BrandProgressProps> = ({ brandName, currentPoints, maxPoints = 1000 }) => {
+const BrandProgress: React.FC<BrandProgressProps> = ({ brandName, currentPoints, maxPoints = 1000, isAffiliated }) => {
     const progressPercentage = Math.min((currentPoints / maxPoints) * 100, 100);
     const hasReachedGoal = currentPoints >= maxPoints;
 
     return (
         <div className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] p-4 rounded-lg">
             <div className="flex justify-between items-center mb-2">
-                <h3 className="font-bold text-lg uppercase">{brandName}</h3>
+                <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-lg uppercase">{brandName}</h3>
+                    {isAffiliated && (
+                        <div title="Você é um afiliado desta marca!">
+                            <LinkIcon className="w-5 h-5 text-[var(--accent-primary)]" />
+                        </div>
+                    )}
+                </div>
                 <span className={`font-semibold ${hasReachedGoal ? 'text-[var(--accent-primary)] text-glow' : 'text-[var(--text-tertiary)]'}`}>
                     {currentPoints.toLocaleString()} / {maxPoints.toLocaleString()} PTS
                 </span>
@@ -55,6 +62,8 @@ const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
         'lv': 50 // Not displayed for now, but can be added
     });
 
+    const [affiliatedBrands] = useState<string[]>(['new_feeling', 'lilas']);
+
     const rewardCategories = CATEGORIES.filter(cat => cat.id !== 'lv');
 
     return (
@@ -64,7 +73,7 @@ const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
                 <div className="text-center mb-4">
                     <img src="https://i.postimg.cc/wjyHYD8S/moeda.png" alt="Recompensas" className="w-16 h-16 mx-auto mb-2"/>
                     <p className="text-[var(--text-tertiary)]">
-                        Ganhe pontos usando itens de cada marca. Alcance 1000 pontos para desbloquear uma recompensa exclusiva!
+                        Ganhe pontos usando itens de cada marca ou recomendando produtos. Alcance 1000 pontos para desbloquear uma recompensa exclusiva!
                     </p>
                 </div>
 
@@ -73,8 +82,16 @@ const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
                         key={category.id}
                         brandName={category.name}
                         currentPoints={points[category.id] || 0}
+                        isAffiliated={affiliatedBrands.includes(category.id)}
                     />
                 ))}
+
+                <div className="pt-4 mt-4 border-t border-[var(--border-primary)] text-center text-xs text-[var(--text-secondary)]">
+                    <div className="flex items-center justify-center gap-2">
+                        <LinkIcon className="w-4 h-4" />
+                        <span>Indica uma afiliação ativa com a marca.</span>
+                    </div>
+                </div>
             </div>
         </div>
     );
