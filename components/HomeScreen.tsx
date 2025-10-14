@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import type { Profile, Category, Post, Item, MarketplaceType } from '../types';
@@ -7,7 +5,7 @@ import { CATEGORIES, INITIAL_STORIES } from '../constants';
 import { 
     PlusIcon, CameraIcon, ShoppingBagIcon, UserIcon, CompassIcon, 
     GiftIcon, VerifiedIcon, ChevronDownIcon, MenuIcon,
-    BellIcon, PencilIcon, ChatBubbleIcon
+    BellIcon, PencilIcon, ChatBubbleIcon, StarIcon
 } from './IconComponents';
 import BioEditModal from './BioEditModal';
 import GradientButton from './GradientButton';
@@ -338,26 +336,29 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             <div><span className="text-lg font-bold">6.989</span><p className="text-sm text-[var(--text-secondary)]">seguindo</p></div>
         </div>
         
-        {/* --- ACTION BUTTONS (Visible when viewing another profile) --- */}
-        {!isMyProfile && (
-            <div className="px-4 mt-4 flex items-center gap-2">
-                <GradientButton onClick={() => alert('Agora você está seguindo este perfil!')} className="flex-1 !py-2.5 text-xs">
-                    Seguir
-                </GradientButton>
-                <GradientButton onClick={onNavigateToChat} className="flex-1 !py-2.5 text-xs">
-                    Mensagem
-                </GradientButton>
-                {profile.account_type === 'business' && (
-                    <GradientButton
-                        onClick={() => setAffiliationStatus('pending')}
-                        disabled={affiliationStatus === 'pending'}
-                        className="flex-1 !py-2.5 text-xs whitespace-nowrap"
-                    >
-                        {affiliationStatus === 'pending' ? 'Solicitação Enviada' : 'Solicitar Afiliação'}
+        {/* --- ACTION BUTTONS (Visible when viewing another profile or your own) --- */}
+        <div className="px-4 mt-4">
+            {!isMyProfile && (
+                 <div className="flex items-center gap-2">
+                    <GradientButton onClick={() => alert('Agora você está seguindo este perfil!')} className="flex-1 !py-2.5 text-xs">
+                        Seguir
                     </GradientButton>
-                )}
-            </div>
-        )}
+                    <GradientButton onClick={onNavigateToChat} className="flex-1 !py-2.5 text-xs">
+                        Mensagem
+                    </GradientButton>
+                    {profile.account_type === 'business' && (
+                        <GradientButton
+                            onClick={() => setAffiliationStatus('pending')}
+                            disabled={affiliationStatus === 'pending'}
+                            className="flex-1 !py-2.5 text-xs whitespace-nowrap"
+                        >
+                            {affiliationStatus === 'pending' ? 'Solicitação Enviada' : 'Solicitar Afiliação'}
+                        </GradientButton>
+                    )}
+                </div>
+            )}
+        </div>
+
 
         <div className="border-b border-[var(--border-primary)] flex mt-4">
           <button onClick={() => setActiveTab('market')} className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${activeTab === 'market' ? 'text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}>Mercado</button>

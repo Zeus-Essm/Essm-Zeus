@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { ChartBarIcon, ShoppingBagIcon, UsersIcon, ChevronRightIcon } from './IconComponents';
+import { ChartBarIcon, ShoppingBagIcon, UsersIcon, ChevronRightIcon, StarIcon } from './IconComponents';
 
 const XIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -12,6 +12,7 @@ interface VendorMenuModalProps {
   onNavigateToAnalytics: () => void;
   onNavigateToProducts: () => void;
   onNavigateToAffiliates: () => void;
+  onNavigateToCollaborations: () => void;
   onSignOut: () => void;
 }
 
@@ -29,6 +30,7 @@ const VendorMenuModal: React.FC<VendorMenuModalProps> = ({
     onNavigateToAnalytics, 
     onNavigateToProducts,
     onNavigateToAffiliates,
+    onNavigateToCollaborations,
     onSignOut 
 }) => {
     useEffect(() => {
@@ -62,6 +64,7 @@ const VendorMenuModal: React.FC<VendorMenuModalProps> = ({
                     <MenuItem icon={<ChartBarIcon />} text="Visão Geral (Analytics)" onClick={onNavigateToAnalytics} />
                     <MenuItem icon={<ShoppingBagIcon />} text="Gerenciar Produtos" onClick={onNavigateToProducts} />
                     <MenuItem icon={<UsersIcon />} text="Solicitações de Afiliados" onClick={onNavigateToAffiliates} />
+                    <MenuItem icon={<StarIcon />} text="Colaborações" onClick={onNavigateToCollaborations} />
                 </div>
                 
                 <div className="mt-auto">

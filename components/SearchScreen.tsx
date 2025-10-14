@@ -2,34 +2,42 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { ArrowLeftIcon, SearchIcon } from './IconComponents';
 import type { Post, Profile, Item } from '../types';
 import ImageViewModal from './ImageViewModal';
+import QuickViewModal from './QuickViewModal';
 
 interface SearchScreenProps {
     onBack: () => void;
     posts: Post[];
+    items: Item[];
     onViewProfile: (profileId: string) => void;
     onLikePost: (postId: string) => void;
     onItemClick: (item: Item) => void;
     onOpenComments: (postId: string) => void;
+    onAddToCart: (item: Item) => void;
+    onBuy: (item: Item) => void;
 }
 
 const SearchScreen: React.FC<SearchScreenProps> = ({ 
     onBack, 
     posts, 
+    items,
     onViewProfile,
     onLikePost,
     onItemClick,
-    onOpenComments
+    onOpenComments,
+    onAddToCart,
+    onBuy,
 }) => {
     const [query, setQuery] = useState('');
+    const [activeTab, setActiveTab] = useState<'accounts' | 'products'>('accounts');
     const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([]);
+    const [filteredItems, setFilteredItems] = useState<Item[]>([]);
     const [viewingPostDetails, setViewingPostDetails] = useState<{ posts: Post[]; startIndex: number } | null>(null);
+    const [quickViewItem, setQuickViewItem] = useState<Item | null>(null);
 
     const popularPosts = useMemo(() => {
-        // Create a copy before sorting to avoid mutating the original prop
         return [...posts].sort((a, b) => b.likes - a.likes);
     }, [posts]);
     
-    // Create a unique list of profiles from all posts for searching
     const allProfiles = useMemo(() => {
         const profileMap = new Map<string, Profile>();
         posts.forEach(post => {
@@ -40,7 +48,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                     profile_image_url: post.user.avatar,
                     bio: null,
                     cover_image_url: null,
-                    account_type: 'personal', // Assumption
+                    account_type: 'personal',
                 });
             }
         });
@@ -50,16 +58,24 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
     useEffect(() => {
         if (query.trim() === '') {
             setFilteredProfiles([]);
+            setFilteredItems([]);
             return;
         }
 
         const lowercasedQuery = query.toLowerCase();
-        const results = allProfiles.filter(profile =>
+        
+        const profileResults = allProfiles.filter(profile =>
             profile.username.toLowerCase().includes(lowercasedQuery)
         );
-        setFilteredProfiles(results);
+        setFilteredProfiles(profileResults);
+        
+        const itemResults = items.filter(item =>
+            item.name.toLowerCase().includes(lowercasedQuery) ||
+            item.description.toLowerCase().includes(lowercasedQuery)
+        );
+        setFilteredItems(itemResults);
 
-    }, [query, allProfiles]);
+    }, [query, allProfiles, items]);
 
     const handleViewPost = (postIndex: number) => {
         setViewingPostDetails({ posts: popularPosts, startIndex: postIndex });
@@ -76,7 +92,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                         <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-secondary)]" />
                         <input
                             type="text"
-                            placeholder="Pesquisar perfis..."
+                            placeholder="Pesquisar..."
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                             className="w-full bg-[var(--bg-secondary)] rounded-lg pl-10 pr-4 py-2 border border-[var(--border-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
@@ -86,7 +102,6 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                 </header>
                 <main className="flex-grow overflow-y-auto">
                     {query.trim() === '' ? (
-                        // Grid view for popular posts
                         <div className="grid grid-cols-3 gap-px bg-[var(--border-primary)]">
                             {popularPosts.map((post, index) => (
                                 <div 
@@ -99,23 +114,54 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                             ))}
                         </div>
                     ) : (
-                        // List view for search results
                         <div>
-                            {filteredProfiles.length > 0 ? (
-                                filteredProfiles.map(profile => (
-                                    <button 
-                                        key={profile.id}
-                                        onClick={() => onViewProfile(profile.id)}
-                                        className="w-full flex items-center gap-4 p-3 text-left hover:bg-[var(--bg-tertiary)] transition-colors"
-                                    >
-                                        <img src={profile.profile_image_url || 'https://i.postimg.cc/jSVNgmm4/IMG-2069.jpg'} alt={profile.username} className="w-12 h-12 rounded-full object-cover"/>
-                                        <div>
-                                            <p className="font-semibold">{profile.username}</p>
-                                        </div>
-                                    </button>
-                                ))
+                            <div className="border-b border-[var(--border-primary)] flex">
+                                <button onClick={() => setActiveTab('accounts')} className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${activeTab === 'accounts' ? 'text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}>
+                                    Contas
+                                </button>
+                                <button onClick={() => setActiveTab('products')} className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${activeTab === 'products' ? 'text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}>
+                                    Produtos
+                                </button>
+                            </div>
+                            {activeTab === 'accounts' ? (
+                                <div>
+                                    {filteredProfiles.length > 0 ? (
+                                        filteredProfiles.map(profile => (
+                                            <button 
+                                                key={profile.id}
+                                                onClick={() => onViewProfile(profile.id)}
+                                                className="w-full flex items-center gap-4 p-3 text-left hover:bg-[var(--bg-tertiary)] transition-colors"
+                                            >
+                                                <img src={profile.profile_image_url || 'https://i.postimg.cc/jSVNgmm4/IMG-2069.jpg'} alt={profile.username} className="w-12 h-12 rounded-full object-cover"/>
+                                                <div>
+                                                    <p className="font-semibold">{profile.username}</p>
+                                                </div>
+                                            </button>
+                                        ))
+                                    ) : (
+                                        <p className="text-[var(--text-secondary)] text-center p-8">Nenhum perfil encontrado.</p>
+                                    )}
+                                </div>
                             ) : (
-                                <p className="text-[var(--text-secondary)] text-center p-8">Nenhum perfil encontrado.</p>
+                                 <div>
+                                    {filteredItems.length > 0 ? (
+                                        filteredItems.map(item => (
+                                            <button 
+                                                key={item.id}
+                                                onClick={() => setQuickViewItem(item)}
+                                                className="w-full flex items-center gap-4 p-3 text-left hover:bg-[var(--bg-tertiary)] transition-colors"
+                                            >
+                                                <img src={item.image} alt={item.name} className="w-12 h-16 object-cover rounded-md"/>
+                                                <div className="flex-grow">
+                                                    <p className="font-semibold">{item.name}</p>
+                                                    <p className="text-sm text-[var(--accent-primary)]">{item.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
+                                                </div>
+                                            </button>
+                                        ))
+                                    ) : (
+                                        <p className="text-[var(--text-secondary)] text-center p-8">Nenhum produto encontrado.</p>
+                                    )}
+                                </div>
                             )}
                         </div>
                     )}
@@ -131,6 +177,21 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                     onItemClick={onItemClick}
                     onViewProfile={onViewProfile}
                     onComment={onOpenComments}
+                />
+            )}
+
+            {quickViewItem && (
+                <QuickViewModal 
+                    item={quickViewItem} 
+                    onClose={() => setQuickViewItem(null)}
+                    onBuy={(item) => {
+                        onBuy(item);
+                        setQuickViewItem(null);
+                    }}
+                    onAddToCart={(item) => {
+                        onAddToCart(item);
+                        setQuickViewItem(null);
+                    }}
                 />
             )}
         </>

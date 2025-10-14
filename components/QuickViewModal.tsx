@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import type { Item } from '../types';
 import GradientButton from './GradientButton';
@@ -64,7 +65,7 @@ const QuickViewModal: React.FC<QuickViewModalProps> = ({ item, onClose, onBuy, o
             <div className="flex justify-between items-center mb-4">
                 <span className="text-[var(--text-secondary)]">Preço</span>
                 <span className="text-xl font-bold text-[var(--accent-primary)] text-glow">
-                    {item.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {item.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
                 </span>
             </div>
             <div className="flex gap-3">

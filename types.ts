@@ -1,4 +1,5 @@
 
+
 export type MarketplaceType = 'fashion' | 'restaurant' | 'supermarket' | 'beauty' | 'technology';
 
 export interface User {
@@ -49,6 +50,7 @@ export interface Post {
   isLiked: boolean;
   comments: Comment[];
   commentCount: number;
+  isSponsored?: boolean;
 }
 
 export interface Story {
@@ -103,6 +105,7 @@ export enum Screen {
   VendorAnalytics,
   VendorProducts,
   VendorAffiliates,
+  VendorCollaborations,
   Home,
   Settings,
   ImageSourceSelection,
@@ -140,4 +143,17 @@ export interface InfluencerAffiliationRequest {
     };
     status: 'pending' | 'approved' | 'rejected';
     requestedAt: string;
+}
+
+export interface CollaborationPost {
+    id: string;
+    influencer: {
+        id: string;
+        name: string;
+        avatar: string;
+    };
+    businessId: string;
+    postId: string;
+    status: 'pending' | 'approved' | 'rejected';
+    submittedAt: string;
 }

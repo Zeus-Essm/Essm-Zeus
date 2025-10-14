@@ -3,7 +3,6 @@ import type { BusinessProfile, Item, Post, MarketplaceType } from '../types';
 import { MenuIcon, CameraIcon, PencilIcon, PlusIcon, StarIcon, XCircleIcon, BellIcon } from './IconComponents';
 import BioEditModal from './BioEditModal';
 import GradientButton from './GradientButton';
-import PromotionModal from './PromotionModal';
 import { 
     MALE_CLOTHING_SUBCATEGORIES, 
     FEMALE_CLOTHING_SUBCATEGORIES, 
@@ -11,64 +10,24 @@ import {
     RESTAURANT_SHOP_CATEGORIES,
     SUPERMARKET_SHOP_CATEGORIES,
     BEAUTY_SHOP_CATEGORIES,
-    TECHNOLOGY_SHOP_CATEGORIES
+    TECHNOLOGY_SHOP_CATEGORIES,
+    INITIAL_VENDOR_ITEMS,
+    VENDOR_POSTS
 } from '../constants';
-
-
-// Dummy Data - In a real app, this would be fetched
-const INITIAL_VENDOR_ITEMS: Item[] = [
-    // Fashion
-    { id: 'vendor-item-1', name: 'T-shirt Gráfica Exclusiva', description: '...', category: '...', image: 'https://i.postimg.cc/TPR4dpBg/louis-vuitton-camiseta-de-algodao-bordada-HTY18-WNPG651-PM2-Front-view.webp', price: 350, gender: 'male', vendorSubCategory: 'tshirt' },
-    { id: 'vendor-item-2', name: 'Calça Cargo Techwear', description: '...', category: '...', image: 'https://i.postimg.cc/W1tdQn1k/dddd.webp', price: 890, gender: 'male', vendorSubCategory: 'calca' },
-    { id: 'vendor-item-3', name: 'Ténis Urbano V2', description: '...', category: '...', image: 'https://i.postimg.cc/VvTx5mX1/louis-vuitton-sneaker-lv-skate-BO9-U3-PMI31-PM2-Front-view.webp', price: 1250, gender: 'unisex', vendorSubCategory: 'tenis' },
-    { id: 'vendor-item-4', name: 'Jaqueta Corta-vento', description: '...', category: '...', image: 'https://i.postimg.cc/W1cyy9n9/louis-vuitton-paleto-pont-neuf-de-la-HRFJ8-EDLG60-D-PM2-Front-view.png', price: 990, gender: 'male', vendorSubCategory: 'jaqueta' },
-    { id: 'vendor-item-5', name: 'Vestido de Gala LV', description: 'Vestido longo de seda para ocasiões especiais.', category: '...', image: 'https://i.postimg.cc/k47jSjPj/vestido-lv-fem-1.jpg', price: 15000, gender: 'female', vendorSubCategory: 'vestido' },
-    { id: 'vendor-item-6', name: 'Vestido Casual Monograma', description: 'Vestido confortável para o dia a dia, com padrão monograma.', category: '...', image: 'https://i.postimg.cc/C1QZ8L1k/vestido-lv-fem-2.jpg', price: 7500, gender: 'female', vendorSubCategory: 'vestido' },
-    { id: 'vendor-item-7', name: 'Conjunto Infantil', description: 'Conjunto confortável para crianças.', category: '...', image: 'https://i.postimg.cc/DyL1wFVc/pequeno.jpg', price: 450, gender: 'kid', vendorSubCategory: 'fato' },
-    { id: 'vendor-item-8', name: 'Saia Jeans New Feeling', description: 'Saia jeans moderna e despojada.', category: '...', image: 'https://i.postimg.cc/8z7xQ9WY/saia-nf-fem-1.jpg', price: 250, gender: 'female', vendorSubCategory: 'saia' },
-    // Restaurant
-    { id: 'vendor-item-r1', name: 'Bife à Parmegiana', description: 'Delicioso bife empanado com queijo e molho de tomate.', category: 'restaurant-items', image: 'https://i.postimg.cc/XYJ6b4NT/Gemini-Generated-Image-1eva5i1eva5i1eva-1.png', price: 85, vendorSubCategory: 'pratos' },
-    { id: 'vendor-item-r2', name: 'Petit Gâteau', description: 'Bolo de chocolate com interior cremoso.', category: 'restaurant-items', image: 'https://i.postimg.cc/L5BvGFbb/PHOTO-2025-07-14-23-58-55.jpg', price: 35, vendorSubCategory: 'sobremesas' },
-    // Supermarket
-    { id: 'vendor-item-s1', name: 'Coca-Cola 2L', description: 'Refrigerante de cola.', category: 'supermarket-items', image: 'https://i.postimg.cc/tC39yWny/Gemini-Generated-Image-henwbohenwbohenw.png', price: 12, vendorSubCategory: 'bebidas' },
-    // Beauty
-    { id: 'vendor-item-b1', name: 'Batom Vermelho Intenso', description: 'Batom com acabamento matte.', category: 'beauty-items', image: 'https://i.postimg.cc/YS6p2Fsd/Gemini-Generated-Image-fz7zo1fz7zo1fz7z.png', price: 99, vendorSubCategory: 'maquilhagem' },
-    // Technology
-    { id: 'vendor-item-t1', name: 'iPhone 15 Pro', description: 'O mais novo smartphone da Apple.', category: 'technology-items', image: 'https://i.postimg.cc/ZKszJHKK/Gemini_Generated_Image_lrcnu0lrcnu0lrcn.png', price: 9999, vendorSubCategory: 'telemoveis' },
-];
-
-const VENDOR_POSTS: Post[] = [
-    {
-        id: 'vpost1',
-        user: { id: 'vendor1', name: 'Minha Loja', avatar: 'https://i.pravatar.cc/150?u=vendor' },
-        image: 'https://i.postimg.cc/bJYnRnS3/meu-estilo-look-6.png',
-        items: [INITIAL_VENDOR_ITEMS[2]],
-        likes: 1200, isLiked: false, comments: [], commentCount: 15
-    },
-    {
-        id: 'vpost2',
-        user: { id: 'vendor1', name: 'Minha Loja', avatar: 'https://i.pravatar.cc/150?u=vendor' },
-        image: 'https://i.postimg.cc/vTc6Jdzn/meu-estilo-look.png',
-        items: [INITIAL_VENDOR_ITEMS[0], INITIAL_VENDOR_ITEMS[1]],
-        likes: 2500, isLiked: true, comments: [], commentCount: 32
-    },
-];
-
 
 interface VendorDashboardProps {
   businessProfile: BusinessProfile;
   onOpenMenu: () => void;
   unreadNotificationCount: number;
   onOpenNotificationsPanel: () => void;
-  onConfirmPromotion: (tier: { id: number; budget: number; duration: number; reach: string; }) => void;
+  onOpenPromotionModal: () => void;
 }
 
-const VendorDashboard: React.FC<VendorDashboardProps> = ({ businessProfile, onOpenMenu, unreadNotificationCount, onOpenNotificationsPanel, onConfirmPromotion }) => {
+const VendorDashboard: React.FC<VendorDashboardProps> = ({ businessProfile, onOpenMenu, unreadNotificationCount, onOpenNotificationsPanel, onOpenPromotionModal }) => {
     const [activeTab, setActiveTab] = useState<'shop' | 'posts'>('shop');
     const [activeGenderTab, setActiveGenderTab] = useState<'male' | 'female' | 'kid'>('male');
     const [activeShopCategory, setActiveShopCategory] = useState<{ id: string; name: string } | null>(null);
     const [isEditingBio, setIsEditingBio] = useState(false);
-    const [isPromotionModalOpen, setIsPromotionModalOpen] = useState(false);
     
     const [localProfile, setLocalProfile] = useState(businessProfile);
     const [vendorItems, setVendorItems] = useState<Item[]>(INITIAL_VENDOR_ITEMS);
@@ -300,8 +259,8 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ businessProfile, onOp
                 </div>
 
                  <div className="px-4 mt-4">
-                    <GradientButton onClick={() => setIsPromotionModalOpen(true)} className="!py-2.5 text-sm">
-                        Promover Perfil
+                    <GradientButton onClick={onOpenPromotionModal} className="!py-2.5 text-sm">
+                        Criar Promoção
                     </GradientButton>
                 </div>
 
@@ -357,17 +316,6 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ businessProfile, onOp
                     onSave={(newBio) => {
                         setLocalProfile(prev => ({ ...prev, description: newBio }));
                         setIsEditingBio(false);
-                    }}
-                />
-            )}
-
-            {isPromotionModalOpen && (
-                <PromotionModal
-                    businessProfile={localProfile}
-                    onClose={() => setIsPromotionModalOpen(false)}
-                    onConfirm={(tier) => {
-                        onConfirmPromotion(tier);
-                        setIsPromotionModalOpen(false);
                     }}
                 />
             )}

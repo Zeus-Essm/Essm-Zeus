@@ -1,4 +1,5 @@
 
+
 import React, { useState, useMemo } from 'react';
 import type { Post, Item, MarketplaceType } from '../types';
 import GradientButton from './GradientButton';
@@ -127,7 +128,7 @@ const ShopTheLookModal: React.FC<ShopTheLookModalProps> = ({ post, postType, onC
                     <img src={item.image} alt={item.name} className="w-12 h-12 object-cover rounded-md flex-shrink-0"/>
                     <div className="flex-grow overflow-hidden">
                          <p className="text-sm font-medium text-[var(--text-primary)] truncate">{item.name}</p>
-                         <p className="text-xs text-[var(--text-secondary)]">{item.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+                         <p className="text-xs text-[var(--text-secondary)]">{item.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
                     </div>
                 </label>
             ))}
@@ -137,7 +138,7 @@ const ShopTheLookModal: React.FC<ShopTheLookModalProps> = ({ post, postType, onC
             <div className="flex justify-between items-center mb-4">
                 <span className="text-[var(--text-secondary)]">Total ({selectedItems.length} {selectedItems.length === 1 ? 'item' : 'itens'})</span>
                 <span className="text-xl font-bold text-[var(--accent-primary)] text-glow">
-                    {totalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {totalPrice.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
                 </span>
             </div>
             {postType === 'restaurant' && (

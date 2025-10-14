@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PUMP</title>
     <link rel="icon" type="image/png" href="https://i.postimg.cc/XJf6gckX/Pump_STARTAP.png" />
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
@@ -48,12 +49,16 @@
         --border-primary: #e5e7eb; /* gray-200 */
         --border-secondary: #f3f4f6; /* gray-100 */
       }
-
+      
       body {
+        margin: 0;
         font-family: 'Inter', sans-serif;
         background-color: var(--bg-main);
         color: var(--text-primary);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
+
       .text-glow {
         text-shadow: 0 0 8px var(--accent-primary-glow);
       }

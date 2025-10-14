@@ -5,7 +5,7 @@ import {
     ShoppingBagIcon, 
     PlusIcon, 
     UserIcon,
-    ChatBubbleIcon,
+    StarIcon,
     ChartBarIcon
 } from './IconComponents';
 
@@ -13,11 +13,10 @@ interface BottomNavBarProps {
   activeScreen: Screen;
   onNavigateToFeed: () => void;
   onNavigateToCart: () => void;
-  onNavigateToChat: () => void;
+  onNavigateToPromotion: () => void;
   onNavigateToProfile: () => void;
   onStartTryOn: () => void;
   isCartAnimating: boolean;
-  unreadMessagesCount: number;
   accountType?: 'personal' | 'business' | null;
   onNavigateToVendorAnalytics: () => void;
 }
@@ -47,11 +46,10 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({
   activeScreen,
   onNavigateToFeed,
   onNavigateToCart,
-  onNavigateToChat,
+  onNavigateToPromotion,
   onNavigateToProfile,
   onStartTryOn,
   isCartAnimating,
-  unreadMessagesCount,
   accountType,
   onNavigateToVendorAnalytics
 }) => {
@@ -87,11 +85,10 @@ const BottomNavBar: React.FC<BottomNavBarProps> = ({
       </button>
 
       <NavItem 
-        icon={<ChatBubbleIcon className="w-6 h-6" />}
-        label="Mensagens"
-        isActive={activeScreen === Screen.ChatList || activeScreen === Screen.Chat}
-        onClick={onNavigateToChat}
-        badgeCount={unreadMessagesCount}
+        icon={<StarIcon className="w-6 h-6" />}
+        label="Promover"
+        isActive={false}
+        onClick={onNavigateToPromotion}
       />
 
       <NavItem 

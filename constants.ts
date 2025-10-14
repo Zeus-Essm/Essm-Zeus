@@ -1,4 +1,4 @@
-import type { Category, Item, Post, Story, Conversation } from './types';
+import type { Category, Item, Post, Story, Conversation, CollaborationPost } from './types';
 
 // Sub-categorias de Roupas reutilizáveis
 // FIX: Exported constant arrays for use in other components.
@@ -371,15 +371,66 @@ export const INITIAL_CONVERSATIONS: Conversation[] = [
         },
         unreadCount: 0,
     },
+];
+
+// DADOS PARA VENDEDOR
+export const INITIAL_VENDOR_ITEMS: Item[] = [
+    { id: 'vendor-item-1', name: 'T-shirt Gráfica Exclusiva', description: 'T-shirt de algodão com estampa exclusiva.', category: 'vendor-items', image: 'https://i.postimg.cc/TPR4dpBg/louis-vuitton-camiseta-de-algodao-bordada-HTY18-WNPG651-PM2-Front-view.webp', price: 350, gender: 'male', vendorSubCategory: 'tshirt' },
+    { id: 'vendor-item-2', name: 'Calça Cargo Techwear', description: 'Calça cargo com múltiplos bolsos e tecido tecnológico.', category: 'vendor-items', image: 'https://i.postimg.cc/W1tdQn1k/dddd.webp', price: 890, gender: 'male', vendorSubCategory: 'calca' },
+    { id: 'vendor-item-3', name: 'Ténis Urbano V2', description: 'Ténis para o dia a dia com design moderno.', category: 'vendor-items', image: 'https://i.postimg.cc/VvTx5mX1/louis-vuitton-sneaker-lv-skate-BO9-U3-PMI31-PM2-Front-view.webp', price: 1250, gender: 'male', vendorSubCategory: 'tenis' },
+    { id: 'vendor-item-4', name: 'Jaqueta Corta-vento', description: 'Jaqueta leve e resistente ao vento.', category: 'vendor-items', image: 'https://i.postimg.cc/W1cyy9n9/louis-vuitton-paleto-pont-neuf-de-la-HRFJ8-EDLG60-D-PM2-Front-view.png', price: 720, gender: 'male', vendorSubCategory: 'jaqueta' },
+    { id: 'vendor-item-5', name: 'Saia Plissada New Feeling', description: 'Saia plissada em tons pastel.', category: 'vendor-items', image: 'https://i.postimg.cc/J0vP8g1G/saia-nf-fem-2.jpg', price: 320, gender: 'female', vendorSubCategory: 'saia' },
+    { id: 'vendor-item-6', name: 'Vestido Estampado Floral', description: 'Vestido leve para o verão.', category: 'vendor-items', image: 'https://i.postimg.cc/J0k2Vz7x/ICONS11.jpg', price: 550, gender: 'female', vendorSubCategory: 'vestido' },
+    { id: 'vendor-item-7', name: 'T-shirt Infantil Dino', description: 'T-shirt divertida com estampa de dinossauro.', category: 'vendor-items', image: 'https://i.postimg.cc/gJxZFbq8/ICONS3.jpg', price: 150, gender: 'kid', vendorSubCategory: 'tshirt' },
+    { id: 'vendor-item-8', name: 'Calça Jeans Infantil', description: 'Calça jeans confortável para crianças.', category: 'vendor-items', image: 'https://i.postimg.cc/sXbZ3Hw8/ICONS4.jpg', price: 250, gender: 'kid', vendorSubCategory: 'calca' },
+];
+
+export const VENDOR_POSTS: Post[] = [
+     {
+        id: 'vendor-post1',
+        user: { id: 'business-user-1', name: 'NEW FEELING', avatar: 'https://i.postimg.cc/P5K1G2Py/new.jpg' },
+        image: 'https://i.postimg.cc/T3mn2fXq/meu-estilo-look-5.png',
+        items: [INITIAL_VENDOR_ITEMS[0], INITIAL_VENDOR_ITEMS[1]],
+        likes: 1800,
+        isLiked: false,
+        comments: [],
+        commentCount: 0,
+    },
     {
-        id: 'conv3',
-        participant: { id: 'user3', name: 'Carla Dias', avatar: 'https://i.pravatar.cc/150?u=carla' },
-        lastMessage: {
-            id: 'msg3',
-            text: 'Onde você comprou aquela saia?',
-            senderId: 'user3',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-        },
-        unreadCount: 0,
+        id: 'vendor-post2',
+        user: { id: 'business-user-1', name: 'NEW FEELING', avatar: 'https://i.postimg.cc/P5K1G2Py/new.jpg' },
+        image: 'https://i.postimg.cc/mk2v3Ts0/meu-estilo-look-13.png',
+        items: [INITIAL_VENDOR_ITEMS[4]],
+        likes: 2300,
+        isLiked: false,
+        comments: [],
+        commentCount: 0,
+    }
+];
+
+export const INITIAL_COLLABORATION_REQUESTS: CollaborationPost[] = [
+    {
+        id: 'collab1',
+        influencer: { id: 'user1', name: 'Ana Clara', avatar: 'https://i.pravatar.cc/150?u=anaclara' },
+        businessId: 'business-user-1',
+        postId: 'post5', // Post do vestido de noiva
+        status: 'pending',
+        submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
+    },
+    {
+        id: 'collab2',
+        influencer: { id: 'user2', name: 'Bruno Gomes', avatar: 'https://i.pravatar.cc/150?u=bruno' },
+        businessId: 'business-user-1',
+        postId: 'post7', // Post do Adidas Superstar
+        status: 'pending',
+        submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+    },
+    {
+        id: 'collab3',
+        influencer: { id: 'user3', name: 'Carla Dias', avatar: 'https://i.pravatar.cc/150?u=carla' },
+        businessId: 'business-user-1',
+        postId: 'post3', // Post da Saia Jeans
+        status: 'approved',
+        submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 96).toISOString(),
     }
 ];

@@ -53,7 +53,7 @@ const ResultScreen: React.FC<ResultScreenProps> = ({
                     <div key={index} className="flex justify-between items-center text-sm">
                         <span className="flex-1 pr-2">{item.name}</span>
                         <span className="font-semibold text-[var(--text-tertiary)]">
-                            {item.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                            {item.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
                         </span>
                     </div>
                 ))}
@@ -62,7 +62,7 @@ const ResultScreen: React.FC<ResultScreenProps> = ({
             <div className="flex justify-between items-center font-bold text-lg">
                 <span className="uppercase">TOTAL:</span>
                 <span className="text-[var(--accent-primary)] text-glow">
-                    {totalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {totalPrice.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
                 </span>
             </div>
         </div>

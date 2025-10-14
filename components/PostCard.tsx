@@ -18,7 +18,10 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
       {/* Card Header */}
       <button onClick={onViewProfile} className="p-3 flex items-center gap-3 text-left hover:bg-[var(--accent-primary)]/10 transition-colors">
         <img src={post.user.avatar} alt={post.user.name} className="w-10 h-10 rounded-full object-cover border-2 border-zinc-700" />
-        <span className="font-bold text-sm">{post.user.name}</span>
+        <div>
+            <span className="font-bold text-sm">{post.user.name}</span>
+            {post.isSponsored && <p className="text-xs text-[var(--text-secondary)]">Patrocinado</p>}
+        </div>
       </button>
 
       {/* Post Image or Video */}

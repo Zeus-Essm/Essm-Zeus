@@ -31,7 +31,7 @@ const VendorAnalyticsScreen: React.FC<VendorAnalyticsScreenProps> = ({ onBack, i
                     </div>
                     <div className="bg-[var(--bg-secondary)] p-4 rounded-lg border border-[var(--border-secondary)]">
                         <h3 className="text-sm font-bold text-[var(--text-secondary)]">Vendas Totais (30d)</h3>
-                        <p className="text-3xl font-bold text-[var(--accent-primary)] text-glow">R$ 5.670</p>
+                        <p className="text-3xl font-bold text-[var(--accent-primary)] text-glow">{(5670).toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
                         <p className="text-sm text-red-400">-2%</p>
                     </div>
                 </div>
@@ -53,7 +53,7 @@ const VendorAnalyticsScreen: React.FC<VendorAnalyticsScreenProps> = ({ onBack, i
                         </div>
                         <div className="bg-amber-600/10 p-4 rounded-lg border border-amber-500/30 col-span-2">
                             <h3 className="text-sm font-bold text-amber-300">Orçamento Gasto</h3>
-                            <p className="text-3xl font-bold text-amber-400 text-glow">R$ 8,50 / R$ 20,00</p>
+                            <p className="text-3xl font-bold text-amber-400 text-glow">{(8.50).toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })} / {(20.00).toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
                             <div className="w-full h-2 bg-amber-900/50 rounded-full mt-2 overflow-hidden"><div className="w-[42.5%] h-full bg-amber-400 rounded-full"></div></div>
                         </div>
                     </div>

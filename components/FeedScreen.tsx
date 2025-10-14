@@ -15,6 +15,7 @@ interface FeedScreenProps {
   profile: Profile;
   businessProfile: BusinessProfile | null;
   isProfilePromoted: boolean;
+  promotedItems: { id: string; image: string; }[];
   onBack: () => void;
   onItemClick: (item: Item) => void;
   onAddToCartMultiple: (items: Item[]) => void;
@@ -71,6 +72,7 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
     profile, 
     businessProfile,
     isProfilePromoted,
+    promotedItems,
     onBack, 
     onItemClick, 
     onAddToCartMultiple, 
@@ -305,6 +307,7 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
                 {index === 1 && isProfilePromoted && businessProfile && (
                     <PromotedProfileCard
                         businessProfile={businessProfile}
+                        promotedItems={promotedItems}
                         onVisit={() => onViewProfile(businessProfile.id)}
                     />
                 )}

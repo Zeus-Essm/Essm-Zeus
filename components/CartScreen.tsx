@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import Header from './Header';
 import { ShoppingBagIcon, XCircleIcon } from './IconComponents';
@@ -29,7 +30,7 @@ const CartScreen: React.FC<CartScreenProps> = ({ cartItems, onBack, onRemoveItem
                 <div className="flex-grow">
                   <h3 className="font-semibold">{item.name}</h3>
                   <p className="text-sm text-[var(--accent-primary)]">
-                    {item.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {item.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
                   </p>
                 </div>
                 <div className="flex flex-col items-center gap-2">
@@ -71,7 +72,7 @@ const CartScreen: React.FC<CartScreenProps> = ({ cartItems, onBack, onRemoveItem
           <div className="flex justify-between items-center font-bold text-lg">
             <span>TOTAL:</span>
             <span className="text-[var(--accent-primary)] text-glow">
-              {totalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              {totalPrice.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
             </span>
           </div>
           <GradientButton onClick={onCheckout} className="!bg-[var(--accent-primary)] !text-[var(--accent-primary-text)] hover:!brightness-125">

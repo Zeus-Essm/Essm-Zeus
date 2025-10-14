@@ -2,9 +2,9 @@ import React from 'react';
 // FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
 import { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
-import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType, AppNotification, Conversation, Comment, BusinessProfile } from './types';
+import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType, AppNotification, Conversation, Comment, BusinessProfile, CollaborationPost } from './types';
 import { generateTryOnImage, normalizeImageAspectRatio, generateBeautyTryOnImage, generateFashionVideo } from './services/geminiService';
-import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, ITEMS, INITIAL_CONVERSATIONS } from './constants';
+import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, ITEMS, INITIAL_CONVERSATIONS, INITIAL_COLLABORATION_REQUESTS } from './constants';
 
 // Screen Components
 import SplashScreen from './components/SplashScreen';
@@ -36,9 +36,11 @@ import VendorMenuModal from './components/VendorMenuModal';
 import VendorAnalyticsScreen from './components/VendorAnalyticsScreen';
 import VendorProductsScreen from './components/VendorProductsScreen';
 import VendorAffiliatesScreen from './components/VendorAffiliatesScreen';
+import VendorCollaborationsScreen from './components/VendorCollaborationsScreen';
 import AllHighlightsScreen from './components/AllHighlightsScreen';
 import SearchScreen from './components/SearchScreen';
 import CommentsModal from './components/CommentsModal';
+import PromotionModal from './components/PromotionModal';
 
 
 declare global {
@@ -203,9 +205,12 @@ const App: React.FC = () => {
     const [selectedConversation, setSelectedConversation] = React.useState<Conversation | null>(null);
     const [commentingPost, setCommentingPost] = React.useState<Post | null>(null);
     
-    // Vendor State
+    // Vendor State & Promotion State
     const [showVendorMenu, setShowVendorMenu] = React.useState(false);
-    const [isProfilePromoted, setIsProfilePromoted] = React.useState(false);
+    const [promotedContent, setPromotedContent] = React.useState<{ items: {id: string, image: string}[] } | null>(null);
+    const [collaborationRequests, setCollaborationRequests] = React.useState<CollaborationPost[]>(INITIAL_COLLABORATION_REQUESTS);
+    const [promotionModalConfig, setPromotionModalConfig] = React.useState<{ isOpen: boolean; accountType: 'personal' | 'business' | null }>({ isOpen: false, accountType: null });
+
 
     const unreadNotificationCount = notifications.filter(n => !n.read).length;
     const unreadMessagesCount = conversations.reduce((acc, conv) => acc + conv.unreadCount, 0);
@@ -851,7 +856,7 @@ const App: React.FC = () => {
     };
     const handleBuyLook = (items: Item[]) => {
         const total = items.reduce((sum, item) => sum + item.price, 0);
-        const formattedTotal = total.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const formattedTotal = total.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' });
         setConfirmationMessage(`Sua compra de ${items.length} item(ns) no valor de ${formattedTotal} foi finalizada!`);
         setCurrentScreen(Screen.Confirmation);
     };
@@ -1103,6 +1108,7 @@ const App: React.FC = () => {
     };
     
     const handleNavigateToVendorAnalytics = () => setCurrentScreen(Screen.VendorAnalytics);
+    const handleNavigateToVendorCollaborations = () => setCurrentScreen(Screen.VendorCollaborations);
 
     const handleViewProfile = async (profileId: string) => {
         if (profileId === profile?.id) {
@@ -1118,11 +1124,61 @@ const App: React.FC = () => {
         setIsPreviewingAsVisitor(prev => !prev);
     };
     
-    const handleConfirmPromotion = (tier: { budget: number; duration: number; }) => {
-        setIsProfilePromoted(true);
-        // In a real app, you would also close the modal here.
-        setToast(`Promoção ativada! Orçamento de R$${tier.budget} por ${tier.duration} dias.`);
+    const handleOpenPromotionModal = (type: 'personal' | 'business') => {
+        setPromotionModalConfig({ isOpen: true, accountType: type });
+    };
+
+    const handleClosePromotionModal = () => {
+        setPromotionModalConfig({ isOpen: false, accountType: null });
+    };
+
+    const handleConfirmPromotion = (details: { budget: number; duration: number; items: { id: string; image: string; }[]; }) => {
+        if (promotionModalConfig.accountType === 'business') {
+            setPromotedContent({ items: details.items });
+            setToast(`Promoção de ${details.items.length} item(ns) ativada por ${details.duration} dias!`);
+        } else if (promotionModalConfig.accountType === 'personal') {
+            const postIdsToSponsor = new Set(details.items.map(item => item.id));
+            setPosts(prevPosts =>
+                prevPosts.map(post =>
+                    postIdsToSponsor.has(post.id) ? { ...post, isSponsored: true } : post
+                )
+            );
+            setToast(`${details.items.length} publicaç${details.items.length > 1 ? 'ões' : 'ão'} promovida(s) com sucesso!`);
+        }
+        
+        handleClosePromotionModal();
         setTimeout(() => setToast(null), 5000);
+    };
+
+    const handleApproveCollaboration = (requestId: string) => {
+        if (!businessProfile) return;
+
+        const request = collaborationRequests.find(r => r.id === requestId);
+        if (!request) return;
+
+        setPosts(prevPosts => prevPosts.map(p => {
+            if (p.id === request.postId) {
+                return {
+                    ...p,
+                    user: { // Re-attribute the post to the business
+                        id: businessProfile.id,
+                        name: businessProfile.business_name,
+                        avatar: businessProfile.logo_url
+                    }
+                };
+            }
+            return p;
+        }));
+
+        setCollaborationRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'approved' } : r));
+        setToast('Colaboração aprovada e postada no seu perfil!');
+        setTimeout(() => setToast(null), 3000);
+    };
+    
+    const handleSponsorPost = (postId: string) => {
+        setPosts(prevPosts => prevPosts.map(p => p.id === postId ? { ...p, isSponsored: true } : p));
+        setToast('Post patrocinado com sucesso!');
+        setTimeout(() => setToast(null), 3000);
     };
 
     const renderScreen = () => {
@@ -1147,13 +1203,13 @@ const App: React.FC = () => {
                                 onOpenMenu={() => setShowVendorMenu(true)}
                                 unreadNotificationCount={unreadNotificationCount}
                                 onOpenNotificationsPanel={handleOpenNotificationsPanel}
-                                onConfirmPromotion={handleConfirmPromotion}
+                                onOpenPromotionModal={() => handleOpenPromotionModal('business')}
                            />;
                 }
                 setCurrentScreen(profile?.account_type === 'business' ? Screen.BusinessOnboarding : Screen.Login);
                 return null;
             case Screen.VendorAnalytics:
-                return <VendorAnalyticsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} isProfilePromoted={isProfilePromoted} />;
+                return <VendorAnalyticsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} isProfilePromoted={!!promotedContent} />;
             case Screen.VendorProducts:
                 if (businessProfile) {
                     return <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile} />;
@@ -1162,6 +1218,15 @@ const App: React.FC = () => {
                 return null;
             case Screen.VendorAffiliates:
                 return <VendorAffiliatesScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} />;
+             case Screen.VendorCollaborations:
+                return <VendorCollaborationsScreen 
+                    onBack={() => setCurrentScreen(Screen.VendorDashboard)}
+                    collaborationRequests={collaborationRequests}
+                    posts={posts}
+                    onApprove={handleApproveCollaboration}
+                    onReject={(id) => setCollaborationRequests(prev => prev.map(r => r.id === id ? {...r, status: 'rejected'} : r))}
+                    onSponsor={handleSponsorPost}
+                />;
             case Screen.Home:
                 return <HomeScreen 
                             loggedInProfile={profile!}
@@ -1257,7 +1322,8 @@ const App: React.FC = () => {
                     stories={stories}
                     profile={profile!}
                     businessProfile={businessProfile}
-                    isProfilePromoted={isProfilePromoted}
+                    isProfilePromoted={!!promotedContent}
+                    promotedItems={promotedContent?.items || []}
                     onBack={handleNavigateToProfile}
                     onItemClick={handleItemClick}
                     onAddToCartMultiple={handleAddToCartMultiple}
@@ -1311,10 +1377,13 @@ const App: React.FC = () => {
                 return <SearchScreen 
                     onBack={() => setCurrentScreen(Screen.Feed)} 
                     posts={posts}
+                    items={ITEMS}
                     onViewProfile={handleViewProfile}
                     onLikePost={handleLikePost}
                     onItemClick={handleItemClick}
                     onOpenComments={handleOpenComments}
+                    onAddToCart={handleAddToCart}
+                    onBuy={handleBuy}
                 />;
             case Screen.AllHighlights:
                 return <AllHighlightsScreen 
@@ -1359,11 +1428,10 @@ const App: React.FC = () => {
                         activeScreen={currentScreen}
                         onNavigateToFeed={() => setCurrentScreen(Screen.Feed)}
                         onNavigateToCart={handleNavigateToCart}
-                        onNavigateToChat={handleNavigateToChat}
+                        onNavigateToPromotion={() => handleOpenPromotionModal(profile!.account_type!)}
                         onNavigateToProfile={handleNavigateToProfile}
                         onStartTryOn={handleStartTryOn}
                         isCartAnimating={isCartAnimating}
-                        unreadMessagesCount={unreadMessagesCount}
                         accountType={profile.account_type}
                         onNavigateToVendorAnalytics={handleNavigateToVendorAnalytics}
                     />
@@ -1416,6 +1484,10 @@ const App: React.FC = () => {
                         setCurrentScreen(Screen.VendorAffiliates);
                         setShowVendorMenu(false);
                     }}
+                    onNavigateToCollaborations={() => {
+                        setCurrentScreen(Screen.VendorCollaborations);
+                        setShowVendorMenu(false);
+                    }}
                     onSignOut={() => {
                         setShowVendorMenu(false);
                         handleSignOut();
@@ -1430,6 +1502,16 @@ const App: React.FC = () => {
                     onClose={() => setCommentingPost(null)}
                     onAddComment={handleAddComment}
                  />
+            )}
+
+            {promotionModalConfig.isOpen && (
+                <PromotionModal
+                    accountType={promotionModalConfig.accountType!}
+                    profile={promotionModalConfig.accountType === 'business' ? businessProfile! : profile}
+                    userPosts={posts.filter(p => p.user.id === profile?.id)}
+                    onClose={handleClosePromotionModal}
+                    onConfirm={handleConfirmPromotion}
+                />
             )}
 
         </div>
