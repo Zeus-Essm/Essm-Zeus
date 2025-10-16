@@ -1,4 +1,5 @@
 
+
 import React, { useEffect, useRef, useState } from 'react';
 import type { Profile } from '../types';
 import { UploadIcon, DownloadIcon, PlayIcon, PauseIcon } from './IconComponents';
@@ -28,7 +29,8 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({ videoUrl, onClose, 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [showCenterIcon, setShowCenterIcon] = useState(false);
-  const iconTimer = useRef<number>();
+  // FIX: Initialize useRef with null and update the type to handle null values.
+  const iconTimer = useRef<number | null>(null);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -47,7 +49,8 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({ videoUrl, onClose, 
       }
       
       setShowCenterIcon(true);
-      if (iconTimer.current) {
+      // FIX: Use a null check for the timer ID to avoid issues if the ID is 0.
+      if (iconTimer.current !== null) {
         clearTimeout(iconTimer.current);
       }
       iconTimer.current = window.setTimeout(() => {

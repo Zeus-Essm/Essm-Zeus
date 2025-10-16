@@ -5,7 +5,7 @@ import { CATEGORIES, INITIAL_STORIES } from '../constants';
 import { 
     PlusIcon, CameraIcon, ShoppingBagIcon, UserIcon, CompassIcon, 
     GiftIcon, VerifiedIcon, ChevronDownIcon, MenuIcon,
-    BellIcon, PencilIcon, ChatBubbleIcon, StarIcon
+    BellIcon, PencilIcon, ChatBubbleIcon, StarIcon, ShieldCheckIcon
 } from './IconComponents';
 import BioEditModal from './BioEditModal';
 import GradientButton from './GradientButton';
@@ -260,7 +260,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
       <header className="px-4 pt-4 flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
               <h1 className="text-lg font-extrabold">{profile.username}</h1>
-              <VerifiedIcon className="w-5 h-5 text-[var(--accent-primary)]" />
+              {profile.verification_status === 'verified' ? (
+// FIX: Removed title prop from icon and wrapped in a span with a title attribute for tooltip functionality.
+                  <span title="Perfil Verificado">
+                    <ShieldCheckIcon className="w-5 h-5 text-zinc-800 dark:text-white" />
+                  </span>
+              ) : profile.reward_points && profile.reward_points >= 1000 ? (
+// FIX: Removed title prop from icon and wrapped in a span with a title attribute for tooltip functionality.
+                  <span title="Usuário Destaque">
+                    <VerifiedIcon className="w-5 h-5 text-[var(--accent-primary)]" />
+                  </span>
+              ) : null}
               <ChevronDownIcon className="w-3 h-3" />
           </div>
           <div className="flex items-center gap-5 relative">
@@ -349,8 +359,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                     {profile.account_type === 'business' && (
                         <GradientButton
                             onClick={() => setAffiliationStatus('pending')}
-                            disabled={affiliationStatus === 'pending'}
+                            disabled={affiliationStatus === 'pending' || profile.verification_status !== 'verified'}
                             className="flex-1 !py-2.5 text-xs whitespace-nowrap"
+                            title={profile.verification_status !== 'verified' ? "Apenas perfis verificados podem solicitar afiliação." : ""}
                         >
                             {affiliationStatus === 'pending' ? 'Solicitação Enviada' : 'Solicitar Afiliação'}
                         </GradientButton>

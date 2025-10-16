@@ -86,6 +86,8 @@ export interface Profile {
   profile_image_url: string | null;
   cover_image_url: string | null;
   account_type: 'personal' | 'business' | null;
+  verification_status?: 'unverified' | 'pending' | 'verified';
+  reward_points?: number;
 }
 
 export interface BusinessProfile {
@@ -122,7 +124,11 @@ export enum Screen {
   ChatList,
   Chat,
   Search,
-  AllHighlights
+  AllHighlights,
+  VerificationIntro,
+  IdUpload,
+  FaceScan,
+  VerificationPending
 }
 
 export interface AppNotification {

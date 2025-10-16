@@ -50,13 +50,22 @@
         --border-secondary: #f3f4f6; /* gray-100 */
       }
       
-      body {
+      html, body, #root {
+        height: 100%;
         margin: 0;
+        padding: 0;
+      }
+
+      body {
         font-family: 'Inter', sans-serif;
-        background-color: var(--bg-main);
+        background-color: #0a0a0a; /* Neutral dark page background */
         color: var(--text-primary);
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
+      }
+      
+      html.light body {
+         background-color: #f3f4f6; /* Neutral light page background */
       }
 
       .text-glow {

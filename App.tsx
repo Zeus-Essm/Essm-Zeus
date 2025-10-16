@@ -41,6 +41,10 @@ import AllHighlightsScreen from './components/AllHighlightsScreen';
 import SearchScreen from './components/SearchScreen';
 import CommentsModal from './components/CommentsModal';
 import PromotionModal from './components/PromotionModal';
+import VerificationIntroScreen from './components/VerificationIntroScreen';
+import IdUploadScreen from './components/IdUploadScreen';
+import FaceScanScreen from './components/FaceScanScreen';
+import VerificationPendingScreen from './components/VerificationPendingScreen';
 
 
 declare global {
@@ -92,6 +96,8 @@ const getOrCreateProfile = async (session: Session, setError: (msg: string) => v
                 username: username,
                 profile_image_url: avatar,
                 account_type: null, // Ensure new profiles start with a null account type
+                verification_status: 'unverified',
+                reward_points: 0,
             })
             .select()
             .single();
@@ -210,6 +216,10 @@ const App: React.FC = () => {
     const [promotedContent, setPromotedContent] = React.useState<{ items: {id: string, image: string}[] } | null>(null);
     const [collaborationRequests, setCollaborationRequests] = React.useState<CollaborationPost[]>(INITIAL_COLLABORATION_REQUESTS);
     const [promotionModalConfig, setPromotionModalConfig] = React.useState<{ isOpen: boolean; accountType: 'personal' | 'business' | null }>({ isOpen: false, accountType: null });
+    
+    // Verification State
+    const [idFrontImage, setIdFrontImage] = React.useState<string | null>(null);
+    const [idBackImage, setIdBackImage] = React.useState<string | null>(null);
 
 
     const unreadNotificationCount = notifications.filter(n => !n.read).length;
@@ -346,6 +356,8 @@ const App: React.FC = () => {
             profile_image_url: '',
             cover_image_url: '',
             account_type: null, // Start with null to force selection
+            verification_status: 'unverified',
+            reward_points: 0,
         };
         const mockSession = { user: { id: 'mock_user_123' } } as Session;
 
@@ -370,6 +382,8 @@ const App: React.FC = () => {
                     profile_image_url: 'https://i.postimg.cc/jSVNgmm4/IMG-2069.jpg',
                     cover_image_url: 'https://i.postimg.cc/wTQh27Rt/Captura-de-Tela-2025-09-19-a-s-2-10-14-PM.png',
                     account_type: 'personal',
+                    verification_status: 'unverified',
+                    reward_points: 500,
                 };
                 setProfile(personalProfile);
                 setPosts(assignDemoPostsToUser(personalProfile));
@@ -1058,6 +1072,7 @@ const App: React.FC = () => {
 
     const resetToHome = () => {
         const fromRepost = confirmationMessage.includes('postado no seu feed');
+        const fromVerification = confirmationMessage.includes('verificado com sucesso');
         setGeneratedImage(userImage);
         setWornItems([]);
         setImageHistory(userImage ? [userImage] : []);
@@ -1065,7 +1080,10 @@ const App: React.FC = () => {
         setCollectionIdentifier(null);
         if (fromRepost) {
             setCurrentScreen(Screen.Feed);
-        } else {
+        } else if (fromVerification) {
+            setCurrentScreen(Screen.Settings);
+        }
+        else {
             handleNavigateToProfile();
         }
     };
@@ -1181,6 +1199,40 @@ const App: React.FC = () => {
         setTimeout(() => setToast(null), 3000);
     };
 
+    // Verification Flow Handlers
+    const handleNavigateToVerification = () => {
+        if (profile?.verification_status === 'unverified') {
+            setCurrentScreen(Screen.VerificationIntro);
+        } else {
+            const statusMessage = profile?.verification_status === 'verified' ? 'Seu perfil já está verificado.' : 'Sua verificação está em análise.';
+            setToast(statusMessage);
+            setTimeout(() => setToast(null), 3000);
+        }
+    };
+    
+    const handleIdUploadComplete = (idFront: string, idBack: string) => {
+        setIdFrontImage(idFront);
+        setIdBackImage(idBack);
+        setCurrentScreen(Screen.FaceScan);
+    };
+
+    const handleFaceScanComplete = () => {
+        if (profile) {
+            setProfile({ ...profile, verification_status: 'pending' });
+        }
+        setCurrentScreen(Screen.VerificationPending);
+    };
+
+    const handleVerificationComplete = () => {
+        if (profile) {
+            // In a real app, this status would come from a backend. We simulate it here.
+            setProfile({ ...profile, verification_status: 'verified' });
+        }
+        setConfirmationMessage('Seu perfil foi verificado com sucesso!');
+        setCurrentScreen(Screen.Confirmation);
+    };
+
+
     const renderScreen = () => {
         if (isLoading) return <LoadingIndicator userImage={userImage || 'https://i.postimg.cc/htGw97By/Sem-Ti-tulo-1.png'} customMessage={loadingMessage} />;
 
@@ -1255,9 +1307,11 @@ const App: React.FC = () => {
                         />;
             case Screen.Settings:
                 return <SettingsScreen 
+                            profile={profile!}
                             onBack={handleNavigateToProfile}
                             theme={theme}
                             onToggleTheme={toggleTheme}
+                            onNavigateToVerification={handleNavigateToVerification}
                         />;
             case Screen.ImageSourceSelection:
                  return <ImageSourceSelectionScreen 
@@ -1391,6 +1445,14 @@ const App: React.FC = () => {
                     onBack={() => setCurrentScreen(Screen.Feed)}
                     onSelectCategory={handleSelectCategory}
                 />;
+            case Screen.VerificationIntro:
+                return <VerificationIntroScreen onBack={() => setCurrentScreen(Screen.Settings)} onStart={() => setCurrentScreen(Screen.IdUpload)} />;
+            case Screen.IdUpload:
+                return <IdUploadScreen onBack={() => setCurrentScreen(Screen.VerificationIntro)} onComplete={handleIdUploadComplete} />;
+            case Screen.FaceScan:
+                return <FaceScanScreen onBack={() => setCurrentScreen(Screen.IdUpload)} onComplete={handleFaceScanComplete} />;
+            case Screen.VerificationPending:
+                return <VerificationPendingScreen onComplete={handleVerificationComplete} />;
             default:
                 setCurrentScreen(Screen.Feed);
                 return null;

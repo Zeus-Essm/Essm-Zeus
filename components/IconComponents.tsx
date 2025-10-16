@@ -226,6 +226,13 @@ export const VerifiedIcon: React.FC<IconProps> = (props) => (
   </svg>
 );
 
+export const ShieldCheckIcon: React.FC<IconProps> = (props) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+        <path fillRule="evenodd" d="M12 2.25c.242 0 .482.028.715.082 2.643.5 4.8 2.112 6.132 4.223.334.527.334 1.183 0 1.71-.334.527-.86.83-1.432.83H6.585c-.572 0-1.098-.303-1.432-.83a1.983 1.983 0 010-1.71C6.486 4.464 8.642 2.85 11.285 2.332 11.518 2.278 11.758 2.25 12 2.25zM12.75 10.5a.75.75 0 00-1.5 0v4.5a.75.75 0 001.5 0v-4.5zM12 21.75a9.75 9.75 0 01-9.75-9.75V9c0-.493.18-1.047.513-1.524C4.306 5.276 6.36 3.5 9.19 3.034a.75.75 0 01.542.115 11.25 11.25 0 004.536 0 .75.75 0 01.542-.115c2.83.466 4.884 2.242 6.415 4.442.333.477.513 1.03.513 1.524v3a9.75 9.75 0 01-9.75 9.75z" clipRule="evenodd" />
+        <path d="M12 11.25a1.125 1.125 0 100 2.25 1.125 1.125 0 000-2.25zM10.02 14.38a.75.75 0 101.06 1.06l.94-.94.94.94a.75.75 0 101.06-1.06l-.94-.94-.94.94-1.06-1.06zM12.94 9.44a.75.75 0 10-1.06-1.06l-.94.94-.94-.94a.75.75 0 10-1.06 1.06l.94.94.94-.94 1.06 1.06z" />
+    </svg>
+);
+
 export const ChevronDownIcon: React.FC<IconProps> = (props) => (
   <svg fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" {...props}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
