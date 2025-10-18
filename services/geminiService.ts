@@ -1,5 +1,3 @@
-
-
 import { GoogleGenAI, Modality, GenerateContentResponse } from '@google/genai';
 import type { Item } from '../types';
 
@@ -109,14 +107,8 @@ const SUPPORTED_ASPECT_RATIOS = [
 ];
 
 const getClosestAspectRatio = (width: number, height: number): string => {
-  if (height === 0) return '1:1'; // Avoid division by zero
-  const originalRatio = width / height;
-
-  const closest = SUPPORTED_ASPECT_RATIOS.reduce((prev, curr) => {
-    return (Math.abs(curr.ratio - originalRatio) < Math.abs(prev.ratio - originalRatio) ? curr : prev);
-  });
-
-  return closest.label;
+  // Always return '4:5' as per user request to force this aspect ratio.
+  return '4:5';
 };
 
 export const normalizeImageAspectRatio = async (userImage: string): Promise<string> => {
@@ -236,7 +228,23 @@ const generateVideoWithRunway = async (imageDataUrl: string, onTick?: (s: string
         onTick?.("Preparando imagem para Runway...");
         const resizedImageDataUrl = await resizeImage(imageDataUrl, 1024, 0.95);
 
-        const prompt = `A pessoa na imagem se exibe para a câmera como se estivesse em um ensaio fotográfico. A câmera deve permanecer completamente parada, sem nenhum movimento ou zoom. Apenas a pessoa realiza movimentos sutis e elegantes, posando para a foto. O fundo deve permanecer estático e consistente com a imagem original. Preserve a proporção de aspecto vertical da imagem. O vídeo deve ter cerca de 4 a 6 segundos.`;
+        const prompt = `**PROMPT DIRECIONADO PARA GERAÇÃO DE VÍDEO - LEIA COM ATENÇÃO**
+
+**OBJETIVO PRINCIPAL:** Gerar um vídeo de 8 segundos a partir da imagem de referência, simulando um ensaio fotográfico profissional.
+
+**CONTEXTO OBRIGATÓRIO:** O cenário é um ensaio fotográfico (photoshoot). A pessoa na imagem é uma modelo profissional e deve agir como tal.
+
+**REGRAS INQUEBRÁVEIS (PRIORIDADE MÁXIMA):**
+
+1.  **CÂMERA 100% ESTÁTICA:** A câmera NÃO SE MOVE. Zero movimento. Sem panorâmica (pan), sem inclinação (tilt), sem zoom, sem tremores, sem qualquer tipo de deslocamento. A câmera deve permanecer completamente parada durante todo o vídeo, como se estivesse em um tripé fixo.
+
+2.  **AÇÃO DA MODELO: APENAS POSES:** A pessoa no vídeo deve realizar uma sequência de poses de moda, suaves e elegantes.
+    *   **MOVIMENTOS PERMITIDOS:** Lentas rotações de tronco, inclinações suaves de cabeça, expressões faciais naturais (séria, sorriso leve), gestos sutis com as mãos.
+    *   **MOVIMENTOS PROIBIDOS:** A pessoa NÃO DEVE falar, cantar, gesticular como se estivesse conversando, ou mover os lábios. A performance é puramente visual e silenciosa.
+
+3.  **CONSISTÊNCIA VISUAL ABSOLUTA:** O vídeo final deve ser uma continuação perfeita da foto. Mantenha exatamente a mesma pessoa, mesma roupa, mesma iluminação (direção, intensidade, cor das sombras) e o mesmo fundo da imagem de referência.
+
+**ESTILO FINAL:** Ensaio fotográfico de estúdio, profissional, alta qualidade, sem transições ou cortes.`;
 
         onTick?.("Enviando para o Runway Gen-3 Turbo...");
         const jobId = await createRunwayJob(resizedImageDataUrl, prompt);
@@ -405,18 +413,36 @@ export const generateFashionVideo = async (imageDataUrl: string, onTick?: (s: st
         const resizedImageDataUrl = await resizeImage(imageDataUrl, 1024, 0.95);
         const { base64, mimeType } = getBase64Parts(resizedImageDataUrl);
 
-        const prompt = `A pessoa na imagem se exibe para a câmera como se estivesse em um ensaio fotográfico. A câmera deve permanecer completamente parada, sem nenhum movimento ou zoom. Apenas a pessoa realiza movimentos sutis e elegantes, posando para a foto. O fundo deve permanecer estático e consistente com a imagem original. Preserve a proporção de aspecto vertical da imagem. O vídeo deve ter cerca de 4 a 6 segundos.`;
+        const prompt = `**PROMPT DIRECIONADO PARA GERAÇÃO DE VÍDEO - LEIA COM ATENÇÃO**
+
+**OBJETIVO PRINCIPAL:** Gerar um vídeo de 8 segundos a partir da imagem de referência, simulando um ensaio fotográfico profissional.
+
+**CONTEXTO OBRIGATÓRIO:** O cenário é um ensaio fotográfico (photoshoot). A pessoa na imagem é uma modelo profissional e deve agir como tal.
+
+**REGRAS INQUEBRÁVEIS (PRIORIDADE MÁXIMA):**
+
+1.  **CÂMERA 100% ESTÁTICA:** A câmera NÃO SE MOVE. Zero movimento. Sem panorâmica (pan), sem inclinação (tilt), sem zoom, sem tremores, sem qualquer tipo de deslocamento. A câmera deve permanecer completamente parada durante todo o vídeo, como se estivesse em um tripé fixo.
+
+2.  **AÇÃO DA MODELO: APENAS POSES:** A pessoa no vídeo deve realizar uma sequência de poses de moda, suaves e elegantes.
+    *   **MOVIMENTOS PERMITIDOS:** Lentas rotações de tronco, inclinações suaves de cabeça, expressões faciais naturais (séria, sorriso leve), gestos sutis com as mãos.
+    *   **MOVIMENTOS PROIBIDOS:** A pessoa NÃO DEVE falar, cantar, gesticular como se estivesse conversando, ou mover os lábios. A performance é puramente visual e silenciosa.
+
+3.  **CONSISTÊNCIA VISUAL ABSOLUTA:** O vídeo final deve ser uma continuação perfeita da foto. Mantenha exatamente a mesma pessoa, mesma roupa, mesma iluminação (direção, intensidade, cor das sombras) e o mesmo fundo da imagem de referência.
+
+**ESTILO FINAL:** Ensaio fotográfico de estúdio, profissional, alta qualidade, sem transições ou cortes.`;
 
         onTick?.("Enviando para o modelo de vídeo VEO...");
         let operation = await ai.models.generateVideos({
-            model: 'veo-2.0-generate-001',
+            model: 'veo-3.1-fast-generate-preview',
             prompt: prompt,
             image: {
                 imageBytes: base64,
                 mimeType: mimeType,
             },
             config: {
-                numberOfVideos: 1
+                numberOfVideos: 1,
+                aspectRatio: '9:16',
+                resolution: '720p',
             }
         });
         
