@@ -107,8 +107,8 @@ const SUPPORTED_ASPECT_RATIOS = [
 ];
 
 const getClosestAspectRatio = (width: number, height: number): string => {
-  // Always return '4:5' as per user request to force this aspect ratio.
-  return '4:5';
+  // Always return '3:4' as per user request to force this aspect ratio.
+  return '3:4';
 };
 
 export const normalizeImageAspectRatio = async (userImage: string): Promise<string> => {
@@ -228,23 +228,25 @@ const generateVideoWithRunway = async (imageDataUrl: string, onTick?: (s: string
         onTick?.("Preparando imagem para Runway...");
         const resizedImageDataUrl = await resizeImage(imageDataUrl, 1024, 0.95);
 
-        const prompt = `**PROMPT DIRECIONADO PARA GERAÇÃO DE VÍDEO - LEIA COM ATENÇÃO**
+        const prompt = `**PROMPT DE GERAÇÃO DE VÍDEO ULTRA-PRECISO**
 
-**OBJETIVO PRINCIPAL:** Gerar um vídeo de 8 segundos a partir da imagem de referência, simulando um ensaio fotográfico profissional.
+**MISSÃO PRINCIPAL:** Animar a imagem de referência num vídeo de 8 segundos. O contexto é um ensaio fotográfico profissional (photoshoot) de alta-costura.
 
-**CONTEXTO OBRIGATÓRIO:** O cenário é um ensaio fotográfico (photoshoot). A pessoa na imagem é uma modelo profissional e deve agir como tal.
+**REGRAS ABSOLUTAS E INQUEBRÁVEIS:**
 
-**REGRAS INQUEBRÁVEIS (PRIORIDADE MÁXIMA):**
+1.  **CÂMERA TOTALMENTE ESTÁTICA (REGRA CRÍTICA):**
+    *   A câmera está 100% FIXA, como num tripé de cimento.
+    *   **ZERO MOVIMENTO DE CÂMERA.** Sem panorâmica, sem inclinação, sem zoom, sem tremores, sem qualquer deslocamento. A câmera permanece completamente PARADA durante todo o vídeo. A cena não se move.
 
-1.  **CÂMERA 100% ESTÁTICA:** A câmera NÃO SE MOVE. Zero movimento. Sem panorâmica (pan), sem inclinação (tilt), sem zoom, sem tremores, sem qualquer tipo de deslocamento. A câmera deve permanecer completamente parada durante todo o vídeo, como se estivesse em um tripé fixo.
+2.  **AÇÃO EXCLUSIVA DA MODELO: POSES DE MODA:**
+    *   A pessoa é uma modelo profissional e deve apenas realizar uma sequência de **poses de moda suaves e elegantes**.
+    *   **MOVIMENTOS PERMITIDOS:** Mudanças sutis de pose, inclinações lentas de cabeça, rotações suaves de tronco, expressões faciais serenas (séria, sorriso leve), gestos delicados com as mãos.
+    *   **AÇÕES ESTRITAMENTE PROIBIDAS:** A modelo **NÃO DEVE falar, mover os lábios, cantar, ou gesticular como se estivesse numa conversa**. A performance é puramente visual e silenciosa.
 
-2.  **AÇÃO DA MODELO: APENAS POSES:** A pessoa no vídeo deve realizar uma sequência de poses de moda, suaves e elegantes.
-    *   **MOVIMENTOS PERMITIDOS:** Lentas rotações de tronco, inclinações suaves de cabeça, expressões faciais naturais (séria, sorriso leve), gestos sutis com as mãos.
-    *   **MOVIMENTOS PROIBIDOS:** A pessoa NÃO DEVE falar, cantar, gesticular como se estivesse conversando, ou mover os lábios. A performance é puramente visual e silenciosa.
+3.  **CONSISTÊNCIA VISUAL PERFEITA:**
+    *   O vídeo deve ser uma continuação fotorealista da imagem. Mantenha a **mesma pessoa, mesma roupa, mesmo cabelo, mesma maquiagem, mesma iluminação e o mesmo fundo exato** da imagem de referência.
 
-3.  **CONSISTÊNCIA VISUAL ABSOLUTA:** O vídeo final deve ser uma continuação perfeita da foto. Mantenha exatamente a mesma pessoa, mesma roupa, mesma iluminação (direção, intensidade, cor das sombras) e o mesmo fundo da imagem de referência.
-
-**ESTILO FINAL:** Ensaio fotográfico de estúdio, profissional, alta qualidade, sem transições ou cortes.`;
+**ESTILO FINAL:** Um ensaio fotográfico de luxo, profissional, focado puramente nas poses da modelo, com uma qualidade visual impecável e sem cortes.`;
 
         onTick?.("Enviando para o Runway Gen-3 Turbo...");
         const jobId = await createRunwayJob(resizedImageDataUrl, prompt);
@@ -406,100 +408,149 @@ export const generateFashionVideo = async (imageDataUrl: string, onTick?: (s: st
         throw new Error("API_KEY não está configurada. A geração de vídeo está desativada.");
     }
 
-    try {
-        onTick?.("Preparando imagem para o vídeo...");
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        
-        const resizedImageDataUrl = await resizeImage(imageDataUrl, 1024, 0.95);
-        const { base64, mimeType } = getBase64Parts(resizedImageDataUrl);
+    // Lista de modelos Veo para tentar em ordem de prioridade (do mais avançado para o mais rápido/básico).
+    // A lógica de fallback tentará cada um desses modelos sequencialmente em caso de erro de cota.
+    const veoModelsToTry: string[] = [
+        'veo-3.1-generate-preview',    // Modelo de maior qualidade, tentado primeiro.
+        'veo-3.1-fast-generate-preview', // Modelo mais rápido da v3.1.
+        'veo-3.0-generate-001',        // Modelo de qualidade da v3.0.
+        'veo-3.0-fast-generate-001',   // Modelo rápido da v3.0.
+        'veo-2.0-generate-exp',        // Modelo experimental da v2.0.
+        'veo-2.0-generate-001',        // Modelo base da v2.0.
+    ];
+    let lastError: Error | null = null;
 
-        const prompt = `**PROMPT DIRECIONADO PARA GERAÇÃO DE VÍDEO - LEIA COM ATENÇÃO**
+    for (const model of veoModelsToTry) {
+        try {
+            onTick?.(`Preparando para gerar vídeo com o modelo: ${model}`);
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+            
+            const resizedImageDataUrl = await resizeImage(imageDataUrl, 1024, 0.95);
+            const { base64, mimeType } = getBase64Parts(resizedImageDataUrl);
 
-**OBJETIVO PRINCIPAL:** Gerar um vídeo de 8 segundos a partir da imagem de referência, simulando um ensaio fotográfico profissional.
+            const prompt = `**PROMPT DE GERAÇÃO DE VÍDEO ULTRA-PRECISO**
 
-**CONTEXTO OBRIGATÓRIO:** O cenário é um ensaio fotográfico (photoshoot). A pessoa na imagem é uma modelo profissional e deve agir como tal.
+**MISSÃO PRINCIPAL:** Animar a imagem de referência num vídeo de 8 segundos. O contexto é um ensaio fotográfico profissional (photoshoot) de alta-costura.
 
-**REGRAS INQUEBRÁVEIS (PRIORIDADE MÁXIMA):**
+**REGRAS ABSOLUTAS E INQUEBRÁVEIS:**
 
-1.  **CÂMERA 100% ESTÁTICA:** A câmera NÃO SE MOVE. Zero movimento. Sem panorâmica (pan), sem inclinação (tilt), sem zoom, sem tremores, sem qualquer tipo de deslocamento. A câmera deve permanecer completamente parada durante todo o vídeo, como se estivesse em um tripé fixo.
+1.  **CÂMERA TOTALMENTE ESTÁTICA (REGRA CRÍTICA):**
+    *   A câmera está 100% FIXA, como num tripé de cimento.
+    *   **ZERO MOVIMENTO DE CÂMERA.** Sem panorâmica, sem inclinação, sem zoom, sem tremores, sem qualquer deslocamento. A câmera permanece completamente PARADA durante todo o vídeo. A cena não se move.
 
-2.  **AÇÃO DA MODELO: APENAS POSES:** A pessoa no vídeo deve realizar uma sequência de poses de moda, suaves e elegantes.
-    *   **MOVIMENTOS PERMITIDOS:** Lentas rotações de tronco, inclinações suaves de cabeça, expressões faciais naturais (séria, sorriso leve), gestos sutis com as mãos.
-    *   **MOVIMENTOS PROIBIDOS:** A pessoa NÃO DEVE falar, cantar, gesticular como se estivesse conversando, ou mover os lábios. A performance é puramente visual e silenciosa.
+2.  **AÇÃO EXCLUSIVA DA MODELO: POSES DE MODA:**
+    *   A pessoa é uma modelo profissional e deve apenas realizar uma sequência de **poses de moda suaves e elegantes**.
+    *   **MOVIMENTOS PERMITIDOS:** Mudanças sutis de pose, inclinações lentas de cabeça, rotações suaves de tronco, expressões faciais serenas (séria, sorriso leve), gestos delicados com as mãos.
+    *   **AÇÕES ESTRITAMENTE PROIBIDAS:** A modelo **NÃO DEVE falar, mover os lábios, cantar, ou gesticular como se estivesse numa conversa**. A performance é puramente visual e silenciosa.
 
-3.  **CONSISTÊNCIA VISUAL ABSOLUTA:** O vídeo final deve ser uma continuação perfeita da foto. Mantenha exatamente a mesma pessoa, mesma roupa, mesma iluminação (direção, intensidade, cor das sombras) e o mesmo fundo da imagem de referência.
+3.  **CONSISTÊNCIA VISUAL PERFEITA:**
+    *   O vídeo deve ser uma continuação fotorealista da imagem. Mantenha a **mesma pessoa, mesma roupa, mesmo cabelo, mesma maquiagem, mesma iluminação e o mesmo fundo exato** da imagem de referência.
 
-**ESTILO FINAL:** Ensaio fotográfico de estúdio, profissional, alta qualidade, sem transições ou cortes.`;
+**ESTILO FINAL:** Um ensaio fotográfico de luxo, profissional, focado puramente nas poses da modelo, com uma qualidade visual impecável e sem cortes.`;
 
-        onTick?.("Enviando para o modelo de vídeo VEO...");
-        let operation = await ai.models.generateVideos({
-            model: 'veo-3.1-fast-generate-preview',
-            prompt: prompt,
-            image: {
-                imageBytes: base64,
-                mimeType: mimeType,
-            },
-            config: {
-                numberOfVideos: 1,
-                aspectRatio: '9:16',
-                resolution: '720p',
+            onTick?.(`Enviando para o modelo de vídeo ${model}...`);
+            let operation = await ai.models.generateVideos({
+                model: model,
+                prompt: prompt,
+                image: {
+                    imageBytes: base64,
+                    mimeType: mimeType,
+                },
+                config: {
+                    numberOfVideos: 1,
+                    aspectRatio: '9:16',
+                    resolution: '720p',
+                }
+            });
+            
+            onTick?.("Trabalho de vídeo enviado. Aguardando processamento...");
+
+            const maxWaitTime = 300000; // 5 minutos
+            const initialDelay = 10000; // 10 segundos
+            let totalWaitTime = 0;
+            let currentDelay = initialDelay;
+
+            while (!operation.done && totalWaitTime < maxWaitTime) {
+                onTick?.(`Processando com ${model}... (Isso pode levar alguns minutos)`);
+                await new Promise(resolve => setTimeout(resolve, currentDelay));
+                totalWaitTime += currentDelay;
+                operation = await ai.operations.getVideosOperation({ operation: operation });
+                currentDelay = Math.min(Math.floor(currentDelay * 1.2), 30000); 
             }
-        });
-        
-        onTick?.("Trabalho de vídeo enviado. Aguardando processamento...");
 
-        const maxWaitTime = 300000; // 5 minutos
-        const initialDelay = 10000; // 10 segundos
-        let totalWaitTime = 0;
-        let currentDelay = initialDelay;
-
-        while (!operation.done && totalWaitTime < maxWaitTime) {
-            onTick?.(`Processando... (Isso pode levar alguns minutos)`);
-            await new Promise(resolve => setTimeout(resolve, currentDelay));
-            totalWaitTime += currentDelay;
-            operation = await ai.operations.getVideosOperation({ operation: operation });
-            currentDelay = Math.min(Math.floor(currentDelay * 1.2), 30000); 
-        }
-
-        if (!operation.done) {
-            throw new Error("Tempo limite atingido ao aguardar a geração do vídeo.");
-        }
-
-        const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
-        if (!downloadLink) {
-            const reason = operation.error?.message || "Verifique se há bloqueios de segurança na sua conta da API.";
-            throw new Error(`Geração concluída, mas nenhuma URL de vídeo foi retornada. Motivo: ${reason}`);
-        }
-        
-        onTick?.("Processamento concluído! Baixando o vídeo...");
-        
-        const videoResponse = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
-        if (!videoResponse.ok) {
-            if (videoResponse.status === 429) {
-                 throw new Error("429 Too Many Requests");
+            if (!operation.done) {
+                throw new Error("Tempo limite atingido ao aguardar a geração do vídeo.");
             }
-            throw new Error(`Falha ao baixar o vídeo gerado. Status: ${videoResponse.status}`);
+
+            const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
+            if (!downloadLink) {
+                const reason = operation.error?.message || "Verifique se há bloqueios de segurança na sua conta da API.";
+                // Let's make sure quota errors are throwable here to be caught below
+                if (reason.toLowerCase().includes('quota')) {
+                    throw new Error(`Quota Exceeded: ${reason}`);
+                }
+                throw new Error(`Geração concluída, mas nenhuma URL de vídeo foi retornada. Motivo: ${reason}`);
+            }
+            
+            onTick?.("Processamento concluído! Baixando o vídeo...");
+            
+            const videoResponse = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
+            if (!videoResponse.ok) {
+                if (videoResponse.status === 429) {
+                     throw new Error("429 Too Many Requests");
+                }
+                throw new Error(`Falha ao baixar o vídeo gerado. Status: ${videoResponse.status}`);
+            }
+
+            const videoBlob = await videoResponse.blob();
+            
+            onTick?.("Vídeo gerado com sucesso!");
+
+            return URL.createObjectURL(videoBlob); // Success, so we return and exit the function.
+
+        } catch (error) {
+            lastError = error as Error;
+            const isQuotaError = error instanceof Error && (
+                error.message.includes('429') || 
+                error.message.toLowerCase().includes('rate limit') ||
+                error.message.toLowerCase().includes('quota')
+            );
+
+            if (isQuotaError) {
+                console.warn(`Erro de cota com o modelo ${model}. Tentando o próximo...`);
+                onTick?.(`O modelo ${model} está ocupado. Tentando uma alternativa...`);
+                // Continue to the next iteration of the loop
+            } else {
+                // For any other error, we should stop trying and fall through to the final error handling.
+                console.error(`Erro inesperado com o modelo ${model}:`, error);
+                break; // Exit the loop
+            }
         }
-
-        const videoBlob = await videoResponse.blob();
-        
-        onTick?.("Vídeo gerado com sucesso!");
-
-        return URL.createObjectURL(videoBlob);
-
-    } catch (error) {
-        if (error instanceof Error && (error.message.includes('429') || error.message.toLowerCase().includes('rate limit'))) {
-            console.warn("Erro 429 do VEO detectado. Ativando fallback para Runway.");
-            onTick?.("O modelo VEO está ocupado. Tentando o nosso gerador de vídeo alternativo...");
-            return generateVideoWithRunway(imageDataUrl, onTick);
-        }
-
-        console.error('Erro no fluxo de geração de vídeo do VEO:', error);
-        if (error instanceof Error) {
-            throw new Error(`Falha na geração do vídeo: ${error.message}`);
-        }
-        throw new Error('Ocorreu um erro desconhecido ao gerar o vídeo.');
     }
+
+    // If we've exited the loop, it means all Veo models have failed due to quota or a non-retriable error occurred.
+    const lastErrorWasQuota = lastError && (
+        lastError.message.includes('429') || 
+        lastError.message.toLowerCase().includes('rate limit') ||
+        lastError.message.toLowerCase().includes('quota')
+    );
+
+    if (lastErrorWasQuota) {
+        console.warn("Todos os modelos VEO falharam devido a cotas. Ativando fallback para Runway.");
+        onTick?.("Os modelos VEO estão ocupados. Tentando o nosso gerador de vídeo alternativo...");
+        return generateVideoWithRunway(imageDataUrl, onTick);
+    }
+
+    // If there was another type of error, we throw it.
+    if (lastError) {
+        console.error('Erro final no fluxo de geração de vídeo do VEO:', lastError);
+        if (lastError instanceof Error) {
+            throw new Error(`Falha na geração do vídeo: ${lastError.message}`);
+        }
+    }
+    
+    // Fallback error message if something unexpected happened.
+    throw new Error('Ocorreu um erro desconhecido ao gerar o vídeo.');
 };
 
 

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import type { Post, Item } from '../types';
-import { HeartIcon, ShoppingBagIcon, ChatBubbleIcon } from './IconComponents';
+import { HeartIcon, ShoppingBagIcon, ChatBubbleIcon, PlayIcon } from './IconComponents';
 
 interface PostCardProps {
   post: Post;
@@ -13,8 +13,62 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTheLook, onViewProfile, onImageClick, onComment }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) {
+          video.pause();
+        }
+      },
+      { threshold: 0.5 } // Pause when less than 50% of the video is visible
+    );
+
+    const currentCardRef = cardRef.current;
+    if (currentCardRef) {
+      observer.observe(currentCardRef);
+    }
+
+    return () => {
+      if (currentCardRef) {
+        observer.unobserve(currentCardRef);
+      }
+    };
+  }, []);
+
+  const handleVideoClick = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering other click handlers
+    if (videoRef.current) {
+      if (videoRef.current.paused) {
+        videoRef.current.play();
+      } else {
+        videoRef.current.pause();
+      }
+    }
+  };
+  
+  const handleDoubleClick = (e: React.MouseEvent) => {
+      e.stopPropagation();
+      onImageClick(); // Open modal on double click for videos
+  };
+
+  const handleProgress = () => {
+    if (videoRef.current?.duration) {
+      const value = (videoRef.current.currentTime / videoRef.current.duration) * 100;
+      setProgress(value);
+    }
+  };
+
+
   return (
-    <div className="bg-[var(--bg-main)] flex flex-col animate-fadeIn border-b border-[var(--border-primary)]">
+    <div ref={cardRef} className="bg-[var(--bg-main)] flex flex-col animate-fadeIn border-b border-[var(--border-primary)]">
       {/* Card Header */}
       <button onClick={onViewProfile} className="p-3 flex items-center gap-3 text-left hover:bg-[var(--accent-primary)]/10 transition-colors">
         <img src={post.user.avatar} alt={post.user.name} className="w-10 h-10 rounded-full object-cover border-2 border-zinc-700" />
@@ -25,16 +79,33 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
       </button>
 
       {/* Post Image or Video */}
-      <div className="aspect-w-1 aspect-h-1 bg-black">
+      <div className="relative aspect-w-1 aspect-h-1 bg-black">
         {post.video ? (
-            <video
-                src={post.video}
-                loop
-                playsInline
-                controls
-                poster={post.image}
-                className="w-full h-full object-cover"
-            />
+            <>
+                <video
+                    ref={videoRef}
+                    src={post.video}
+                    loop
+                    playsInline
+                    onClick={handleVideoClick}
+                    onDoubleClick={handleDoubleClick}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                    onTimeUpdate={handleProgress}
+                    poster={post.image}
+                    className="w-full h-full object-cover cursor-pointer"
+                />
+                <div 
+                  onClick={handleVideoClick}
+                  className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${!isPlaying ? 'opacity-100 bg-black/20' : 'opacity-0'}`}
+                >
+                  {!isPlaying && <PlayIcon className="w-16 h-16 text-white/80 drop-shadow-lg" />}
+                </div>
+                {/* Progress bar */}
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/30">
+                    <div className="h-full bg-white transition-all duration-100 ease-linear" style={{ width: `${progress}%` }}></div>
+                </div>
+            </>
         ) : (
             <div onClick={onImageClick} className="w-full h-full cursor-pointer">
                 <img src={post.image} alt={`Look by ${post.user.name}`} className="w-full h-full object-cover" />

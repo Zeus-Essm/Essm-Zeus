@@ -1,5 +1,3 @@
-
-
 import React, { useEffect, useRef, useState } from 'react';
 import type { Profile } from '../types';
 import { UploadIcon, DownloadIcon, PlayIcon, PauseIcon } from './IconComponents';
@@ -27,8 +25,8 @@ interface VideoPlayerModalProps {
 
 const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({ videoUrl, onClose, onPublish, onSave, isPublishing }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [showCenterIcon, setShowCenterIcon] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [showCenterIcon, setShowCenterIcon] = useState(true);
   // FIX: Initialize useRef with null and update the type to handle null values.
   const iconTimer = useRef<number | null>(null);
 
@@ -37,6 +35,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({ videoUrl, onClose, 
       if (event.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
+
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
 
@@ -82,9 +81,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({ videoUrl, onClose, 
         <video
           ref={videoRef}
           src={videoUrl}
-          autoPlay
           loop
-          muted
           playsInline
           onClick={handleVideoTap}
           onPlay={() => setIsPlaying(true)}

@@ -217,7 +217,7 @@ export const ITEMS: Item[] = [
     // Louis Vuitton - Masculino - T-shirt (NOVOS)
     { id: 'item-tshirt-1', name: 't-shirt 1', description: 'T-shirt exclusiva da coleção Louis Vuitton.', category: 'lv_masculino_tshirt', image: 'https://i.postimg.cc/TPR4dpBg/louis-vuitton-camiseta-de-algodao-bordada-HTY18-WNPG651-PM2-Front-view.webp', price: 10000 },
     { id: 'item-tshirt-2', name: 't-shirt 2', description: 'T-shirt exclusiva da coleção Louis Vuitton.', category: 'lv_masculino_tshirt', image: 'https://i.postimg.cc/6pVPxdbB/Louis-Vuitton-LV-Monogram-Gradient-Black-White-T-Shirt-Crepslocker-Front-1.webp', price: 10000 },
-    // NOVOS ITENS DE NOVAS CATEGORIAS
+    // NOVOS ITENS DE NOVAS CATEGORias
     // Delicias da Leandra - Bolos
     { id: 'item-bolo-1', name: 'Bolo 1', description: 'Bolo artesanal delicioso, feito com ingredientes frescos.', category: 'restaurantes_bolos', image: 'https://i.postimg.cc/L5BvGFbb/PHOTO-2025-07-14-23-58-55.jpg', price: 20000 },
     { id: 'item-bolo-2', name: 'Bolo 2', description: 'Bolo de festa espetacular para celebrar momentos especiais.', category: 'restaurantes_bolos', image: 'https://i.postimg.cc/VvB42PVh/PHOTO-2025-03-03-19-26-45.jpg', price: 100000 },
@@ -434,3 +434,5 @@ export const INITIAL_COLLABORATION_REQUESTS: CollaborationPost[] = [
         submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 96).toISOString(),
     }
 ];
+
+export const FASHION_MUSIC_URL = 'https://cdn.pixabay.com/download/audio/2022/08/04/audio_2d01d690f7.mp3';
