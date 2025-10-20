@@ -45,7 +45,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: provider,
                 options: {
-                    redirectTo: window.location.origin,
+                    redirectTo: 'https://pump-45473940960.us-west1.run.app/',
                 },
             });
             if (error) throw error;
