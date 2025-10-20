@@ -89,7 +89,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
                 </GradientButton>
             </form>
 
-            {/*
             <div className="my-6 flex items-center w-full">
                 <div className="flex-grow border-t border-[var(--accent-primary)]/20"></div>
                 <span className="flex-shrink mx-4 text-zinc-500 text-sm">OU</span>
@@ -114,7 +113,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
                     <span className="font-semibold">{isSignUp ? 'Continue com Facebook' : 'Entrar com Facebook'}</span>
                 </button>
             </div>
-            */}
             
             <div className="my-4 text-center text-sm">
                 <button onClick={onContinueAsVisitor} className="font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] underline transition-colors">

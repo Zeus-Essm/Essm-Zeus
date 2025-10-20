@@ -120,7 +120,14 @@ const ImageViewModal: React.FC<ImageViewModalProps> = ({ posts, startIndex, onCl
                 {posts.map(post => (
                     <div
                         key={post.id}
-                        ref={el => postRefs.current.set(post.id, el)}
+                        // FIX: The ref callback function should not return a value. Wrapped the set call in a block. Also added cleanup for when the element unmounts.
+                        ref={el => {
+                            if (el) {
+                                postRefs.current.set(post.id, el);
+                            } else {
+                                postRefs.current.delete(post.id);
+                            }
+                        }}
                         data-post-id={post.id}
                         className="h-full w-full relative flex-shrink-0 snap-start flex flex-col"
                     >
@@ -138,7 +145,14 @@ const ImageViewModal: React.FC<ImageViewModalProps> = ({ posts, startIndex, onCl
                                 {post.video ? (
                                     <>
                                         <video
-                                            ref={el => videoRefs.current.set(post.id, el)}
+                                            // FIX: The ref callback function should not return a value. Wrapped the set call in a block. Also added cleanup for when the element unmounts.
+                                            ref={el => {
+                                                if (el) {
+                                                    videoRefs.current.set(post.id, el);
+                                                } else {
+                                                    videoRefs.current.delete(post.id);
+                                                }
+                                            }}
                                             src={post.video}
                                             loop
                                             playsInline
