@@ -69,7 +69,10 @@ const resizeImage = (
 
 // Fetches an image from a URL and converts it into a data URL (base64 encoded string).
 const imageUrlToDataUrl = async (url: string): Promise<string> => {
-  const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+  const corsApiKey = 'AQ.Ab8RN6K4XMcdwkHtoN1KbfTHg_gTy0YGT85ZyKjzHFGMoxIlCg';
+  const urlWithKey = new URL(url);
+  urlWithKey.searchParams.append('key', corsApiKey);
+  const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(urlWithKey.href)}`;
   
   try {
     const response = await fetch(proxyUrl);
@@ -262,7 +265,10 @@ const generateVideoWithRunway = async (imageDataUrl: string, onTick?: (s: string
             
             if (result.status === 'succeeded' && result.url) {
                 onTick?.("Processamento concluído! Baixando o vídeo do Runway...");
-                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(result.url)}`;
+                const corsApiKey = 'AQ.Ab8RN6K4XMcdwkHtoN1KbfTHg_gTy0YGT85ZyKjzHFGMoxIlCg';
+                const urlWithKey = new URL(result.url);
+                urlWithKey.searchParams.append('key', corsApiKey);
+                const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(urlWithKey.href)}`;
                 const videoResponse = await fetch(proxyUrl);
 
                 if (!videoResponse.ok) {
@@ -408,15 +414,9 @@ export const generateFashionVideo = async (imageDataUrl: string, onTick?: (s: st
         throw new Error("API_KEY não está configurada. A geração de vídeo está desativada.");
     }
 
-    // Lista de modelos Veo para tentar em ordem de prioridade (do mais avançado para o mais rápido/básico).
-    // A lógica de fallback tentará cada um desses modelos sequencialmente em caso de erro de cota.
     const veoModelsToTry: string[] = [
-        'veo-3.1-generate-preview',    // Modelo de maior qualidade, tentado primeiro.
-        'veo-3.1-fast-generate-preview', // Modelo mais rápido da v3.1.
-        'veo-3.0-generate-001',        // Modelo de qualidade da v3.0.
-        'veo-3.0-fast-generate-001',   // Modelo rápido da v3.0.
-        'veo-2.0-generate-exp',        // Modelo experimental da v2.0.
-        'veo-2.0-generate-001',        // Modelo base da v2.0.
+        'veo-3.1-generate-preview',
+        'veo-3.1-fast-generate-preview',
     ];
     let lastError: Error | null = null;
 
@@ -485,7 +485,6 @@ export const generateFashionVideo = async (imageDataUrl: string, onTick?: (s: st
             const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
             if (!downloadLink) {
                 const reason = operation.error?.message || "Verifique se há bloqueios de segurança na sua conta da API.";
-                // Let's make sure quota errors are throwable here to be caught below
                 if (reason.toLowerCase().includes('quota')) {
                     throw new Error(`Quota Exceeded: ${reason}`);
                 }
@@ -506,34 +505,43 @@ export const generateFashionVideo = async (imageDataUrl: string, onTick?: (s: st
             
             onTick?.("Vídeo gerado com sucesso!");
 
-            return URL.createObjectURL(videoBlob); // Success, so we return and exit the function.
+            return URL.createObjectURL(videoBlob);
 
         } catch (error) {
             lastError = error as Error;
-            const isQuotaError = error instanceof Error && (
-                error.message.includes('429') || 
-                error.message.toLowerCase().includes('rate limit') ||
-                error.message.toLowerCase().includes('quota')
-            );
+            const errorMessage = (error instanceof Error ? error.message : String(error)).toLowerCase();
 
-            if (isQuotaError) {
-                console.warn(`Erro de cota com o modelo ${model}. Tentando o próximo...`);
-                onTick?.(`O modelo ${model} está ocupado. Tentando uma alternativa...`);
-                // Continue to the next iteration of the loop
+            const isRetriableError = 
+                errorMessage.includes('429') || 
+                errorMessage.includes('rate limit') ||
+                errorMessage.includes('quota') ||
+                errorMessage.includes('requested entity was not found');
+
+            if (isRetriableError) {
+                const reason = errorMessage.includes('not found') ? 'não foi encontrado' : 'está ocupado';
+                console.warn(`O modelo ${model} ${reason}. Tentando o próximo...`);
+                onTick?.(`O modelo ${model} ${reason}. Tentando uma alternativa...`);
             } else {
-                // For any other error, we should stop trying and fall through to the final error handling.
                 console.error(`Erro inesperado com o modelo ${model}:`, error);
-                break; // Exit the loop
+                break;
             }
         }
     }
 
-    // If we've exited the loop, it means all Veo models have failed due to quota or a non-retriable error occurred.
-    const lastErrorWasQuota = lastError && (
-        lastError.message.includes('429') || 
-        lastError.message.toLowerCase().includes('rate limit') ||
-        lastError.message.toLowerCase().includes('quota')
-    );
+    if (!lastError) {
+        throw new Error('Ocorreu um erro desconhecido ao gerar o vídeo.');
+    }
+
+    const lastErrorMessage = (lastError instanceof Error ? lastError.message : String(lastError)).toLowerCase();
+    
+    if (lastErrorMessage.includes("requested entity was not found")) {
+        throw lastError;
+    }
+    
+    const lastErrorWasQuota = 
+        lastErrorMessage.includes('429') || 
+        lastErrorMessage.includes('rate limit') ||
+        lastErrorMessage.includes('quota');
 
     if (lastErrorWasQuota) {
         console.warn("Todos os modelos VEO falharam devido a cotas. Ativando fallback para Runway.");
@@ -541,16 +549,8 @@ export const generateFashionVideo = async (imageDataUrl: string, onTick?: (s: st
         return generateVideoWithRunway(imageDataUrl, onTick);
     }
 
-    // If there was another type of error, we throw it.
-    if (lastError) {
-        console.error('Erro final no fluxo de geração de vídeo do VEO:', lastError);
-        if (lastError instanceof Error) {
-            throw new Error(`Falha na geração do vídeo: ${lastError.message}`);
-        }
-    }
-    
-    // Fallback error message if something unexpected happened.
-    throw new Error('Ocorreu um erro desconhecido ao gerar o vídeo.');
+    console.error('Erro final no fluxo de geração de vídeo do VEO:', lastError);
+    throw lastError;
 };
 
 

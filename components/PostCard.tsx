@@ -53,11 +53,6 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
       }
     }
   };
-  
-  const handleDoubleClick = (e: React.MouseEvent) => {
-      e.stopPropagation();
-      onImageClick(); // Open modal on double click for videos
-  };
 
   const handleProgress = () => {
     if (videoRef.current?.duration) {
@@ -79,7 +74,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
       </button>
 
       {/* Post Image or Video */}
-      <div className="relative aspect-w-1 aspect-h-1 bg-black">
+      <div className="relative bg-black aspect-square">
         {post.video ? (
             <>
                 <video
@@ -88,7 +83,6 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
                     loop
                     playsInline
                     onClick={handleVideoClick}
-                    onDoubleClick={handleDoubleClick}
                     onPlay={() => setIsPlaying(true)}
                     onPause={() => setIsPlaying(false)}
                     onTimeUpdate={handleProgress}

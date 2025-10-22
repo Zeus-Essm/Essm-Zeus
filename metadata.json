@@ -3,6 +3,7 @@
   "description": "A modern and interactive virtual try-on platform for clothes and shoes, using AI to simulate how users would look with different items before buying.",
   "iconUrl": "https://i.postimg.cc/XJf6gckX/Pump_STARTAP.png",
   "requestFramePermissions": [
-    "camera"
+    "camera",
+    "microphone"
   ]
 }

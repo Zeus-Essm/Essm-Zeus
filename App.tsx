@@ -45,10 +45,21 @@ import VerificationIntroScreen from './components/VerificationIntroScreen';
 import IdUploadScreen from './components/IdUploadScreen';
 import FaceScanScreen from './components/FaceScanScreen';
 import VerificationPendingScreen from './components/VerificationPendingScreen';
+import VeoApiKeyModal from './components/VeoApiKeyModal';
 
 
+// FIX: To resolve the "Subsequent property declarations must have the same type" error for 'aistudio',
+// the AIStudio interface is moved inside the `declare global` block. This ensures it's treated
+// as a single, mergeable global interface rather than a module-scoped type that can conflict with other declarations.
 declare global {
-  interface Window {}
+  interface AIStudio {
+    hasSelectedApiKey: () => Promise<boolean>;
+    openSelectKey: () => Promise<void>;
+  }
+
+  interface Window {
+    aistudio?: AIStudio;
+  }
   interface Navigator {
       canShare(data?: ShareData): boolean;
   }
@@ -203,6 +214,7 @@ const App: React.FC = () => {
     const [error, setError] = React.useState<string | null>(null);
     const [isCartAnimating, setIsCartAnimating] = React.useState(false);
     const [isPreviewingAsVisitor, setIsPreviewingAsVisitor] = React.useState(false);
+    const [isVeoKeyFlowNeeded, setIsVeoKeyFlowNeeded] = React.useState(false);
     
     // Notifications & Messages State
     const [notifications, setNotifications] = React.useState<AppNotification[]>([]);
@@ -757,6 +769,17 @@ const App: React.FC = () => {
             setError("Não há imagem de look para gerar o vídeo.");
             return;
         }
+
+        if (window.aistudio && typeof window.aistudio.hasSelectedApiKey === 'function') {
+            const hasKey = await window.aistudio.hasSelectedApiKey();
+            if (!hasKey) {
+                setIsVeoKeyFlowNeeded(true);
+                return;
+            }
+        } else {
+            console.warn("aistudio API key selection methods not available.");
+        }
+
         setIsLoading(true);
         setLoadingMessage("Iniciando a criação do vídeo...");
         setError(null);
@@ -767,7 +790,13 @@ const App: React.FC = () => {
             setGeneratedVideoUrl(videoUrl);
             setShowVideoPlayer(true);
         } catch (err: any) {
-            setError(err.message || 'Falha ao gerar o vídeo.');
+            const errorMessage = err.message || '';
+            if (errorMessage.toLowerCase().includes("requested entity was not found")) {
+                setError("Sua chave de API pode não ter acesso ao Veo. Por favor, selecione uma chave de API válida com faturamento ativado.");
+                setIsVeoKeyFlowNeeded(true);
+            } else {
+                setError(errorMessage || 'Falha ao gerar o vídeo.');
+            }
         } finally {
             setIsLoading(false);
             setLoadingMessage(null);
@@ -1528,6 +1557,20 @@ const App: React.FC = () => {
                     onPublish={handlePublishVideo}
                     onSave={handleSaveVideo}
                     isPublishing={isPublishing}
+                />
+            )}
+
+            {isVeoKeyFlowNeeded && window.aistudio && (
+                <VeoApiKeyModal
+                    onClose={() => setIsVeoKeyFlowNeeded(false)}
+                    onSelectKey={async () => {
+                        await window.aistudio.openSelectKey();
+                        setIsVeoKeyFlowNeeded(false);
+                        // Assume key selection was successful and retry.
+                        setTimeout(() => {
+                           handleGenerateVideo();
+                        }, 100);
+                    }}
                 />
             )}
             
