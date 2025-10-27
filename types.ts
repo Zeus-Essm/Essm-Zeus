@@ -51,6 +51,7 @@ export interface Post {
   comments: Comment[];
   commentCount: number;
   isSponsored?: boolean;
+  caption?: string;
 }
 
 export interface Story {

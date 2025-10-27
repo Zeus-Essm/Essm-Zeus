@@ -281,20 +281,23 @@ export const INITIAL_POSTS: Post[] = [
         comments: [
             { id: 'c1-1', user: { id: 'user2', name: 'Bruno Gomes', avatar: 'https://i.pravatar.cc/150?u=bruno' }, text: 'Uau, que vestido lindo!', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString() },
             { id: 'c1-2', user: { id: 'user3', name: 'Carla Dias', avatar: 'https://i.pravatar.cc/150?u=carla' }, text: 'Amei a cor!', timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString() },
+            { id: 'c1-3', user: { id: 'user4', name: 'Daniel Alves', avatar: 'https://i.pravatar.cc/150?u=daniel' }, text: 'Perfeita!', timestamp: new Date(Date.now() - 1000 * 60 * 15).toISOString() },
         ],
-        commentCount: 2,
+        commentCount: 3,
+        caption: 'Um dia especial pede um look especial! ✨',
     },
     {
         id: 'post2',
         user: { id: 'user2', name: 'Bruno Gomes', avatar: 'https://i.pravatar.cc/150?u=bruno' },
         image: 'https://i.postimg.cc/PxhsxmFf/meu-estilo-look-12.png',
-        items: [ITEMS[4]], // Adidas Ultraboost
+        items: [ITEMS[6]], // Adidas Ultraboost
         likes: 850,
         isLiked: true,
         comments: [
             { id: 'c2-1', user: { id: 'user1', name: 'Ana Clara', avatar: 'https://i.pravatar.cc/150?u=anaclara' }, text: 'Esse ténis é super confortável!', timestamp: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString() },
         ],
         commentCount: 1,
+        caption: 'Correndo com estilo. Conforto é tudo.',
     },
     {
         id: 'post3',
@@ -305,26 +308,29 @@ export const INITIAL_POSTS: Post[] = [
         isLiked: false,
         comments: [],
         commentCount: 0,
+        caption: 'Adoro o estilo despojado desta saia.',
     },
     {
         id: 'post4',
         user: { id: 'user4', name: 'Daniel Alves', avatar: 'https://i.pravatar.cc/150?u=daniel' },
         image: 'https://i.postimg.cc/vTc6Jdzn/meu-estilo-look.png',
-        items: [], // Placeholder, will be replaced with new t-shirt
+        items: [ITEMS[30]],
         likes: 980,
         isLiked: false,
         comments: [],
         commentCount: 0,
+        caption: 'Vibes casuais hoje.',
     },
     {
         id: 'post5',
         user: { id: 'user1', name: 'Ana Clara', avatar: 'https://i.pravatar.cc/150?u=anaclara' },
         image: 'https://i.postimg.cc/tgNPPkJs/meu-estilo-look-11.png',
-        items: [ITEMS[6]], // Vestido de Noiva Sereia
+        items: [ITEMS[8]], // Vestido de Noiva Sereia
         likes: 5400,
         isLiked: true,
         comments: [],
         commentCount: 0,
+        caption: 'Sentindo-me como uma princesa. 👑',
     },
     {
         id: 'post6',
@@ -335,16 +341,18 @@ export const INITIAL_POSTS: Post[] = [
         isLiked: false,
         comments: [],
         commentCount: 0,
+        caption: 'Simples e elegante.',
     },
      {
         id: 'post7',
         user: { id: 'user2', name: 'Bruno Gomes', avatar: 'https://i.pravatar.cc/150?u=bruno' },
         image: 'https://i.postimg.cc/bJYnRnS3/meu-estilo-look-6.png',
-        items: [ITEMS[5]], // Adidas Superstar
+        items: [ITEMS[7]], // Adidas Superstar
         likes: 4200,
         isLiked: false,
         comments: [],
         commentCount: 0,
+        caption: 'Um clássico nunca sai de moda.',
     },
 ];
 
@@ -395,6 +403,7 @@ export const VENDOR_POSTS: Post[] = [
         isLiked: false,
         comments: [],
         commentCount: 0,
+        caption: "Nossa nova coleção urbana já está disponível!",
     },
     {
         id: 'vendor-post2',
@@ -405,6 +414,7 @@ export const VENDOR_POSTS: Post[] = [
         isLiked: false,
         comments: [],
         commentCount: 0,
+        caption: "A saia perfeita para qualquer ocasião.",
     }
 ];
 

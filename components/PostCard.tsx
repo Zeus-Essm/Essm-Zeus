@@ -17,6 +17,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
   const cardRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [showAllComments, setShowAllComments] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -24,11 +25,23 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (!entry.isIntersecting) {
+        if (entry.isIntersecting) {
+          // Attempt to play with sound. This may be blocked by the browser.
+          video.muted = false;
+          const playPromise = video.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(error => {
+              // Autoplay with sound failed. Play muted instead.
+              console.log("Autoplay with sound was prevented. Playing muted.", error);
+              video.muted = true;
+              video.play();
+            });
+          }
+        } else {
           video.pause();
         }
       },
-      { threshold: 0.5 } // Pause when less than 50% of the video is visible
+      { threshold: 0.5 } // Trigger when 50% of the video is visible/hidden
     );
 
     const currentCardRef = cardRef.current;
@@ -46,10 +59,12 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
   const handleVideoClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent triggering other click handlers
     if (videoRef.current) {
-      if (videoRef.current.paused) {
-        videoRef.current.play();
+      const video = videoRef.current;
+      if (video.paused) {
+        video.muted = false; // Always try to play with sound on user interaction
+        video.play();
       } else {
-        videoRef.current.pause();
+        video.pause();
       }
     }
   };
@@ -126,28 +141,46 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
         <p className="text-sm font-semibold mt-2">{post.likes.toLocaleString()} curtidas</p>
       </div>
 
-      {/* Caption / Item List */}
-      <div className="px-3 pb-4 text-sm">
-         {post.commentCount > 0 && (
-            <button onClick={onComment} className="text-[var(--text-secondary)] mb-1 hover:underline">
+      {/* Caption & Comments Section */}
+      <div className="px-3 pb-4 text-sm space-y-1.5">
+        {post.items.length > 0 && (
+          <p>
+            <span className="mr-1 text-[var(--text-secondary)]">
+                {post.video ? 'Apresentando ' : 'Vestindo '}
+            </span>
+            {post.items.map((item, index) => (
+            <React.Fragment key={item.id}>
+                <button
+                    onClick={() => onItemClick(item)}
+                    className="font-semibold text-[var(--text-tertiary)] hover:underline focus:outline-none"
+                >
+                {item.name}
+                </button>
+                {index < post.items.length - 1 ? ', ' : ''}
+            </React.Fragment>
+            ))}
+          </p>
+        )}
+        <p>
+            <button onClick={onViewProfile} className="font-bold mr-2 hover:underline">{post.user.name}</button>
+            {post.caption && <span className="font-normal">{post.caption}</span>}
+        </p>
+
+        {/* Comments */}
+        <div className="space-y-1">
+            {(showAllComments ? post.comments : post.comments.slice(0, 2)).map(comment => (
+                <p key={comment.id} className="text-[var(--text-tertiary)]">
+                    <span className="font-semibold text-[var(--text-primary)] mr-2">{comment.user.name}</span>
+                    {comment.text}
+                </p>
+            ))}
+        </div>
+        
+        {post.commentCount > 2 && !showAllComments && (
+            <button onClick={() => setShowAllComments(true)} className="text-[var(--text-secondary)] hover:underline">
                 Ver todos os {post.commentCount} comentários
             </button>
         )}
-        <p>
-          <button onClick={onViewProfile} className="font-bold mr-2 hover:underline">{post.user.name}</button>
-          {post.items.length > 0 ? (post.video ? 'apresentando ' : 'vestindo ') : 'compartilhou um novo vídeo.'}
-          {post.items.map((item, index) => (
-            <React.Fragment key={item.id}>
-              <button 
-                onClick={() => onItemClick(item)}
-                className="font-semibold text-[var(--accent-primary)] hover:underline focus:outline-none"
-              >
-                {item.name}
-              </button>
-              {index < post.items.length - 1 ? ', ' : '.'}
-            </React.Fragment>
-          ))}
-        </p>
       </div>
     </div>
   );

@@ -4,16 +4,15 @@ import React from 'react';
 import type { Item } from '../types';
 import GradientButton from './GradientButton';
 import Header from './Header';
-import { ShoppingBagIcon, PlusIcon, UndoIcon, ShareIcon, BookmarkIcon, DownloadIcon, VideoCameraIcon } from './IconComponents';
+import { ShoppingBagIcon, PlusIcon, UndoIcon, UploadIcon, DownloadIcon, VideoCameraIcon } from './IconComponents';
 
 interface ResultScreenProps {
   generatedImage: string;
   items: Item[]; // A lista de itens vestidos
   categoryItems: Item[]; // A lista de todos os itens na categoria atual
-  onPostToFeed: () => void;
   onBuy: (items: Item[]) => void;
   onUndo: () => void;
-  onSaveLook: () => void;
+  onStartPublishing: () => void;
   onSaveImage: () => void;
   onItemSelect: (item: Item) => void;
   onAddMoreItems: () => void;
@@ -24,10 +23,9 @@ const ResultScreen: React.FC<ResultScreenProps> = ({
     generatedImage, 
     items, 
     categoryItems, 
-    onPostToFeed, 
     onBuy, 
     onUndo, 
-    onSaveLook, 
+    onStartPublishing, 
     onSaveImage,
     onItemSelect,
     onAddMoreItems,
@@ -123,11 +121,12 @@ const ResultScreen: React.FC<ResultScreenProps> = ({
                 <span className="text-[9px] tracking-wider uppercase">Vídeo</span>
             </button>
             <button
-                onClick={onSaveLook}
+                onClick={onStartPublishing}
                 className="flex-1 flex flex-col items-center justify-center text-[var(--text-primary)] font-semibold py-2 px-1 rounded-lg bg-[var(--bg-tertiary)] hover:brightness-95 transition-colors"
+                aria-label="Publicar no Feed"
             >
-               <BookmarkIcon className="w-5 h-5 mb-0.5" />
-                <span className="text-[9px] tracking-wider uppercase">Salvar</span>
+               <UploadIcon className="w-5 h-5 mb-0.5" />
+                <span className="text-[9px] tracking-wider uppercase">Publicar</span>
             </button>
             <button
                 onClick={onSaveImage}

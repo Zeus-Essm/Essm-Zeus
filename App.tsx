@@ -46,6 +46,7 @@ import IdUploadScreen from './components/IdUploadScreen';
 import FaceScanScreen from './components/FaceScanScreen';
 import VerificationPendingScreen from './components/VerificationPendingScreen';
 import VeoApiKeyModal from './components/VeoApiKeyModal';
+import CaptionModal from './components/CaptionModal';
 
 
 // FIX: To resolve the "Subsequent property declarations must have the same type" error for 'aistudio',
@@ -222,6 +223,7 @@ const App: React.FC = () => {
     const [conversations, setConversations] = React.useState<Conversation[]>(INITIAL_CONVERSATIONS);
     const [selectedConversation, setSelectedConversation] = React.useState<Conversation | null>(null);
     const [commentingPost, setCommentingPost] = React.useState<Post | null>(null);
+    const [isCaptioning, setIsCaptioning] = React.useState(false);
     
     // Vendor State & Promotion State
     const [showVendorMenu, setShowVendorMenu] = React.useState(false);
@@ -250,15 +252,19 @@ const App: React.FC = () => {
     // Auth effect
     React.useEffect(() => {
         const fetchAndSetUserData = async (session: Session) => {
+            // Se um usuário real (não convidado) estiver a fazer login, limpa os dados de demonstração.
+            if (!session.user.id.startsWith('mock_')) {
+                setPosts(INITIAL_POSTS);
+                setSavedLooks([]);
+            }
+
             const profileData = await getOrCreateProfile(session, setError);
             setProfile(profileData);
+
             if (profileData) {
-                // Route user based on their account type
                 if (!profileData.account_type) {
                     setCurrentScreen(Screen.AccountTypeSelection);
                 } else if (profileData.account_type === 'business') {
-                     // For now, we assume if they are 'business' they are onboarded.
-                    // A real app would check a separate business_profiles table.
                     setBusinessProfile({
                         id: profileData.id,
                         business_name: profileData.username,
@@ -268,10 +274,8 @@ const App: React.FC = () => {
                     });
                     setCurrentScreen(Screen.VendorDashboard);
                 } else { // 'personal'
-                    setPosts(assignDemoPostsToUser(profileData));
-                    if (session.user.id.startsWith('mock_')) {
-                        setSavedLooks(assignDemoLooksToUser());
-                    } // ... existing logic to fetch real saved looks
+                    // Para usuários reais, o perfil deles começa limpo. Não é preciso fazer nada aqui.
+                    // Para usuários convidados, os dados de demonstração são tratados em `handleSetAccountType`.
                     setCurrentScreen(Screen.Feed);
                 }
             }
@@ -399,6 +403,7 @@ const App: React.FC = () => {
                 };
                 setProfile(personalProfile);
                 setPosts(assignDemoPostsToUser(personalProfile));
+                // FIX: Called assignDemoLooksToUser which takes no arguments and returns SavedLook[] as expected by setSavedLooks.
                 setSavedLooks(assignDemoLooksToUser());
                 setCurrentScreen(Screen.Feed);
             } else { // business
@@ -935,8 +940,12 @@ const App: React.FC = () => {
     };
     const handleNavigateToCart = () => setCurrentScreen(Screen.Cart);
 
-    const handlePostToFeed = () => {
-        if (generatedImage && wornItems.length > 0 && profile) {
+    const handleStartPublishing = () => {
+        setIsCaptioning(true);
+    };
+
+    const handlePostToFeed = (caption: string) => {
+        if (generatedImage && profile) {
             const newPost: Post = {
                 id: `post_${Date.now()}`,
                 user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || 'https://i.pravatar.cc/150?u=me' },
@@ -946,9 +955,13 @@ const App: React.FC = () => {
                 isLiked: false,
                 comments: [],
                 commentCount: 0,
+                caption: caption,
             };
             setPosts(prevPosts => [newPost, ...prevPosts]);
+            setIsCaptioning(false);
             setCurrentScreen(Screen.Feed);
+            setToast("Publicado com sucesso!");
+            setTimeout(() => setToast(null), 3000);
         }
     };
 
@@ -1384,10 +1397,9 @@ const App: React.FC = () => {
                         generatedImage={generatedImage}
                         items={wornItems}
                         categoryItems={categoryItems}
-                        onPostToFeed={handlePostToFeed}
                         onBuy={handleBuyLook}
                         onUndo={handleUndoLastItem}
-                        onSaveLook={handleSaveLook}
+                        onStartPublishing={handleStartPublishing}
                         onSaveImage={handleSaveImage}
                         onItemSelect={handleItemSelect}
                         onAddMoreItems={handleNavigateToAddMoreItems}
@@ -1616,6 +1628,14 @@ const App: React.FC = () => {
                     userPosts={posts.filter(p => p.user.id === profile?.id)}
                     onClose={handleClosePromotionModal}
                     onConfirm={handleConfirmPromotion}
+                />
+            )}
+
+            {isCaptioning && generatedImage && (
+                <CaptionModal
+                    image={generatedImage}
+                    onClose={() => setIsCaptioning(false)}
+                    onPublish={handlePostToFeed}
                 />
             )}
 
