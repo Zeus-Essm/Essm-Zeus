@@ -98,7 +98,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
             <div className="w-full space-y-3">
                 <button
                     onClick={() => handleSocialLogin('google')}
-                    className="w-full flex items-center justify-center gap-3 p-4 bg-[#0a0a0a] rounded-lg border-2 border-[var(--accent-primary)]/20 hover:border-[var(--accent-primary)]/70 transition-colors"
+                    className="w-full flex items-center justify-center gap-3 p-4 bg-[var(--bg-secondary)] rounded-lg border-2 border-[var(--border-primary)] hover:border-[var(--accent-primary)] transition-all duration-300"
                     disabled={loading}
                 >
                     <GoogleIcon className="w-6 h-6" />
@@ -106,7 +106,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
                 </button>
                 <button
                     onClick={() => handleSocialLogin('facebook')}
-                    className="w-full flex items-center justify-center gap-3 p-4 bg-[#0a0a0a] rounded-lg border-2 border-[var(--accent-primary)]/20 hover:border-[var(--accent-primary)]/70 transition-colors"
+                    className="w-full flex items-center justify-center gap-3 p-4 bg-[var(--bg-secondary)] rounded-lg border-2 border-[var(--border-primary)] hover:border-[var(--accent-primary)] transition-all duration-300"
                     disabled={loading}
                 >
                     <FacebookIcon className="w-6 h-6 text-[#1877F2]" />
