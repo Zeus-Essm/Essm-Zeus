@@ -484,11 +484,15 @@ export const generateFashionVideo = async (imageDataUrl: string, onTick?: (s: st
 
             const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
             if (!downloadLink) {
-                const reason = operation.error?.message || "Verifique se há bloqueios de segurança na sua conta da API.";
-                if (reason.toLowerCase().includes('quota')) {
-                    throw new Error(`Quota Exceeded: ${reason}`);
+                // If there's a specific error message from the API, use it.
+                if (operation.error?.message) {
+                    const reason = operation.error.message;
+                    // The catch block below will handle quota errors, so just re-throw.
+                    throw new Error(reason);
                 }
-                throw new Error(`Geração concluída, mas nenhuma URL de vídeo foi retornada. Motivo: ${reason}`);
+                
+                // Otherwise, it's likely a silent failure (e.g., safety block).
+                throw new Error(`Geração concluída, mas nenhum vídeo foi retornado. Isso pode ocorrer devido a políticas de segurança. Tente uma imagem ou prompt diferente.`);
             }
             
             onTick?.("Processamento concluído! Baixando o vídeo...");
