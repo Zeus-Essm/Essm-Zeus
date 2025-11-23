@@ -1,3 +1,4 @@
+
 import type { Category, Item, Post, Story, Conversation, CollaborationPost } from './types';
 
 // Sub-categorias de Roupas reutilizáveis
@@ -184,11 +185,7 @@ export const ITEMS: Item[] = [
     // Adidas - Masculino - Tênis
     { id: 'item7', name: 'Adidas Ultraboost', description: 'Tênis de corrida com máximo conforto e retorno de energia.', category: 'ad_masculino_tenis', image: 'https://i.postimg.cc/Hnpy6yvK/tenis-ad-masc-1.jpg', price: 900 },
     { id: 'item8', name: 'Adidas Superstar', description: 'O clássico da Adidas com seu design icônico.', category: 'ad_masculino_tenis', image: 'https://i.postimg.cc/J0tL2y08/tenis-ad-masc-2.jpg', price: 450 },
-     // Noivas - Vestido
-    { id: 'item9', name: 'Vestido de Noiva Sereia', description: 'Vestido de noiva estilo sereia com detalhes em renda.', category: 'noivas_vestido', image: 'https://i.postimg.cc/x8sZ5hJq/vestido-noiva-1.jpg', price: 25000 },
-    { id: 'item10', name: 'Vestido de Noiva Princesa', description: 'Vestido de noiva volumoso com saia de tule.', category: 'noivas_vestido', image: 'https://i.postimg.cc/8cBRc7S7/vestido-noiva-2.jpg', price: 28000 },
-    { id: 'item-noiva-1', name: 'noiva 1', description: 'Vestido de noiva deslumbrante.', category: 'noivas_vestido', image: 'https://i.postimg.cc/d09pzLS1/img-1105-2028421a0094fb73d117399106383951-1024-1024.webp', price: 20000 },
-    { id: 'item-noiva-2', name: 'noiva 2', description: 'Vestido de noiva deslumbrante.', category: 'noivas_vestido', image: 'https://i.postimg.cc/KYXQJxGY/Gemini-Generated-Image-bzmns3bzmns3bzmn.png', price: 20000 },
+    
     // Louis Vuitton - Masculino - Fato
     { id: 'item15', name: 'fato 1', description: 'Fato sofisticado da coleção Louis Vuitton.', category: 'lv_masculino_fato', image: 'https://i.postimg.cc/tg58WhFB/louis-vuitton-terno-pont-neuf-em-la-HQCF4-WAVD631-PM2-Front-view.webp', price: 20000 },
     { id: 'item16', name: 'fato 2', description: 'Fato sofisticado da coleção Louis Vuitton.', category: 'lv_masculino_fato', image: 'https://i.postimg.cc/cHkj509Y/louis-vuitton-terno-pont-neuf-em-mescla-de-la-HQCF4-WFOG900-PM2-Front-view.webp', price: 20000 },
@@ -205,6 +202,15 @@ export const ITEMS: Item[] = [
     { id: 'item28', name: 'óculos 4', description: 'Óculos de sol de luxo da coleção Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/TYBx3qcm/louis-vuitton-oculos-de-sol-quadrados-lv-clash-Z1579-W-PM2-Front-view.webp', price: 20000 },
     { id: 'item29', name: 'óculos 5', description: 'Óculos de sol de luxo da coleção Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/1zhyJcnP/louis-vuitton-oculos-de-sol-quadrados-lv-link-pm-Z1566-W-PM2-Front-view.webp', price: 20000 },
     { id: 'item30', name: 'óculos 6', description: 'Óculos de sol de luxo da coleção Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/RhDBfc5k/louis-vuitton-oculos-de-sol-quadrados-lv-ocean-Z2207-U-PM2-Front-view.webp', price: 20000 },
+    // Louis Vuitton - Masculino - Acessórios (Chapéus)
+    { id: 'item-chapeu-1', name: 'Chapeu 1', description: 'Chapéu exclusivo da coleção Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/wBQYFKYc/louis-vuitton-bone-lv-get-ready-M76505-PM2-Front-view.webp', price: 20000 },
+    { id: 'item-chapeu-2', name: 'Chapeu 2', description: 'Chapéu exclusivo da coleção Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/MTZ2FsWk/louis-vuitton-bone-lv-smash-M7608-L-PM2-Front-view.webp', price: 20000 },
+    { id: 'item-chapeu-3', name: 'Chapeu 3', description: 'Chapéu exclusivo da coleção Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/NjTc99Nn/louis-vuitton-bone-monogram-shadow-M76580-PM2-Front-view.webp', price: 20000 },
+    { id: 'item-chapeu-4', name: 'Chapeu 4', description: 'Chapéu exclusivo da coleção Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/j2W1pmm1/pngtree-brown-louis-vuitton-lv-polyester-mens-png-image-12912743.png', price: 20000 },
+    // Louis Vuitton - Masculino - Acessórios (Rula/Relógios)
+    { id: 'item-rula-1', name: 'rula 1', description: 'Relógio exclusivo da coleção Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/cHd0NxBb/louis-vuitton-relogio-tambour-street-diver-chronograph-com-movimento-automatico-e-46-mm-de-diametro.webp', price: 20000 },
+    { id: 'item-rula-2', name: 'rula 2', description: 'Relógio exclusivo da coleção Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/0QZxkTt2/louis-vuitton-relogio-tambour-street-diver-chronograph-com-movimento-automatico-e-46-mm-de-diametro.webp', price: 20000 },
+    { id: 'item-rula-3', name: 'rula 3', description: 'Relógio exclusivo da coleção Louis Vuitton.', category: 'lv_masculino_acessorios', image: 'https://i.postimg.cc/PqWTcpYD/louis-vuitton-relogio-tambour-street-diver-de-movimento-automatico-com-44-mm-de-diametro-em-aco-QA1.webp', price: 20000 },
     // Louis Vuitton - Masculino - Calça (NOVOS)
     { id: 'item-calca-1', name: 'calça 1', description: 'Calça de luxo da coleção Louis Vuitton.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/wTBFPX5K/louis-vuitton-calca-cigarrete-de-la-com-jacquard-damier-HSP61-WSMYMU1-PM2-Front-view.webp', price: 20000 },
     { id: 'item-calca-2', name: 'calça 2', description: 'Calça de luxo da coleção Louis Vuitton.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/mkmjkks6/louis-vuitton-calca-de-agasalho-em-tecido-tecnologico-com-monogram-estampado-HRP83-WMJW609-PM2-Front.webp', price: 20000 },
@@ -212,11 +218,29 @@ export const ITEMS: Item[] = [
     { id: 'item-calca-4', name: 'calça 4', description: 'Calça de luxo da coleção Louis Vuitton.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/W1tdQn1k/dddd.webp', price: 20000 },
     { id: 'item-calca-5', name: 'calça 5', description: 'Calça de luxo da coleção Louis Vuitton.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/R09jWPJ3/louis-vuitton-fleece-jogpants-HQY22-WDFXMU1-PM2-Front-view.webp', price: 20000 },
     { id: 'item-calca-6', name: 'calça 6', description: 'Calça de luxo da coleção Louis Vuitton.', category: 'lv_masculino_calca', image: 'https://i.postimg.cc/76ZdVfVw/louis-vuitton-calca-em-jacquard-damoflage-HSN93-WTMJ900-PM2-Front-view.webp', price: 20000 },
-    // Louis Vuitton - Masculino - Jaqueta (NOVO)
-    { id: 'item-casaco-1', name: 'casaco 1', description: 'Casaco exclusivo da coleção Louis Vuitton.', category: 'lv_masculino_jaqueta', image: 'https://i.postimg.cc/W1cyy9n9/louis-vuitton-paleto-pont-neuf-de-la-HRFJ8-EDLG60-D-PM2-Front-view.png', price: 20000 },
+    // Louis Vuitton - Masculino - Jaqueta
+    { id: 'item-jaqueta-1', name: 'jaqueta 1', description: 'Jaqueta exclusiva da coleção Louis Vuitton.', category: 'lv_masculino_jaqueta', image: 'https://i.postimg.cc/MZ4N7ZjJ/louis-vuitton-jaqueta-de-couro-damier-HSL90-ETAHMU1-PM2-Front-view.webp', price: 20000 },
+    { id: 'item-jaqueta-2', name: 'jaqueta 2', description: 'Jaqueta exclusiva da coleção Louis Vuitton.', category: 'lv_masculino_jaqueta', image: 'https://i.postimg.cc/QMC3DCnK/louis-vuitton-jaqueta-safari-chic-com-gola-de-couro-HSB73-WRJV851-PM2-Front-view.webp', price: 20000 },
+    { id: 'item-jaqueta-3', name: 'jaqueta 3', description: 'Jaqueta exclusiva da coleção Louis Vuitton.', category: 'lv_masculino_jaqueta', image: 'https://i.postimg.cc/VNG5vQGQ/louis-vuitton-jaqueta-de-baseball-em-nylon-bordado--HSB75WGPD900_PM2_Front_view.webp', price: 20000 },
     // Louis Vuitton - Masculino - T-shirt (NOVOS)
     { id: 'item-tshirt-1', name: 't-shirt 1', description: 'T-shirt exclusiva da coleção Louis Vuitton.', category: 'lv_masculino_tshirt', image: 'https://i.postimg.cc/TPR4dpBg/louis-vuitton-camiseta-de-algodao-bordada-HTY18-WNPG651-PM2-Front-view.webp', price: 10000 },
     { id: 'item-tshirt-2', name: 't-shirt 2', description: 'T-shirt exclusiva da coleção Louis Vuitton.', category: 'lv_masculino_tshirt', image: 'https://i.postimg.cc/6pVPxdbB/Louis-Vuitton-LV-Monogram-Gradient-Black-White-T-Shirt-Crepslocker-Front-1.webp', price: 10000 },
+    { id: 'item-tshirt-3', name: 't-shirt 3', description: 'T-shirt exclusiva da coleção Louis Vuitton.', category: 'lv_masculino_tshirt', image: 'https://i.postimg.cc/SKJkZXrc/blue-front-t-shirt-free-png.webp', price: 10000 },
+    { id: 'item-tshirt-4', name: 't-shirt 4', description: 'T-shirt exclusiva da coleção Louis Vuitton.', category: 'lv_masculino_tshirt', image: 'https://i.postimg.cc/k5BqjVc2/louis-vuitton-camisa-polo-de-manga-curta-em-algodao-com-assinatura-bordada--HNY58WJ6422C_PM2_Front_v.webp', price: 10000 },
+    { id: 'item-tshirt-5', name: 't-shirt 5', description: 'T-shirt exclusiva da coleção Louis Vuitton.', category: 'lv_masculino_tshirt', image: 'https://i.postimg.cc/KYRx9KNk/louis-vuitton-camiseta-com-monogram-e-listras--FOTS37TR1522_PM2_Front_view.webp', price: 10000 },
+    { id: 'item-tshirt-6', name: 't-shirt 6', description: 'T-shirt exclusiva da coleção Louis Vuitton.', category: 'lv_masculino_tshirt', image: 'https://i.postimg.cc/8zyTBdhW/louis-vuitton-camiseta-de-manga-curta-em-algodao-damier-com-patch-lv-em-cristais--HQN63WAUR816_PM2_F.webp', price: 10000 },
+    { id: 'item-tshirt-7', name: 't-shirt 7', description: 'T-shirt exclusiva da coleção Louis Vuitton.', category: 'lv_masculino_tshirt', image: 'https://i.postimg.cc/7ZPx2tTH/louis-vuitton-camiseta-com-monogram-e-listras--FOTS37TR1613_PM2_Front_view.webp', price: 10000 },
+    
+    // Louis Vuitton - Feminino - Calça (NOVOS)
+    { id: 'item-fem-calca-1', name: 'Calça 1', description: 'Calça feminina exclusiva Louis Vuitton.', category: 'lv_feminino_calca', image: 'https://i.postimg.cc/vmvHs3bK/Gemini_Generated_Image_vapl0avapl0avapl.png', price: 20000 },
+    { id: 'item-fem-calca-2', name: 'Calça 2', description: 'Calça feminina exclusiva Louis Vuitton.', category: 'lv_feminino_calca', image: 'https://i.postimg.cc/s2JDrws8/Gemini_Generated_Image_rf67ahrf67ahrf67.png', price: 20000 },
+    { id: 'item-fem-calca-3', name: 'Calça 3', description: 'Calça feminina exclusiva Louis Vuitton.', category: 'lv_feminino_calca', image: 'https://i.postimg.cc/d0FtpzcY/Gemini_Generated_Image_ojq8ngojq8ngojq8.png', price: 20000 },
+    { id: 'item-fem-calca-4', name: 'Calça 4', description: 'Calça feminina exclusiva Louis Vuitton.', category: 'lv_feminino_calca', image: 'https://i.postimg.cc/6QK5gDJD/Gemini_Generated_Image_k5xewpk5xewpk5xe.png', price: 20000 },
+
+    // Louis Vuitton - Feminino - Jaqueta (NOVOS)
+    { id: 'item-fem-jaqueta-1', name: 'jaqueta', description: 'Jaqueta feminina exclusiva Louis Vuitton.', category: 'lv_feminino_jaqueta', image: 'https://i.postimg.cc/PJvjP4nQ/Gemini_Generated_Image_80r5ki80r5ki80r5.png', price: 20000 },
+    { id: 'item-fem-jaqueta-2', name: 'jaqueta 2', description: 'Jaqueta feminina exclusiva Louis Vuitton.', category: 'lv_feminino_jaqueta', image: 'https://i.postimg.cc/fySNJKQc/Gemini_Generated_Image_binoenbinoenbino.png', price: 20000 },
+
     // NOVOS ITENS DE NOVAS CATEGORias
     // Delicias da Leandra - Bolos
     { id: 'item-bolo-1', name: 'Bolo 1', description: 'Bolo artesanal delicioso, feito com ingredientes frescos.', category: 'restaurantes_bolos', image: 'https://i.postimg.cc/L5BvGFbb/PHOTO-2025-07-14-23-58-55.jpg', price: 20000 },
@@ -290,7 +314,7 @@ export const INITIAL_POSTS: Post[] = [
         id: 'post2',
         user: { id: 'user2', name: 'Bruno Gomes', avatar: 'https://i.pravatar.cc/150?u=bruno' },
         image: 'https://i.postimg.cc/PxhsxmFf/meu-estilo-look-12.png',
-        items: [ITEMS[6]], // Adidas Ultraboost
+        items: [ITEMS[4]], // Adidas Ultraboost
         likes: 850,
         isLiked: true,
         comments: [
@@ -314,23 +338,12 @@ export const INITIAL_POSTS: Post[] = [
         id: 'post4',
         user: { id: 'user4', name: 'Daniel Alves', avatar: 'https://i.pravatar.cc/150?u=daniel' },
         image: 'https://i.postimg.cc/vTc6Jdzn/meu-estilo-look.png',
-        items: [ITEMS[30]],
+        items: [ITEMS[30]], // Updated index for item-tshirt-1 due to removals and additions
         likes: 980,
         isLiked: false,
         comments: [],
         commentCount: 0,
         caption: 'Vibes casuais hoje.',
-    },
-    {
-        id: 'post5',
-        user: { id: 'user1', name: 'Ana Clara', avatar: 'https://i.pravatar.cc/150?u=anaclara' },
-        image: 'https://i.postimg.cc/tgNPPkJs/meu-estilo-look-11.png',
-        items: [ITEMS[8]], // Vestido de Noiva Sereia
-        likes: 5400,
-        isLiked: true,
-        comments: [],
-        commentCount: 0,
-        caption: 'Sentindo-me como uma princesa. 👑',
     },
     {
         id: 'post6',
@@ -347,7 +360,7 @@ export const INITIAL_POSTS: Post[] = [
         id: 'post7',
         user: { id: 'user2', name: 'Bruno Gomes', avatar: 'https://i.pravatar.cc/150?u=bruno' },
         image: 'https://i.postimg.cc/bJYnRnS3/meu-estilo-look-6.png',
-        items: [ITEMS[7]], // Adidas Superstar
+        items: [ITEMS[5]], // Adidas Superstar
         likes: 4200,
         isLiked: false,
         comments: [],
@@ -423,7 +436,7 @@ export const INITIAL_COLLABORATION_REQUESTS: CollaborationPost[] = [
         id: 'collab1',
         influencer: { id: 'user1', name: 'Ana Clara', avatar: 'https://i.pravatar.cc/150?u=anaclara' },
         businessId: 'business-user-1',
-        postId: 'post5', // Post do vestido de noiva
+        postId: 'post5', // This ID is kept for historical data but might not render if post is removed from feed
         status: 'pending',
         submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString(),
     },
