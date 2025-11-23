@@ -16,6 +16,7 @@ export const MALE_CLOTHING_SUBCATEGORIES = [
 
 // FIX: Exported constant arrays for use in other components.
 export const FEMALE_CLOTHING_SUBCATEGORIES = [
+    { id: 'fato', name: 'Fato', image: 'https://i.postimg.cc/VLV716TV/Gemini_Generated_Image_1pwnnv1pwnnv1pwn.png' },
     { id: 'tshirt', name: 'T-shirt', image: 'https://i.postimg.cc/gJxZFbq8/ICONS3.jpg' },
     { id: 'camisa', name: 'Camisa', image: 'https://i.postimg.cc/yNG84gNY/ICONS9.jpg' },
     { id: 'calca', name: 'Calça', image: 'https://i.postimg.cc/sXbZ3Hw8/ICONS4.jpg' },
@@ -241,6 +242,49 @@ export const ITEMS: Item[] = [
     { id: 'item-fem-jaqueta-1', name: 'jaqueta', description: 'Jaqueta feminina exclusiva Louis Vuitton.', category: 'lv_feminino_jaqueta', image: 'https://i.postimg.cc/PJvjP4nQ/Gemini_Generated_Image_80r5ki80r5ki80r5.png', price: 20000 },
     { id: 'item-fem-jaqueta-2', name: 'jaqueta 2', description: 'Jaqueta feminina exclusiva Louis Vuitton.', category: 'lv_feminino_jaqueta', image: 'https://i.postimg.cc/fySNJKQc/Gemini_Generated_Image_binoenbinoenbino.png', price: 20000 },
 
+    // Noivas - Vestido (NOVOS)
+    { id: 'noivas-vestido-nova-1', name: 'nova 1', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/G2z4DQWx/Gemini_Generated_Image_2650mg2650mg2650-Photoroom.png', price: 20000 },
+    { id: 'noivas-vestido-nova-2', name: 'nova 2', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/26Cq3JKV/Gemini_Generated_Image_a1effta1effta1ef-Photoroom.png', price: 20000 },
+    { id: 'noivas-vestido-nova-3', name: 'nova 3', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/26T1WwsW/Gemini_Generated_Image_ft6rlgft6rlgft6r-Photoroom.png', price: 20000 },
+    { id: 'noivas-vestido-nova-4', name: 'nova 4', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/hjKJhw5h/Gemini_Generated_Image_mo1c0dmo1c0dmo1c-Photoroom.png', price: 20000 },
+    { id: 'noivas-vestido-nova-5', name: 'nova 5', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/W3sDtKHF/Gemini_Generated_Image_yy6m84yy6m84yy6m-Photoroom.png', price: 20000 },
+    { id: 'noivas-vestido-nova-6', name: 'nova 6', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/sXKMWckP/Gemini_Generated_Image_z8z8hwz8z8hwz8z8-Photoroom.png', price: 20000 },
+
+    // NEW FEELING - Masculino - Fato (NOVOS)
+    { id: 'nf-masc-fato-1', name: 'fato 1', description: 'Fato New Feeling elegante.', category: 'nf_masculino_fato', image: 'https://i.postimg.cc/TwNdQgN6/Gemini_Generated_Image_1tdh7l1tdh7l1tdh.png', price: 20000 },
+    { id: 'nf-masc-fato-2', name: 'fato 2', description: 'Fato New Feeling elegante.', category: 'nf_masculino_fato', image: 'https://i.postimg.cc/s2XDWTKD/Gemini_Generated_Image_6o1rfi6o1rfi6o1r.png', price: 20000 },
+    { id: 'nf-masc-fato-3', name: 'fato 3', description: 'Fato New Feeling elegante.', category: 'nf_masculino_fato', image: 'https://i.postimg.cc/T2ZL6v00/Gemini_Generated_Image_atk1gxatk1gxatk1.png', price: 20000 },
+    { id: 'nf-masc-fato-4', name: 'fato 4', description: 'Fato New Feeling elegante.', category: 'nf_masculino_fato', image: 'https://i.postimg.cc/8C5PvZwz/Gemini_Generated_Image_c9tbmfc9tbmfc9tb.png', price: 20000 },
+    { id: 'nf-masc-fato-5', name: 'fato 5', description: 'Fato New Feeling elegante.', category: 'nf_masculino_fato', image: 'https://i.postimg.cc/mDpLVCXj/Gemini_Generated_Image_doczjodoczjodocz.png', price: 20000 },
+    { id: 'nf-masc-fato-6', name: 'fato 6', description: 'Fato New Feeling elegante.', category: 'nf_masculino_fato', image: 'https://i.postimg.cc/fRWw4H4N/Gemini_Generated_Image_eklfymeklfymeklf.png', price: 20000 },
+    { id: 'nf-masc-fato-7', name: 'fato 7', description: 'Fato New Feeling elegante.', category: 'nf_masculino_fato', image: 'https://i.postimg.cc/K89mmnFk/Gemini_Generated_Image_fl36ccfl36ccfl36.png', price: 20000 },
+    { id: 'nf-masc-fato-8', name: 'fato 8', description: 'Fato New Feeling elegante.', category: 'nf_masculino_fato', image: 'https://i.postimg.cc/ZRsbjp77/Gemini_Generated_Image_hhn23xhhn23xhhn2.png', price: 20000 },
+    { id: 'nf-masc-fato-9', name: 'fato 9', description: 'Fato New Feeling elegante.', category: 'nf_masculino_fato', image: 'https://i.postimg.cc/FHx73d4T/Gemini_Generated_Image_k41u7k41u7k41u7k.png', price: 20000 },
+    { id: 'nf-masc-fato-10', name: 'fato 10', description: 'Fato New Feeling elegante.', category: 'nf_masculino_fato', image: 'https://i.postimg.cc/9F5MktFH/Gemini_Generated_Image_lwcaqelwcaqelwca.png', price: 20000 },
+    { id: 'nf-masc-fato-11', name: 'fato 11', description: 'Fato New Feeling elegante.', category: 'nf_masculino_fato', image: 'https://i.postimg.cc/nV6jJfTn/Gemini_Generated_Image_px3v72px3v72px3v.png', price: 20000 },
+    { id: 'nf-masc-fato-12', name: 'fato 12', description: 'Fato New Feeling elegante.', category: 'nf_masculino_fato', image: 'https://i.postimg.cc/8zyTThDL/Gemini_Generated_Image_qlzuojqlzuojqlzu.png', price: 20000 },
+    { id: 'nf-masc-fato-13', name: 'fato 13', description: 'Fato New Feeling elegante.', category: 'nf_masculino_fato', image: 'https://i.postimg.cc/2STS3sQM/Gemini_Generated_Image_wyvwfkwyvwfkwyvw.png', price: 20000 },
+    { id: 'nf-masc-fato-14', name: 'fato 14', description: 'Fato New Feeling elegante.', category: 'nf_masculino_fato', image: 'https://i.postimg.cc/gkWzszNX/Gemini_Generated_Image_xz80sqxz80sqxz80.png', price: 20000 },
+    { id: 'nf-masc-fato-15', name: 'fato 15', description: 'Fato New Feeling elegante.', category: 'nf_masculino_fato', image: 'https://i.postimg.cc/XYgpdGbm/Gemini_Generated_Image_z8b2jmz8b2jmz8b2.png', price: 20000 },
+
+    // NEW FEELING - Feminino - Fato (NOVOS)
+    { id: 'nf-fem-fato-1', name: 'fato 1', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/VLV716TV/Gemini_Generated_Image_1pwnnv1pwnnv1pwn.png', price: 20000 },
+    { id: 'nf-fem-fato-2', name: 'fato 2', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/bvHHGNCq/Gemini_Generated_Image_2tecl32tecl32tec.png', price: 20000 },
+    { id: 'nf-fem-fato-3', name: 'fato 3', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/YqsXk9VJ/Gemini_Generated_Image_6qse8k6qse8k6qse.png', price: 20000 },
+    { id: 'nf-fem-fato-4', name: 'fato 4', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/9FMxvTxx/Gemini_Generated_Image_7ejw87ejw87ejw87.png', price: 20000 },
+    { id: 'nf-fem-fato-5', name: 'fato 5', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/SxLzd1WV/Gemini_Generated_Image_7rc39w7rc39w7rc3.png', price: 20000 },
+    { id: 'nf-fem-fato-6', name: 'fato 6', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/GpJJBh7B/Gemini_Generated_Image_8ha8yr8ha8yr8ha8.png', price: 20000 },
+    { id: 'nf-fem-fato-7', name: 'fato 7', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/GpJJBh7B/Gemini_Generated_Image_8ha8yr8ha8yr8ha8.png', price: 20000 },
+    { id: 'nf-fem-fato-8', name: 'fato 8', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/ZKGrVyXJ/Gemini_Generated_Image_9k2r799k2r799k2r.png', price: 20000 },
+    { id: 'nf-fem-fato-9', name: 'fato 9', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/gkCvN61W/Gemini_Generated_Image_ae45k6ae45k6ae45.png', price: 20000 },
+    { id: 'nf-fem-fato-10', name: 'fato 10', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/L6byRX7y/Gemini_Generated_Image_g00297g00297g002.png', price: 20000 },
+    { id: 'nf-fem-fato-12', name: 'fato 12', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/dQSRZfB2/Gemini_Generated_Image_h04of5h04of5h04o.png', price: 20000 },
+    { id: 'nf-fem-fato-13', name: 'fato 13', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/yNXXJYQd/Gemini_Generated_Image_i98uani98uani98u.png', price: 20000 },
+    { id: 'nf-fem-fato-14', name: 'fato 14', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/JhW54Bqm/Gemini_Generated_Image_ijzvs1ijzvs1ijzv.png', price: 20000 },
+    { id: 'nf-fem-fato-15', name: 'fato 15', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/JhW54Bqm/Gemini_Generated_Image_ijzvs1ijzvs1ijzv.png', price: 20000 },
+    { id: 'nf-fem-fato-16-a', name: 'fato 16', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/t4dVkvhd/Gemini_Generated_Image_x7t4s5x7t4s5x7t4.png', price: 20000 },
+    { id: 'nf-fem-fato-16-b', name: 'fato 16', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/sf0PGLc8/Gemini_Generated_Image_vsge8jvsge8jvsge.png', price: 20000 },
+
     // NOVOS ITENS DE NOVAS CATEGORias
     // Delicias da Leandra - Bolos
     { id: 'item-bolo-1', name: 'Bolo 1', description: 'Bolo artesanal delicioso, feito com ingredientes frescos.', category: 'restaurantes_bolos', image: 'https://i.postimg.cc/L5BvGFbb/PHOTO-2025-07-14-23-58-55.jpg', price: 20000 },
@@ -281,6 +325,34 @@ export const ITEMS: Item[] = [
       price: 250,
       isTryOn: true,
       beautyType: 'eyeshadow'
+    },
+    // Bonita - Linda (NEW ITEMS)
+    { 
+      id: 'item-beleza-linda-4',
+      name: 'linda 3',
+      description: 'Produto de beleza exclusivo da coleção Linda.',
+      category: 'beleza_linda',
+      image: 'https://i.postimg.cc/KzkGMFnR/Gemini_Generated_Image_bn4paxbn4paxbn4p.png',
+      price: 20000,
+      isTryOn: true,
+    },
+    { 
+      id: 'item-beleza-linda-5',
+      name: 'linda 4',
+      description: 'Produto de beleza exclusivo da coleção Linda.',
+      category: 'beleza_linda',
+      image: 'https://i.postimg.cc/PxpXwhmN/Gemini_Generated_Image_tmnkkttmnkkttmnk.png',
+      price: 20000,
+      isTryOn: true,
+    },
+    { 
+      id: 'item-beleza-linda-6',
+      name: 'linda 5',
+      description: 'Produto de beleza exclusivo da coleção Linda.',
+      category: 'beleza_linda',
+      image: 'https://i.postimg.cc/dQCQQssX/Gemini_Generated_Image_ngmtkengmtkengmt.png',
+      price: 20000,
+      isTryOn: true,
     },
     // Apple - Iphone
     { id: 'item-tec-iphone-1', name: 'Iphone 1', description: 'Iphone exclusivo da Apple.', category: 'tecnologia_Iphone', image: 'https://i.postimg.cc/ZKszJHKK/Gemini_Generated_Image_lrcnu0lrcnu0lrcn.png', price: 20000 },

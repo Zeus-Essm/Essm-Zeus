@@ -33,9 +33,6 @@ const ResultScreen: React.FC<ResultScreenProps> = ({
 }) => {
   const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
   
-  const wornItemIds = new Set(items.map(i => i.id));
-  const suggestedItems = categoryItems.filter(i => !wornItemIds.has(i.id));
-
   return (
     <div className="w-full h-full flex flex-col text-[var(--text-primary)] animate-fadeIn bg-[var(--bg-main)]">
       <Header title="Seu Look" />
@@ -64,28 +61,6 @@ const ResultScreen: React.FC<ResultScreenProps> = ({
                 </span>
             </div>
         </div>
-
-        {/* Carrossel de Itens Sugeridos */}
-        {suggestedItems.length > 0 && (
-          <div className="w-full max-w-sm mt-2">
-            <h3 className="text-lg font-bold mb-3 text-[var(--text-primary)] opacity-90">Experimente também:</h3>
-            <div className="flex overflow-x-auto gap-3 pb-2 -mx-4 px-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              {suggestedItems.map(item => (
-                <div 
-                  key={item.id} 
-                  onClick={() => onItemSelect(item)} 
-                  className="flex-shrink-0 w-32 bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-lg overflow-hidden cursor-pointer group transform hover:scale-105 transition-transform hover:border-[var(--accent-primary)]/40"
-                >
-                   <img src={item.image} alt={item.name} className="w-full h-32 object-cover"/>
-                   <div className="p-2">
-                    <h4 className="text-xs font-semibold truncate group-hover:text-[var(--accent-primary)] transition-colors">{item.name}</h4>
-                    <p className="text-xs text-[var(--text-secondary)]">Provar</p>
-                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
       </div>
       <div className="p-4 flex-shrink-0 space-y-2 bg-[var(--bg-main)] border-t border-[var(--border-primary)]">
