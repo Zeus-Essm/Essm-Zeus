@@ -320,6 +320,20 @@ export const ITEMS: Item[] = [
     { id: 'nf-fem-fato-16-a', name: 'fato 16', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/t4dVkvhd/Gemini_Generated_Image_x7t4s5x7t4s5x7t4.png', price: 20000 },
     { id: 'nf-fem-fato-16-b', name: 'fato 16', description: 'Fato feminino New Feeling.', category: 'nf_feminino_fato', image: 'https://i.postimg.cc/sf0PGLc8/Gemini_Generated_Image_vsge8jvsge8jvsge.png', price: 20000 },
 
+    // ADIDAS - Feminino - Ténis (NOVOS)
+    { id: 'ad-fem-tenis-1', name: 'T1', description: 'Ténis Adidas feminino exclusivo.', category: 'ad_feminino_tenis', image: 'https://i.postimg.cc/YqN1H4wg/1393666_full_product.webp', price: 20000 },
+    { id: 'ad-fem-tenis-2', name: 'T2', description: 'Ténis Adidas feminino exclusivo.', category: 'ad_feminino_tenis', image: 'https://i.postimg.cc/RZMwVMMn/sapatilhas_adizero_evo_sl_(1).avif', price: 20000 },
+    { id: 'ad-fem-tenis-3', name: 'T3', description: 'Ténis Adidas feminino exclusivo.', category: 'ad_feminino_tenis', image: 'https://i.postimg.cc/J43bLyWk/tenis_adidas_campus_794830.jpg', price: 20000 },
+    { id: 'ad-fem-tenis-4', name: 'T4', description: 'Ténis Adidas feminino exclusivo.', category: 'ad_feminino_tenis', image: 'https://i.postimg.cc/dtR8Y7Kr/tenis_adidas_dame_9_low_ie3627_8071_1_eba2c755b4d44d25a8300143fa4dc10b.webp', price: 20000 },
+    { id: 'ad-fem-tenis-5', name: 'T5', description: 'Ténis Adidas feminino exclusivo.', category: 'ad_feminino_tenis', image: 'https://i.postimg.cc/sDPprBR5/314217283804.webp', price: 20000 },
+    { id: 'ad-fem-tenis-6', name: 'T6', description: 'Ténis Adidas feminino exclusivo.', category: 'ad_feminino_tenis', image: 'https://i.postimg.cc/vH7Ws1dv/314217725804.webp', price: 20000 },
+
+    // ADIDAS - Feminino - Fato (NOVOS)
+    { id: 'ad-fem-fato-1', name: 'T1', description: 'Fato Adidas feminino exclusivo.', category: 'ad_feminino_fato', image: 'https://i.postimg.cc/kGmL2VYB/322846_800_auto.webp', price: 20000 },
+    { id: 'ad-fem-fato-2', name: 'T2', description: 'Fato Adidas feminino exclusivo.', category: 'ad_feminino_fato', image: 'https://i.postimg.cc/j2bBDW3W/63838802_o.webp', price: 20000 },
+    { id: 'ad-fem-fato-3', name: 'T3', description: 'Fato Adidas feminino exclusivo.', category: 'ad_feminino_fato', image: 'https://i.postimg.cc/0jshz6XK/63842428_o.webp', price: 20000 },
+    { id: 'ad-fem-fato-4', name: 'T4', description: 'Fato Adidas feminino exclusivo.', category: 'ad_feminino_fato', image: 'https://i.postimg.cc/GtC64Bgs/7afc787b99b64c10a9e7efa06126cee6.webp', price: 20000 },
+
     // NOVOS ITENS DE NOVAS CATEGORias
     // Delicias da Leandra - Bolos
     { id: 'item-bolo-1', name: 'Bolo 1', description: 'Bolo artesanal delicioso, feito com ingredientes frescos.', category: 'restaurantes_bolos', image: 'https://i.postimg.cc/L5BvGFbb/PHOTO-2025-07-14-23-58-55.jpg', price: 20000 },
