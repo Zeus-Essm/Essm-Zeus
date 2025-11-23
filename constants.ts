@@ -93,7 +93,16 @@ export const CATEGORIES: Category[] = [
     type: 'fashion',
     subCategories: [
         { id: 'lv_masculino', name: 'Masculino', image: 'https://i.postimg.cc/zD9nNvQB/homem.jpg', subCategories: createSubCategories('lv_masculino', MALE_CLOTHING_SUBCATEGORIES) },
-        { id: 'lv_feminino', name: 'Feminino', image: 'https://i.postimg.cc/y8T90P8g/mulher.jpg', subCategories: createSubCategories('lv_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
+        { 
+            id: 'lv_feminino', 
+            name: 'Feminino', 
+            image: 'https://i.postimg.cc/y8T90P8g/mulher.jpg', 
+            subCategories: createSubCategories('lv_feminino', FEMALE_CLOTHING_SUBCATEGORIES.map(sc => {
+                if (sc.id === 'vestido') return { ...sc, image: 'https://i.postimg.cc/rmg2GPCb/Gemini_Generated_Image_x48n1sx48n1sx48n.png' };
+                if (sc.id === 'saia') return { ...sc, image: 'https://i.postimg.cc/B6Nf5VcY/Gemini_Generated_Image_4ugkqh4ugkqh4ugk.png' };
+                return sc;
+            })) 
+        },
         { id: 'lv_crianca', name: 'Criança', image: 'https://i.postimg.cc/DyL1wFVc/pequeno.jpg', subCategories: createSubCategories('lv_crianca', KID_CLOTHING_SUBCATEGORIES) }
     ]
   },
@@ -105,7 +114,16 @@ export const CATEGORIES: Category[] = [
     type: 'fashion',
     subCategories: [
         { id: 'nf_masculino', name: 'Masculino', image: 'https://i.postimg.cc/zD9nNvQB/homem.jpg', subCategories: createSubCategories('nf_masculino', MALE_CLOTHING_SUBCATEGORIES) },
-        { id: 'nf_feminino', name: 'Feminino', image: 'https://i.postimg.cc/y8T90P8g/mulher.jpg', subCategories: createSubCategories('nf_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
+        { 
+            id: 'nf_feminino', 
+            name: 'Feminino', 
+            image: 'https://i.postimg.cc/y8T90P8g/mulher.jpg', 
+            subCategories: createSubCategories('nf_feminino', FEMALE_CLOTHING_SUBCATEGORIES.map(sc => {
+                if (sc.id === 'vestido') return { ...sc, image: 'https://i.postimg.cc/rmg2GPCb/Gemini_Generated_Image_x48n1sx48n1sx48n.png' };
+                if (sc.id === 'saia') return { ...sc, image: 'https://i.postimg.cc/B6Nf5VcY/Gemini_Generated_Image_4ugkqh4ugkqh4ugk.png' };
+                return sc;
+            })) 
+        },
         { id: 'nf_crianca', name: 'Criança', image: 'https://i.postimg.cc/DyL1wFVc/pequeno.jpg', subCategories: createSubCategories('nf_crianca', KID_CLOTHING_SUBCATEGORIES) }
     ]
   },
@@ -114,7 +132,23 @@ export const CATEGORIES: Category[] = [
     name: 'Noivas',
     image: 'https://i.postimg.cc/G3vH75kZ/465687536-1138426001618419-59111119315795457782-n.jpg',
     type: 'fashion',
-    subCategories: createSubCategories('noivas', FEMALE_CLOTHING_SUBCATEGORIES.filter(c => ['vestido', 'sapatos', 'acessorios'].includes(c.id)))
+    subCategories: [
+        {
+            id: 'noivas_vestido',
+            name: 'Vestido',
+            image: 'https://i.postimg.cc/gkPXMMRL/noivas.png'
+        },
+        {
+            id: 'noivas_sapatos',
+            name: 'Sapatos',
+            image: 'https://i.postimg.cc/TPYb0DKk/ICONS6.jpg'
+        },
+        {
+            id: 'noivas_acessorios',
+            name: 'Acessórios',
+            image: 'https://i.postimg.cc/jjg7FSNR/ICONS5.jpg'
+        }
+    ]
   },
   {
     id: 'lilas',
@@ -249,6 +283,7 @@ export const ITEMS: Item[] = [
     { id: 'noivas-vestido-nova-4', name: 'nova 4', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/hjKJhw5h/Gemini_Generated_Image_mo1c0dmo1c0dmo1c-Photoroom.png', price: 20000 },
     { id: 'noivas-vestido-nova-5', name: 'nova 5', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/W3sDtKHF/Gemini_Generated_Image_yy6m84yy6m84yy6m-Photoroom.png', price: 20000 },
     { id: 'noivas-vestido-nova-6', name: 'nova 6', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/sXKMWckP/Gemini_Generated_Image_z8z8hwz8z8hwz8z8-Photoroom.png', price: 20000 },
+    { id: 'noivas-vestido-nova-7', name: 'nova 7', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/HsQLzpFT/Gemini_Generated_Image_ft6rlgft6rlgft6r_Photoroom.png', price: 20000 },
 
     // NEW FEELING - Masculino - Fato (NOVOS)
     { id: 'nf-masc-fato-1', name: 'fato 1', description: 'Fato New Feeling elegante.', category: 'nf_masculino_fato', image: 'https://i.postimg.cc/TwNdQgN6/Gemini_Generated_Image_1tdh7l1tdh7l1tdh.png', price: 20000 },
