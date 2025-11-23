@@ -100,7 +100,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'new_feeling',
     name: 'NEW FEELING',
-    image: 'https://i.postimg.cc/P5K1G2Py/new.jpg',
+    image: 'https://i.postimg.cc/pTbvCjjp/NEW-FEELING.png',
     video: 'https://files.catbox.moe/joiet2.mp4',
     type: 'fashion',
     subCategories: [
@@ -360,7 +360,7 @@ export const ITEMS: Item[] = [
 ];
 
 export const INITIAL_STORIES: Story[] = [
-  { id: 'story1', user: { name: 'Camila', avatar: 'https://i.pravatar.cc/150?u=camila' }, backgroundImage: 'https://i.postimg.cc/P5K1G2Py/new.jpg' },
+  { id: 'story1', user: { name: 'Camila', avatar: 'https://i.pravatar.cc/150?u=camila' }, backgroundImage: 'https://i.postimg.cc/pTbvCjjp/NEW-FEELING.png' },
   { id: 'story2', user: { name: 'Juliana', avatar: 'https://i.pravatar.cc/150?u=juliana' }, backgroundImage: 'https://i.postimg.cc/fT8G07T7/lilas.jpg' },
   { id: 'story3', user: { name: 'Lucas', avatar: 'https://i.pravatar.cc/150?u=lucas' }, backgroundImage: 'https://i.postimg.cc/6pBH2ygx/adidas.jpg' },
   { id: 'story4', user: { name: 'Mariana', avatar: 'https://i.pravatar.cc/150?u=mariana' }, backgroundImage: 'https://i.postimg.cc/Y0dZ2hRz/noiva.jpg' },
@@ -481,7 +481,7 @@ export const INITIAL_VENDOR_ITEMS: Item[] = [
 export const VENDOR_POSTS: Post[] = [
      {
         id: 'vendor-post1',
-        user: { id: 'business-user-1', name: 'NEW FEELING', avatar: 'https://i.postimg.cc/P5K1G2Py/new.jpg' },
+        user: { id: 'business-user-1', name: 'NEW FEELING', avatar: 'https://i.postimg.cc/pTbvCjjp/NEW-FEELING.png' },
         image: 'https://i.postimg.cc/T3mn2fXq/meu-estilo-look-5.png',
         items: [INITIAL_VENDOR_ITEMS[0], INITIAL_VENDOR_ITEMS[1]],
         likes: 1800,
@@ -492,7 +492,7 @@ export const VENDOR_POSTS: Post[] = [
     },
     {
         id: 'vendor-post2',
-        user: { id: 'business-user-1', name: 'NEW FEELING', avatar: 'https://i.postimg.cc/P5K1G2Py/new.jpg' },
+        user: { id: 'business-user-1', name: 'NEW FEELING', avatar: 'https://i.postimg.cc/pTbvCjjp/NEW-FEELING.png' },
         image: 'https://i.postimg.cc/mk2v3Ts0/meu-estilo-look-13.png',
         items: [INITIAL_VENDOR_ITEMS[4]],
         likes: 2300,
