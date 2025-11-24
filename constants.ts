@@ -151,13 +151,6 @@ export const CATEGORIES: Category[] = [
     ]
   },
   {
-    id: 'lilas',
-    name: 'Lilás',
-    image: 'https://i.postimg.cc/7Z9pT8Wk/L.jpg',
-    type: 'fashion',
-    subCategories: createSubCategories('lilas', FEMALE_CLOTHING_SUBCATEGORIES)
-  },
-  {
     id: 'adidas',
     name: 'Adidas',
     image: 'https://i.postimg.cc/LXmdq4H2/D.jpg',
@@ -166,6 +159,13 @@ export const CATEGORIES: Category[] = [
         { id: 'ad_masculino', name: 'Masculino', image: 'https://i.postimg.cc/zD9nNvQB/homem.jpg', subCategories: createSubCategories('ad_masculino', MALE_CLOTHING_SUBCATEGORIES) },
         { id: 'ad_feminino', name: 'Feminino', image: 'https://i.postimg.cc/y8T90P8g/mulher.jpg', subCategories: createSubCategories('ad_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
     ]
+  },
+  {
+    id: 'lilas',
+    name: 'Lilás',
+    image: 'https://i.postimg.cc/7Z9pT8Wk/L.jpg',
+    type: 'fashion',
+    subCategories: createSubCategories('lilas', FEMALE_CLOTHING_SUBCATEGORIES)
   },
   {
     id: 'restaurantes',
@@ -329,10 +329,11 @@ export const ITEMS: Item[] = [
     { id: 'ad-fem-tenis-6', name: 'T6', description: 'Ténis Adidas feminino exclusivo.', category: 'ad_feminino_tenis', image: 'https://i.postimg.cc/vH7Ws1dv/314217725804.webp', price: 20000 },
 
     // ADIDAS - Feminino - Fato (NOVOS)
-    { id: 'ad-fem-fato-1', name: 'T1', description: 'Fato Adidas feminino exclusivo.', category: 'ad_feminino_fato', image: 'https://i.postimg.cc/kGmL2VYB/322846_800_auto.webp', price: 20000 },
-    { id: 'ad-fem-fato-2', name: 'T2', description: 'Fato Adidas feminino exclusivo.', category: 'ad_feminino_fato', image: 'https://i.postimg.cc/j2bBDW3W/63838802_o.webp', price: 20000 },
+    { id: 'ad-fem-fato-1', name: 'T1', description: 'Fato Adidas feminino exclusivo.', category: 'ad_feminino_fato', image: 'https://i.postimg.cc/PqyVKt4z/sapatilhas_adidas_originals_superstar_ii_ih4172.png', price: 20000 },
+    { id: 'ad-fem-fato-2', name: 'T2', description: 'Fato Adidas feminino exclusivo.', category: 'ad_feminino_fato', image: 'https://i.postimg.cc/xdnFKkKG/sapatos_de_taekwondo_adikick_aditkk01_adidas.jpg', price: 20000 },
     { id: 'ad-fem-fato-3', name: 'T3', description: 'Fato Adidas feminino exclusivo.', category: 'ad_feminino_fato', image: 'https://i.postimg.cc/0jshz6XK/63842428_o.webp', price: 20000 },
-    { id: 'ad-fem-fato-4', name: 'T4', description: 'Fato Adidas feminino exclusivo.', category: 'ad_feminino_fato', image: 'https://i.postimg.cc/GtC64Bgs/7afc787b99b64c10a9e7efa06126cee6.webp', price: 20000 },
+    { id: 'ad-fem-fato-4', name: 'T4', description: 'Fato Adidas feminino exclusivo.', category: 'ad_feminino_fato', image: 'https://i.postimg.cc/mrB6QcQm/XCV.png', price: 20000 },
+    { id: 'ad-fem-fato-5', name: 'T5', description: 'Fato Adidas feminino exclusivo.', category: 'ad_feminino_fato', image: 'https://i.postimg.cc/cJhkTsm7/XSD.png', price: 20000 },
 
     // NOVOS ITENS DE NOVAS CATEGORias
     // Delicias da Leandra - Bolos
