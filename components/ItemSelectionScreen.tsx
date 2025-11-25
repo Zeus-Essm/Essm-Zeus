@@ -22,6 +22,7 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
   
   const [quickViewItem, setQuickViewItem] = useState<Item | null>(null);
   const [pressedItemId, setPressedItemId] = useState<string | null>(null); // State to track pressed item for animation
+  const [animatingCartItemId, setAnimatingCartItemId] = useState<string | null>(null); // State to track item being added to cart
   const pressTimer = useRef<number | null>(null);
 
   const handlePressStart = (item: Item) => {
@@ -43,6 +44,13 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
     setQuickViewItem(null);
   };
 
+  const handleAddToCartClick = (e: React.MouseEvent, item: Item) => {
+      e.stopPropagation();
+      setAnimatingCartItemId(item.id);
+      onAddToCart(item);
+      setTimeout(() => setAnimatingCartItemId(null), 1000); // Animation duration
+  };
+
   return (
     <>
       <div className="w-full h-full flex flex-col text-[var(--text-primary)] animate-fadeIn bg-[var(--bg-main)]">
@@ -61,7 +69,7 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
               {categoryItems.map(item => (
                 <div 
                     key={item.id}
-                    className={`bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-xl p-2 flex flex-col hover:bg-[var(--accent-primary)]/5 cursor-pointer transition-all duration-200 ease-out ${pressedItemId === item.id ? 'transform scale-105 shadow-lg shadow-[var(--accent-primary)]/20' : ''}`}
+                    className={`bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-xl p-2 flex flex-col hover:bg-[var(--accent-primary)]/5 cursor-pointer transition-all duration-200 ease-out ${pressedItemId === item.id ? 'transform scale-95 shadow-inner' : 'hover:scale-[1.02] shadow-sm'}`}
                     onMouseDown={() => handlePressStart(item)}
                     onMouseUp={handlePressEnd}
                     onMouseLeave={handlePressEnd}
@@ -69,22 +77,31 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
                     onTouchEnd={handlePressEnd}
                     onContextMenu={(e) => e.preventDefault()}
                 >
-                  <img src={item.image} alt={item.name} className="w-full h-40 object-cover rounded-lg mb-2 pointer-events-none" />
+                  <div className="relative overflow-hidden rounded-lg mb-2">
+                      <img src={item.image} alt={item.name} className="w-full h-40 object-cover pointer-events-none transition-transform duration-500 hover:scale-110" />
+                  </div>
                   <div className='flex flex-col flex-grow p-1'>
-                    <h3 className="text-sm font-semibold flex-grow pointer-events-none">{item.name}</h3>
+                    <h3 className="text-sm font-semibold flex-grow pointer-events-none truncate">{item.name}</h3>
                     <div className="mt-2 flex items-center gap-2">
                         <button
-                            onClick={() => onItemSelect(item)}
-                            className="flex-grow text-xs text-center font-bold uppercase tracking-wider py-2 px-2 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] hover:brightness-125 transition-colors transform hover:scale-105"
+                            onClick={(e) => { e.stopPropagation(); onItemSelect(item); }}
+                            className="flex-grow text-xs text-center font-bold uppercase tracking-wider py-2 px-2 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] transition-all transform active:scale-90 hover:shadow-[0_0_10px_var(--accent-primary-glow)]"
                         >
                             {collectionType === 'fashion' || item.isTryOn ? 'PROVAR' : 'REPOSTAR'}
                         </button>
                         <button
-                            onClick={() => onAddToCart(item)}
-                            className="p-2.5 rounded-full bg-[var(--bg-tertiary)] hover:brightness-95 transition-colors"
+                            onClick={(e) => handleAddToCartClick(e, item)}
+                            className={`p-2.5 rounded-full transition-all transform duration-300 ${animatingCartItemId === item.id ? 'bg-green-500 scale-110 rotate-12' : 'bg-[var(--bg-tertiary)] hover:bg-[var(--text-secondary)]/20 active:scale-90'}`}
                             aria-label="Adicionar ao carrinho"
+                            disabled={animatingCartItemId === item.id}
                         >
-                            <ShoppingBagIcon className="w-4 h-4 text-[var(--accent-primary)]" />
+                            {animatingCartItemId === item.id ? (
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="white" className="w-4 h-4">
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                </svg>
+                            ) : (
+                                <ShoppingBagIcon className="w-4 h-4 text-[var(--accent-primary)]" />
+                            )}
                         </button>
                     </div>
                   </div>

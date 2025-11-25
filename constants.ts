@@ -1,4 +1,3 @@
-
 import type { Category, Item, Post, Story, Conversation, CollaborationPost } from './types';
 
 // Sub-categorias de Roupas reutilizáveis
@@ -69,6 +68,7 @@ export const BEAUTY_SHOP_CATEGORIES = [
     { id: 'maquilhagem', name: 'Maquilhagem', image: 'https://i.postimg.cc/YS6p2Fsd/Gemini-Generated-Image-fz7zo1fz7zo1fz7z.png' },
     { id: 'cabelo', name: 'Cabelo', image: 'https://i.postimg.cc/BvTqZFVN/Gemini-Generated-Image-3ps4k73ps4k73ps4.png' },
     { id: 'pele', name: 'Pele', image: 'https://i.postimg.cc/k5QnMSp1/Gemini-Generated-Image-a9r49ea9r49ea9r4.png' },
+    { id: 'peruca', name: 'Peruca', image: 'https://i.postimg.cc/6Q1TQDHK/81e_CCdc_Mv_ZL_SL1500.jpg' },
 ];
 
 export const TECHNOLOGY_SHOP_CATEGORIES = [
@@ -151,13 +151,6 @@ export const CATEGORIES: Category[] = [
     ]
   },
   {
-    id: 'lilas',
-    name: 'Lilás',
-    image: 'https://i.postimg.cc/7Z9pT8Wk/L.jpg',
-    type: 'fashion',
-    subCategories: createSubCategories('lilas', FEMALE_CLOTHING_SUBCATEGORIES)
-  },
-  {
     id: 'adidas',
     name: 'Adidas',
     image: 'https://i.postimg.cc/LXmdq4H2/D.jpg',
@@ -166,6 +159,13 @@ export const CATEGORIES: Category[] = [
         { id: 'ad_masculino', name: 'Masculino', image: 'https://i.postimg.cc/zD9nNvQB/homem.jpg', subCategories: createSubCategories('ad_masculino', MALE_CLOTHING_SUBCATEGORIES) },
         { id: 'ad_feminino', name: 'Feminino', image: 'https://i.postimg.cc/y8T90P8g/mulher.jpg', subCategories: createSubCategories('ad_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
     ]
+  },
+  {
+    id: 'lilas',
+    name: 'Lilás',
+    image: 'https://i.postimg.cc/7Z9pT8Wk/L.jpg',
+    type: 'fashion',
+    subCategories: createSubCategories('lilas', FEMALE_CLOTHING_SUBCATEGORIES)
   },
   {
     id: 'restaurantes',
@@ -196,7 +196,8 @@ export const CATEGORIES: Category[] = [
     image: 'https://i.postimg.cc/k5QnMSp1/Gemini-Generated-Image-a9r49ea9r49ea9r4.png',
     type: 'beauty',
     subCategories: [
-        { id: 'beleza_linda', name: 'Linda', image: 'https://i.postimg.cc/YS6p2Fsd/Gemini-Generated-Image-fz7zo1fz7zo1fz7z.png' }
+        { id: 'beleza_linda', name: 'Linda', image: 'https://i.postimg.cc/YS6p2Fsd/Gemini-Generated-Image-fz7zo1fz7zo1fz7z.png' },
+        { id: 'beleza_peruca', name: 'Peruca', image: 'https://i.postimg.cc/6Q1TQDHK/81e_CCdc_Mv_ZL_SL1500.jpg' }
     ]
   },
   {
@@ -383,6 +384,17 @@ export const ITEMS: Item[] = [
       image: 'https://i.postimg.cc/dQCQQssX/Gemini_Generated_Image_ngmtkengmtkengmt.png',
       price: 20000,
       isTryOn: true,
+    },
+    // Bonita - Peruca (NEW ITEM)
+    { 
+      id: 'item-beleza-peruca-linda-o',
+      name: 'linda o',
+      description: 'Peruca exclusiva.',
+      category: 'beleza_peruca',
+      image: 'https://i.postimg.cc/6Q1TQDHK/81e_CCdc_Mv_ZL_SL1500.jpg',
+      price: 20000,
+      isTryOn: true,
+      beautyType: 'wig'
     },
     // Apple - Iphone
     { id: 'item-tec-iphone-1', name: 'Iphone 1', description: 'Iphone exclusivo da Apple.', category: 'tecnologia_Iphone', image: 'https://i.postimg.cc/ZKszJHKK/Gemini_Generated_Image_lrcnu0lrcnu0lrcn.png', price: 20000 },

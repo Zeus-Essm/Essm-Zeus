@@ -1,5 +1,4 @@
 
-
 import React from 'react';
 import Header from './Header';
 import { ShoppingBagIcon, XCircleIcon } from './IconComponents';
@@ -25,7 +24,11 @@ const CartScreen: React.FC<CartScreenProps> = ({ cartItems, onBack, onRemoveItem
         {cartItems.length > 0 ? (
           <div className="p-4 space-y-3">
             {cartItems.map((item, index) => (
-              <div key={index} className="flex items-center gap-4 bg-[var(--bg-secondary)] border border-[var(--border-primary)] p-3 rounded-lg">
+              <div 
+                key={`${item.id}-${index}`} 
+                className="flex items-center gap-4 bg-[var(--bg-secondary)] border border-[var(--border-primary)] p-3 rounded-lg animate-slideUp"
+                style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'backwards' }}
+              >
                 <img src={item.image} alt={item.name} className="w-16 h-20 object-cover rounded-md" />
                 <div className="flex-grow">
                   <h3 className="font-semibold">{item.name}</h3>
@@ -37,20 +40,20 @@ const CartScreen: React.FC<CartScreenProps> = ({ cartItems, onBack, onRemoveItem
                     <div className="flex items-center gap-2">
                          <button
                             onClick={() => onTryOnItem(item)}
-                            className="text-xs font-bold py-1.5 px-4 rounded-full bg-[var(--bg-tertiary)] hover:brightness-95 transition-colors"
+                            className="text-xs font-bold py-1.5 px-4 rounded-full bg-[var(--bg-tertiary)] hover:brightness-95 transition-transform active:scale-95"
                             aria-label={`Provar ${item.name}`}
                         >
                             Provar
                         </button>
                         <button
                           onClick={() => onBuyItem(item, index)}
-                          className="text-xs font-bold py-1.5 px-4 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] hover:brightness-125 transition-colors"
+                          className="text-xs font-bold py-1.5 px-4 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] hover:brightness-125 transition-transform active:scale-95"
                           aria-label={`Comprar ${item.name}`}
                         >
                           Comprar
                         </button>
                     </div>
-                    <button onClick={() => onRemoveItem(index)} className="p-1 text-[var(--text-secondary)] opacity-75 hover:text-red-500 transition-colors">
+                    <button onClick={() => onRemoveItem(index)} className="p-1 text-[var(--text-secondary)] opacity-75 hover:text-red-500 transition-transform active:scale-90">
                       <XCircleIcon className="w-6 h-6" />
                     </button>
                 </div>
@@ -75,7 +78,7 @@ const CartScreen: React.FC<CartScreenProps> = ({ cartItems, onBack, onRemoveItem
               {totalPrice.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
             </span>
           </div>
-          <GradientButton onClick={onCheckout} className="!bg-[var(--accent-primary)] !text-[var(--accent-primary-text)] hover:!brightness-125">
+          <GradientButton onClick={onCheckout} className="!bg-[var(--accent-primary)] !text-[var(--accent-primary-text)] hover:!brightness-125 active:scale-98 transition-transform">
             <div className="flex items-center justify-center gap-2">
               <ShoppingBagIcon className="w-5 h-5" />
               Finalizar Compra
