@@ -151,6 +151,13 @@ export const CATEGORIES: Category[] = [
     ]
   },
   {
+    id: 'lilas',
+    name: 'Lilás',
+    image: 'https://i.postimg.cc/7Z9pT8Wk/L.jpg',
+    type: 'fashion',
+    subCategories: createSubCategories('lilas', FEMALE_CLOTHING_SUBCATEGORIES)
+  },
+  {
     id: 'adidas',
     name: 'Adidas',
     image: 'https://i.postimg.cc/LXmdq4H2/D.jpg',
@@ -159,13 +166,6 @@ export const CATEGORIES: Category[] = [
         { id: 'ad_masculino', name: 'Masculino', image: 'https://i.postimg.cc/zD9nNvQB/homem.jpg', subCategories: createSubCategories('ad_masculino', MALE_CLOTHING_SUBCATEGORIES) },
         { id: 'ad_feminino', name: 'Feminino', image: 'https://i.postimg.cc/y8T90P8g/mulher.jpg', subCategories: createSubCategories('ad_feminino', FEMALE_CLOTHING_SUBCATEGORIES) },
     ]
-  },
-  {
-    id: 'lilas',
-    name: 'Lilás',
-    image: 'https://i.postimg.cc/7Z9pT8Wk/L.jpg',
-    type: 'fashion',
-    subCategories: createSubCategories('lilas', FEMALE_CLOTHING_SUBCATEGORIES)
   },
   {
     id: 'restaurantes',
@@ -355,26 +355,6 @@ export const ITEMS: Item[] = [
       price: 150,
       isTryOn: true,
       beautyType: 'lipstick'
-    },
-    {
-      id: 'item-beleza-linda-2',
-      name: 'Peruca Loira Ondulada',
-      description: 'Peruca loira com ondas naturais e aparência realista para uma mudança de visual instantânea.',
-      category: 'beleza_linda',
-      image: 'https://i.postimg.cc/BvTqZFVN/Gemini-Generated-Image-3ps4k73ps4k73ps4.png',
-      price: 1200,
-      isTryOn: true,
-      beautyType: 'wig'
-    },
-    {
-      id: 'item-beleza-linda-3',
-      name: 'Sombra Noite Estrelada',
-      description: 'Paleta de sombras com tons escuros e brilhantes para um olhar marcante.',
-      category: 'beleza_linda',
-      image: 'https://i.postimg.cc/J0bJbJgQ/Gemini-Generated-Image-2.png',
-      price: 250,
-      isTryOn: true,
-      beautyType: 'eyeshadow'
     },
     // Bonita - Linda (NEW ITEMS)
     { 
