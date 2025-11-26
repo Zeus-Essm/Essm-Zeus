@@ -354,7 +354,7 @@ export const ITEMS: Item[] = [
       name: 'Batom Vermelho Intenso',
       description: 'Batom vermelho vibrante com acabamento matte para um look poderoso.',
       category: 'beleza_linda',
-      image: 'https://i.postimg.cc/YS6p2Fsd/Gemini_Generated_Image_fz7zo1fz7zo1fz7z.png',
+      image: 'https://i.postimg.cc/YS6p2Fsd/Gemini-Generated_Image_fz7zo1fz7zo1fz7z.png',
       price: 150,
       isTryOn: true,
       beautyType: 'lipstick'
@@ -439,7 +439,7 @@ export const ITEMS: Item[] = [
       isTryOn: true,
       beautyType: 'eyeshadow'
     },
-    { 
+     { 
       id: 'item-beleza-makeup-5',
       name: 'make 5',
       description: 'Estilo de maquiagem exclusivo.',

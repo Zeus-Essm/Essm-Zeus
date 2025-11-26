@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Modality, GenerateContentResponse } from '@google/genai';
 import type { Item } from '../types';
 
@@ -93,101 +92,49 @@ const imageUrlToDataUrl = async (url: string): Promise<string> => {
   }
 };
 
-// --- NEW ASPECT RATIO LOGIC ---
-const SUPPORTED_ASPECT_RATIOS = [
-  // Portrait
-  { ratio: 9 / 16, label: '9:16' }, // 0.5625
-  { ratio: 2 / 3, label: '2:3' },   // 0.6667
-  { ratio: 3 / 4, label: '3:4' },   // 0.75
-  { ratio: 4 / 5, label: '4:5' },   // 0.8
-  // Square
-  { ratio: 1 / 1, label: '1:1' },   // 1.0
-  // Flexible / Landscape
-  { ratio: 5 / 4, label: '5:4' },   // 1.25
-  { ratio: 4 / 3, label: '4:3' },   // 1.3333
-  { ratio: 3 / 2, label: '3:2' },   // 1.5
-  { ratio: 16 / 9, label: '16:9' }, // 1.7778
-  { ratio: 21 / 9, label: '21:9' }, // 2.3333
-];
-
-const getClosestAspectRatio = (width: number, height: number): string => {
-  // Always return '3:4' as per user request to force this aspect ratio.
-  return '3:4';
-};
-
+/**
+ * Normalizes the image to a 1:1 (4:4) aspect ratio by adding a white background.
+ * The user's image is centered on the white canvas.
+ * This effectively creates the "white background base" requested.
+ */
 export const normalizeImageAspectRatio = async (userImage: string): Promise<string> => {
-    if (!process.env.API_KEY) {
-        console.warn("API_KEY not set. Cannot normalize image aspect ratio. Returning original.");
-        return userImage;
-    }
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      // 1. Determine the square size based on the largest dimension
+      const size = Math.max(img.width, img.height);
 
-    const { width, height } = await getImageDimensions(userImage);
-    const targetAspectRatio = getClosestAspectRatio(width, height);
+      // 2. Create a square canvas
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
 
-    // Check if the aspect ratio is already close enough to a supported one
-    const originalRatio = width / height;
-    const targetRatioValue = SUPPORTED_ASPECT_RATIOS.find(r => r.label === targetAspectRatio)!.ratio;
-    if (Math.abs(originalRatio - targetRatioValue) < 0.02) { // Allow a small tolerance
-        console.log(`Image aspect ratio is already close to ${targetAspectRatio}. Skipping normalization.`);
-        return userImage;
-    }
+      if (!ctx) {
+        reject(new Error('Não foi possível criar o contexto do canvas.'));
+        return;
+      }
 
-    try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const { base64: userBase64, mimeType: userMimeType } = getBase64Parts(userImage);
-        
-        const promptText = `Sua tarefa é ser um editor de imagens especialista. Ajuste a imagem fornecida para uma proporção de aspecto exata de **${targetAspectRatio}**.
+      // 3. Fill the background with white
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, size, size);
 
-**REGRAS CRÍTICAS E INQUEBRÁVEIS:**
-1.  **PROPORÇÃO FINAL:** A imagem de saída DEVE ter exatamente a proporção de **${targetAspectRatio}**.
-2.  **PRESERVAÇÃO DO ASSUNTO:** O assunto principal (pessoa, objetos) na imagem original deve ser mantido 100% intacto. Não corte, distorça, estique ou altere o assunto de forma alguma.
-3.  **EXPANSÃO REALISTA:** Se a imagem precisar ser expandida para atingir a proporção alvo, preencha as novas áreas com conteúdo que estenda o fundo existente de forma ultra-realista e imperceptível. A iluminação, textura e sombras da área expandida devem corresponder perfeitamente à imagem original.
-4.  **RESULTADO LIMPO:** Forneça apenas a imagem finalizada, sem texto adicional.`;
+      // 4. Calculate position to center the image
+      const x = (size - img.width) / 2;
+      const y = (size - img.height) / 2;
 
-        const response: GenerateContentResponse = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
-            contents: {
-                parts: [
-                    {
-                        inlineData: {
-                            data: userBase64,
-                            mimeType: userMimeType,
-                        },
-                    },
-                    {
-                        text: promptText,
-                    },
-                ],
-            },
-            config: {
-                responseModalities: [Modality.IMAGE, Modality.TEXT],
-            },
-        });
+      // 5. Draw the user image on top
+      ctx.drawImage(img, x, y);
 
-        const candidate = response.candidates?.[0];
-        if (!candidate || !candidate.content || !candidate.content.parts) {
-            const blockReason = response.promptFeedback?.blockReason || candidate?.finishReason;
-            if (blockReason) {
-                throw new Error(`Falha ao ajustar a imagem. Motivo: ${blockReason}. Tente uma imagem diferente.`);
-            }
-            throw new Error('A IA não retornou uma imagem ajustada válida. A resposta pode ter sido bloqueada ou estar vazia.');
-        }
-
-        for (const part of candidate.content.parts) {
-            if (part.inlineData) {
-                const base64ImageBytes: string = part.inlineData.data;
-                return `data:${part.inlineData.mimeType};base64,${base64ImageBytes}`;
-            }
-        }
-
-        throw new Error('A IA não retornou uma imagem ajustada.');
-    } catch (error) {
-        console.error('Error calling Gemini API for image aspect ratio normalization:', error);
-        if (error instanceof Error) {
-            throw new Error(`Falha ao normalizar a proporção da imagem: ${error.message}`);
-        }
-        throw new Error('Falha ao normalizar a proporção da imagem. Verifique o console para mais detalhes.');
-    }
+      // 6. Return the new image data
+      resolve(canvas.toDataURL('image/jpeg', 0.95));
+    };
+    img.onerror = (err) => {
+      console.error('Error loading image for normalization:', err);
+      reject(new Error('Falha ao processar a imagem para formato 1:1.'));
+    };
+    img.src = userImage;
+  });
 };
 
 // --- BEGIN RUNWAY FALLBACK IMPLEMENTATION ---
@@ -345,10 +292,23 @@ Na imagem de referência da peruca (IMAGEM 2), existe frequentemente uma borda d
            case 'eyeshadow':
                return `${basePrompt}
 
-**MISSÃO ESPECÍFICA: APLICAR SOMRA DE OLHOS / MAKEUP COMPLETA**
-1.  **Identifique a Área:** Localize com precisão as pálpebras e a área dos olhos da pessoa na IMAGEM 1. Se o item for uma maquiagem completa, aplique blush e contorno conforme necessário.
-2.  **Aplicação Suave:** Aplique os tons da IMAGEM 2, esfumando as bordas para uma transição suave com a pele. A aplicação deve seguir o formato natural dos olhos.
-3.  **Não Altere Outros Traços:** Mantenha cílios, sobrancelhas e a cor dos olhos inalterados, a menos que seja para integrar a sombra de forma mais realista.`;
+**MISSÃO ESPECÍFICA: TRANSFERÊNCIA DE LOOK FULL FACE DE ALTA FIDELIDADE**
+
+**OBJETIVO:** Você é um maquiador profissional de Hollywood. Sua tarefa é transferir o **look de maquiagem COMPLETO** da IMAGEM 2 para o rosto da pessoa na IMAGEM 1, como se fosse para uma capa de revista.
+
+**INSTRUÇÕES DETALHADAS (CHECKLIST OBRIGATÓRIO):**
+1.  **PELE (A BASE DE TUDO):**
+    *   **Base e Corretivo:** Recrie o acabamento da pele (matte ou glow) e a cobertura da maquiagem da IMAGEM 2 na IMAGEM 1.
+    *   **Contorno e Blush:** Copie o estilo do contorno (suave ou marcado) e a cor/posição do blush.
+    *   **Iluminador:** Aplique o iluminador nos mesmos pontos (maçãs do rosto, nariz, etc.) com a mesma intensidade (sutil ou intenso).
+
+2.  **OLHOS (O FOCO):**
+    *   **Sombra:** Transfira as cores, o formato do esfumado e qualquer detalhe (cut crease, brilho) da IMAGEM 2.
+    *   **Delineado e Cílios:** Replique o estilo do delineado (se houver) e o volume dos cílios.
+
+3.  **LÁBIOS:** Se a IMAGEM 2 mostrar uma cor de lábio específica, aplique essa cor e acabamento (ex: gloss, matte) na IMAGEM 1.
+
+4.  **FUSÃO E REALISMO:** A maquiagem final deve parecer que foi aplicada sob a mesma luz da IMAGEM 1. Sem parecer artificial.`;
            default:
                return `${basePrompt}
 
@@ -522,7 +482,7 @@ export const generateFashionVideo = async (imageDataUrl: string, onTick?: (s: st
 
             return URL.createObjectURL(videoBlob);
 
-        } catch (error: unknown) {
+        } catch (error) {
             lastError = error instanceof Error ? error : new Error(String(error));
             const errorMessage = lastError.message.toLowerCase();
 

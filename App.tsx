@@ -1,7 +1,6 @@
-
 import React from 'react';
 // FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
-import { Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
 import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType, AppNotification, Conversation, Comment, BusinessProfile, CollaborationPost } from './types';
 import { generateTryOnImage, normalizeImageAspectRatio, generateBeautyTryOnImage, generateFashionVideo } from './services/geminiService';
@@ -49,7 +48,7 @@ import VerificationPendingScreen from './components/VerificationPendingScreen';
 import VeoApiKeyModal from './components/VeoApiKeyModal';
 import CaptionModal from './components/CaptionModal';
 
-// FORCE REFRESH v1.2 - Apply new AI logic
+// FORCE REFRESH v2.0 - Apply new normalization logic and constants
 
 // FIX: To resolve the "Subsequent property declarations must have the same type" error for 'aistudio',
 // the AIStudio interface is moved inside the `declare global` block. This ensures it's treated
@@ -776,9 +775,9 @@ const App: React.FC = () => {
             setError("Não há imagem de look para gerar o vídeo.");
             return;
         }
-
-        if (window.aistudio && typeof window.aistudio.hasSelectedApiKey === 'function') {
-            const hasKey = await window.aistudio.hasSelectedApiKey();
+        const aiStudio = (window as any).aistudio;
+        if (aiStudio && typeof aiStudio.hasSelectedApiKey === 'function') {
+            const hasKey = await aiStudio.hasSelectedApiKey();
             if (!hasKey) {
                 setIsVeoKeyFlowNeeded(true);
                 return;
