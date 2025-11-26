@@ -69,6 +69,7 @@ export const BEAUTY_SHOP_CATEGORIES = [
     { id: 'cabelo', name: 'Cabelo', image: 'https://i.postimg.cc/BvTqZFVN/Gemini-Generated-Image-3ps4k73ps4k73ps4.png' },
     { id: 'pele', name: 'Pele', image: 'https://i.postimg.cc/k5QnMSp1/Gemini-Generated-Image-a9r49ea9r49ea9r4.png' },
     { id: 'peruca', name: 'Peruca', image: 'https://i.postimg.cc/6Q1TQDHK/81e_CCdc_Mv_ZL_SL1500.jpg' },
+    { id: 'makeup', name: 'Makeup', image: 'https://i.postimg.cc/Hx3xYJvP/469854347_597462169307087_8299951859133309802_n.jpg' },
 ];
 
 export const TECHNOLOGY_SHOP_CATEGORIES = [
@@ -197,7 +198,8 @@ export const CATEGORIES: Category[] = [
     type: 'beauty',
     subCategories: [
         { id: 'beleza_linda', name: 'Linda', image: 'https://i.postimg.cc/YS6p2Fsd/Gemini-Generated-Image-fz7zo1fz7zo1fz7z.png' },
-        { id: 'beleza_peruca', name: 'Peruca', image: 'https://i.postimg.cc/6Q1TQDHK/81e_CCdc_Mv_ZL_SL1500.jpg' }
+        { id: 'beleza_peruca', name: 'Peruca', image: 'https://i.postimg.cc/6Q1TQDHK/81e_CCdc_Mv_ZL_SL1500.jpg' },
+        { id: 'beleza_makeup', name: 'Makeup', image: 'https://i.postimg.cc/Hx3xYJvP/469854347_597462169307087_8299951859133309802_n.jpg' }
     ]
   },
   {
@@ -395,6 +397,47 @@ export const ITEMS: Item[] = [
       price: 20000,
       isTryOn: true,
       beautyType: 'wig'
+    },
+    // Bonita - Makeup (NOVOS ITENS ADICIONADOS)
+    { 
+      id: 'item-beleza-makeup-1',
+      name: 'make 1',
+      description: 'Estilo de maquiagem exclusivo.',
+      category: 'beleza_makeup',
+      image: 'https://i.postimg.cc/Hx3xYJvP/469854347_597462169307087_8299951859133309802_n.jpg',
+      price: 20000,
+      isTryOn: true,
+      beautyType: 'eyeshadow' // Usando eyeshadow para makeup geral
+    },
+    { 
+      id: 'item-beleza-makeup-2',
+      name: 'make 2',
+      description: 'Estilo de maquiagem exclusivo.',
+      category: 'beleza_makeup',
+      image: 'https://i.postimg.cc/90MfrWs1/474066431_906984494815655_5405599933775268333_n.jpg',
+      price: 20000,
+      isTryOn: true,
+      beautyType: 'eyeshadow'
+    },
+    { 
+      id: 'item-beleza-makeup-3',
+      name: 'make 3',
+      description: 'Estilo de maquiagem exclusivo.',
+      category: 'beleza_makeup',
+      image: 'https://i.postimg.cc/2y65VzPN/474105229_906984478148990_2303604750851724532_n.jpg',
+      price: 20000,
+      isTryOn: true,
+      beautyType: 'eyeshadow'
+    },
+    { 
+      id: 'item-beleza-makeup-4',
+      name: 'make 4',
+      description: 'Estilo de maquiagem exclusivo.',
+      category: 'beleza_makeup',
+      image: 'https://i.postimg.cc/1Xtzf9LZ/MAQUILHAGEM_COLORIDA_410x321.jpg',
+      price: 20000,
+      isTryOn: true,
+      beautyType: 'eyeshadow'
     },
     // Apple - Iphone
     { id: 'item-tec-iphone-1', name: 'Iphone 1', description: 'Iphone exclusivo da Apple.', category: 'tecnologia_Iphone', image: 'https://i.postimg.cc/ZKszJHKK/Gemini_Generated_Image_lrcnu0lrcnu0lrcn.png', price: 20000 },
