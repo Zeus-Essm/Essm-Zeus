@@ -48,7 +48,7 @@ import VerificationPendingScreen from './components/VerificationPendingScreen';
 import VeoApiKeyModal from './components/VeoApiKeyModal';
 import CaptionModal from './components/CaptionModal';
 
-// FORCE REFRESH v2.0 - Apply new normalization logic and constants
+// FORCE REFRESH v2.3 - Apply new wig items and ensure AI logic is active
 
 // FIX: To resolve the "Subsequent property declarations must have the same type" error for 'aistudio',
 // the AIStudio interface is moved inside the `declare global` block. This ensures it's treated
@@ -949,7 +949,7 @@ const App: React.FC = () => {
         if (generatedImage && profile) {
             const newPost: Post = {
                 id: `post_${Date.now()}`,
-                user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || 'https://i.pravatar.cc/150?u=me' },
+                user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || 'https://i.postimg.cc/150?u=me' },
                 image: generatedImage,
                 items: wornItems,
                 likes: 0,
@@ -1573,11 +1573,11 @@ const App: React.FC = () => {
                 />
             )}
 
-            {isVeoKeyFlowNeeded && window.aistudio && (
+            {isVeoKeyFlowNeeded && (window as any).aistudio && (
                 <VeoApiKeyModal
                     onClose={() => setIsVeoKeyFlowNeeded(false)}
                     onSelectKey={async () => {
-                        await window.aistudio.openSelectKey();
+                        await (window as any).aistudio.openSelectKey();
                         setIsVeoKeyFlowNeeded(false);
                         // Assume key selection was successful and retry.
                         setTimeout(() => {

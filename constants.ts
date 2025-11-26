@@ -354,7 +354,7 @@ export const ITEMS: Item[] = [
       name: 'Batom Vermelho Intenso',
       description: 'Batom vermelho vibrante com acabamento matte para um look poderoso.',
       category: 'beleza_linda',
-      image: 'https://i.postimg.cc/YS6p2Fsd/Gemini-Generated_Image_fz7zo1fz7zo1fz7z.png',
+      image: 'https://i.postimg.cc/YS6p2Fsd/Gemini_Generated_Image_fz7zo1fz7zo1fz7z.png',
       price: 150,
       isTryOn: true,
       beautyType: 'lipstick'
@@ -398,6 +398,16 @@ export const ITEMS: Item[] = [
       isTryOn: true,
       beautyType: 'wig'
     },
+    { id: 'item-beleza-peruca-2', name: 'peruca 2', description: 'Peruca exclusiva.', category: 'beleza_peruca', image: 'https://i.postimg.cc/nzp8Bhr1/713Aj_EVL2_L_SL1500.jpg', price: 20000, isTryOn: true, beautyType: 'wig' },
+    { id: 'item-beleza-peruca-3', name: 'peruca 3', description: 'Peruca exclusiva.', category: 'beleza_peruca', image: 'https://i.postimg.cc/nzp8Bhr1/713Aj_EVL2_L_SL1500.jpg', price: 20000, isTryOn: true, beautyType: 'wig' },
+    { id: 'item-beleza-peruca-4', name: 'peruca 4', description: 'Peruca exclusiva.', category: 'beleza_peruca', image: 'https://i.postimg.cc/ZR4kp5nF/71l_N_KK2TPL_SL1500.jpg', price: 20000, isTryOn: true, beautyType: 'wig' },
+    { id: 'item-beleza-peruca-5', name: 'peruca 5', description: 'Peruca exclusiva.', category: 'beleza_peruca', image: 'https://i.postimg.cc/50bcL2y3/71l_VF2BQ4YL_SL1500.jpg', price: 20000, isTryOn: true, beautyType: 'wig' },
+    { id: 'item-beleza-peruca-6', name: 'peruca 6', description: 'Peruca exclusiva.', category: 'beleza_peruca', image: 'https://i.postimg.cc/MTqkVpHm/71q_LP1K7ro_L_SL1500.jpg', price: 20000, isTryOn: true, beautyType: 'wig' },
+    { id: 'item-beleza-peruca-7', name: 'peruca 7', description: 'Peruca exclusiva.', category: 'beleza_peruca', image: 'https://i.postimg.cc/rmM6xwsB/71r_ORTEqi3L_SL1500.jpg', price: 20000, isTryOn: true, beautyType: 'wig' },
+    { id: 'item-beleza-peruca-8', name: 'peruca 8', description: 'Peruca exclusiva.', category: 'beleza_peruca', image: 'https://i.postimg.cc/KzN6Nh3s/71v_G_dnfnf_L_SL1253.jpg', price: 20000, isTryOn: true, beautyType: 'wig' },
+    { id: 'item-beleza-peruca-9', name: 'peruca 9', description: 'Peruca exclusiva.', category: 'beleza_peruca', image: 'https://i.postimg.cc/nzp8BhMt/810k6CLU5XL_SL1500.jpg', price: 20000, isTryOn: true, beautyType: 'wig' },
+    { id: 'item-beleza-peruca-10', name: 'peruca 10', description: 'Peruca exclusiva.', category: 'beleza_peruca', image: 'https://i.postimg.cc/FRNt3HzG/81fxcq6_Om_L_SL1500.jpg', price: 20000, isTryOn: true, beautyType: 'wig' },
+
     // Bonita - Makeup (NOVOS ITENS ADICIONADOS)
     { 
       id: 'item-beleza-makeup-1',
