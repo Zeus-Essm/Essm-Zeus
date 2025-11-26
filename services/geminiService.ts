@@ -327,11 +327,24 @@ REGRAS ADICIONAIS:
            case 'wig':
                return `${basePrompt}
 
-**MISSÃO ESPECÍFICA: APLICAR PERUCA**
-1.  **Posicionamento Natural:** Coloque a peruca da IMAGEM 2 na cabeça da pessoa. A linha do cabelo da peruca deve parecer natural e se fundir de forma crível com a testa.
-2.  **Cobertura Total:** O cabelo original da pessoa deve ser completamente coberto pela peruca.
-3.  **Sombreamento Crítico:** Crie sombras realistas que a peruca projetaria no rosto, pescoço e ombros da pessoa, consistentes com a fonte de luz da IMAGEM 1.
-4.  **Fios Realistas:** Certifique-se de que alguns fios de cabelo finos e imperfeições sutis estejam presentes para evitar uma aparência de "capacete".`;
+**MISSÃO CRÍTICA: SUBSTITUIÇÃO CAPILAR TOTAL E PROPORCIONAL (PERUCA)**
+
+1.  **ANÁLISE DE ESCALA E PROPORÇÃO (PRIORIDADE MÁXIMA):**
+    *   A pessoa na IMAGEM 1 pode estar em uma foto de corpo inteiro. **Analise cuidadosamente o tamanho da cabeça em relação ao corpo.**
+    *   **REDIMENSIONE a peruca (IMAGEM 2)** para corresponder EXATAMENTE às dimensões anatômicas do crânio da pessoa.
+    *   **EVITE O EFEITO "CABEÇA GRANDE":** A peruca NÃO deve parecer gigante, flutuante ou desproporcional. Ela deve ter o tamanho real de uma cabeça humana naquela escala específica.
+
+2.  **REMOÇÃO VIRTUAL DO CABELO (INPAINTING):**
+    *   Antes de aplicar a peruca, você deve **remover digitalmente todo o cabelo original** da pessoa.
+    *   Imagine que a pessoa está usando uma touca de peruca (bald cap) cor da pele.
+    *   Nenhum volume do cabelo antigo deve criar inchaço sob a peruca.
+
+3.  **APLICAÇÃO "LACE MELT":**
+    *   A linha do cabelo (hairline) deve se fundir imperceptivelmente com a pele da testa.
+    *   Não deve haver bordas duras ou linhas visíveis de separação.
+
+4.  **ILUMINAÇÃO E SOMBRA:**
+    *   Projete sombras realistas da peruca sobre a testa e o pescoço, respeitando a luz da foto original.`;
            case 'eyeshadow':
                return `${basePrompt}
 
@@ -361,8 +374,9 @@ export const generateBeautyTryOnImage = async (userImage: string, newItem: Item)
 
         const promptText = getBeautyPrompt(newItem);
 
+        // USE THE PRO MODEL FOR HIGH QUALITY EDITING
         const response: GenerateContentResponse = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
+            model: 'gemini-3-pro-image-preview', 
             contents: {
                 parts: [
                     {
