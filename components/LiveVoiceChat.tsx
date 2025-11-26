@@ -1,5 +1,6 @@
+
 import React, { useEffect, useRef } from 'react';
-import { GoogleGenAI, LiveServerMessage, Modality, Blob, LiveSession } from '@google/genai';
+import { GoogleGenAI, LiveServerMessage, Modality, Blob } from '@google/genai';
 
 // Base64 encoding/decoding functions
 function encode(bytes: Uint8Array) {
@@ -60,7 +61,7 @@ interface LiveVoiceChatProps {
 }
 
 const LiveVoiceChat: React.FC<LiveVoiceChatProps> = ({ onNewTranscriptionTurn, onStatusChange, onError }) => {
-  const sessionRef = useRef<LiveSession | null>(null);
+  const sessionRef = useRef<any>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const audioProcessorRef = useRef<ScriptProcessorNode | null>(null);
   const inputAudioContextRef = useRef<AudioContext | null>(null);
@@ -80,7 +81,7 @@ const LiveVoiceChat: React.FC<LiveVoiceChatProps> = ({ onNewTranscriptionTurn, o
 
     const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-    let localSessionPromise: Promise<LiveSession> | null = null;
+    let localSessionPromise: Promise<any> | null = null;
     let localInputAudioContext: AudioContext | null = null;
     let localOutputAudioContext: AudioContext | null = null;
     let localMediaStream: MediaStream | null = null;

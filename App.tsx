@@ -1,3 +1,4 @@
+
 import React from 'react';
 // FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
 import { Session } from '@supabase/supabase-js';
@@ -48,6 +49,7 @@ import VerificationPendingScreen from './components/VerificationPendingScreen';
 import VeoApiKeyModal from './components/VeoApiKeyModal';
 import CaptionModal from './components/CaptionModal';
 
+// FORCE REFRESH v1.2 - Apply new AI logic
 
 // FIX: To resolve the "Subsequent property declarations must have the same type" error for 'aistudio',
 // the AIStudio interface is moved inside the `declare global` block. This ensures it's treated

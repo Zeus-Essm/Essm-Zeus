@@ -1,3 +1,4 @@
+
 import { GoogleGenAI, Modality, GenerateContentResponse } from '@google/genai';
 import type { Item } from '../types';
 
@@ -325,33 +326,29 @@ REGRAS ADICIONAIS:
 2.  **Aplicação Realista:** Aplique a cor e a textura do batom da IMAGEM 2 aos lábios. Respeite os contornos naturais, incluindo o arco do cupido. A cobertura deve ser uniforme mas com variações sutis de luz e sombra para parecer real.
 3.  **Integração Perfeita:** O acabamento (matte, brilhante, etc.) deve interagir realisticamente com a luz da foto.`;
            case 'wig':
-               return `${basePrompt}
+               return `**INSTRUÇÃO DE ELITE PARA GEMINI 3 PRO (NANO BANANA):**
 
-**MISSÃO CRÍTICA: SUBSTITUIÇÃO CAPILAR TOTAL E PROPORCIONAL (PERUCA)**
+**TAREFA:** Aplicação de peruca com acabamento invisível e remoção de artefatos.
 
-1.  **ANÁLISE DE ESCALA E PROPORÇÃO (PRIORIDADE MÁXIMA):**
-    *   A pessoa na IMAGEM 1 pode estar em uma foto de corpo inteiro. **Analise cuidadosamente o tamanho da cabeça em relação ao corpo.**
-    *   **REDIMENSIONE a peruca (IMAGEM 2)** para corresponder EXATAMENTE às dimensões anatômicas do crânio da pessoa.
-    *   **EVITE O EFEITO "CABEÇA GRANDE":** A peruca NÃO deve parecer gigante, flutuante ou desproporcional. Ela deve ter o tamanho real de uma cabeça humana naquela escala específica.
+**REGRA SUPREMA (ZERO TOLERÂNCIA PARA ERROS DE BORDAS):**
+Na imagem de referência da peruca (IMAGEM 2), existe frequentemente uma borda de tecido, renda (lace) ou parte de um manequim na testa.
+**VOCÊ DEVE RECORTAR E REMOVER DIGITALMENTE ESSA BORDA DE RENDA/TECIDO.**
+*   Se você aplicar a peruca com a borda da renda visível, o resultado será considerado FALHA.
+*   O cabelo deve começar diretamente na pele, simulando uma raiz natural ("melting lace").
 
-2.  **REMOÇÃO VIRTUAL DO CABELO (INPAINTING):**
-    *   Antes de aplicar a peruca, você deve **remover digitalmente todo o cabelo original** da pessoa.
-    *   Imagine que a pessoa está usando uma touca de peruca (bald cap) cor da pele.
-    *   Nenhum volume do cabelo antigo deve criar inchaço sob a peruca.
+**INTEGRAÇÃO PERFEITA:**
+1.  **Substituição Total:** Apague digitalmente o cabelo antigo da modelo (IMAGEM 1) para evitar volume excessivo. A peruca é o novo cabelo.
+2.  **Proporção da Cabeça:** Analise se a foto é de corpo inteiro ou close. Ajuste a peruca para ter o tamanho anatômico correto do crânio da pessoa. Não deixe a cabeça desproporcionalmente grande.
+3.  **Iluminação:** A peruca deve ter as mesmas sombras e brilhos da cena original.
 
-3.  **APLICAÇÃO "LACE MELT":**
-    *   A linha do cabelo (hairline) deve se fundir imperceptivelmente com a pele da testa.
-    *   Não deve haver bordas duras ou linhas visíveis de separação.
-
-4.  **ILUMINAÇÃO E SOMBRA:**
-    *   Projete sombras realistas da peruca sobre a testa e o pescoço, respeitando a luz da foto original.`;
+**RESULTADO FINAL:** Uma foto realista onde a peruca parece ser o cabelo biológico da pessoa, sem bordas de tecido visíveis na testa.`;
            case 'eyeshadow':
                return `${basePrompt}
 
-**MISSÃO ESPECÍFICA: APLICAR SOMRA DE OLHOS**
-1.  **Identifique os Olhos:** Localize com precisão as pálpebras e a área dos olhos da pessoa na IMAGEM 1.
-2.  **Aplicação Suave:** Aplique os tons de sombra da IMAGEM 2 nas pálpebras, esfumando as bordas para uma transição suave com a pele. A aplicação deve seguir o formato natural dos olhos.
-3.  **Não Altere Outros Traços:** Mantenha cílios, sobrancelhas e a cor dos olhos inalterados, a menos que seja para integrar a sombra de forma mais realista (ex: uma leve sombra nos cílios inferiores).`;
+**MISSÃO ESPECÍFICA: APLICAR SOMRA DE OLHOS / MAKEUP COMPLETA**
+1.  **Identifique a Área:** Localize com precisão as pálpebras e a área dos olhos da pessoa na IMAGEM 1. Se o item for uma maquiagem completa, aplique blush e contorno conforme necessário.
+2.  **Aplicação Suave:** Aplique os tons da IMAGEM 2, esfumando as bordas para uma transição suave com a pele. A aplicação deve seguir o formato natural dos olhos.
+3.  **Não Altere Outros Traços:** Mantenha cílios, sobrancelhas e a cor dos olhos inalterados, a menos que seja para integrar a sombra de forma mais realista.`;
            default:
                return `${basePrompt}
 
@@ -500,7 +497,7 @@ export const generateFashionVideo = async (imageDataUrl: string, onTick?: (s: st
             if (!downloadLink) {
                 // If there's a specific error message from the API, use it.
                 if (operation.error?.message) {
-                    const reason = operation.error.message;
+                    const reason = String(operation.error.message);
                     // The catch block below will handle quota errors, so just re-throw.
                     throw new Error(reason);
                 }
@@ -525,9 +522,9 @@ export const generateFashionVideo = async (imageDataUrl: string, onTick?: (s: st
 
             return URL.createObjectURL(videoBlob);
 
-        } catch (error) {
-            lastError = error as Error;
-            const errorMessage = (error instanceof Error ? error.message : String(error)).toLowerCase();
+        } catch (error: unknown) {
+            lastError = error instanceof Error ? error : new Error(String(error));
+            const errorMessage = lastError.message.toLowerCase();
 
             const isRetriableError = 
                 errorMessage.includes('429') || 
@@ -550,7 +547,7 @@ export const generateFashionVideo = async (imageDataUrl: string, onTick?: (s: st
         throw new Error('Ocorreu um erro desconhecido ao gerar o vídeo.');
     }
 
-    const lastErrorMessage = (lastError instanceof Error ? lastError.message : String(lastError)).toLowerCase();
+    const lastErrorMessage = lastError.message.toLowerCase();
     
     if (lastErrorMessage.includes("requested entity was not found")) {
         throw lastError;
