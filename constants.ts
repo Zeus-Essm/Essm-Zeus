@@ -47,27 +47,27 @@ const DELICIAS_DA_LEANDRA_SUBCATEGORIES = [
 ];
 
 const CLUB_S_SUBCATEGORIES = [
-    { id: 'pratos', name: 'Pratos', image: 'https://i.postimg.cc/XYJ6b4NT/Gemini-Generated-Image-1eva5i1eva5i1eva-1.png' },
+    { id: 'pratos', name: 'Pratos', image: 'https://i.postimg.cc/XYJ6b4NT/Gemini_Generated_Image_1eva5i1eva5i1eva-1.png' },
 ];
 
 // NOVAS categorias para o painel do Vendedor
 export const RESTAURANT_SHOP_CATEGORIES = [
-    { id: 'pratos', name: 'Pratos', image: 'https://i.postimg.cc/XYJ6b4NT/Gemini-Generated-Image-1eva5i1eva5i1eva-1.png' },
+    { id: 'pratos', name: 'Pratos', image: 'https://i.postimg.cc/XYJ6b4NT/Gemini_Generated_Image_1eva5i1eva5i1eva-1.png' },
     { id: 'sobremesas', name: 'Sobremesas', image: 'https://i.postimg.cc/L5BvGFbb/PHOTO-2025-07-14-23-58-55.jpg' },
-    { id: 'bebidas', name: 'Bebidas', image: 'https://i.postimg.cc/tC39yWny/Gemini-Generated-Image-henwbohenwbohenw.png' },
+    { id: 'bebidas', name: 'Bebidas', image: 'https://i.postimg.cc/tC39yWny/Gemini_Generated_Image_henwbohenwbohenw.png' },
 ];
 
 export const SUPERMARKET_SHOP_CATEGORIES = [
-    { id: 'mercearia', name: 'Mercearia', image: 'https://i.postimg.cc/15GyPwVS/Gemini-Generated-Image-euq60jeuq60jeuq6.png' },
+    { id: 'mercearia', name: 'Mercearia', image: 'https://i.postimg.cc/15GyPwVS/Gemini_Generated_Image_euq60jeuq60jeuq6.png' },
     { id: 'padaria', name: 'Padaria', image: 'https://i.postimg.cc/VvB42PVh/PHOTO-2025-03-03-19-26-45.jpg' },
-    { id: 'talho', name: 'Talho', image: 'https://i.postimg.cc/HsqHQjwp/Gemini-Generated-Image-sa7g1ysa7g1ysa7g.png' },
-    { id: 'bebidas', name: 'Bebidas', image: 'https://i.postimg.cc/tC39yWny/Gemini-Generated-Image-henwbohenwbohenw.png' },
+    { id: 'talho', name: 'Talho', image: 'https://i.postimg.cc/HsqHQjwp/Gemini_Generated_Image_sa7g1ysa7g1ysa7g.png' },
+    { id: 'bebidas', name: 'Bebidas', image: 'https://i.postimg.cc/tC39yWny/Gemini_Generated_Image_henwbohenwbohenw.png' },
 ];
 
 export const BEAUTY_SHOP_CATEGORIES = [
-    { id: 'maquilhagem', name: 'Maquilhagem', image: 'https://i.postimg.cc/YS6p2Fsd/Gemini-Generated-Image-fz7zo1fz7zo1fz7z.png' },
-    { id: 'cabelo', name: 'Cabelo', image: 'https://i.postimg.cc/BvTqZFVN/Gemini-Generated-Image-3ps4k73ps4k73ps4.png' },
-    { id: 'pele', name: 'Pele', image: 'https://i.postimg.cc/k5QnMSp1/Gemini-Generated-Image-a9r49ea9r49ea9r4.png' },
+    { id: 'maquilhagem', name: 'Maquilhagem', image: 'https://i.postimg.cc/YS6p2Fsd/Gemini_Generated_Image_fz7zo1fz7zo1fz7z.png' },
+    { id: 'cabelo', name: 'Cabelo', image: 'https://i.postimg.cc/BvTqZFVN/Gemini_Generated_Image_3ps4k73ps4k73ps4.png' },
+    { id: 'pele', name: 'Pele', image: 'https://i.postimg.cc/k5QnMSp1/Gemini_Generated_Image_a9r49ea9r49ea9r4.png' },
     { id: 'peruca', name: 'Peruca', image: 'https://i.postimg.cc/6Q1TQDHK/81e_CCdc_Mv_ZL_SL1500.jpg' },
     { id: 'makeup', name: 'Makeup', image: 'https://i.postimg.cc/Hx3xYJvP/469854347_597462169307087_8299951859133309802_n.jpg' },
 ];
@@ -178,26 +178,26 @@ export const CATEGORIES: Category[] = [
   {
     id: 'clubs',
     name: 'Club S',
-    image: 'https://i.postimg.cc/Yq8BZhk2/Gemini-Generated-Image-dc3csmdc3csmdc3c.png',
+    image: 'https://i.postimg.cc/Yq8BZhk2/Gemini_Generated_Image_dc3csmdc3csmdc3c.png',
     type: 'restaurant',
     subCategories: createSubCategories('clubs', CLUB_S_SUBCATEGORIES)
   },
   {
     id: 'supermercados',
     name: 'Kero',
-    image: 'https://i.postimg.cc/15GyPwVS/Gemini-Generated-Image-euq60jeuq60jeuq6.png',
+    image: 'https://i.postimg.cc/15GyPwVS/Gemini_Generated_Image_euq60jeuq60jeuq6.png',
     type: 'supermarket',
     subCategories: [
-        { id: 'supermercados_gasosa', name: 'Gasosa', image: 'https://i.postimg.cc/tC39yWny/Gemini-Generated-Image-henwbohenwbohenw.png' }
+        { id: 'supermercados_gasosa', name: 'Gasosa', image: 'https://i.postimg.cc/tC39yWny/Gemini_Generated_Image_henwbohenwbohenw.png' }
     ]
   },
   {
     id: 'beleza',
     name: 'Bonita',
-    image: 'https://i.postimg.cc/k5QnMSp1/Gemini-Generated-Image-a9r49ea9r49ea9r4.png',
+    image: 'https://i.postimg.cc/k5QnMSp1/Gemini_Generated_Image_a9r49ea9r49ea9r4.png',
     type: 'beauty',
     subCategories: [
-        { id: 'beleza_linda', name: 'Linda', image: 'https://i.postimg.cc/YS6p2Fsd/Gemini-Generated-Image-fz7zo1fz7zo1fz7z.png' },
+        { id: 'beleza_linda', name: 'Linda', image: 'https://i.postimg.cc/YS6p2Fsd/Gemini_Generated_Image_fz7zo1fz7zo1fz7z.png' },
         { id: 'beleza_peruca', name: 'Peruca', image: 'https://i.postimg.cc/6Q1TQDHK/81e_CCdc_Mv_ZL_SL1500.jpg' },
         { id: 'beleza_makeup', name: 'Makeup', image: 'https://i.postimg.cc/Hx3xYJvP/469854347_597462169307087_8299951859133309802_n.jpg' }
     ]
@@ -343,18 +343,18 @@ export const ITEMS: Item[] = [
     { id: 'item-bolo-1', name: 'Bolo 1', description: 'Bolo artesanal delicioso, feito com ingredientes frescos.', category: 'restaurantes_bolos', image: 'https://i.postimg.cc/L5BvGFbb/PHOTO-2025-07-14-23-58-55.jpg', price: 20000 },
     { id: 'item-bolo-2', name: 'Bolo 2', description: 'Bolo de festa espetacular para celebrar momentos especiais.', category: 'restaurantes_bolos', image: 'https://i.postimg.cc/VvB42PVh/PHOTO-2025-03-03-19-26-45.jpg', price: 100000 },
     // Club S - Pratos
-    { id: 'item-prato-1', name: 'prato 1', description: 'Prato delicioso do Club S.', category: 'clubs_pratos', image: 'https://i.postimg.cc/XYJ6b4NT/Gemini-Generated-Image-1eva5i1eva5i1eva-1.png', price: 20000 },
-    { id: 'item-prato-2', name: 'prato 2', description: 'Prato especial do Club S.', category: 'clubs_pratos', image: 'https://i.postimg.cc/HsqHQjwp/Gemini-Generated-Image-sa7g1ysa7g1ysa7g.png', price: 100000 },
+    { id: 'item-prato-1', name: 'prato 1', description: 'Prato delicioso do Club S.', category: 'clubs_pratos', image: 'https://i.postimg.cc/XYJ6b4NT/Gemini_Generated_Image_1eva5i1eva5i1eva-1.png', price: 20000 },
+    { id: 'item-prato-2', name: 'prato 2', description: 'Prato especial do Club S.', category: 'clubs_pratos', image: 'https://i.postimg.cc/HsqHQjwp/Gemini_Generated_Image_sa7g1ysa7g1ysa7g.png', price: 100000 },
     // Kero - Gasosa
-    { id: 'item-kero-gasosa-1', name: 'produ 1', description: 'Produto de qualidade do Kero.', category: 'supermercados_gasosa', image: 'https://i.postimg.cc/tC39yWny/Gemini-Generated-Image-henwbohenwbohenw.png', price: 20000 },
-    { id: 'item-kero-gasosa-2', name: 'produ 2', description: 'Produto exclusivo do Kero.', category: 'supermercados_gasosa', image: 'https://i.postimg.cc/28QCmhLC/Gemini-Generated-Image-uei117uei117uei1.png', price: 100000 },
+    { id: 'item-kero-gasosa-1', name: 'produ 1', description: 'Produto de qualidade do Kero.', category: 'supermercados_gasosa', image: 'https://i.postimg.cc/tC39yWny/Gemini_Generated_Image_henwbohenwbohenw.png', price: 20000 },
+    { id: 'item-kero-gasosa-2', name: 'produ 2', description: 'Produto exclusivo do Kero.', category: 'supermercados_gasosa', image: 'https://i.postimg.cc/28QCmhLC/Gemini_Generated_Image_uei117uei117uei1.png', price: 100000 },
     // Bonita - Linda (UPDATED FOR VIRTUAL TRY-ON)
     { 
       id: 'item-beleza-linda-1',
       name: 'Batom Vermelho Intenso',
       description: 'Batom vermelho vibrante com acabamento matte para um look poderoso.',
       category: 'beleza_linda',
-      image: 'https://i.postimg.cc/YS6p2Fsd/Gemini-Generated-Image-fz7zo1fz7zo1fz7z.png',
+      image: 'https://i.postimg.cc/YS6p2Fsd/Gemini_Generated_Image_fz7zo1fz7zo1fz7z.png',
       price: 150,
       isTryOn: true,
       beautyType: 'lipstick'
@@ -435,6 +435,16 @@ export const ITEMS: Item[] = [
       description: 'Estilo de maquiagem exclusivo.',
       category: 'beleza_makeup',
       image: 'https://i.postimg.cc/1Xtzf9LZ/MAQUILHAGEM_COLORIDA_410x321.jpg',
+      price: 20000,
+      isTryOn: true,
+      beautyType: 'eyeshadow'
+    },
+    { 
+      id: 'item-beleza-makeup-5',
+      name: 'make 5',
+      description: 'Estilo de maquiagem exclusivo.',
+      category: 'beleza_makeup',
+      image: 'https://i.postimg.cc/fTsddjT4/fotos_de_maquiagem_simples_29_820x1024.jpg',
       price: 20000,
       isTryOn: true,
       beautyType: 'eyeshadow'
