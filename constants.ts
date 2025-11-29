@@ -1,3 +1,4 @@
+
 import type { Category, Item, Post, Story, Conversation, CollaborationPost } from './types';
 
 // Sub-categorias de Roupas reutilizáveis
@@ -19,8 +20,8 @@ export const FEMALE_CLOTHING_SUBCATEGORIES = [
     { id: 'tshirt', name: 'T-shirt', image: 'https://i.postimg.cc/gJxZFbq8/ICONS3.jpg' },
     { id: 'camisa', name: 'Camisa', image: 'https://i.postimg.cc/yNG84gNY/ICONS9.jpg' },
     { id: 'calca', name: 'Calça', image: 'https://i.postimg.cc/sXbZ3Hw8/ICONS4.jpg' },
-    { id: 'saia', name: 'Saia', image: 'https://i.postimg.cc/J0k2Vz7x/ICONS11.jpg' },
-    { id: 'vestido', name: 'Vestido', image: 'https://i.postimg.cc/prdkxSjC/ICONS10.jpg' },
+    { id: 'saia', name: 'Saia', image: 'https://i.postimg.cc/B6Nf5VcY/Gemini_Generated_Image_4ugkqh4ugkqh4ugk.png' },
+    { id: 'vestido', name: 'Vestido', image: 'https://i.postimg.cc/rmg2GPCb/Gemini_Generated_Image_x48n1sx48n1sx48n.png' },
     { id: 'jaqueta', name: 'Jaqueta', image: 'https://i.postimg.cc/pXfntZ8G/ICONS.jpg' },
     { id: 'tenis', name: 'Ténis', image: 'https://i.postimg.cc/4xGVKMsR/ICONS7.jpg' },
     { id: 'sapatos', name: 'Sapatos', image: 'https://i.postimg.cc/TPYb0DKk/ICONS6.jpg' },
@@ -98,11 +99,7 @@ export const CATEGORIES: Category[] = [
             id: 'lv_feminino', 
             name: 'Feminino', 
             image: 'https://i.postimg.cc/y8T90P8g/mulher.jpg', 
-            subCategories: createSubCategories('lv_feminino', FEMALE_CLOTHING_SUBCATEGORIES.map(sc => {
-                if (sc.id === 'vestido') return { ...sc, image: 'https://i.postimg.cc/rmg2GPCb/Gemini_Generated_Image_x48n1sx48n1sx48n.png' };
-                if (sc.id === 'saia') return { ...sc, image: 'https://i.postimg.cc/B6Nf5VcY/Gemini_Generated_Image_4ugkqh4ugkqh4ugk.png' };
-                return sc;
-            })) 
+            subCategories: createSubCategories('lv_feminino', FEMALE_CLOTHING_SUBCATEGORIES) 
         },
         { id: 'lv_crianca', name: 'Criança', image: 'https://i.postimg.cc/DyL1wFVc/pequeno.jpg', subCategories: createSubCategories('lv_crianca', KID_CLOTHING_SUBCATEGORIES) }
     ]
@@ -119,11 +116,7 @@ export const CATEGORIES: Category[] = [
             id: 'nf_feminino', 
             name: 'Feminino', 
             image: 'https://i.postimg.cc/y8T90P8g/mulher.jpg', 
-            subCategories: createSubCategories('nf_feminino', FEMALE_CLOTHING_SUBCATEGORIES.map(sc => {
-                if (sc.id === 'vestido') return { ...sc, image: 'https://i.postimg.cc/rmg2GPCb/Gemini_Generated_Image_x48n1sx48n1sx48n.png' };
-                if (sc.id === 'saia') return { ...sc, image: 'https://i.postimg.cc/B6Nf5VcY/Gemini_Generated_Image_4ugkqh4ugkqh4ugk.png' };
-                return sc;
-            })) 
+            subCategories: createSubCategories('nf_feminino', FEMALE_CLOTHING_SUBCATEGORIES) 
         },
         { id: 'nf_crianca', name: 'Criança', image: 'https://i.postimg.cc/DyL1wFVc/pequeno.jpg', subCategories: createSubCategories('nf_crianca', KID_CLOTHING_SUBCATEGORIES) }
     ]
