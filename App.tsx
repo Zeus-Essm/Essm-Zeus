@@ -50,7 +50,8 @@ import VeoApiKeyModal from './components/VeoApiKeyModal';
 import CaptionModal from './components/CaptionModal';
 import CoinBurst from './components/CoinBurst';
 import RecommendationModal from './components/RecommendationModal';
-import SplitCameraScreen from './components/SplitCameraScreen'; // Novo Import
+import SplitCameraScreen from './components/SplitCameraScreen';
+import VideoEditScreen from './components/VideoEditScreen';
 
 // FORCE REFRESH v2.3 - Apply new wig items and ensure AI logic is active
 
@@ -246,6 +247,7 @@ const App: React.FC = () => {
 
     // Split Camera State
     const [splitCameraItem, setSplitCameraItem] = React.useState<Item | null>(null);
+    const [editingVideoDetails, setEditingVideoDetails] = React.useState<{ blob: Blob; item: Item } | null>(null);
 
 
     const unreadNotificationCount = notifications.filter(n => !n.read).length;
@@ -1172,19 +1174,29 @@ const App: React.FC = () => {
         setCurrentScreen(Screen.SplitCamera);
     };
 
-    const handlePublishSplitVideo = (videoBlob: Blob | null) => {
-        if (profile && splitCameraItem) {
+    const handleRecordingComplete = (videoBlob: Blob) => {
+        if (splitCameraItem) {
+            setEditingVideoDetails({ blob: videoBlob, item: splitCameraItem });
+            setCurrentScreen(Screen.VideoEdit);
+        }
+    };
+    
+    const handlePublishOverlayVideo = (details: { caption: string; position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right' }) => {
+        if (profile && editingVideoDetails) {
+            const { blob, item } = editingVideoDetails;
             const newPost: Post = {
-                id: `post_split_${Date.now()}`,
+                id: `post_overlay_${Date.now()}`,
                 user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || `https://i.pravatar.cc/150?u=${profile.id}` },
-                image: splitCameraItem.image, // Product image as thumbnail
-                video: videoBlob ? URL.createObjectURL(videoBlob) : undefined,
-                items: [splitCameraItem],
+                image: item.image, // Product image as thumbnail
+                video: URL.createObjectURL(blob),
+                items: [item],
                 likes: 0,
                 isLiked: false,
                 comments: [],
                 commentCount: 0,
-                caption: `Olha o que eu criei com ${splitCameraItem.name}! 🎬`,
+                caption: details.caption,
+                layout: 'product-overlay',
+                overlayPosition: details.position,
             };
             setPosts(prevPosts => [newPost, ...prevPosts]);
             setConfirmationMessage('Seu vídeo foi publicado com sucesso!');
@@ -1195,6 +1207,7 @@ const App: React.FC = () => {
             setTimeout(() => setShowCoinAnimation(false), 2000);
         }
         setSplitCameraItem(null);
+        setEditingVideoDetails(null);
     };
 
 
@@ -1352,12 +1365,26 @@ const App: React.FC = () => {
              case Screen.SplitCamera:
                 if (splitCameraItem) {
                     return <SplitCameraScreen 
-                                item={splitCameraItem} 
                                 onBack={() => setCurrentScreen(Screen.ItemSelection)} 
-                                onPublish={handlePublishSplitVideo} 
+                                onRecordingComplete={handleRecordingComplete} 
                            />;
                 }
-                setCurrentScreen(Screen.ItemSelection); // Fallback
+                setCurrentScreen(Screen.ItemSelection);
+                return null;
+            case Screen.VideoEdit:
+                if (editingVideoDetails) {
+                    return <VideoEditScreen
+                                videoBlob={editingVideoDetails.blob}
+                                item={editingVideoDetails.item}
+                                onBack={() => {
+                                    setEditingVideoDetails(null);
+                                    setCurrentScreen(Screen.SplitCamera);
+                                }}
+                                onPublish={handlePublishOverlayVideo}
+                                isPublishing={isPublishing}
+                           />;
+                }
+                setCurrentScreen(Screen.ItemSelection);
                 return null;
             case Screen.AccountTypeSelection:
                 return <AccountTypeSelectionScreen onSelect={handleSetAccountType} />;
@@ -1723,6 +1750,7 @@ const App: React.FC = () => {
                     onClose={() => setRecommendationItem(null)}
                     onAddToCart={(item) => {
                         handleAddToCart(item);
+                        setRecommendationItem(null);
                     }}
                     onStartTryOn={(item) => {
                         setRecommendationItem(null);

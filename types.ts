@@ -53,6 +53,8 @@ export interface Post {
   commentCount: number;
   isSponsored?: boolean;
   caption?: string;
+  layout?: 'product-overlay';
+  overlayPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 }
 
 export interface Story {
@@ -131,7 +133,8 @@ export enum Screen {
   IdUpload,
   FaceScan,
   VerificationPending,
-  SplitCamera // Nova tela adicionada
+  SplitCamera,
+  VideoEdit
 }
 
 export interface AppNotification {
