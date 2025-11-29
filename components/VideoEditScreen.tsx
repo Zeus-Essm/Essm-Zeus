@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import type { Item } from '../types';
 import { PaperAirplaneIcon, RepositionIcon } from './IconComponents';
@@ -51,7 +52,7 @@ const VideoEditScreen: React.FC<VideoEditScreenProps> = ({ videoBlob, item, onBa
         <div className="relative w-full aspect-[9/16] bg-zinc-900 mx-auto max-w-full max-h-[60vh] rounded-b-lg overflow-hidden">
           <video src={videoUrl} autoPlay loop muted playsInline className="w-full h-full object-cover" />
           <div className={`absolute p-1 bg-black/30 backdrop-blur-sm rounded-lg transition-all duration-300 ${positionClasses[position]}`}>
-            <img src={item.image} alt={item.name} className="w-20 h-20 object-cover rounded-md" />
+            <img src={item.image} alt={item.name} className="w-40 h-40 object-cover rounded-md" />
           </div>
         </div>
 

@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { ArrowLeftIcon } from './IconComponents';
 import type { Item } from '../types';
@@ -85,7 +86,7 @@ const SplitCameraScreen: React.FC<SplitCameraScreenProps> = ({ onBack, onRecordi
                   }
                   return prev + 1; 
               });
-          }, 50); // 5 seconds recording time
+          }, 3000); // 5 minutes recording time (100 * 3000ms = 300000ms = 300s)
       }
       return () => {
         if (interval) clearInterval(interval);

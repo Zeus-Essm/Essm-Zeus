@@ -91,8 +91,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
       <button onClick={onViewProfile} className="p-3 flex items-center gap-3 text-left hover:bg-[var(--accent-primary)]/10 transition-colors">
         <img src={post.user.avatar} alt={post.user.name} className="w-10 h-10 rounded-full object-cover border-2 border-zinc-700" />
         <div>
-            <span className="font-bold text-sm">{post.user.name}</span>
-            {post.isSponsored && <p className="text-xs text-[var(--text-secondary)]">Patrocinado</p>}
+            <span className="font-bold text-sm text-black">{post.user.name}</span>
+            {post.isSponsored && <p className="text-xs text-zinc-500">Patrocinado</p>}
         </div>
       </button>
 
@@ -116,7 +116,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
                 {/* Product Overlay for specific layout */}
                 {post.layout === 'product-overlay' && post.items.length > 0 && (
                     <div 
-                        className={`absolute z-20 w-24 h-24 p-1 bg-black/40 backdrop-blur-md rounded-xl border border-white/20 shadow-lg cursor-pointer transition-transform hover:scale-105 active:scale-95 ${positionClasses[post.overlayPosition || 'bottom-right']}`}
+                        className={`absolute z-20 w-40 h-40 p-1 bg-black/40 backdrop-blur-md rounded-xl border border-white/20 shadow-lg cursor-pointer transition-transform hover:scale-105 active:scale-95 ${positionClasses[post.overlayPosition || 'bottom-right']}`}
                         onClick={(e) => {
                             e.stopPropagation();
                             onItemClick(post.items[0]);
@@ -156,32 +156,32 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
         <div className="flex items-center gap-4">
           <button onClick={onLike} className="transform hover:scale-110 transition-transform" aria-label="Curtir">
             <HeartIcon 
-              className={`w-7 h-7 ${post.isLiked ? 'text-[var(--accent-primary)]' : 'text-[var(--text-primary)]'}`} 
+              className={`w-7 h-7 ${post.isLiked ? 'text-[var(--accent-primary)]' : 'text-black'}`} 
               fill={post.isLiked ? 'currentColor' : 'none'}
             />
           </button>
            <button onClick={onComment} className="transform hover:scale-110 transition-transform" aria-label="Comentar">
-            <ChatBubbleIcon className="w-7 h-7 text-[var(--text-primary)]" />
+            <ChatBubbleIcon className="w-7 h-7 text-black" />
           </button>
           <button onClick={onShopTheLook} className="transform hover:scale-110 transition-transform" aria-label="Comprar o look">
-            <ShoppingBagIcon className="w-7 h-7 text-[var(--text-primary)]" />
+            <ShoppingBagIcon className="w-7 h-7 text-black" />
           </button>
         </div>
-        <p className="text-sm font-semibold mt-2">{post.likes.toLocaleString()} curtidas</p>
+        <p className="text-sm font-semibold mt-2 text-black">{post.likes.toLocaleString()} curtidas</p>
       </div>
 
       {/* Caption & Comments Section */}
-      <div className="px-3 pb-4 text-sm space-y-1.5">
+      <div className="px-3 pb-4 text-sm space-y-1.5 text-black">
         {post.items.length > 0 && (
           <p>
-            <span className="mr-1 text-[var(--text-secondary)]">
+            <span className="mr-1 text-zinc-600">
                 {post.video ? 'Apresentando ' : 'Vestindo '}
             </span>
             {post.items.map((item, index) => (
             <React.Fragment key={item.id}>
                 <button
                     onClick={() => onItemClick(item)}
-                    className="font-semibold text-[var(--text-tertiary)] hover:underline focus:outline-none"
+                    className="font-semibold text-zinc-800 hover:underline focus:outline-none"
                 >
                 {item.name}
                 </button>
@@ -191,22 +191,22 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
           </p>
         )}
         <p>
-            <button onClick={onViewProfile} className="font-bold mr-2 hover:underline">{post.user.name}</button>
-            {post.caption && <span className="font-normal">{post.caption}</span>}
+            <button onClick={onViewProfile} className="font-bold mr-2 hover:underline text-black">{post.user.name}</button>
+            {post.caption && <span className="font-normal text-black">{post.caption}</span>}
         </p>
 
         {/* Comments */}
         <div className="space-y-1">
             {(showAllComments ? post.comments : post.comments.slice(0, 2)).map(comment => (
-                <p key={comment.id} className="text-[var(--text-tertiary)]">
-                    <span className="font-semibold text-[var(--text-primary)] mr-2">{comment.user.name}</span>
+                <p key={comment.id} className="text-zinc-700">
+                    <span className="font-semibold text-black mr-2">{comment.user.name}</span>
                     {comment.text}
                 </p>
             ))}
         </div>
         
         {post.commentCount > 2 && !showAllComments && (
-            <button onClick={() => setShowAllComments(true)} className="text-[var(--text-secondary)] hover:underline">
+            <button onClick={() => setShowAllComments(true)} className="text-zinc-500 hover:underline">
                 Ver todos os {post.commentCount} comentários
             </button>
         )}
