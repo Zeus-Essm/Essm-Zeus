@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import type { Post, Item } from '../types';
 import { HeartIcon, ShoppingBagIcon, ChatBubbleIcon, PlayIcon } from './IconComponents';
@@ -76,6 +77,13 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
     }
   };
 
+  const positionClasses: Record<string, string> = {
+    'top-left': 'top-4 left-4',
+    'top-right': 'top-4 right-4',
+    'bottom-left': 'bottom-4 left-4',
+    'bottom-right': 'bottom-4 right-4',
+  };
+
 
   return (
     <div ref={cardRef} className="bg-[var(--bg-main)] flex flex-col animate-fadeIn border-b border-[var(--border-primary)]">
@@ -89,7 +97,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
       </button>
 
       {/* Post Image or Video */}
-      <div className="relative bg-black aspect-square">
+      <div className="relative bg-black aspect-square overflow-hidden">
         {post.video ? (
             <>
                 <video
@@ -104,6 +112,27 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
                     poster={post.image}
                     className="w-full h-full object-cover cursor-pointer"
                 />
+                
+                {/* Product Overlay for specific layout */}
+                {post.layout === 'product-overlay' && post.items.length > 0 && (
+                    <div 
+                        className={`absolute z-20 w-24 h-24 p-1 bg-black/40 backdrop-blur-md rounded-xl border border-white/20 shadow-lg cursor-pointer transition-transform hover:scale-105 active:scale-95 ${positionClasses[post.overlayPosition || 'bottom-right']}`}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onItemClick(post.items[0]);
+                        }}
+                    >
+                        <img 
+                            src={post.items[0].image} 
+                            alt={post.items[0].name} 
+                            className="w-full h-full object-cover rounded-lg"
+                        />
+                        <div className="absolute bottom-0 right-0 bg-[var(--accent-primary)] text-black text-[10px] font-bold px-1.5 py-0.5 rounded-tl-lg rounded-br-lg">
+                            Ver
+                        </div>
+                    </div>
+                )}
+
                 <div 
                   onClick={handleVideoClick}
                   className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${!isPlaying ? 'opacity-100 bg-black/20' : 'opacity-0'}`}
