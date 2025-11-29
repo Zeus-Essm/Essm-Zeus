@@ -92,12 +92,13 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
         <img src={post.user.avatar} alt={post.user.name} className="w-10 h-10 rounded-full object-cover border-2 border-zinc-700" />
         <div>
             <span className="font-bold text-sm text-black">{post.user.name}</span>
-            {post.isSponsored && <p className="text-xs text-zinc-500">Patrocinado</p>}
+            {post.isSponsored && <p className="text-xs text-zinc-900 font-medium">Patrocinado</p>}
         </div>
       </button>
 
       {/* Post Image or Video */}
-      <div className="relative bg-black aspect-square overflow-hidden">
+      {/* Alterado de aspect-square fixo para condicional baseada se é vídeo (9:16) ou imagem (1:1) */}
+      <div className={`relative bg-black overflow-hidden ${post.video ? 'aspect-[9/16]' : 'aspect-square'}`}>
         {post.video ? (
             <>
                 <video
@@ -167,21 +168,21 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
             <ShoppingBagIcon className="w-7 h-7 text-black" />
           </button>
         </div>
-        <p className="text-sm font-semibold mt-2 text-black">{post.likes.toLocaleString()} curtidas</p>
+        <p className="text-sm font-bold mt-2 text-black">{post.likes.toLocaleString()} curtidas</p>
       </div>
 
       {/* Caption & Comments Section */}
       <div className="px-3 pb-4 text-sm space-y-1.5 text-black">
         {post.items.length > 0 && (
           <p>
-            <span className="mr-1 text-zinc-600">
+            <span className="mr-1 text-black font-medium">
                 {post.video ? 'Apresentando ' : 'Vestindo '}
             </span>
             {post.items.map((item, index) => (
             <React.Fragment key={item.id}>
                 <button
                     onClick={() => onItemClick(item)}
-                    className="font-semibold text-zinc-800 hover:underline focus:outline-none"
+                    className="font-bold text-black hover:underline focus:outline-none"
                 >
                 {item.name}
                 </button>
@@ -198,15 +199,15 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
         {/* Comments */}
         <div className="space-y-1">
             {(showAllComments ? post.comments : post.comments.slice(0, 2)).map(comment => (
-                <p key={comment.id} className="text-zinc-700">
-                    <span className="font-semibold text-black mr-2">{comment.user.name}</span>
+                <p key={comment.id} className="text-black">
+                    <span className="font-bold text-black mr-2">{comment.user.name}</span>
                     {comment.text}
                 </p>
             ))}
         </div>
         
         {post.commentCount > 2 && !showAllComments && (
-            <button onClick={() => setShowAllComments(true)} className="text-zinc-500 hover:underline">
+            <button onClick={() => setShowAllComments(true)} className="text-black font-medium hover:underline opacity-80">
                 Ver todos os {post.commentCount} comentários
             </button>
         )}

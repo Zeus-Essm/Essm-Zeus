@@ -4,7 +4,9 @@ import { ArrowLeftIcon } from './IconComponents';
 import type { Item } from '../types';
 
 interface SplitCameraScreenProps {
+  item: Item; // Required prop to match usage in App.tsx
   onBack: () => void;
+  onPublish?: (videoBlob: Blob | null) => void; // Optional if handled via onRecordingComplete
   onRecordingComplete: (videoBlob: Blob) => void;
 }
 

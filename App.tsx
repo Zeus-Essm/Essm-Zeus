@@ -248,6 +248,9 @@ const App: React.FC = () => {
     // Split Camera State
     const [splitCameraItem, setSplitCameraItem] = React.useState<Item | null>(null);
     const [editingVideoDetails, setEditingVideoDetails] = React.useState<{ blob: Blob; item: Item } | null>(null);
+    
+    // Repost State
+    const [repostingItem, setRepostingItem] = React.useState<Item | null>(null);
 
 
     const unreadNotificationCount = notifications.filter(n => !n.read).length;
@@ -710,23 +713,8 @@ const App: React.FC = () => {
         } else {
             // "repost" logic for non-fashion, non-try-on items
             if (profile) {
-                const newPost: Post = {
-                    id: `post_${Date.now()}`,
-                    user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || `https://i.pravatar.cc/150?u=${profile.id}` },
-                    image: item.image,
-                    items: [item],
-                    likes: 0,
-                    isLiked: false,
-                    comments: [],
-                    commentCount: 0,
-                };
-                setPosts(prevPosts => [newPost, ...prevPosts]);
-                setConfirmationMessage(`${item.name} foi postado no seu feed!`);
-                setCurrentScreen(Screen.Confirmation);
-                // Trigger coin animation
-                setShowCoinAnimation(true);
-                setProfile(prev => prev ? { ...prev, reward_points: (prev.reward_points || 0) + 50 } : null);
-                setTimeout(() => setShowCoinAnimation(false), 2000);
+                setRepostingItem(item);
+                setIsCaptioning(true);
             } else {
                 setError("Você precisa estar logado para postar.");
             }
@@ -974,28 +962,47 @@ const App: React.FC = () => {
     };
 
     const handlePostToFeed = (caption: string) => {
-        if (generatedImage && profile) {
+        if (profile) {
             // Trigger Coin Animation
             setShowCoinAnimation(true);
             setProfile(prev => prev ? { ...prev, reward_points: (prev.reward_points || 0) + 50 } : null);
             setTimeout(() => setShowCoinAnimation(false), 2000);
 
-            const newPost: Post = {
-                id: `post_${Date.now()}`,
-                user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || 'https://i.postimg.cc/150?u=me' },
-                image: generatedImage,
-                items: wornItems,
-                likes: 0,
-                isLiked: false,
-                comments: [],
-                commentCount: 0,
-                caption: caption,
-            };
+            let newPost: Post;
+
+            if (repostingItem) {
+                 newPost = {
+                    id: `post_${Date.now()}`,
+                    user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || 'https://i.postimg.cc/150?u=me' },
+                    image: repostingItem.image,
+                    items: [repostingItem],
+                    likes: 0,
+                    isLiked: false,
+                    comments: [],
+                    commentCount: 0,
+                    caption: caption,
+                };
+                setRepostingItem(null);
+            } else if (generatedImage) {
+                 newPost = {
+                    id: `post_${Date.now()}`,
+                    user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || 'https://i.postimg.cc/150?u=me' },
+                    image: generatedImage,
+                    items: wornItems,
+                    likes: 0,
+                    isLiked: false,
+                    comments: [],
+                    commentCount: 0,
+                    caption: caption,
+                };
+            } else {
+                return;
+            }
+
             setPosts(prevPosts => [newPost, ...prevPosts]);
             setIsCaptioning(false);
-            setCurrentScreen(Screen.Feed);
-            setToast("Publicado com sucesso!");
-            setTimeout(() => setToast(null), 3000);
+            setConfirmationMessage("Publicado com sucesso!");
+            setCurrentScreen(Screen.Confirmation);
         }
     };
 
@@ -1365,6 +1372,7 @@ const App: React.FC = () => {
              case Screen.SplitCamera:
                 if (splitCameraItem) {
                     return <SplitCameraScreen 
+                                item={splitCameraItem}
                                 onBack={() => setCurrentScreen(Screen.ItemSelection)} 
                                 onRecordingComplete={handleRecordingComplete} 
                            />;
@@ -1736,10 +1744,13 @@ const App: React.FC = () => {
                 />
             )}
 
-            {isCaptioning && generatedImage && (
+            {isCaptioning && (generatedImage || repostingItem) && (
                 <CaptionModal
-                    image={generatedImage}
-                    onClose={() => setIsCaptioning(false)}
+                    image={repostingItem ? repostingItem.image : generatedImage!}
+                    onClose={() => {
+                        setIsCaptioning(false);
+                        setRepostingItem(null);
+                    }}
                     onPublish={handlePostToFeed}
                 />
             )}
