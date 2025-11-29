@@ -1,3 +1,4 @@
+
 import React from 'react';
 // FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
 import type { Session } from '@supabase/supabase-js';
@@ -47,6 +48,8 @@ import FaceScanScreen from './components/FaceScanScreen';
 import VerificationPendingScreen from './components/VerificationPendingScreen';
 import VeoApiKeyModal from './components/VeoApiKeyModal';
 import CaptionModal from './components/CaptionModal';
+import CoinBurst from './components/CoinBurst';
+import RecommendationModal from './components/RecommendationModal';
 
 // FORCE REFRESH v2.3 - Apply new wig items and ensure AI logic is active
 
@@ -217,6 +220,7 @@ const App: React.FC = () => {
     const [isCartAnimating, setIsCartAnimating] = React.useState(false);
     const [isPreviewingAsVisitor, setIsPreviewingAsVisitor] = React.useState(false);
     const [isVeoKeyFlowNeeded, setIsVeoKeyFlowNeeded] = React.useState(false);
+    const [showCoinAnimation, setShowCoinAnimation] = React.useState(false);
     
     // Notifications & Messages State
     const [notifications, setNotifications] = React.useState<AppNotification[]>([]);
@@ -235,6 +239,9 @@ const App: React.FC = () => {
     // Verification State
     const [idFrontImage, setIdFrontImage] = React.useState<string | null>(null);
     const [idBackImage, setIdBackImage] = React.useState<string | null>(null);
+
+    // Recommendation State
+    const [recommendationItem, setRecommendationItem] = React.useState<Item | null>(null);
 
 
     const unreadNotificationCount = notifications.filter(n => !n.read).length;
@@ -651,6 +658,12 @@ const App: React.FC = () => {
     };
 
     const handleItemSelect = async (item: Item) => {
+        // Check for recommendation video
+        if (item.recommendationVideo && !recommendationItem) {
+            setRecommendationItem(item);
+            return;
+        }
+
         const itemType = getCategoryTypeFromItem(item);
 
         if (itemType === 'fashion' || item.isTryOn) {
@@ -704,6 +717,10 @@ const App: React.FC = () => {
                 setPosts(prevPosts => [newPost, ...prevPosts]);
                 setConfirmationMessage(`${item.name} foi postado no seu feed!`);
                 setCurrentScreen(Screen.Confirmation);
+                // Trigger coin animation
+                setShowCoinAnimation(true);
+                setProfile(prev => prev ? { ...prev, reward_points: (prev.reward_points || 0) + 50 } : null);
+                setTimeout(() => setShowCoinAnimation(false), 2000);
             } else {
                 setError("Você precisa estar logado para postar.");
             }
@@ -827,6 +844,11 @@ const App: React.FC = () => {
             return;
         }
 
+        // Add Coin Animation Trigger Here
+        setShowCoinAnimation(true);
+        setProfile(prev => prev ? { ...prev, reward_points: (prev.reward_points || 0) + 50 } : null);
+        setTimeout(() => setShowCoinAnimation(false), 2000);
+
         if (session.user.id.startsWith('mock_')) {
             const newPost: Post = {
                 id: `post_video_${Date.now()}`,
@@ -947,6 +969,11 @@ const App: React.FC = () => {
 
     const handlePostToFeed = (caption: string) => {
         if (generatedImage && profile) {
+            // Trigger Coin Animation
+            setShowCoinAnimation(true);
+            setProfile(prev => prev ? { ...prev, reward_points: (prev.reward_points || 0) + 50 } : null);
+            setTimeout(() => setShowCoinAnimation(false), 2000);
+
             const newPost: Post = {
                 id: `post_${Date.now()}`,
                 user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || 'https://i.postimg.cc/150?u=me' },
@@ -1049,6 +1076,11 @@ const App: React.FC = () => {
         setToast('Look postado no feed com sucesso!');
         setTimeout(() => setToast(null), 3000);
         setCurrentScreen(Screen.Feed);
+        
+        // Trigger Coin Animation for reposting too
+        setShowCoinAnimation(true);
+        setProfile(prev => prev ? { ...prev, reward_points: (prev.reward_points || 0) + 50 } : null);
+        setTimeout(() => setShowCoinAnimation(false), 2000);
     };
 
     const handleSaveImage = () => {
@@ -1555,6 +1587,8 @@ const App: React.FC = () => {
                 </div>
             )}
             
+            {showCoinAnimation && <CoinBurst />}
+
             {showNotificationsPanel && (
                 <NotificationsPanel
                     notifications={notifications}
@@ -1637,6 +1671,31 @@ const App: React.FC = () => {
                     image={generatedImage}
                     onClose={() => setIsCaptioning(false)}
                     onPublish={handlePostToFeed}
+                />
+            )}
+
+            {recommendationItem && (
+                <RecommendationModal
+                    item={recommendationItem}
+                    onClose={() => setRecommendationItem(null)}
+                    onAddToCart={(item) => {
+                        handleAddToCart(item);
+                        setRecommendationItem(null);
+                    }}
+                    onStartTryOn={(item) => {
+                        setRecommendationItem(null);
+                        // Need to clear recommendation first to avoid conflicts, then wait briefly
+                        setTimeout(() => {
+                            // Logic to start try on directly from here would be ideal, 
+                            // but reusing the existing flow:
+                            if (!userImage) {
+                                setCurrentScreen(Screen.ImageSourceSelection);
+                            } else {
+                                // Simulate item select for try on
+                                handleItemSelect(item);
+                            }
+                        }, 100);
+                    }}
                 />
             )}
 

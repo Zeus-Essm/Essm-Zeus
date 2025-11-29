@@ -1,4 +1,5 @@
 
+
 import type { Category, Item, Post, Story, Conversation, CollaborationPost } from './types';
 
 // Sub-categorias de Roupas reutilizáveis
@@ -208,13 +209,37 @@ export const CATEGORIES: Category[] = [
 
 export const ITEMS: Item[] = [
     // Louis Vuitton - Feminino - Vestido
-    { id: 'item3', name: 'Vestido de Gala LV', description: 'Vestido longo de seda para ocasiões especiais.', category: 'lv_feminino_vestido', image: 'https://i.postimg.cc/k47jSjPj/vestido-lv-fem-1.jpg', price: 15000 },
+    { 
+        id: 'item3', 
+        name: 'Vestido de Gala LV', 
+        description: 'Vestido longo de seda para ocasiões especiais.', 
+        category: 'lv_feminino_vestido', 
+        image: 'https://i.postimg.cc/k47jSjPj/vestido-lv-fem-1.jpg', 
+        price: 15000,
+        recommendationVideo: 'https://files.catbox.moe/ctk28a.mp4' // Added video
+    },
     { id: 'item4', name: 'Vestido Casual Monograma', description: 'Vestido confortável para o dia a dia, com padrão monograma.', category: 'lv_feminino_vestido', image: 'https://i.postimg.cc/C1QZ8L1k/vestido-lv-fem-2.jpg', price: 7500 },
     // NEW FEELING - Feminino - Saia
     { id: 'item5', name: 'Saia Jeans New Feeling', description: 'Saia jeans moderna e despojada.', category: 'nf_feminino_saia', image: 'https://i.postimg.cc/8z7xQ9WY/saia-nf-fem-1.jpg', price: 250 },
-    { id: 'item6', name: 'Saia Plissada New Feeling', description: 'Saia plissada em tons pastel.', category: 'nf_feminino_saia', image: 'https://i.postimg.cc/J0vP8g1G/saia-nf-fem-2.jpg', price: 320 },
+    { 
+        id: 'item6', 
+        name: 'Saia Plissada New Feeling', 
+        description: 'Saia plissada em tons pastel.', 
+        category: 'nf_feminino_saia', 
+        image: 'https://i.postimg.cc/J0vP8g1G/saia-nf-fem-2.jpg', 
+        price: 320,
+        recommendationVideo: 'https://files.catbox.moe/joiet2.mp4' // Added video
+    },
     // Adidas - Masculino - Tênis
-    { id: 'item7', name: 'Adidas Ultraboost', description: 'Tênis de corrida com máximo conforto e retorno de energia.', category: 'ad_masculino_tenis', image: 'https://i.postimg.cc/Hnpy6yvK/tenis-ad-masc-1.jpg', price: 900 },
+    { 
+        id: 'item7', 
+        name: 'Adidas Ultraboost', 
+        description: 'Tênis de corrida com máximo conforto e retorno de energia.', 
+        category: 'ad_masculino_tenis', 
+        image: 'https://i.postimg.cc/Hnpy6yvK/tenis-ad-masc-1.jpg', 
+        price: 900,
+        recommendationVideo: 'https://files.catbox.moe/ctk28a.mp4' // Added video placeholder
+    },
     { id: 'item8', name: 'Adidas Superstar', description: 'O clássico da Adidas com seu design icônico.', category: 'ad_masculino_tenis', image: 'https://i.postimg.cc/J0tL2y08/tenis-ad-masc-2.jpg', price: 450 },
     
     // Louis Vuitton - Masculino - Fato

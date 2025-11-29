@@ -1,9 +1,10 @@
 
+
 import React, { useMemo, useState, useRef } from 'react';
 import type { Item, MarketplaceType } from '../types';
 import { ITEMS } from '../constants';
 import Header from './Header';
-import { ShoppingBagIcon } from './IconComponents';
+import { ShoppingBagIcon, PlayIcon } from './IconComponents';
 import QuickViewModal from './QuickViewModal';
 
 interface ItemSelectionScreenProps {
@@ -79,6 +80,11 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
                 >
                   <div className="relative overflow-hidden rounded-lg mb-2">
                       <img src={item.image} alt={item.name} className="w-full h-40 object-cover pointer-events-none transition-transform duration-500 hover:scale-110" />
+                      {item.recommendationVideo && (
+                          <div className="absolute top-2 right-2 bg-black/60 rounded-full p-1 backdrop-blur-sm">
+                              <PlayIcon className="w-3 h-3 text-white" />
+                          </div>
+                      )}
                   </div>
                   <div className='flex flex-col flex-grow p-1'>
                     <h3 className="text-sm font-semibold flex-grow pointer-events-none truncate">{item.name}</h3>
@@ -87,7 +93,7 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
                             onClick={(e) => { e.stopPropagation(); onItemSelect(item); }}
                             className="flex-grow text-xs text-center font-bold uppercase tracking-wider py-2 px-2 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] transition-all transform active:scale-90 hover:shadow-[0_0_10px_var(--accent-primary-glow)]"
                         >
-                            {collectionType === 'fashion' || item.isTryOn ? 'PROVAR' : 'REPOSTAR'}
+                            {item.recommendationVideo ? 'VER VIDEO' : (collectionType === 'fashion' || item.isTryOn ? 'PROVAR' : 'REPOSTAR')}
                         </button>
                         <button
                             onClick={(e) => handleAddToCartClick(e, item)}

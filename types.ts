@@ -31,6 +31,7 @@ export interface Item {
   beautyType?: 'lipstick' | 'wig' | 'eyeshadow';
   gender?: 'male' | 'female' | 'kid' | 'unisex';
   vendorSubCategory?: string;
+  recommendationVideo?: string; // New field for split-screen recommendation
 }
 
 export interface Comment {
