@@ -130,7 +130,8 @@ export enum Screen {
   VerificationIntro,
   IdUpload,
   FaceScan,
-  VerificationPending
+  VerificationPending,
+  SplitCamera // Nova tela adicionada
 }
 
 export interface AppNotification {

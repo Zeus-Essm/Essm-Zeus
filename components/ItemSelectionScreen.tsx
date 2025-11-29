@@ -1,10 +1,8 @@
-
-
 import React, { useMemo, useState, useRef } from 'react';
 import type { Item, MarketplaceType } from '../types';
 import { ITEMS } from '../constants';
 import Header from './Header';
-import { ShoppingBagIcon, PlayIcon } from './IconComponents';
+import { ShoppingBagIcon, PlayIcon, ArchiveIcon, VideoCameraIcon } from './IconComponents';
 import QuickViewModal from './QuickViewModal';
 
 interface ItemSelectionScreenProps {
@@ -13,29 +11,80 @@ interface ItemSelectionScreenProps {
   collectionName: string;
   collectionType: MarketplaceType;
   onItemSelect: (item: Item) => void;
+  onOpenSplitCamera: (item: Item) => void; // Nova prop
   onBack: () => void;
   onBuy: (item: Item) => void;
   onAddToCart: (item: Item) => void;
 }
 
-const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, collectionId, collectionName, collectionType, onItemSelect, onBack, onBuy, onAddToCart }) => {
+// Internal Option Modal Component
+const OptionSelectionModal: React.FC<{
+    onClose: () => void;
+    onNormal: () => void;
+    onVideo: () => void;
+}> = ({ onClose, onNormal, onVideo }) => (
+    <div 
+        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn"
+        onClick={onClose}
+    >
+        <div 
+            className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-2xl w-full max-w-xs p-6 flex flex-col gap-4 shadow-2xl animate-modalZoomIn relative overflow-hidden"
+            onClick={e => e.stopPropagation()}
+        >
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--accent-primary)] to-yellow-200"></div>
+            <h3 className="text-xl font-bold text-center text-[var(--text-primary)] mb-2">Como deseja visualizar?</h3>
+            
+            <button 
+                onClick={onNormal} 
+                className="flex items-center gap-4 p-4 rounded-xl bg-[var(--bg-tertiary)] hover:bg-[var(--accent-primary)]/10 border-2 border-transparent hover:border-[var(--accent-primary)] transition-all group"
+            >
+                <div className="p-3 rounded-full bg-[var(--bg-main)] group-hover:bg-[var(--accent-primary)] transition-colors shadow-sm">
+                    <ArchiveIcon className="w-6 h-6 text-[var(--text-primary)] group-hover:text-[var(--accent-primary-text)]" />
+                </div>
+                <div className="text-left">
+                    <p className="font-bold text-[var(--text-primary)]">Versão Normal</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Apenas a imagem do produto</p>
+                </div>
+            </button>
+
+            <button 
+                onClick={onVideo} 
+                className="flex items-center gap-4 p-4 rounded-xl bg-[var(--bg-tertiary)] hover:bg-[var(--accent-primary)]/10 border-2 border-transparent hover:border-[var(--accent-primary)] transition-all group"
+            >
+                <div className="p-3 rounded-full bg-[var(--bg-main)] group-hover:bg-[var(--accent-primary)] transition-colors shadow-sm">
+                    <PlayIcon className="w-6 h-6 text-[var(--text-primary)] group-hover:text-[var(--accent-primary-text)]" />
+                </div>
+                <div className="text-left">
+                    <p className="font-bold text-[var(--text-primary)]">Com Vídeo Review</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Ver recomendação em vídeo</p>
+                </div>
+            </button>
+
+            <button onClick={onClose} className="mt-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">Cancelar</button>
+        </div>
+    </div>
+);
+
+const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, collectionId, collectionName, collectionType, onItemSelect, onOpenSplitCamera, onBack, onBuy, onAddToCart }) => {
   const categoryItems = useMemo(() => ITEMS.filter(item => item.category === collectionId), [collectionId]);
   
   const [quickViewItem, setQuickViewItem] = useState<Item | null>(null);
-  const [pressedItemId, setPressedItemId] = useState<string | null>(null); // State to track pressed item for animation
-  const [animatingCartItemId, setAnimatingCartItemId] = useState<string | null>(null); // State to track item being added to cart
+  const [itemForOptions, setItemForOptions] = useState<Item | null>(null);
+  
+  const [pressedItemId, setPressedItemId] = useState<string | null>(null);
+  const [animatingCartItemId, setAnimatingCartItemId] = useState<string | null>(null);
   const pressTimer = useRef<number | null>(null);
 
   const handlePressStart = (item: Item) => {
-    setPressedItemId(item.id); // Start animation
+    setPressedItemId(item.id);
     pressTimer.current = window.setTimeout(() => {
       setQuickViewItem(item);
-      setPressedItemId(null); // Stop animation when modal opens
-    }, 500); // Long press duration
+      setPressedItemId(null);
+    }, 500);
   };
 
   const handlePressEnd = () => {
-    setPressedItemId(null); // Stop animation
+    setPressedItemId(null);
     if (pressTimer.current) {
       clearTimeout(pressTimer.current);
     }
@@ -49,7 +98,31 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
       e.stopPropagation();
       setAnimatingCartItemId(item.id);
       onAddToCart(item);
-      setTimeout(() => setAnimatingCartItemId(null), 1000); // Animation duration
+      setTimeout(() => setAnimatingCartItemId(null), 1000);
+  };
+
+  const handleMainActionClick = (item: Item, e?: React.MouseEvent) => {
+      e?.stopPropagation();
+      if (item.recommendationVideo) {
+          setItemForOptions(item);
+      } else {
+          onItemSelect(item);
+      }
+  };
+
+  const handleOptionNormal = () => {
+      if (itemForOptions) {
+          const itemWithoutVideo = { ...itemForOptions, recommendationVideo: undefined };
+          onItemSelect(itemWithoutVideo);
+          setItemForOptions(null);
+      }
+  };
+
+  const handleOptionVideo = () => {
+      if (itemForOptions) {
+          onItemSelect(itemForOptions);
+          setItemForOptions(null);
+      }
   };
 
   return (
@@ -80,6 +153,7 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
                 >
                   <div className="relative overflow-hidden rounded-lg mb-2">
                       <img src={item.image} alt={item.name} className="w-full h-40 object-cover pointer-events-none transition-transform duration-500 hover:scale-110" />
+                      
                       {item.recommendationVideo && (
                           <div className="absolute top-2 right-2 bg-black/60 rounded-full p-1 backdrop-blur-sm">
                               <PlayIcon className="w-3 h-3 text-white" />
@@ -89,12 +163,31 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
                   <div className='flex flex-col flex-grow p-1'>
                     <h3 className="text-sm font-semibold flex-grow pointer-events-none truncate">{item.name}</h3>
                     <div className="mt-2 flex items-center gap-2">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onItemSelect(item); }}
-                            className="flex-grow text-xs text-center font-bold uppercase tracking-wider py-2 px-2 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] transition-all transform active:scale-90 hover:shadow-[0_0_10px_var(--accent-primary-glow)]"
-                        >
-                            {item.recommendationVideo ? 'VER VIDEO' : (collectionType === 'fashion' || item.isTryOn ? 'PROVAR' : 'REPOSTAR')}
-                        </button>
+                        {collectionType === 'fashion' || item.isTryOn ? (
+                            <button
+                                onClick={(e) => handleMainActionClick(item, e)}
+                                className="flex-grow text-xs text-center font-bold uppercase tracking-wider py-2 px-2 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] transition-all transform active:scale-90 hover:shadow-[0_0_10px_var(--accent-primary-glow)]"
+                            >
+                                PROVAR
+                            </button>
+                        ) : (
+                            <div className="flex-grow flex gap-2">
+                                <button
+                                    onClick={(e) => handleMainActionClick(item, e)}
+                                    className="flex-1 text-[10px] text-center font-bold uppercase tracking-wider py-2 px-1 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] transition-all transform active:scale-90"
+                                >
+                                    REPOSTAR
+                                </button>
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onOpenSplitCamera(item); }}
+                                    className="flex-1 flex items-center justify-center gap-1 text-[10px] text-center font-bold uppercase tracking-wider py-2 px-1 rounded-full bg-white text-black border border-zinc-300 transition-all transform active:scale-90"
+                                >
+                                    <VideoCameraIcon className="w-3 h-3" />
+                                    CRIAR
+                                </button>
+                            </div>
+                        )}
+                        
                         <button
                             onClick={(e) => handleAddToCartClick(e, item)}
                             className={`p-2.5 rounded-full transition-all transform duration-300 ${animatingCartItemId === item.id ? 'bg-green-500 scale-110 rotate-12' : 'bg-[var(--bg-tertiary)] hover:bg-[var(--text-secondary)]/20 active:scale-90'}`}
@@ -121,9 +214,11 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
           )}
         </div>
       </div>
+
       {quickViewItem && (
         <QuickViewModal 
             item={quickViewItem} 
+            collectionType={collectionType} // Passar o tipo para o modal saber se mostra CRIAR
             onClose={handleCloseModal}
             onBuy={(item) => {
                 handleCloseModal();
@@ -133,7 +228,23 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
                 handleCloseModal();
                 onAddToCart(item);
             }}
+            onItemAction={(item) => {
+                handleCloseModal();
+                handleMainActionClick(item);
+            }}
+            onOpenSplitCamera={(item) => {
+                handleCloseModal();
+                onOpenSplitCamera(item);
+            }}
         />
+      )}
+
+      {itemForOptions && (
+          <OptionSelectionModal 
+              onClose={() => setItemForOptions(null)}
+              onNormal={handleOptionNormal}
+              onVideo={handleOptionVideo}
+          />
       )}
     </>
   );

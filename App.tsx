@@ -50,6 +50,7 @@ import VeoApiKeyModal from './components/VeoApiKeyModal';
 import CaptionModal from './components/CaptionModal';
 import CoinBurst from './components/CoinBurst';
 import RecommendationModal from './components/RecommendationModal';
+import SplitCameraScreen from './components/SplitCameraScreen'; // Novo Import
 
 // FORCE REFRESH v2.3 - Apply new wig items and ensure AI logic is active
 
@@ -242,6 +243,9 @@ const App: React.FC = () => {
 
     // Recommendation State
     const [recommendationItem, setRecommendationItem] = React.useState<Item | null>(null);
+
+    // Split Camera State
+    const [splitCameraItem, setSplitCameraItem] = React.useState<Item | null>(null);
 
 
     const unreadNotificationCount = notifications.filter(n => !n.read).length;
@@ -1163,6 +1167,37 @@ const App: React.FC = () => {
         }
     };
 
+    const handleOpenSplitCamera = (item: Item) => {
+        setSplitCameraItem(item);
+        setCurrentScreen(Screen.SplitCamera);
+    };
+
+    const handlePublishSplitVideo = (videoBlob: Blob | null) => {
+        if (profile && splitCameraItem) {
+            const newPost: Post = {
+                id: `post_split_${Date.now()}`,
+                user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || `https://i.pravatar.cc/150?u=${profile.id}` },
+                image: splitCameraItem.image, // Product image as thumbnail
+                video: videoBlob ? URL.createObjectURL(videoBlob) : undefined,
+                items: [splitCameraItem],
+                likes: 0,
+                isLiked: false,
+                comments: [],
+                commentCount: 0,
+                caption: `Olha o que eu criei com ${splitCameraItem.name}! 🎬`,
+            };
+            setPosts(prevPosts => [newPost, ...prevPosts]);
+            setConfirmationMessage('Seu vídeo foi publicado com sucesso!');
+            setCurrentScreen(Screen.Confirmation);
+            // Trigger coin animation
+            setShowCoinAnimation(true);
+            setProfile(prev => prev ? { ...prev, reward_points: (prev.reward_points || 0) + 50 } : null);
+            setTimeout(() => setShowCoinAnimation(false), 2000);
+        }
+        setSplitCameraItem(null);
+    };
+
+
     // Navigation handlers
     const handleNavigateToMyLooks = () => setCurrentScreen(Screen.MyLooks);
     const handleNavigateToRewards = () => setCurrentScreen(Screen.Rewards);
@@ -1313,12 +1348,17 @@ const App: React.FC = () => {
 
         const currentNode = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1] : null;
 
-        const notificationProps = {
-            unreadNotificationCount: unreadNotificationCount,
-            onNotificationsClick: handleOpenNotificationsPanel,
-        };
-
         switch (currentScreen) {
+             case Screen.SplitCamera:
+                if (splitCameraItem) {
+                    return <SplitCameraScreen 
+                                item={splitCameraItem} 
+                                onBack={() => setCurrentScreen(Screen.ItemSelection)} 
+                                onPublish={handlePublishSplitVideo} 
+                           />;
+                }
+                setCurrentScreen(Screen.ItemSelection); // Fallback
+                return null;
             case Screen.AccountTypeSelection:
                 return <AccountTypeSelectionScreen onSelect={handleSetAccountType} />;
             case Screen.BusinessOnboarding:
@@ -1414,6 +1454,7 @@ const App: React.FC = () => {
                         collectionName={collectionIdentifier.name}
                         collectionType={collectionIdentifier.type}
                         onItemSelect={handleItemSelect}
+                        onOpenSplitCamera={handleOpenSplitCamera}
                         onBack={() => setCurrentScreen(Screen.SubCategorySelection)}
                         onBuy={handleBuy}
                         onAddToCart={handleAddToCart}
@@ -1509,6 +1550,8 @@ const App: React.FC = () => {
                     onViewProfile={handleViewProfile}
                     onLikePost={handleLikePost}
                     onItemClick={handleItemClick}
+                    onItemAction={handleItemSelect}
+                    onOpenSplitCamera={handleOpenSplitCamera}
                     onOpenComments={handleOpenComments}
                     onAddToCart={handleAddToCart}
                     onBuy={handleBuy}
@@ -1680,18 +1723,13 @@ const App: React.FC = () => {
                     onClose={() => setRecommendationItem(null)}
                     onAddToCart={(item) => {
                         handleAddToCart(item);
-                        setRecommendationItem(null);
                     }}
                     onStartTryOn={(item) => {
                         setRecommendationItem(null);
-                        // Need to clear recommendation first to avoid conflicts, then wait briefly
                         setTimeout(() => {
-                            // Logic to start try on directly from here would be ideal, 
-                            // but reusing the existing flow:
                             if (!userImage) {
                                 setCurrentScreen(Screen.ImageSourceSelection);
                             } else {
-                                // Simulate item select for try on
                                 handleItemSelect(item);
                             }
                         }, 100);

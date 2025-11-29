@@ -1,8 +1,10 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { ArrowLeftIcon, SearchIcon } from './IconComponents';
-import type { Post, Profile, Item } from '../types';
+import type { Post, Profile, Item, MarketplaceType } from '../types';
 import ImageViewModal from './ImageViewModal';
 import QuickViewModal from './QuickViewModal';
+import { CATEGORIES } from '../constants';
 
 interface SearchScreenProps {
     onBack: () => void;
@@ -11,6 +13,8 @@ interface SearchScreenProps {
     onViewProfile: (profileId: string) => void;
     onLikePost: (postId: string) => void;
     onItemClick: (item: Item) => void;
+    onItemAction: (item: Item) => void;
+    onOpenSplitCamera: (item: Item) => void;
     onOpenComments: (postId: string) => void;
     onAddToCart: (item: Item) => void;
     onBuy: (item: Item) => void;
@@ -23,6 +27,8 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
     onViewProfile,
     onLikePost,
     onItemClick,
+    onItemAction,
+    onOpenSplitCamera,
     onOpenComments,
     onAddToCart,
     onBuy,
@@ -54,6 +60,12 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
         });
         return Array.from(profileMap.values());
     }, [posts]);
+
+    const getCategoryTypeFromItem = (item: Item): MarketplaceType => {
+        const rootCategoryId = item.category.split('_')[0];
+        const category = CATEGORIES.find(c => c.id === rootCategoryId);
+        return category?.type || 'fashion';
+    };
 
     useEffect(() => {
         if (query.trim() === '') {
@@ -183,6 +195,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
             {quickViewItem && (
                 <QuickViewModal 
                     item={quickViewItem} 
+                    collectionType={getCategoryTypeFromItem(quickViewItem)}
                     onClose={() => setQuickViewItem(null)}
                     onBuy={(item) => {
                         onBuy(item);
@@ -190,6 +203,14 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                     }}
                     onAddToCart={(item) => {
                         onAddToCart(item);
+                        setQuickViewItem(null);
+                    }}
+                    onItemAction={(item) => {
+                        onItemAction(item);
+                        setQuickViewItem(null);
+                    }}
+                    onOpenSplitCamera={(item) => {
+                        onOpenSplitCamera(item);
                         setQuickViewItem(null);
                     }}
                 />
