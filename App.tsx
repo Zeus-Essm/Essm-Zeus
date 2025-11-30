@@ -614,7 +614,7 @@ const App: React.FC = () => {
             let finalImage = imageDataUrl;
             
             // Check if we are in decoration flow (last item selected was decoration)
-            const isDecoration = wornItems.length > 0 && wornItems[wornItems.length - 1].tryOnType === 'decoration';
+            // const isDecoration = wornItems.length > 0 && wornItems[wornItems.length - 1].tryOnType === 'decoration';
             
             // However, handleImageUpload is called from ImageSourceSelectionScreen which is pushed after ItemSelection.
             // We can check if navigationStack leads to decoration category or if we have a pending item.
@@ -1133,7 +1133,7 @@ const App: React.FC = () => {
         if (!profile) return;
         const newPost: Post = {
             id: `post_${Date.now()}`,
-            user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || 'https://i.pravatar.cc/150?u=me' },
+            user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || 'https://i.postimg.cc/150?u=me' },
             image: look.image,
             items: look.items,
             likes: 0,
