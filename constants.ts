@@ -1,4 +1,5 @@
 
+
 import type { Category, Item, Post, Story, Conversation, CollaborationPost } from './types';
 
 // Sub-categorias de Roupas reutilizáveis
@@ -223,6 +224,12 @@ export const ITEMS: Item[] = [
     { id: 'deco-13', name: 'deco 13', description: 'Item de decoração exclusivo.', category: 'supermercados_decoracao', image: 'https://i.postimg.cc/6qRj6m0f/quadro_com_moldura_frase_coisas_pequenas_amor_30x40cm_preta.webp', price: 20000, isTryOn: true, tryOnType: 'decoration' },
     { id: 'deco-14', name: 'deco 14', description: 'Item de decoração exclusivo.', category: 'supermercados_decoracao', image: 'https://i.postimg.cc/fL1qNNx7/quadro_paris_nova_york_e_londres_kit_3_telas_1567793695_3517_600x600.jpg', price: 20000, isTryOn: true, tryOnType: 'decoration' },
     { id: 'deco-15', name: 'deco 15', description: 'Item de decoração exclusivo.', category: 'supermercados_decoracao', image: 'https://i.postimg.cc/J040MfMM/png_transparent_frames_quadro_floral_design_poster_ipad_mini_quadros_flower_arranging_text_poster_Ph.png', price: 20000, isTryOn: true, tryOnType: 'decoration' },
+    // Novos itens Deco 17-21
+    { id: 'deco-17', name: 'deco 17', description: 'Item de decoração exclusivo.', category: 'supermercados_decoracao', image: 'https://i.postimg.cc/JzCXCRPb/cz_Nmcy1wcml2YXRl_L3Jhd3Bpe_GVs_X2lt_YWdlcy93ZWJza_XRl_X2Nvbn_Rlbn_Qvb_HIvc_GYtcz_Ex_OC1w_YS02OTQy_L.png', price: 20000, isTryOn: true, tryOnType: 'decoration' },
+    { id: 'deco-18', name: 'deco 18', description: 'Item de decoração exclusivo.', category: 'supermercados_decoracao', image: 'https://i.postimg.cc/y8CRC7v9/png_clipart_flowers_in_a_vase_vase_flower_arranging_white_Photoroom.png', price: 20000, isTryOn: true, tryOnType: 'decoration' },
+    { id: 'deco-19', name: 'deco 19', description: 'Item de decoração exclusivo.', category: 'supermercados_decoracao', image: 'https://i.postimg.cc/WbkZyd6Z/png_clipart_white_flower_in_clear_glass_vase_vase_flowerpot_glass_flower_bouquet_vase_white_plant_st.png', price: 20000, isTryOn: true, tryOnType: 'decoration' },
+    { id: 'deco-20', name: 'deco 20', description: 'Item de decoração exclusivo.', category: 'supermercados_decoracao', image: 'https://i.postimg.cc/sDhWLM9S/pngtree_potted_grass_flower_over_wooden_table_png_image_13738331_Photoroom.png', price: 20000, isTryOn: true, tryOnType: 'decoration' },
+    { id: 'deco-21', name: 'deco 21', description: 'Item de decoração exclusivo.', category: 'supermercados_decoracao', image: 'https://i.postimg.cc/2SNWNC2G/pngtree_white_ceramic_vases_with_tulips_png_image_14790373_Photoroom.png', price: 20000, isTryOn: true, tryOnType: 'decoration' },
 ];
 
 export const INITIAL_STORIES: Story[] = [

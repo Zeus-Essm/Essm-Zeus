@@ -1,5 +1,4 @@
 
-
 import { GoogleGenAI, Modality, GenerateContentResponse } from '@google/genai';
 import type { Item } from '../types';
 
@@ -392,23 +391,40 @@ export const generateDecorationImage = async (compositeImage: string): Promise<s
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const { base64: compositeBase64, mimeType: compositeMimeType } = getBase64Parts(compositeImage);
 
-        // Prompt for Decoration Integration
-        const promptText = `**MISSÃO: DESIGN DE INTERIORES ULTRA-REALISTA**
+        // PROMPT DE ELITE PARA DECORAÇÃO - NÍVEL ARQUITETÔNICO
+        // O objetivo é forçar a IA a entender que o input é um "Rascunho" (Mockup) 
+        // e que a saída deve ser uma renderização 3D finalizada.
+        const promptText = `**ATUAR COMO: Renderizador de Realidade Aumentada de Elite e Arquiteto 3D.**
 
-**CONTEXTO:** A imagem de entrada é uma composição digital bruta onde um objeto de decoração (móvel, quadro, vaso, etc.) foi colado sobre a foto de um ambiente.
+**ENTRADA (INPUT):** A imagem fornecida é um "RASCUNHO DE POSICIONAMENTO" (Mockup 2D). Nela, um objeto de decoração (quadro, móvel, vaso) foi sobreposto digitalmente sobre a foto de um ambiente.
+*   **O QUE ESTÁ CORRETO NO RASCUNHO:** O tamanho (escala) e a localização (posição x,y) do objeto. NÃO ALTERE ISSO.
+*   **O QUE ESTÁ ERRADO NO RASCUNHO:** O objeto parece "colado", plano ("flat"), sem perspectiva, sem sombras e sem pertencer à cena. Parece feito no MS Word.
 
-**OBJETIVO:** Transformar essa colagem numa fotografia única e coesa, integrando perfeitamente o objeto ao ambiente.
+**SUA MISSÃO (OUTPUT):** Gerar a imagem FINAL FOTORREALISTA onde o objeto é fisicamente integrado ao ambiente.
 
-**INSTRUÇÕES DE ALTA PRECISÃO:**
-1.  **ILUMINAÇÃO E SOMBRAS:** Analise a direção da luz na sala. Crie sombras realistas projetadas pelo objeto no chão ou na parede. Ajuste o brilho e contraste do objeto para combinar com a exposição do ambiente.
-2.  **CORREÇÃO DE COR:** Se o objeto parecer "recortado" ou com temperatura de cor diferente, ajuste-o para harmonizar com a paleta da sala.
-3.  **PERSPECTIVA E INTEGRAÇÃO:** Suavize levemente as bordas do objeto para remover o aspecto de "adesivo". Se for um tapete ou móvel no chão, garanta que ele pareça estar fisicamente apoiado na superfície (oclusão ambiental).
-4.  **PRESERVAÇÃO DO AMBIENTE:** O ambiente ao redor (paredes, chão, outros móveis) deve permanecer **INALTRADO**. Apenas integre o novo objeto.
+**REGRAS OBRIGATÓRIAS DE EXECUÇÃO (protocolo 3D):**
 
-**SAÍDA:** Retorne apenas a imagem finalizada e processada.`;
+1.  **GEOMETRIA E PERSPECTIVA (ANTI-FLATNESS):**
+    *   **Análise de Pontos de Fuga:** Identifique as linhas de fuga da parede ou do chão onde o objeto está.
+    *   **Distorção (Skew/Warp):** Se a parede estiver em ângulo (vista lateral), você **DEVE** distorcer a perspectiva do objeto (quadro/poster) para acompanhar esse ângulo exato. O objeto NÃO PODE ficar virado para a frente se a parede estiver diagonal. Ele deve "deitar" na perspectiva da parede.
+
+2.  **OCLUSÃO DE AMBIENTE (SOMBRAS DE CONTATO):**
+    *   Crie sombras escuras e suaves *logo atrás* ou *embaixo* do objeto, onde ele toca a superfície. Isso é essencial para "colar" o objeto na cena.
+    *   Para quadros: Adicione uma sombra projetada na parede para dar volume e simular a espessura da moldura.
+
+3.  **ILUMINAÇÃO GLOBAL (LIGHT MATCHING):**
+    *   Identifique a fonte de luz principal da sala. O objeto deve ser iluminado pela mesma direção.
+    *   Corrija o brilho/contraste do objeto para que ele não pareça "mais brilhante" ou "mais lavado" que o resto da sala.
+
+4.  **INTEGRAÇÃO DE TEXTURA:**
+    *   Adicione o mesmo nível de granulação (noise) e desfoque leve da foto original ao objeto novo. Se a foto for um pouco embaçada, o objeto também deve ser.
+
+**RESUMO DO COMANDO:** "Pegue este rascunho de colagem 2D ruim e renderize-o como se o objeto estivesse lá fisicamente desde sempre, respeitando a perspectiva da parede e as sombras."
+
+**SAÍDA:** Retorne apenas a imagem processada.`;
 
         const response: GenerateContentResponse = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image', // Fast and good for simple integration tasks
+            model: 'gemini-2.5-flash-image', // Fast and capable enough for single-step img2img logic
             contents: {
                 parts: [
                     {
