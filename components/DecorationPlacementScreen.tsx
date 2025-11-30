@@ -39,7 +39,6 @@ const DecorationPlacementScreen: React.FC<DecorationPlacementScreenProps> = ({ b
     if (!isDragging) return;
     const coords = getCoordinates(e);
     if (coords) {
-      // Clamp values to keep somewhat on screen
       const x = Math.max(0, Math.min(100, coords.x));
       const y = Math.max(0, Math.min(100, coords.y));
       setPosition({ x, y });
@@ -50,75 +49,91 @@ const DecorationPlacementScreen: React.FC<DecorationPlacementScreenProps> = ({ b
     setIsDragging(false);
   };
 
+  // Function to load image securely to avoid Tainted Canvas
+  const loadSafeImage = async (url: string): Promise<HTMLImageElement> => {
+      const img = new Image();
+      // Crucial: Set CrossOrigin to Anonymous to request CORS headers
+      img.crossOrigin = "Anonymous";
+      
+      return new Promise((resolve, reject) => {
+          img.onload = () => resolve(img);
+          img.onerror = () => {
+              // If direct load fails (e.g. server doesn't support CORS), try proxy
+              console.warn("Direct load failed, trying proxy for:", url);
+              const corsApiKey = 'AQ.Ab8RN6K4XMcdwkHtoN1KbfTHg_gTy0YGT85ZyKjzHFGMoxIlCg';
+              const urlWithKey = new URL(url);
+              urlWithKey.searchParams.append('key', corsApiKey);
+              const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(urlWithKey.href)}`;
+              
+              const imgProxy = new Image();
+              imgProxy.crossOrigin = "Anonymous";
+              imgProxy.onload = () => resolve(imgProxy);
+              imgProxy.onerror = reject;
+              imgProxy.src = proxyUrl;
+          };
+          img.src = url;
+      });
+  };
+
   const handleCaptureComposite = async () => {
     if (!containerRef.current || !itemRef.current) return;
 
     const container = containerRef.current;
-    
-    // Create a canvas to draw the composite
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
     if (!ctx) return;
 
-    // Load background image to get natural dimensions
-    const bgImg = new Image();
-    bgImg.src = backgroundImage;
-    await new Promise(resolve => { bgImg.onload = resolve; });
+    try {
+        // Load background image
+        const bgImg = new Image();
+        bgImg.src = backgroundImage;
+        await new Promise(resolve => { bgImg.onload = resolve; });
 
-    canvas.width = bgImg.width;
-    canvas.height = bgImg.height;
+        canvas.width = bgImg.width;
+        canvas.height = bgImg.height;
 
-    // Draw background
-    ctx.drawImage(bgImg, 0, 0);
+        // Draw background
+        ctx.drawImage(bgImg, 0, 0);
 
-    // Calculate item position and size relative to the canvas based on screen percentage
-    const itemImg = new Image();
-    itemImg.src = item.image;
-    // Need proxy for item image if it's external, but item.image usually works if CORS allowed or base64.
-    // Assuming Item images are accessible. If not, use the ref.
-    await new Promise((resolve, reject) => { 
-        itemImg.onload = resolve; 
-        itemImg.onerror = reject;
-        // Handle cross-origin if needed, though most in constants are public
-        itemImg.crossOrigin = "Anonymous"; 
-    });
+        // Load item image securely
+        const itemImg = await loadSafeImage(item.image);
 
-    // The scale in the UI is relative to the *displayed* size.
-    // We need to map that to the *actual* image size.
-    
-    // 1. Get container displayed ratio
-    const containerRect = container.getBoundingClientRect();
-    
-    // 2. Determine rendered width/height of the item in the DOM
-    // itemRef.current.width is the rendered width.
-    const renderedItemWidth = itemRef.current.offsetWidth;
-    const renderedItemHeight = itemRef.current.offsetHeight;
+        // Get container displayed ratio
+        const containerRect = container.getBoundingClientRect();
+        
+        // Determine rendered width/height of the item in the DOM
+        const renderedItemWidth = itemRef.current.offsetWidth;
+        const renderedItemHeight = itemRef.current.offsetHeight;
 
-    // 3. Calculate ratio of Rendered Container to Actual Canvas
-    const scaleX = canvas.width / containerRect.width;
-    const scaleY = canvas.height / containerRect.height;
+        // Calculate ratio of Rendered Container to Actual Canvas
+        const scaleX = canvas.width / containerRect.width;
+        const scaleY = canvas.height / containerRect.height;
 
-    // 4. Calculate position on canvas
-    // Position x/y is the center percentage.
-    const centerX = (position.x / 100) * canvas.width;
-    const centerY = (position.y / 100) * canvas.height;
+        // Calculate position on canvas (percentage based)
+        const centerX = (position.x / 100) * canvas.width;
+        const centerY = (position.y / 100) * canvas.height;
 
-    // 5. Calculate dimensions on canvas
-    const drawWidth = renderedItemWidth * scaleX;
-    const drawHeight = renderedItemHeight * scaleY;
+        // Calculate dimensions on canvas
+        const drawWidth = renderedItemWidth * scaleX;
+        const drawHeight = renderedItemHeight * scaleY;
 
-    // Draw item centered at coordinates
-    ctx.drawImage(
-        itemImg, 
-        centerX - drawWidth / 2, 
-        centerY - drawHeight / 2, 
-        drawWidth, 
-        drawHeight
-    );
+        // Draw item centered at coordinates
+        ctx.drawImage(
+            itemImg, 
+            centerX - drawWidth / 2, 
+            centerY - drawHeight / 2, 
+            drawWidth, 
+            drawHeight
+        );
 
-    const compositeDataUrl = canvas.toDataURL('image/jpeg', 0.9);
-    onGenerate(compositeDataUrl);
+        const compositeDataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        onGenerate(compositeDataUrl);
+        
+    } catch (e) {
+        console.error("Error generating composite:", e);
+        alert("Não foi possível gerar a imagem composta devido a restrições de segurança do navegador na imagem do produto.");
+    }
   };
 
   return (
@@ -128,7 +143,7 @@ const DecorationPlacementScreen: React.FC<DecorationPlacementScreenProps> = ({ b
           <ArrowLeftIcon className="w-5 h-5 text-[var(--accent-primary)]" />
         </button>
         <h1 className="text-lg font-bold text-[var(--accent-primary)] uppercase tracking-wider">Posicionar Item</h1>
-        <div className="w-9"></div> {/* Spacer */}
+        <div className="w-9"></div>
       </header>
 
       {/* Workspace */}
@@ -157,7 +172,7 @@ const DecorationPlacementScreen: React.FC<DecorationPlacementScreenProps> = ({ b
                 style={{ 
                     left: `${position.x}%`, 
                     top: `${position.y}%`,
-                    width: '40%', // Base width relative to container
+                    width: '40%',
                 }}
                 onMouseDown={handleStart}
                 onTouchStart={handleStart}
