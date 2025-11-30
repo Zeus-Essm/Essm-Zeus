@@ -28,10 +28,11 @@ export interface Item {
   image: string;
   price: number;
   isTryOn?: boolean;
+  tryOnType?: 'clothing' | 'beauty' | 'decoration'; // Added decoration type
   beautyType?: 'lipstick' | 'wig' | 'eyeshadow';
   gender?: 'male' | 'female' | 'kid' | 'unisex';
   vendorSubCategory?: string;
-  recommendationVideo?: string; // New field for split-screen recommendation
+  recommendationVideo?: string;
 }
 
 export interface Comment {
@@ -53,7 +54,7 @@ export interface Post {
   commentCount: number;
   isSponsored?: boolean;
   caption?: string;
-  layout?: 'product-overlay';
+  layout?: 'product-overlay' | 'split-video';
   overlayPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 }
 
@@ -134,7 +135,8 @@ export enum Screen {
   FaceScan,
   VerificationPending,
   SplitCamera,
-  VideoEdit
+  VideoEdit,
+  DecorationPlacement // New Screen
 }
 
 export interface AppNotification {

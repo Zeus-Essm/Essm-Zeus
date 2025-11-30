@@ -1,5 +1,6 @@
 
 
+
 import type { Category, Item, Post, Story, Conversation, CollaborationPost } from './types';
 
 // Sub-categorias de Roupas reutilizáveis
@@ -64,6 +65,7 @@ export const SUPERMARKET_SHOP_CATEGORIES = [
     { id: 'padaria', name: 'Padaria', image: 'https://i.postimg.cc/VvB42PVh/PHOTO-2025-03-03-19-26-45.jpg' },
     { id: 'talho', name: 'Talho', image: 'https://i.postimg.cc/HsqHQjwp/Gemini_Generated_Image_sa7g1ysa7g1ysa7g.png' },
     { id: 'bebidas', name: 'Bebidas', image: 'https://i.postimg.cc/tC39yWny/Gemini_Generated_Image_henwbohenwbohenw.png' },
+    { id: 'decoracao', name: 'Decoração', image: 'https://i.postimg.cc/VLdTbJVz/pngtree_armchair_isolated_on_white_background_png_image_2770873_Photoroom.png' },
 ];
 
 export const BEAUTY_SHOP_CATEGORIES = [
@@ -182,7 +184,8 @@ export const CATEGORIES: Category[] = [
     image: 'https://i.postimg.cc/15GyPwVS/Gemini_Generated_Image_euq60jeuq60jeuq6.png',
     type: 'supermarket',
     subCategories: [
-        { id: 'supermercados_gasosa', name: 'Gasosa', image: 'https://i.postimg.cc/tC39yWny/Gemini_Generated_Image_henwbohenwbohenw.png' }
+        { id: 'supermercados_gasosa', name: 'Gasosa', image: 'https://i.postimg.cc/tC39yWny/Gemini_Generated_Image_henwbohenwbohenw.png' },
+        { id: 'supermercados_decoracao', name: 'Decoração', image: 'https://i.postimg.cc/VLdTbJVz/pngtree_armchair_isolated_on_white_background_png_image_2770873_Photoroom.png' }
     ]
   },
   {
@@ -366,6 +369,17 @@ export const ITEMS: Item[] = [
     // Kero - Gasosa
     { id: 'item-kero-gasosa-1', name: 'produ 1', description: 'Produto de qualidade do Kero.', category: 'supermercados_gasosa', image: 'https://i.postimg.cc/tC39yWny/Gemini_Generated_Image_henwbohenwbohenw.png', price: 20000 },
     { id: 'item-kero-gasosa-2', name: 'produ 2', description: 'Produto exclusivo do Kero.', category: 'supermercados_gasosa', image: 'https://i.postimg.cc/28QCmhLC/Gemini_Generated_Image_uei117uei117uei1.png', price: 100000 },
+    
+    // Kero - Decoração (NOVOS)
+    { id: 'deco-1', name: 'deco 1', description: 'Item de decoração exclusivo.', category: 'supermercados_decoracao', image: 'https://i.postimg.cc/m2Jn3Tvt/Captura_de_Tela_2025_11_30_a_s_6_28_07_PM_Photoroom.png', price: 20000, isTryOn: true, tryOnType: 'decoration' },
+    { id: 'deco-3', name: 'deco 3', description: 'Item de decoração exclusivo.', category: 'supermercados_decoracao', image: 'https://i.postimg.cc/Fs86bhMG/Captura_de_Tela_2025_11_30_a_s_6_28_33_PM_Photoroom.png', price: 20000, isTryOn: true, tryOnType: 'decoration' },
+    { id: 'deco-4', name: 'deco 4', description: 'Item de decoração exclusivo.', category: 'supermercados_decoracao', image: 'https://i.postimg.cc/L6wWkmcB/Captura_de_Tela_2025_11_30_a_s_6_28_50_PM_Photoroom.png', price: 20000, isTryOn: true, tryOnType: 'decoration' },
+    { id: 'deco-5', name: 'deco 5', description: 'Item de decoração exclusivo.', category: 'supermercados_decoracao', image: 'https://i.postimg.cc/Qxwzgj21/Captura_de_Tela_2025_11_30_a_s_6_29_15_PM_Photoroom.png', price: 20000, isTryOn: true, tryOnType: 'decoration' },
+    { id: 'deco-6', name: 'deco 6', description: 'Item de decoração exclusivo.', category: 'supermercados_decoracao', image: 'https://i.postimg.cc/VLdTbJVz/pngtree_armchair_isolated_on_white_background_png_image_2770873_Photoroom.png', price: 20000, isTryOn: true, tryOnType: 'decoration' },
+    { id: 'deco-7', name: 'deco 7', description: 'Item de decoração exclusivo.', category: 'supermercados_decoracao', image: 'https://i.postimg.cc/ncC5QXPj/pngtree_elegant_rattan_armchair_design_png_image_12689317_Photoroom.png', price: 20000, isTryOn: true, tryOnType: 'decoration' },
+    { id: 'deco-8', name: 'deco 8', description: 'Item de decoração exclusivo.', category: 'supermercados_decoracao', image: 'https://i.postimg.cc/Pr97bdgt/poltrona_de_veludo_cor_de_vinho_isolada_em_fundo_transparente_png_psd_888962_1656_Photoroom.png', price: 20000, isTryOn: true, tryOnType: 'decoration' },
+    { id: 'deco-9', name: 'deco 9', description: 'Item de decoração exclusivo.', category: 'supermercados_decoracao', image: 'https://i.postimg.cc/zXVMRycL/poltrona_decorativa_sala_de_estar_seul_cinza_1572218835_f683_600x600_Photoroom.png', price: 20000, isTryOn: true, tryOnType: 'decoration' },
+
     // Bonita - Linda (UPDATED FOR VIRTUAL TRY-ON)
     { 
       id: 'item-beleza-linda-1',

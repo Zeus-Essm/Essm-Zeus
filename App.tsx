@@ -4,7 +4,7 @@ import React from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
 import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType, AppNotification, Conversation, Comment, BusinessProfile, CollaborationPost } from './types';
-import { generateTryOnImage, normalizeImageAspectRatio, generateBeautyTryOnImage, generateFashionVideo } from './services/geminiService';
+import { generateTryOnImage, normalizeImageAspectRatio, generateBeautyTryOnImage, generateFashionVideo, generateDecorationImage } from './services/geminiService';
 import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, ITEMS, INITIAL_CONVERSATIONS, INITIAL_COLLABORATION_REQUESTS } from './constants';
 
 // Screen Components
@@ -52,6 +52,7 @@ import CoinBurst from './components/CoinBurst';
 import RecommendationModal from './components/RecommendationModal';
 import SplitCameraScreen from './components/SplitCameraScreen';
 import VideoEditScreen from './components/VideoEditScreen';
+import DecorationPlacementScreen from './components/DecorationPlacementScreen';
 
 // FORCE REFRESH v2.3 - Apply new wig items and ensure AI logic is active
 
@@ -251,6 +252,9 @@ const App: React.FC = () => {
     
     // Repost State
     const [repostingItem, setRepostingItem] = React.useState<Item | null>(null);
+
+    // Decoration State
+    const [decorationItem, setDecorationItem] = React.useState<Item | null>(null);
 
 
     const unreadNotificationCount = notifications.filter(n => !n.read).length;
@@ -592,32 +596,65 @@ const App: React.FC = () => {
     // App Logic Handlers
     const handleImageUpload = async (imageDataUrl: string) => {
         setUserImage(imageDataUrl);
-        setLoadingMessage("Analisando e ajustando sua foto com IA...");
+        setLoadingMessage("Preparando imagem...");
         setIsLoading(true);
         setError(null);
         try {
-            const normalizedImageDataUrl = await normalizeImageAspectRatio(imageDataUrl);
+            // For general try-on, normalize. For decoration, we might not need this if we handle it in the placement screen,
+            // but keeping it consistent is fine. Decoration placement will use the uploaded image as background.
+            // If it's decoration, we might want to skip normalization to keep aspect ratio, but let's see.
+            // For now, let's normalize everything for consistency, or conditionally skip.
             
-            setUserImage(normalizedImageDataUrl);
-            setGeneratedImage(normalizedImageDataUrl);
-            setImageHistory([normalizedImageDataUrl]); // Initialize history
+            // Actually, if we are in decoration flow, we probably want the full original image as background.
+            // Let's check navigation stack or current intent.
+            // Simplified: Normalize everything for now to avoid complexity.
+            // const normalizedImageDataUrl = await normalizeImageAspectRatio(imageDataUrl); 
+            // Better: Use original for decoration.
+            
+            let finalImage = imageDataUrl;
+            
+            // Check if we are in decoration flow (last item selected was decoration)
+            const isDecoration = wornItems.length > 0 && wornItems[wornItems.length - 1].tryOnType === 'decoration';
+            
+            // However, handleImageUpload is called from ImageSourceSelectionScreen which is pushed after ItemSelection.
+            // We can check if navigationStack leads to decoration category or if we have a pending item.
+            // But we don't have the item stored here easily unless we added it to wornItems early?
+            // Let's check `decorationItem` state if we set it.
+            
+            // Actually, we haven't set `decorationItem` yet in handleItemSelect logic for the image upload flow.
+            // Let's rely on the fact that if we are here, we might need normalization for fashion.
+            // If it is decoration, we will handle it in the next step.
+            
+            if (!decorationItem) {
+                 finalImage = await normalizeImageAspectRatio(imageDataUrl);
+            }
+
+            setUserImage(finalImage);
+            setGeneratedImage(finalImage);
+            setImageHistory([finalImage]); 
             setWornItems([]);
             
-            const currentCategory = navigationStack.length > 0 ? navigationStack[0] as Category : null;
-            if (currentCategory) {
-                setCurrentScreen(Screen.SubCategorySelection);
+            // Navigation Logic based on state
+            if (decorationItem) {
+                setCurrentScreen(Screen.DecorationPlacement);
             } else {
-                const defaultCategory = CATEGORIES[0];
-                if (defaultCategory) {
-                    setNavigationStack([defaultCategory]);
+                // Standard Fashion/Beauty Flow
+                const currentCategory = navigationStack.length > 0 ? navigationStack[0] as Category : null;
+                if (currentCategory) {
                     setCurrentScreen(Screen.SubCategorySelection);
                 } else {
-                    setCurrentScreen(Screen.Home);
+                    const defaultCategory = CATEGORIES[0];
+                    if (defaultCategory) {
+                        setNavigationStack([defaultCategory]);
+                        setCurrentScreen(Screen.SubCategorySelection);
+                    } else {
+                        setCurrentScreen(Screen.Home);
+                    }
                 }
             }
         } catch (err: any) {
-            console.error("Erro ao normalizar a proporção da imagem:", err);
-            setError("Houve um problema ao preparar sua foto. Por favor, tente novamente.");
+            console.error("Erro ao processar imagem:", err);
+            setError("Houve um problema ao preparar sua foto.");
             setCurrentScreen(Screen.ImageSourceSelection); 
         } finally {
             setIsLoading(false);
@@ -667,7 +704,6 @@ const App: React.FC = () => {
     };
 
     const handleItemSelect = async (item: Item) => {
-        // Check for recommendation video
         if (item.recommendationVideo && !recommendationItem) {
             setRecommendationItem(item);
             return;
@@ -675,9 +711,23 @@ const App: React.FC = () => {
 
         const itemType = getCategoryTypeFromItem(item);
 
+        // Special handling for Decoration
+        if (item.tryOnType === 'decoration') {
+            setDecorationItem(item);
+            if (!userImage) {
+                // Prompt for room photo
+                setError("Por favor, tire ou carregue uma foto do ambiente.");
+                setCurrentScreen(Screen.ImageSourceSelection);
+            } else {
+                // Go straight to placement if we already have an image (e.g. reused)
+                setCurrentScreen(Screen.DecorationPlacement);
+            }
+            return;
+        }
+
         if (itemType === 'fashion' || item.isTryOn) {
             if (!userImage) {
-                 if (profile) setUserImage(profile.profile_image_url); // Fallback to profile picture if no image is set
+                 if (profile) setUserImage(profile.profile_image_url);
                  else {
                     setError("Por favor, carregue uma foto primeiro.");
                     setCurrentScreen(Screen.ImageSourceSelection);
@@ -690,12 +740,10 @@ const App: React.FC = () => {
             setIsLoading(true);
             setError(null);
             try {
-                // Determine which AI service to call
                 const generatorFunction = item.isTryOn && itemType === 'beauty' 
                     ? (userImg: string, newItem: Item) => generateBeautyTryOnImage(userImg, newItem)
                     : generateTryOnImage;
 
-                // The beauty function doesn't need existingItems, so we adapt the call signature
                 const newImage = await (generatorFunction === generateTryOnImage
                     ? generatorFunction(baseImage, item, existingItems)
                     : (generatorFunction as (userImg: string, newItem: Item) => Promise<string>)(baseImage, item));
@@ -711,7 +759,6 @@ const App: React.FC = () => {
                 setIsLoading(false);
             }
         } else {
-            // "repost" logic for non-fashion, non-try-on items
             if (profile) {
                 setRepostingItem(item);
                 setIsCaptioning(true);
@@ -721,6 +768,28 @@ const App: React.FC = () => {
         }
     };
     
+    // New handler for generating the decoration result
+    const handleGenerateDecoration = async (compositeImage: string) => {
+        if (!decorationItem) return;
+        
+        setIsLoading(true);
+        setLoadingMessage("Integrando a decoração ao ambiente...");
+        try {
+            const resultImage = await generateDecorationImage(compositeImage);
+            setGeneratedImage(resultImage);
+            setImageHistory(prev => [...prev, resultImage]);
+            setWornItems(prev => [...prev, decorationItem]);
+            setDecorationItem(null); // Clear pending item
+            setCurrentScreen(Screen.Result);
+        } catch (err: any) {
+            console.error("Decoration generation error:", err);
+            setError("Falha ao gerar a decoração. Tente novamente.");
+        } finally {
+            setIsLoading(false);
+            setLoadingMessage(null);
+        }
+    };
+
     const handleStartNewTryOnSession = async (item: Item) => {
         if (!userImage) {
             setCurrentScreen(Screen.ImageSourceSelection);
@@ -748,7 +817,6 @@ const App: React.FC = () => {
         if (collectionIdentifier) {
             setCurrentScreen(Screen.ItemSelection);
         } else {
-            // This is a fallback, but on ResultScreen, collectionIdentifier should exist.
             handleBack(); 
         }
     };
@@ -771,7 +839,6 @@ const App: React.FC = () => {
                     handleBack();
                 }
             }
-            // Stay on ResultScreen if there are still items left
         } else {
              if (collectionIdentifier) {
                 setCurrentScreen(Screen.ItemSelection);
@@ -838,7 +905,6 @@ const App: React.FC = () => {
             return;
         }
 
-        // Add Coin Animation Trigger Here
         setShowCoinAnimation(true);
         setProfile(prev => prev ? { ...prev, reward_points: (prev.reward_points || 0) + 50 } : null);
         setTimeout(() => setShowCoinAnimation(false), 2000);
@@ -847,8 +913,8 @@ const App: React.FC = () => {
             const newPost: Post = {
                 id: `post_video_${Date.now()}`,
                 user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || `https://i.pravatar.cc/150?u=${profile.id}` },
-                image: generatedImage, // Thumbnail
-                video: generatedVideoUrl, // Blob URL
+                image: generatedImage,
+                video: generatedVideoUrl,
                 items: wornItems,
                 likes: 0,
                 isLiked: false,
@@ -929,12 +995,10 @@ const App: React.FC = () => {
         setCartItems(prevItems => [...prevItems, item]);
         setToast(`${item.name} foi adicionado ao carrinho!`);
         setTimeout(() => setToast(null), 3000);
-
-        // Animation logic
         setIsCartAnimating(true);
         setTimeout(() => {
             setIsCartAnimating(false);
-        }, 500); // Animation duration
+        }, 500);
     };
 
     const handleAddToCartMultiple = (items: Item[]) => {
@@ -942,7 +1006,6 @@ const App: React.FC = () => {
         setCartItems(prevItems => [...prevItems, ...items]);
         setToast(`${items.length} iten(s) adicionado(s) ao carrinho!`);
         setTimeout(() => setToast(null), 3000);
-
         setIsCartAnimating(true);
         setTimeout(() => setIsCartAnimating(false), 500);
     };
@@ -963,7 +1026,6 @@ const App: React.FC = () => {
 
     const handlePostToFeed = (caption: string) => {
         if (profile) {
-            // Trigger Coin Animation
             setShowCoinAnimation(true);
             setProfile(prev => prev ? { ...prev, reward_points: (prev.reward_points || 0) + 50 } : null);
             setTimeout(() => setShowCoinAnimation(false), 2000);
@@ -1009,7 +1071,6 @@ const App: React.FC = () => {
     const handleSaveLook = async () => {
         if (!generatedImage || wornItems.length === 0 || !session || !profile) return;
     
-        // Handle visitor mode: save locally for the session
         if (session.user.id.startsWith('mock_')) {
             const newLook: SavedLook = {
                 id: `look_${Date.now()}`,
@@ -1029,20 +1090,17 @@ const App: React.FC = () => {
         setError(null);
     
         try {
-            // 1. Upload the generated image (data URL) to Supabase Storage
             const publicUrl = await uploadImage('looks', generatedImage);
             if (!publicUrl) {
                 throw new Error('Falha ao fazer upload da imagem do look.');
             }
     
-            // 2. Prepare the data for insertion
             const lookData = {
                 user_id: session.user.id,
                 image_url: publicUrl,
-                items: wornItems, // Supabase client handles JSON stringification
+                items: wornItems,
             };
     
-            // 3. Insert into the 'saved_looks' table
             const { data: newSavedLook, error } = await supabase
                 .from('saved_looks')
                 .insert(lookData)
@@ -1051,7 +1109,6 @@ const App: React.FC = () => {
     
             if (error) throw error;
     
-            // 4. Update local state with the new look from the database
             const lookToAdd: SavedLook = {
                 id: newSavedLook.id,
                 image: newSavedLook.image_url,
@@ -1059,14 +1116,13 @@ const App: React.FC = () => {
             };
             setSavedLooks(prevLooks => [lookToAdd, ...prevLooks]);
     
-            // 5. Show confirmation
             setConfirmationMessage('Look salvo com sucesso no seu perfil!');
             setCurrentScreen(Screen.Confirmation);
     
         } catch (err: any) {
             console.error("Error saving look:", err);
             setError(`Não foi possível salvar o look: ${err.message}`);
-            setCurrentScreen(Screen.Result); // Go back to the result screen on failure
+            setCurrentScreen(Screen.Result);
         } finally {
             setIsLoading(false);
             setLoadingMessage(null);
@@ -1090,7 +1146,6 @@ const App: React.FC = () => {
         setTimeout(() => setToast(null), 3000);
         setCurrentScreen(Screen.Feed);
         
-        // Trigger Coin Animation for reposting too
         setShowCoinAnimation(true);
         setProfile(prev => prev ? { ...prev, reward_points: (prev.reward_points || 0) + 50 } : null);
         setTimeout(() => setShowCoinAnimation(false), 2000);
@@ -1393,6 +1448,22 @@ const App: React.FC = () => {
                            />;
                 }
                 setCurrentScreen(Screen.ItemSelection);
+                return null;
+            // NEW SCREEN: Decoration Placement
+            case Screen.DecorationPlacement:
+                if (userImage && decorationItem) {
+                    return <DecorationPlacementScreen
+                        backgroundImage={userImage}
+                        item={decorationItem}
+                        onBack={() => {
+                            setDecorationItem(null);
+                            setCurrentScreen(Screen.ItemSelection);
+                        }}
+                        onGenerate={handleGenerateDecoration}
+                    />
+                }
+                // Fallback if state is missing
+                setCurrentScreen(Screen.Home);
                 return null;
             case Screen.AccountTypeSelection:
                 return <AccountTypeSelectionScreen onSelect={handleSetAccountType} />;

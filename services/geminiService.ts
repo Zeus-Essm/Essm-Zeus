@@ -1,3 +1,5 @@
+
+
 import { GoogleGenAI, Modality, GenerateContentResponse } from '@google/genai';
 import type { Item } from '../types';
 
@@ -377,6 +379,66 @@ export const generateBeautyTryOnImage = async (userImage: string, newItem: Item)
             throw new Error(`Falha ao aplicar o produto de beleza: ${error.message}`);
         }
         throw new Error('Falha ao aplicar o produto de beleza. Verifique o console para mais detalhes.');
+    }
+};
+
+export const generateDecorationImage = async (compositeImage: string): Promise<string> => {
+    if (!process.env.API_KEY) {
+        console.warn("API_KEY is not set. Returning composite as placeholder.");
+        return new Promise(resolve => setTimeout(() => resolve(compositeImage), 2000));
+    }
+
+    try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const { base64: compositeBase64, mimeType: compositeMimeType } = getBase64Parts(compositeImage);
+
+        // Prompt for Decoration Integration
+        const promptText = `**MISSÃO: DESIGN DE INTERIORES ULTRA-REALISTA**
+
+**CONTEXTO:** A imagem de entrada é uma composição digital bruta onde um objeto de decoração (móvel, quadro, vaso, etc.) foi colado sobre a foto de um ambiente.
+
+**OBJETIVO:** Transformar essa colagem numa fotografia única e coesa, integrando perfeitamente o objeto ao ambiente.
+
+**INSTRUÇÕES DE ALTA PRECISÃO:**
+1.  **ILUMINAÇÃO E SOMBRAS:** Analise a direção da luz na sala. Crie sombras realistas projetadas pelo objeto no chão ou na parede. Ajuste o brilho e contraste do objeto para combinar com a exposição do ambiente.
+2.  **CORREÇÃO DE COR:** Se o objeto parecer "recortado" ou com temperatura de cor diferente, ajuste-o para harmonizar com a paleta da sala.
+3.  **PERSPECTIVA E INTEGRAÇÃO:** Suavize levemente as bordas do objeto para remover o aspecto de "adesivo". Se for um tapete ou móvel no chão, garanta que ele pareça estar fisicamente apoiado na superfície (oclusão ambiental).
+4.  **PRESERVAÇÃO DO AMBIENTE:** O ambiente ao redor (paredes, chão, outros móveis) deve permanecer **INALTRADO**. Apenas integre o novo objeto.
+
+**SAÍDA:** Retorne apenas a imagem finalizada e processada.`;
+
+        const response: GenerateContentResponse = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image', // Fast and good for simple integration tasks
+            contents: {
+                parts: [
+                    {
+                        inlineData: { data: compositeBase64, mimeType: compositeMimeType },
+                    },
+                    {
+                        text: promptText,
+                    },
+                ],
+            },
+            config: {
+                responseModalities: [Modality.IMAGE, Modality.TEXT],
+            },
+        });
+
+        const candidate = response.candidates?.[0];
+        if (!candidate || !candidate.content || !candidate.content.parts) {
+             throw new Error('A IA não retornou uma imagem válida.');
+        }
+
+        for (const part of candidate.content.parts) {
+            if (part.inlineData) {
+                return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
+            }
+        }
+        throw new Error('A IA não retornou uma imagem. Tente novamente.');
+
+    } catch (error) {
+        console.error('Error calling Gemini API for decoration:', error);
+        throw new Error('Falha ao gerar o ambiente decorado.');
     }
 };
 
