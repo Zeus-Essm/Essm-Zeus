@@ -1,4 +1,5 @@
 
+
 import { GoogleGenAI, Modality, GenerateContentResponse } from '@google/genai';
 import type { Item } from '../types';
 
@@ -390,38 +391,26 @@ export const generateDecorationImage = async (compositeImage: string): Promise<s
     try {
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const { base64: compositeBase64, mimeType: compositeMimeType } = getBase64Parts(compositeImage);
+        
+        const promptText = `**TASK: Photorealistic Scene Composition.**
 
-        // PROMPT DE ELITE PARA DECORAÇÃO - NÍVEL ARQUITETÔNICO
-        // O objetivo é forçar a IA a entender que o input é um "Rascunho" (Mockup) 
-        // e que a saída deve ser uma renderização 3D finalizada.
-        const promptText = `**ATUAR COMO: Renderizador de Realidade Aumentada de Elite e Arquiteto 3D.**
+**ANALYSIS:** You are given a single composite image. This image is a rough mockup, not a final product. It contains two distinct elements:
+1.  A background scene (e.g., a room).
+2.  A foreground object (e.g., a vase, a picture frame) that has been crudely placed on top of the background.
 
-**ENTRADA (INPUT):** A imagem fornecida é um "RASCUNHO DE POSICIONAMENTO" (Mockup 2D). Nela, um objeto de decoração (quadro, móvel, vaso) foi sobreposto digitalmente sobre a foto de um ambiente.
-*   **O QUE ESTÁ CORRETO NO RASCUNHO:** O tamanho (escala) e a localização (posição x,y) do objeto. NÃO ALTERE ISSO.
-*   **O QUE ESTÁ ERRADO NO RASCUNHO:** O objeto parece "colado", plano ("flat"), sem perspectiva, sem sombras e sem pertencer à cena. Parece feito no MS Word.
+**YOUR GOAL:** Recreate the entire scene from scratch as a single, perfectly photorealistic image. In your new rendering, the foreground object must appear as if it truly belongs in the background scene.
 
-**SUA MISSÃO (OUTPUT):** Gerar a imagem FINAL FOTORREALISTA onde o objeto é fisicamente integrado ao ambiente.
+**CRITICAL INSTRUCTIONS FOR PERFECTION:**
+1.  **GEOMETRIC INTEGRATION:** The foreground object must be perfectly integrated into the 3D space of the room. This means you MUST calculate and apply the correct perspective, skew, and rotation so it aligns with the surfaces (walls, tables, floors). A frame on a wall viewed from an angle must be distorted to match that angle's vanishing point.
+2.  **LIGHTING AND SHADOWS:** This is paramount.
+    *   The object must be lit by the same light sources as the room. Replicate the direction, color, and softness of the light.
+    *   Generate realistic **contact shadows** where the object touches a surface.
+    *   Generate subtle **cast shadows** that the object throws onto its surroundings.
+    *   If the object is on a reflective surface (like a glass table), it MUST have a realistic reflection.
+3.  **SCALE AND POSITION:** The size and position of the object in the input mockup are a guide to the user's intent. Maintain this intended scale and placement in your final render.
+4.  **TEXTURE AND ATMOSPHERE:** The object must match the photographic quality of the background. If the background image is slightly grainy or soft, the object must also be slightly grainy or soft. Do not make it look like a sharp 3D model in a blurry photo.
 
-**REGRAS OBRIGATÓRIAS DE EXECUÇÃO (protocolo 3D):**
-
-1.  **GEOMETRIA E PERSPECTIVA (ANTI-FLATNESS):**
-    *   **Análise de Pontos de Fuga:** Identifique as linhas de fuga da parede ou do chão onde o objeto está.
-    *   **Distorção (Skew/Warp):** Se a parede estiver em ângulo (vista lateral), você **DEVE** distorcer a perspectiva do objeto (quadro/poster) para acompanhar esse ângulo exato. O objeto NÃO PODE ficar virado para a frente se a parede estiver diagonal. Ele deve "deitar" na perspectiva da parede.
-
-2.  **OCLUSÃO DE AMBIENTE (SOMBRAS DE CONTATO):**
-    *   Crie sombras escuras e suaves *logo atrás* ou *embaixo* do objeto, onde ele toca a superfície. Isso é essencial para "colar" o objeto na cena.
-    *   Para quadros: Adicione uma sombra projetada na parede para dar volume e simular a espessura da moldura.
-
-3.  **ILUMINAÇÃO GLOBAL (LIGHT MATCHING):**
-    *   Identifique a fonte de luz principal da sala. O objeto deve ser iluminado pela mesma direção.
-    *   Corrija o brilho/contraste do objeto para que ele não pareça "mais brilhante" ou "mais lavado" que o resto da sala.
-
-4.  **INTEGRAÇÃO DE TEXTURA:**
-    *   Adicione o mesmo nível de granulação (noise) e desfoque leve da foto original ao objeto novo. Se a foto for um pouco embaçada, o objeto também deve ser.
-
-**RESUMO DO COMANDO:** "Pegue este rascunho de colagem 2D ruim e renderize-o como se o objeto estivesse lá fisicamente desde sempre, respeitando a perspectiva da parede e as sombras."
-
-**SAÍDA:** Retorne apenas a imagem processada.`;
+**FINAL OUTPUT:** A single, flawless image. Do not describe your work. Just return the final image.`;
 
         const response: GenerateContentResponse = await ai.models.generateContent({
             model: 'gemini-2.5-flash-image', // Fast and capable enough for single-step img2img logic

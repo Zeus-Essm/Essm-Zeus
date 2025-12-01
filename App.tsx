@@ -600,30 +600,7 @@ const App: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            // For general try-on, normalize. For decoration, we might not need this if we handle it in the placement screen,
-            // but keeping it consistent is fine. Decoration placement will use the uploaded image as background.
-            // If it's decoration, we might want to skip normalization to keep aspect ratio, but let's see.
-            // For now, let's normalize everything for consistency, or conditionally skip.
-            
-            // Actually, if we are in decoration flow, we probably want the full original image as background.
-            // Let's check navigation stack or current intent.
-            // Simplified: Normalize everything for now to avoid complexity.
-            // const normalizedImageDataUrl = await normalizeImageAspectRatio(imageDataUrl); 
-            // Better: Use original for decoration.
-            
             let finalImage = imageDataUrl;
-            
-            // Check if we are in decoration flow (last item selected was decoration)
-            // const isDecoration = wornItems.length > 0 && wornItems[wornItems.length - 1].tryOnType === 'decoration';
-            
-            // However, handleImageUpload is called from ImageSourceSelectionScreen which is pushed after ItemSelection.
-            // We can check if navigationStack leads to decoration category or if we have a pending item.
-            // But we don't have the item stored here easily unless we added it to wornItems early?
-            // Let's check `decorationItem` state if we set it.
-            
-            // Actually, we haven't set `decorationItem` yet in handleItemSelect logic for the image upload flow.
-            // Let's rely on the fact that if we are here, we might need normalization for fashion.
-            // If it is decoration, we will handle it in the next step.
             
             if (!decorationItem) {
                  finalImage = await normalizeImageAspectRatio(imageDataUrl);
@@ -634,11 +611,9 @@ const App: React.FC = () => {
             setImageHistory([finalImage]); 
             setWornItems([]);
             
-            // Navigation Logic based on state
             if (decorationItem) {
                 setCurrentScreen(Screen.DecorationPlacement);
             } else {
-                // Standard Fashion/Beauty Flow
                 const currentCategory = navigationStack.length > 0 ? navigationStack[0] as Category : null;
                 if (currentCategory) {
                     setCurrentScreen(Screen.SubCategorySelection);
@@ -664,7 +639,7 @@ const App: React.FC = () => {
 
     const handleSelectCategory = (category: Category) => {
         setNavigationStack([category]);
-        if (!userImage && (category.type === 'fashion' || category.type === 'beauty')) {
+        if (!userImage && (category.type === 'fashion' || category.type === 'beauty' || (category.type === 'supermarket' && category.subCategories?.some(sc => sc.id.includes('decoracao'))))) {
             setCurrentScreen(Screen.ImageSourceSelection);
             return;
         }
@@ -711,15 +686,12 @@ const App: React.FC = () => {
 
         const itemType = getCategoryTypeFromItem(item);
 
-        // Special handling for Decoration
         if (item.tryOnType === 'decoration') {
             setDecorationItem(item);
             if (!userImage) {
-                // Prompt for room photo
                 setError("Por favor, tire ou carregue uma foto do ambiente.");
                 setCurrentScreen(Screen.ImageSourceSelection);
             } else {
-                // Go straight to placement if we already have an image (e.g. reused)
                 setCurrentScreen(Screen.DecorationPlacement);
             }
             return;
@@ -768,7 +740,6 @@ const App: React.FC = () => {
         }
     };
     
-    // New handler for generating the decoration result
     const handleGenerateDecoration = async (compositeImage: string) => {
         if (!decorationItem) return;
         
@@ -779,7 +750,7 @@ const App: React.FC = () => {
             setGeneratedImage(resultImage);
             setImageHistory(prev => [...prev, resultImage]);
             setWornItems(prev => [...prev, decorationItem]);
-            setDecorationItem(null); // Clear pending item
+            setDecorationItem(null);
             setCurrentScreen(Screen.Result);
         } catch (err: any) {
             console.error("Decoration generation error:", err);
