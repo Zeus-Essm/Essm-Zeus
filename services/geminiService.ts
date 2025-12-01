@@ -1,5 +1,4 @@
 
-
 import { GoogleGenAI, Modality, GenerateContentResponse } from '@google/genai';
 import type { Item } from '../types';
 
@@ -392,28 +391,11 @@ export const generateDecorationImage = async (compositeImage: string): Promise<s
         const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const { base64: compositeBase64, mimeType: compositeMimeType } = getBase64Parts(compositeImage);
         
-        const promptText = `**TASK: Photorealistic Scene Composition.**
-
-**ANALYSIS:** You are given a single composite image. This image is a rough mockup, not a final product. It contains two distinct elements:
-1.  A background scene (e.g., a room).
-2.  A foreground object (e.g., a vase, a picture frame) that has been crudely placed on top of the background.
-
-**YOUR GOAL:** Recreate the entire scene from scratch as a single, perfectly photorealistic image. In your new rendering, the foreground object must appear as if it truly belongs in the background scene.
-
-**CRITICAL INSTRUCTIONS FOR PERFECTION:**
-1.  **GEOMETRIC INTEGRATION:** The foreground object must be perfectly integrated into the 3D space of the room. This means you MUST calculate and apply the correct perspective, skew, and rotation so it aligns with the surfaces (walls, tables, floors). A frame on a wall viewed from an angle must be distorted to match that angle's vanishing point.
-2.  **LIGHTING AND SHADOWS:** This is paramount.
-    *   The object must be lit by the same light sources as the room. Replicate the direction, color, and softness of the light.
-    *   Generate realistic **contact shadows** where the object touches a surface.
-    *   Generate subtle **cast shadows** that the object throws onto its surroundings.
-    *   If the object is on a reflective surface (like a glass table), it MUST have a realistic reflection.
-3.  **SCALE AND POSITION:** The size and position of the object in the input mockup are a guide to the user's intent. Maintain this intended scale and placement in your final render.
-4.  **TEXTURE AND ATMOSPHERE:** The object must match the photographic quality of the background. If the background image is slightly grainy or soft, the object must also be slightly grainy or soft. Do not make it look like a sharp 3D model in a blurry photo.
-
-**FINAL OUTPUT:** A single, flawless image. Do not describe your work. Just return the final image.`;
+        // SIMPLIFIED PROMPT
+        const promptText = `Add the object shown in the foreground to the room shown in the background. Make it look realistic.`;
 
         const response: GenerateContentResponse = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image', // Fast and capable enough for single-step img2img logic
+            model: 'gemini-3-pro-image-preview', 
             contents: {
                 parts: [
                     {

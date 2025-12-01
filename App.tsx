@@ -23,7 +23,6 @@ import CameraScreen from './components/CameraScreen';
 import ImageSourceSelectionScreen from './components/ImageSourceSelectionScreen';
 import CartScreen from './components/CartScreen';
 import RewardsScreen from './components/RewardsScreen';
-import GradientButton from './components/GradientButton';
 import NotificationsPanel from './components/NotificationsPanel';
 import BottomNavBar from './components/BottomNavBar';
 import ChatListScreen from './components/ChatListScreen';
@@ -54,11 +53,8 @@ import SplitCameraScreen from './components/SplitCameraScreen';
 import VideoEditScreen from './components/VideoEditScreen';
 import DecorationPlacementScreen from './components/DecorationPlacementScreen';
 
-// FORCE REFRESH v2.3 - Apply new wig items and ensure AI logic is active
+// FORCE REFRESH v2.6 - Fix export default App error
 
-// FIX: To resolve the "Subsequent property declarations must have the same type" error for 'aistudio',
-// the AIStudio interface is moved inside the `declare global` block. This ensures it's treated
-// as a single, mergeable global interface rather than a module-scoped type that can conflict with other declarations.
 declare global {
   interface AIStudio {
     hasSelectedApiKey: () => Promise<boolean>;
@@ -602,6 +598,8 @@ const App: React.FC = () => {
         try {
             let finalImage = imageDataUrl;
             
+            // Check if we are in decoration flow (if decorationItem is set).
+            // If not, normalize image for fashion try-on.
             if (!decorationItem) {
                  finalImage = await normalizeImageAspectRatio(imageDataUrl);
             }
@@ -611,9 +609,11 @@ const App: React.FC = () => {
             setImageHistory([finalImage]); 
             setWornItems([]);
             
+            // Navigation Logic based on state
             if (decorationItem) {
                 setCurrentScreen(Screen.DecorationPlacement);
             } else {
+                // Standard Fashion/Beauty Flow
                 const currentCategory = navigationStack.length > 0 ? navigationStack[0] as Category : null;
                 if (currentCategory) {
                     setCurrentScreen(Screen.SubCategorySelection);
@@ -639,7 +639,7 @@ const App: React.FC = () => {
 
     const handleSelectCategory = (category: Category) => {
         setNavigationStack([category]);
-        if (!userImage && (category.type === 'fashion' || category.type === 'beauty' || (category.type === 'supermarket' && category.subCategories?.some(sc => sc.id.includes('decoracao'))))) {
+        if (!userImage && (category.type === 'fashion' || category.type === 'beauty')) {
             setCurrentScreen(Screen.ImageSourceSelection);
             return;
         }
@@ -686,12 +686,15 @@ const App: React.FC = () => {
 
         const itemType = getCategoryTypeFromItem(item);
 
+        // Special handling for Decoration
         if (item.tryOnType === 'decoration') {
             setDecorationItem(item);
             if (!userImage) {
+                // Prompt for room photo
                 setError("Por favor, tire ou carregue uma foto do ambiente.");
                 setCurrentScreen(Screen.ImageSourceSelection);
             } else {
+                // Go straight to placement if we already have an image (e.g. reused)
                 setCurrentScreen(Screen.DecorationPlacement);
             }
             return;
@@ -740,6 +743,7 @@ const App: React.FC = () => {
         }
     };
     
+    // New handler for generating the decoration result
     const handleGenerateDecoration = async (compositeImage: string) => {
         if (!decorationItem) return;
         
@@ -750,7 +754,7 @@ const App: React.FC = () => {
             setGeneratedImage(resultImage);
             setImageHistory(prev => [...prev, resultImage]);
             setWornItems(prev => [...prev, decorationItem]);
-            setDecorationItem(null);
+            setDecorationItem(null); // Clear pending item
             setCurrentScreen(Screen.Result);
         } catch (err: any) {
             console.error("Decoration generation error:", err);

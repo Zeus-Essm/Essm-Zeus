@@ -1,4 +1,5 @@
 
+
 import React, { useRef, useEffect, useState } from 'react';
 import { ArrowLeftIcon, CheckCircleIconFilled } from './IconComponents';
 import GradientButton from './GradientButton';
@@ -16,6 +17,8 @@ const DecorationPlacementScreen: React.FC<DecorationPlacementScreenProps> = ({ b
   const itemRef = useRef<HTMLImageElement>(null);
   const [position, setPosition] = useState({ x: 50, y: 50 }); // Percentage 0-100
   const [scale, setScale] = useState(1);
+  // NEW: 3D Rotation State
+  const [rotation, setRotation] = useState({ x: 0, y: 0, z: 0 });
   const [isDragging, setIsDragging] = useState(false);
 
   // Helper to get touch/mouse coordinates relative to container
@@ -103,6 +106,7 @@ const DecorationPlacementScreen: React.FC<DecorationPlacementScreenProps> = ({ b
         const containerRect = container.getBoundingClientRect();
         
         // Determine rendered width/height of the item in the DOM
+        // (Unscaled by CSS transform, just base size)
         const renderedItemWidth = itemRef.current.offsetWidth;
         const renderedItemHeight = itemRef.current.offsetHeight;
 
@@ -118,14 +122,25 @@ const DecorationPlacementScreen: React.FC<DecorationPlacementScreenProps> = ({ b
         const drawWidth = renderedItemWidth * scaleX;
         const drawHeight = renderedItemHeight * scaleY;
 
-        // Draw item centered at coordinates
+        // Apply transformations to context to simulate CSS 3D transforms
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.scale(scale, scale);
+        // Note: Canvas 2D context doesn't support full 3D perspective transforms easily.
+        // We will approximate rotation Z. For full 3D, we'd need WebGL or complex matrix math.
+        // Given this is an input for AI, a basic 2D approximation + the prompt instructions
+        // "fix perspective" is usually enough. The rotation Z helps alignment.
+        ctx.rotate((rotation.z * Math.PI) / 180);
+        
+        // Draw item centered at current context origin
         ctx.drawImage(
             itemImg, 
-            centerX - drawWidth / 2, 
-            centerY - drawHeight / 2, 
+            -drawWidth / 2, 
+            -drawHeight / 2, 
             drawWidth, 
             drawHeight
         );
+        ctx.restore();
 
         const compositeDataUrl = canvas.toDataURL('image/jpeg', 0.9);
         onGenerate(compositeDataUrl);
@@ -158,6 +173,7 @@ const DecorationPlacementScreen: React.FC<DecorationPlacementScreenProps> = ({ b
         <div 
             ref={containerRef}
             className="relative w-full max-w-lg aspect-[3/4] md:aspect-[9/16] max-h-full"
+            style={{ perspective: '1000px' }} // Add perspective container
         >
             {/* Background */}
             <img 
@@ -173,6 +189,7 @@ const DecorationPlacementScreen: React.FC<DecorationPlacementScreenProps> = ({ b
                     left: `${position.x}%`, 
                     top: `${position.y}%`,
                     width: '40%',
+                    zIndex: 10,
                 }}
                 onMouseDown={handleStart}
                 onTouchStart={handleStart}
@@ -182,7 +199,14 @@ const DecorationPlacementScreen: React.FC<DecorationPlacementScreenProps> = ({ b
                     src={item.image} 
                     alt="Decoration" 
                     className="w-full h-auto drop-shadow-2xl border-2 border-dashed border-white/50 rounded-lg"
-                    style={{ transform: `scale(${scale})` }}
+                    style={{ 
+                        transform: `
+                            scale(${scale}) 
+                            rotateX(${rotation.x}deg) 
+                            rotateY(${rotation.y}deg) 
+                            rotateZ(${rotation.z}deg)
+                        ` 
+                    }}
                     draggable={false}
                 />
             </div>
@@ -190,8 +214,10 @@ const DecorationPlacementScreen: React.FC<DecorationPlacementScreenProps> = ({ b
       </div>
 
       {/* Controls */}
-      <div className="p-4 bg-[var(--bg-secondary)] border-t border-[var(--border-primary)] space-y-4 z-20">
-        <div className="space-y-2">
+      <div className="p-4 bg-[var(--bg-secondary)] border-t border-[var(--border-primary)] space-y-4 z-20 max-h-[40vh] overflow-y-auto">
+        
+        {/* Size Slider */}
+        <div className="space-y-1">
             <div className="flex justify-between text-xs text-[var(--text-secondary)] font-bold uppercase tracking-wider">
                 <span>Tamanho</span>
                 <span>{Math.round(scale * 100)}%</span>
@@ -206,9 +232,37 @@ const DecorationPlacementScreen: React.FC<DecorationPlacementScreenProps> = ({ b
                 className="w-full h-2 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-[var(--accent-primary)]"
             />
         </div>
+
+        {/* 3D Rotation Controls */}
+        <div className="grid grid-cols-3 gap-2">
+             <div className="space-y-1">
+                <label className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">Giro (Z)</label>
+                <input 
+                    type="range" min="-180" max="180" value={rotation.z} 
+                    onChange={(e) => setRotation({...rotation, z: parseFloat(e.target.value)})}
+                    className="w-full h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-blue-400"
+                />
+            </div>
+            <div className="space-y-1">
+                <label className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">Inclinar V (X)</label>
+                <input 
+                    type="range" min="-60" max="60" value={rotation.x} 
+                    onChange={(e) => setRotation({...rotation, x: parseFloat(e.target.value)})}
+                    className="w-full h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-green-400"
+                />
+            </div>
+            <div className="space-y-1">
+                <label className="text-[10px] text-[var(--text-secondary)] uppercase font-bold">Inclinar H (Y)</label>
+                <input 
+                    type="range" min="-60" max="60" value={rotation.y} 
+                    onChange={(e) => setRotation({...rotation, y: parseFloat(e.target.value)})}
+                    className="w-full h-1.5 bg-zinc-700 rounded-lg appearance-none cursor-pointer accent-red-400"
+                />
+            </div>
+        </div>
         
-        <p className="text-center text-xs text-[var(--text-tertiary)]">
-            Arraste para mover • Use o slider para ajustar o tamanho
+        <p className="text-center text-[10px] text-[var(--text-tertiary)] pt-2">
+            Arraste para mover • Ajuste o ângulo para alinhar com a parede
         </p>
 
         <GradientButton onClick={handleCaptureComposite} className="!py-3">
