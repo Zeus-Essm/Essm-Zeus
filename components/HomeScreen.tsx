@@ -252,6 +252,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     { type: 'supermarket', label: 'Supermercados' },
     { type: 'beauty', label: 'Beleza' },
     { type: 'technology', label: 'Tecnologia' },
+    { type: 'decoration', label: 'Decoração' },
   ];
 
   return (

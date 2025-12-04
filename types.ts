@@ -1,6 +1,6 @@
 
 
-export type MarketplaceType = 'fashion' | 'restaurant' | 'supermarket' | 'beauty' | 'technology';
+export type MarketplaceType = 'fashion' | 'restaurant' | 'supermarket' | 'beauty' | 'technology' | 'decoration';
 
 export interface User {
   id: string;

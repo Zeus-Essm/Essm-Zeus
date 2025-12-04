@@ -11,6 +11,7 @@ import {
     SUPERMARKET_SHOP_CATEGORIES,
     BEAUTY_SHOP_CATEGORIES,
     TECHNOLOGY_SHOP_CATEGORIES,
+    DECORATION_SHOP_CATEGORIES,
     INITIAL_VENDOR_ITEMS,
     VENDOR_POSTS
 } from '../constants';
@@ -112,6 +113,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ businessProfile, onOp
             supermarket: SUPERMARKET_SHOP_CATEGORIES,
             beauty: BEAUTY_SHOP_CATEGORIES,
             technology: TECHNOLOGY_SHOP_CATEGORIES,
+            decoration: DECORATION_SHOP_CATEGORIES,
         };
         
         const fashionSubCategoryMap = {

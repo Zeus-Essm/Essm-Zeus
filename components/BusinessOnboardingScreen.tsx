@@ -81,6 +81,7 @@ const BusinessOnboardingScreen: React.FC<BusinessOnboardingScreenProps> = ({ onC
                     <option value="supermarket">Supermercado</option>
                     <option value="beauty">Beleza</option>
                     <option value="technology">Tecnologia</option>
+                    <option value="decoration">Decoração</option>
                 </select>
 
                 <textarea

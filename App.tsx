@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 // FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
 import type { Session } from '@supabase/supabase-js';
@@ -1582,6 +1583,7 @@ const App: React.FC = () => {
                     onBack={() => setCurrentScreen(Screen.Feed)} 
                     posts={posts}
                     items={ITEMS}
+// FIX: Changed `onViewProfile` to `handleViewProfile` to pass the correct function to the component.
                     onViewProfile={handleViewProfile}
                     onLikePost={handleLikePost}
                     onItemClick={handleItemClick}
