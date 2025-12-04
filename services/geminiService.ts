@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Modality, GenerateContentResponse } from '@google/genai';
 import type { Item } from '../types';
 
@@ -378,54 +377,6 @@ export const generateBeautyTryOnImage = async (userImage: string, newItem: Item)
             throw new Error(`Falha ao aplicar o produto de beleza: ${error.message}`);
         }
         throw new Error('Falha ao aplicar o produto de beleza. Verifique o console para mais detalhes.');
-    }
-};
-
-export const generateDecorationImage = async (compositeImage: string): Promise<string> => {
-    if (!process.env.API_KEY) {
-        console.warn("API_KEY is not set. Returning composite as placeholder.");
-        return new Promise(resolve => setTimeout(() => resolve(compositeImage), 2000));
-    }
-
-    try {
-        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-        const { base64: compositeBase64, mimeType: compositeMimeType } = getBase64Parts(compositeImage);
-        
-        // SIMPLIFIED PROMPT
-        const promptText = `Add the object shown in the foreground to the room shown in the background. Make it look realistic.`;
-
-        const response: GenerateContentResponse = await ai.models.generateContent({
-            model: 'gemini-3-pro-image-preview', 
-            contents: {
-                parts: [
-                    {
-                        inlineData: { data: compositeBase64, mimeType: compositeMimeType },
-                    },
-                    {
-                        text: promptText,
-                    },
-                ],
-            },
-            config: {
-                responseModalities: [Modality.IMAGE, Modality.TEXT],
-            },
-        });
-
-        const candidate = response.candidates?.[0];
-        if (!candidate || !candidate.content || !candidate.content.parts) {
-             throw new Error('A IA não retornou uma imagem válida.');
-        }
-
-        for (const part of candidate.content.parts) {
-            if (part.inlineData) {
-                return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
-            }
-        }
-        throw new Error('A IA não retornou uma imagem. Tente novamente.');
-
-    } catch (error) {
-        console.error('Error calling Gemini API for decoration:', error);
-        throw new Error('Falha ao gerar o ambiente decorado.');
     }
 };
 
