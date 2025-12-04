@@ -163,30 +163,21 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
                   <div className='flex flex-col flex-grow p-1'>
                     <h3 className="text-sm font-semibold flex-grow pointer-events-none truncate">{item.name}</h3>
                     <div className="mt-2 flex items-center gap-2">
-                        {collectionType === 'fashion' || item.isTryOn ? (
+                        <div className="flex-grow flex gap-2">
                             <button
                                 onClick={(e) => handleMainActionClick(item, e)}
-                                className="flex-grow text-xs text-center font-bold uppercase tracking-wider py-2 px-2 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] transition-all transform active:scale-90 hover:shadow-[0_0_10px_var(--accent-primary-glow)]"
+                                className="flex-1 text-[10px] text-center font-bold uppercase tracking-wider py-2 px-1 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] transition-all transform active:scale-90"
                             >
-                                PROVAR
+                                {collectionType === 'fashion' || item.isTryOn ? 'PROVAR' : 'REPOSTAR'}
                             </button>
-                        ) : (
-                            <div className="flex-grow flex gap-2">
-                                <button
-                                    onClick={(e) => handleMainActionClick(item, e)}
-                                    className="flex-1 text-[10px] text-center font-bold uppercase tracking-wider py-2 px-1 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] transition-all transform active:scale-90"
-                                >
-                                    REPOSTAR
-                                </button>
-                                <button
-                                    onClick={(e) => { e.stopPropagation(); onOpenSplitCamera(item); }}
-                                    className="flex-1 flex items-center justify-center gap-1 text-[10px] text-center font-bold uppercase tracking-wider py-2 px-1 rounded-full bg-white text-black border border-zinc-300 transition-all transform active:scale-90"
-                                >
-                                    <VideoCameraIcon className="w-3 h-3" />
-                                    CRIAR
-                                </button>
-                            </div>
-                        )}
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onOpenSplitCamera(item); }}
+                                className="flex-1 flex items-center justify-center gap-1 text-[10px] text-center font-bold uppercase tracking-wider py-2 px-1 rounded-full bg-white text-black border border-zinc-300 transition-all transform active:scale-90"
+                            >
+                                <VideoCameraIcon className="w-3 h-3" />
+                                CRIAR
+                            </button>
+                        </div>
                         
                         <button
                             onClick={(e) => handleAddToCartClick(e, item)}

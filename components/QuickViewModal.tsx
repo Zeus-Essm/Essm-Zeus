@@ -78,43 +78,32 @@ const QuickViewModal: React.FC<QuickViewModalProps> = ({ item, collectionType, o
             </div>
             
             {/* Conditional Action Buttons */}
-            {isFashionOrTryOn ? (
-                onItemAction && (
+            <div className="flex gap-2 mb-3">
+                {onItemAction && (
                     <button
                         onClick={() => onItemAction(item)}
-                        className="w-full mb-3 flex items-center justify-center font-bold py-3 px-4 rounded-lg transition-colors bg-[var(--accent-primary)] text-[var(--accent-primary-text)] hover:brightness-110 shadow-lg"
+                        className="flex-1 flex items-center justify-center gap-1 font-bold py-3 px-2 rounded-lg transition-colors bg-[var(--accent-primary)] text-[var(--accent-primary-text)] hover:brightness-110 shadow-lg text-sm"
                     >
-                        {item.recommendationVideo ? (
-                            <>
-                                <PlayIcon className="w-4 h-4 mr-2" />
-                                Ver Review / Provar
-                            </>
-                        ) : (
-                            "Provar Agora"
-                        )}
+                        {isFashionOrTryOn ? (
+                            item.recommendationVideo ? (
+                                <>
+                                    <PlayIcon className="w-4 h-4" />
+                                    <span>REVIEW / PROVAR</span>
+                                </>
+                            ) : "PROVAR"
+                        ) : "REPOSTAR"}
                     </button>
-                )
-            ) : (
-                <div className="flex gap-2 mb-3">
-                    {onItemAction && (
-                        <button
-                            onClick={() => onItemAction(item)}
-                            className="flex-1 flex items-center justify-center font-bold py-3 px-2 rounded-lg transition-colors bg-[var(--accent-primary)] text-[var(--accent-primary-text)] hover:brightness-110 shadow-lg text-sm"
-                        >
-                            REPOSTAR
-                        </button>
-                    )}
-                    {onOpenSplitCamera && (
-                        <button
-                            onClick={() => onOpenSplitCamera(item)}
-                            className="flex-1 flex items-center justify-center gap-1 font-bold py-3 px-2 rounded-lg transition-colors bg-white text-black border border-zinc-300 hover:bg-gray-100 shadow-lg text-sm"
-                        >
-                            <VideoCameraIcon className="w-4 h-4" />
-                            CRIAR
-                        </button>
-                    )}
-                </div>
-            )}
+                )}
+                {onOpenSplitCamera && (
+                    <button
+                        onClick={() => onOpenSplitCamera(item)}
+                        className="flex-1 flex items-center justify-center gap-1 font-bold py-3 px-2 rounded-lg transition-colors bg-white text-black border border-zinc-300 hover:bg-gray-100 shadow-lg text-sm"
+                    >
+                        <VideoCameraIcon className="w-4 h-4" />
+                        CRIAR
+                    </button>
+                )}
+            </div>
 
             <div className="flex gap-3">
                  <button
