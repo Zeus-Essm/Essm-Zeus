@@ -53,7 +53,7 @@ const CLUB_S_SUBCATEGORIES = [
 ];
 
 const DECORATION_SUBCATEGORIES = [
-    { id: 'mdc', name: 'MDC', image: 'https://i.postimg.cc/m2Jn3Tvt/Captura_de_Tela_2025_11_30_a_s_6_28_07_PM_Photoroom.png' },
+    { id: 'moveis', name: 'Móveis', image: 'https://i.postimg.cc/tTm74FhJ/mdc.png' },
 ];
 
 
@@ -86,7 +86,7 @@ export const TECHNOLOGY_SHOP_CATEGORIES = [
 ];
 
 export const DECORATION_SHOP_CATEGORIES = [
-    { id: 'mdc', name: 'MDC', image: 'https://i.postimg.cc/m2Jn3Tvt/Captura_de_Tela_2025_11_30_a_s_6_28_07_PM_Photoroom.png' },
+    { id: 'moveis', name: 'Móveis', image: 'https://i.postimg.cc/tTm74FhJ/mdc.png' },
 ];
 
 // Helper para criar subcategorias com IDs únicos
@@ -215,11 +215,11 @@ export const CATEGORIES: Category[] = [
     ]
   },
   {
-    id: 'decoracao',
-    name: 'Decoração',
-    image: 'https://i.postimg.cc/VLdTbJVz/pngtree_armchair_isolated_on_white_background_png_image_2770873_Photoroom.png',
+    id: 'mdc',
+    name: 'MDC',
+    image: 'https://i.postimg.cc/tTm74FhJ/mdc.png',
     type: 'decoration',
-    subCategories: createSubCategories('decoracao', DECORATION_SUBCATEGORIES)
+    subCategories: createSubCategories('mdc', DECORATION_SUBCATEGORIES)
   }
 ];
 
@@ -497,27 +497,27 @@ export const ITEMS: Item[] = [
     { id: 'item-tec-iphone-1', name: 'Iphone 1', description: 'Iphone exclusivo da Apple.', category: 'tecnologia_Iphone', image: 'https://i.postimg.cc/ZKszJHKK/Gemini_Generated_Image_lrcnu0lrcnu0lrcn.png', price: 20000 },
     { id: 'item-tec-iphone-2', name: 'Iphone 2', description: 'Iphone exclusivo da Apple.', category: 'tecnologia_Iphone', image: 'https://i.postimg.cc/ncSfn2cL/Gemini_Generated_Image_c2upgec2upgec2up.png', price: 100000 },
 
-    // Decoração - MDC
-    { id: 'deco-1', name: 'deco 1', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/m2Jn3Tvt/Captura_de_Tela_2025_11_30_a_s_6_28_07_PM_Photoroom.png', price: 20000 },
-    { id: 'deco-2', name: 'deco 2', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/m2Jn3Tvt/Captura_de_Tela_2025_11_30_a_s_6_28_07_PM_Photoroom.png', price: 20000 },
-    { id: 'deco-3', name: 'deco 3', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/Fs86bhMG/Captura_de_Tela_2025_11_30_a_s_6_28_33_PM_Photoroom.png', price: 20000 },
-    { id: 'deco-4', name: 'deco 4', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/L6wWkmcB/Captura_de_Tela_2025_11_30_a_s_6_28_50_PM_Photoroom.png', price: 20000 },
-    { id: 'deco-5', name: 'deco 5', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/Qxwzgj21/Captura_de_Tela_2025_11_30_a_s_6_29_15_PM_Photoroom.png', price: 20000 },
-    { id: 'deco-6', name: 'deco 6', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/VLdTbJVz/pngtree_armchair_isolated_on_white_background_png_image_2770873_Photoroom.png', price: 20000 },
-    { id: 'deco-7', name: 'deco 7', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/ncC5QXPj/pngtree_elegant_rattan_armchair_design_png_image_12689317_Photoroom.png', price: 20000 },
-    { id: 'deco-8', name: 'deco 8', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/Pr97bdgt/poltrona_de_veludo_cor_de_vinho_isolada_em_fundo_transparente_png_psd_888962_1656_Photoroom.png', price: 20000 },
-    { id: 'deco-9', name: 'deco 9', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/zXVMRycL/poltrona_decorativa_sala_de_estar_seul_cinza_1572218835_f683_600x600_Photoroom.png', price: 20000 },
-    { id: 'deco-10', name: 'deco 10', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/d3dHQxBR/download.png', price: 20000 },
-    { id: 'deco-11', name: 'deco 11', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/gjRScTDv/kit_de_quadros_decorativos_em_preto_e_branco_new_york_kit_com_4_quadros_de_35x55cm_24904.jpg', price: 20000 },
-    { id: 'deco-12', name: 'deco 12', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/4dj2ggz5/madeira_s_reflexo.webp', price: 20000 },
-    { id: 'deco-13', name: 'deco 13', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/6qRj6m0f/quadro_com_moldura_frase_coisas_pequenas_amor_30x40cm_preta.webp', price: 20000 },
-    { id: 'deco-14', name: 'deco 14', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/fL1qNNx7/quadro_paris_nova_york_e_londres_kit_3_telas_1567793695_3517_600x600.jpg', price: 20000 },
-    { id: 'deco-15', name: 'deco 15', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/J040MfMM/png_transparent_frames_quadro_floral_design_poster_ipad_mini_quadros_flower_arranging_text_poster_Ph.png', price: 20000 },
-    { id: 'deco-17', name: 'deco 17', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/JzCXCRPb/cz_Nmcy1wcml2YXRl_L3Jhd3Bpe_GVs_X2lt_YWdlcy93ZWJza_XRl_X2Nvbn_Rlbn_Qvb_HIvc_GYtcz_Ex_OC1w_YS02OTQy_L.png', price: 20000 },
-    { id: 'deco-18', name: 'deco 18', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/y8CRC7v9/png_clipart_flowers_in_a_vase_vase_flower_arranging_white_Photoroom.png', price: 20000 },
-    { id: 'deco-19', name: 'deco 19', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/WbkZyd6Z/png_clipart_white_flower_in_clear_glass_vase_vase_flowerpot_glass_flower_bouquet_vase_white_plant_st.png', price: 20000 },
-    { id: 'deco-20', name: 'deco 20', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/sDhWLM9S/pngtree_potted_grass_flower_over_wooden_table_png_image_13738331_Photoroom.png', price: 20000 },
-    { id: 'deco-21', name: 'deco 21', description: 'Item de decoração exclusivo.', category: 'decoracao_mdc', image: 'https://i.postimg.cc/2SNWNC2G/pngtree_white_ceramic_vases_with_tulips_png_image_14790373_Photoroom.png', price: 20000 },
+    // MDC - Móveis
+    { id: 'deco-1', name: 'deco 1', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/m2Jn3Tvt/Captura_de_Tela_2025_11_30_a_s_6_28_07_PM_Photoroom.png', price: 20000 },
+    { id: 'deco-2', name: 'deco 2', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/m2Jn3Tvt/Captura_de_Tela_2025_11_30_a_s_6_28_07_PM_Photoroom.png', price: 20000 },
+    { id: 'deco-3', name: 'deco 3', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/Fs86bhMG/Captura_de_Tela_2025_11_30_a_s_6_28_33_PM_Photoroom.png', price: 20000 },
+    { id: 'deco-4', name: 'deco 4', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/L6wWkmcB/Captura_de_Tela_2025_11_30_a_s_6_28_50_PM_Photoroom.png', price: 20000 },
+    { id: 'deco-5', name: 'deco 5', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/Qxwzgj21/Captura_de_Tela_2025_11_30_a_s_6_29_15_PM_Photoroom.png', price: 20000 },
+    { id: 'deco-6', name: 'deco 6', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/VLdTbJVz/pngtree_armchair_isolated_on_white_background_png_image_2770873_Photoroom.png', price: 20000 },
+    { id: 'deco-7', name: 'deco 7', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/ncC5QXPj/pngtree_elegant_rattan_armchair_design_png_image_12689317_Photoroom.png', price: 20000 },
+    { id: 'deco-8', name: 'deco 8', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/Pr97bdgt/poltrona_de_veludo_cor_de_vinho_isolada_em_fundo_transparente_png_psd_888962_1656_Photoroom.png', price: 20000 },
+    { id: 'deco-9', name: 'deco 9', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/zXVMRycL/poltrona_decorativa_sala_de_estar_seul_cinza_1572218835_f683_600x600_Photoroom.png', price: 20000 },
+    { id: 'deco-10', name: 'deco 10', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/d3dHQxBR/download.png', price: 20000 },
+    { id: 'deco-11', name: 'deco 11', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/gjRScTDv/kit_de_quadros_decorativos_em_preto_e_branco_new_york_kit_com_4_quadros_de_35x55cm_24904.jpg', price: 20000 },
+    { id: 'deco-12', name: 'deco 12', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/4dj2ggz5/madeira_s_reflexo.webp', price: 20000 },
+    { id: 'deco-13', name: 'deco 13', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/6qRj6m0f/quadro_com_moldura_frase_coisas_pequenas_amor_30x40cm_preta.webp', price: 20000 },
+    { id: 'deco-14', name: 'deco 14', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/fL1qNNx7/quadro_paris_nova_york_e_londres_kit_3_telas_1567793695_3517_600x600.jpg', price: 20000 },
+    { id: 'deco-15', name: 'deco 15', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/J040MfMM/png_transparent_frames_quadro_floral_design_poster_ipad_mini_quadros_flower_arranging_text_poster_Ph.png', price: 20000 },
+    { id: 'deco-17', name: 'deco 17', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/JzCXCRPb/cz_Nmcy1wcml2YXRl_L3Jhd3Bpe_GVs_X2lt_YWdlcy93ZWJza_XRl_X2Nvbn_Rlbn_Qvb_HIvc_GYtcz_Ex_OC1w_YS02OTQy_L.png', price: 20000 },
+    { id: 'deco-18', name: 'deco 18', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/y8CRC7v9/png_clipart_flowers_in_a_vase_vase_flower_arranging_white_Photoroom.png', price: 20000 },
+    { id: 'deco-19', name: 'deco 19', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/WbkZyd6Z/png_clipart_white_flower_in_clear_glass_vase_vase_flowerpot_glass_flower_bouquet_vase_white_plant_st.png', price: 20000 },
+    { id: 'deco-20', name: 'deco 20', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/sDhWLM9S/pngtree_potted_grass_flower_over_wooden_table_png_image_13738331_Photoroom.png', price: 20000 },
+    { id: 'deco-21', name: 'deco 21', description: 'Item de decoração exclusivo.', category: 'mdc_moveis', image: 'https://i.postimg.cc/2SNWNC2G/pngtree_white_ceramic_vases_with_tulips_png_image_14790373_Photoroom.png', price: 20000 },
 ];
 
 export const INITIAL_STORIES: Story[] = [

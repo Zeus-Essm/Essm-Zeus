@@ -96,6 +96,7 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
   const featuredCategories: Category[] = [
       CATEGORIES.find(c => c.id === 'lv')!,
       CATEGORIES.find(c => c.id === 'new_feeling')!,
+      CATEGORIES.find(c => c.id === 'mdc')!,
   ].filter(Boolean);
   
   useEffect(() => {
