@@ -32,7 +32,13 @@ const QuickViewModal: React.FC<QuickViewModalProps> = ({ item, collectionType, o
     };
   }, [onClose]);
 
-  const isFashionOrTryOn = collectionType === 'fashion' || item.isTryOn;
+  const getActionText = () => {
+    if (collectionType === 'decoration') return 'USAR';
+    if (collectionType === 'fashion' || item.isTryOn) {
+      return item.recommendationVideo ? 'REVIEW / PROVAR' : 'PROVAR';
+    }
+    return 'REPOSTAR';
+  };
 
   return (
     <div
@@ -84,14 +90,8 @@ const QuickViewModal: React.FC<QuickViewModalProps> = ({ item, collectionType, o
                         onClick={() => onItemAction(item)}
                         className="flex-1 flex items-center justify-center gap-1 font-bold py-3 px-2 rounded-lg transition-colors bg-[var(--accent-primary)] text-[var(--accent-primary-text)] hover:brightness-110 shadow-lg text-sm"
                     >
-                        {isFashionOrTryOn ? (
-                            item.recommendationVideo ? (
-                                <>
-                                    <PlayIcon className="w-4 h-4" />
-                                    <span>REVIEW / PROVAR</span>
-                                </>
-                            ) : "PROVAR"
-                        ) : "REPOSTAR"}
+                        {getActionText().includes('REVIEW') && <PlayIcon className="w-4 h-4" />}
+                        <span>{getActionText()}</span>
                     </button>
                 )}
                 {onOpenSplitCamera && (

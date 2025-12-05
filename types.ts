@@ -134,7 +134,8 @@ export enum Screen {
   FaceScan,
   VerificationPending,
   SplitCamera,
-  VideoEdit
+  VideoEdit,
+  DecorationPlacement
 }
 
 export interface AppNotification {

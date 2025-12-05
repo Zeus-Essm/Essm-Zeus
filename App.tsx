@@ -1,11 +1,10 @@
 
-
 import React from 'react';
 // FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
 import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType, AppNotification, Conversation, Comment, BusinessProfile, CollaborationPost } from './types';
-import { generateTryOnImage, normalizeImageAspectRatio, generateBeautyTryOnImage, generateFashionVideo } from './services/geminiService';
+import { generateTryOnImage, normalizeImageAspectRatio, generateBeautyTryOnImage, generateFashionVideo, generateDecorationImage } from './services/geminiService';
 import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, ITEMS, INITIAL_CONVERSATIONS, INITIAL_COLLABORATION_REQUESTS } from './constants';
 
 // Screen Components
@@ -53,6 +52,7 @@ import CoinBurst from './components/CoinBurst';
 import RecommendationModal from './components/RecommendationModal';
 import SplitCameraScreen from './components/SplitCameraScreen';
 import VideoEditScreen from './components/VideoEditScreen';
+import DecorationPlacementScreen from './components/DecorationPlacementScreen';
 
 // FORCE REFRESH v2.3 - Apply new wig items and ensure AI logic is active
 
@@ -250,8 +250,9 @@ const App: React.FC = () => {
     const [splitCameraItem, setSplitCameraItem] = React.useState<Item | null>(null);
     const [editingVideoDetails, setEditingVideoDetails] = React.useState<{ blob: Blob; item: Item } | null>(null);
     
-    // Repost State
+    // Repost & Decoration State
     const [repostingItem, setRepostingItem] = React.useState<Item | null>(null);
+    const [placingItem, setPlacingItem] = React.useState<Item | null>(null);
 
 
     const unreadNotificationCount = notifications.filter(n => !n.read).length;
@@ -597,16 +598,26 @@ const App: React.FC = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const normalizedImageDataUrl = await normalizeImageAspectRatio(imageDataUrl);
+            // For decoration, we don't need to normalize to 1:1, but for fashion we do.
+            const currentCategoryType = navigationStack.length > 0 ? (navigationStack[0] as Category).type : 'fashion';
             
-            setUserImage(normalizedImageDataUrl);
-            setGeneratedImage(normalizedImageDataUrl);
-            setImageHistory([normalizedImageDataUrl]); // Initialize history
+            const processedImage = currentCategoryType === 'fashion' 
+                ? await normalizeImageAspectRatio(imageDataUrl) 
+                : imageDataUrl;
+
+            setUserImage(processedImage);
+            setGeneratedImage(processedImage);
+            setImageHistory([processedImage]); // Initialize history
             setWornItems([]);
             
             const currentCategory = navigationStack.length > 0 ? navigationStack[0] as Category : null;
             if (currentCategory) {
-                setCurrentScreen(Screen.SubCategorySelection);
+                 if (currentCategory.type === 'decoration') {
+                    // For decoration, we might go straight to a subcategory or item selection
+                    setCurrentScreen(Screen.SubCategorySelection);
+                 } else {
+                    setCurrentScreen(Screen.SubCategorySelection);
+                 }
             } else {
                 const defaultCategory = CATEGORIES[0];
                 if (defaultCategory) {
@@ -617,7 +628,7 @@ const App: React.FC = () => {
                 }
             }
         } catch (err: any) {
-            console.error("Erro ao normalizar a proporção da imagem:", err);
+            console.error("Erro ao processar a imagem:", err);
             setError("Houve um problema ao preparar sua foto. Por favor, tente novamente.");
             setCurrentScreen(Screen.ImageSourceSelection); 
         } finally {
@@ -628,7 +639,7 @@ const App: React.FC = () => {
 
     const handleSelectCategory = (category: Category) => {
         setNavigationStack([category]);
-        if (!userImage && (category.type === 'fashion' || category.type === 'beauty')) {
+        if (!userImage && (category.type === 'fashion' || category.type === 'beauty' || category.type === 'decoration')) {
             setCurrentScreen(Screen.ImageSourceSelection);
             return;
         }
@@ -668,7 +679,6 @@ const App: React.FC = () => {
     };
 
     const handleItemSelect = async (item: Item) => {
-        // Check for recommendation video
         if (item.recommendationVideo && !recommendationItem) {
             setRecommendationItem(item);
             return;
@@ -676,9 +686,20 @@ const App: React.FC = () => {
 
         const itemType = getCategoryTypeFromItem(item);
 
+        if (itemType === 'decoration') {
+            if (!userImage) {
+                setError("Por favor, carregue uma foto do seu ambiente primeiro.");
+                setCurrentScreen(Screen.ImageSourceSelection);
+                return;
+            }
+            setPlacingItem(item);
+            setCurrentScreen(Screen.DecorationPlacement);
+            return;
+        }
+
         if (itemType === 'fashion' || item.isTryOn) {
             if (!userImage) {
-                 if (profile) setUserImage(profile.profile_image_url); // Fallback to profile picture if no image is set
+                 if (profile) setUserImage(profile.profile_image_url);
                  else {
                     setError("Por favor, carregue uma foto primeiro.");
                     setCurrentScreen(Screen.ImageSourceSelection);
@@ -691,12 +712,10 @@ const App: React.FC = () => {
             setIsLoading(true);
             setError(null);
             try {
-                // Determine which AI service to call
                 const generatorFunction = item.isTryOn && itemType === 'beauty' 
-                    ? (userImg: string, newItem: Item) => generateBeautyTryOnImage(userImg, newItem)
+                    ? generateBeautyTryOnImage
                     : generateTryOnImage;
-
-                // The beauty function doesn't need existingItems, so we adapt the call signature
+                
                 const newImage = await (generatorFunction === generateTryOnImage
                     ? generatorFunction(baseImage, item, existingItems)
                     : (generatorFunction as (userImg: string, newItem: Item) => Promise<string>)(baseImage, item));
@@ -712,13 +731,33 @@ const App: React.FC = () => {
                 setIsLoading(false);
             }
         } else {
-            // "repost" logic for non-fashion, non-try-on items
             if (profile) {
                 setRepostingItem(item);
                 setIsCaptioning(true);
             } else {
                 setError("Você precisa estar logado para postar.");
             }
+        }
+    };
+
+    const handleConfirmPlacement = async (compositeImage: string) => {
+        setIsLoading(true);
+        setLoadingMessage("Aplicando a magia do design de interiores...");
+        setError(null);
+        try {
+            const newImage = await generateDecorationImage(compositeImage);
+            setGeneratedImage(newImage);
+            setImageHistory(prev => [...prev, newImage]);
+            if (placingItem) {
+                setWornItems(prevItems => [...prevItems, placingItem]);
+            }
+            setPlacingItem(null);
+            setCurrentScreen(Screen.Result);
+        } catch (err: any) {
+            setError(err.message || 'Ocorreu um erro desconhecido ao gerar a imagem.');
+            setCurrentScreen(Screen.DecorationPlacement);
+        } finally {
+            setIsLoading(false);
         }
     };
     
@@ -749,7 +788,6 @@ const App: React.FC = () => {
         if (collectionIdentifier) {
             setCurrentScreen(Screen.ItemSelection);
         } else {
-            // This is a fallback, but on ResultScreen, collectionIdentifier should exist.
             handleBack(); 
         }
     };
@@ -772,7 +810,6 @@ const App: React.FC = () => {
                     handleBack();
                 }
             }
-            // Stay on ResultScreen if there are still items left
         } else {
              if (collectionIdentifier) {
                 setCurrentScreen(Screen.ItemSelection);
@@ -1370,6 +1407,20 @@ const App: React.FC = () => {
         const currentNode = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1] : null;
 
         switch (currentScreen) {
+             case Screen.DecorationPlacement:
+                if (userImage && placingItem) {
+                    return <DecorationPlacementScreen
+                        userImage={userImage}
+                        item={placingItem}
+                        onBack={() => {
+                            setPlacingItem(null);
+                            setCurrentScreen(Screen.ItemSelection);
+                        }}
+                        onConfirm={handleConfirmPlacement}
+                    />;
+                }
+                setCurrentScreen(Screen.ItemSelection);
+                return null;
              case Screen.SplitCamera:
                 if (splitCameraItem) {
                     return <SplitCameraScreen 

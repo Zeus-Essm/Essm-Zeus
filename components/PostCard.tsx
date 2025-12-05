@@ -97,8 +97,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
       </button>
 
       {/* Post Image or Video */}
-      {/* Alterado de aspect-square fixo para condicional baseada se é vídeo (9:16) ou imagem (1:1) */}
-      <div className={`relative bg-black overflow-hidden ${post.video ? 'aspect-[9/16]' : 'aspect-square'}`}>
+      {/* Updated: Respect original aspect ratio for images (w-full h-auto) */}
+      <div className={`relative bg-black overflow-hidden w-full ${post.video ? 'aspect-[9/16]' : ''}`}>
         {post.video ? (
             <>
                 <video
@@ -146,8 +146,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
                 </div>
             </>
         ) : (
-            <div onClick={onImageClick} className="w-full h-full cursor-pointer">
-                <img src={post.image} alt={`Look by ${post.user.name}`} className="w-full h-full object-cover" />
+            <div onClick={onImageClick} className="w-full cursor-pointer">
+                <img src={post.image} alt={`Look by ${post.user.name}`} className="w-full h-auto object-contain max-h-[600px] bg-[var(--bg-secondary)]" />
             </div>
         )}
       </div>

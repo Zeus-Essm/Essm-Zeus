@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useRef } from 'react';
 import type { Item, MarketplaceType } from '../types';
 import { ITEMS } from '../constants';
@@ -168,7 +169,7 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
                                 onClick={(e) => handleMainActionClick(item, e)}
                                 className="flex-1 text-[10px] text-center font-bold uppercase tracking-wider py-2 px-1 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] transition-all transform active:scale-90"
                             >
-                                {collectionType === 'fashion' || item.isTryOn ? 'PROVAR' : 'REPOSTAR'}
+                                {collectionType === 'decoration' ? 'USAR' : (collectionType === 'fashion' || item.isTryOn ? 'PROVAR' : 'REPOSTAR')}
                             </button>
                             <button
                                 onClick={(e) => { e.stopPropagation(); onOpenSplitCamera(item); }}
