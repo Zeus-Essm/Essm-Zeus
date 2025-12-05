@@ -1160,14 +1160,14 @@ const App: React.FC = () => {
     };
 
     const resetToHome = () => {
-        const fromRepost = confirmationMessage.includes('postado no seu feed');
-        const fromVerification = confirmationMessage.includes('verificado com sucesso');
+        const fromPublication = confirmationMessage.toLowerCase().includes('publicado com sucesso');
+        const fromVerification = confirmationMessage.toLowerCase().includes('verificado com sucesso');
         setGeneratedImage(userImage);
         setWornItems([]);
         setImageHistory(userImage ? [userImage] : []);
         setNavigationStack([]);
         setCollectionIdentifier(null);
-        if (fromRepost) {
+        if (fromPublication) {
             setCurrentScreen(Screen.Feed);
         } else if (fromVerification) {
             setCurrentScreen(Screen.Settings);

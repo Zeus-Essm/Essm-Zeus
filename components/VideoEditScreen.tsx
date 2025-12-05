@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo } from 'react';
 import type { Item } from '../types';
 import { PaperAirplaneIcon, RepositionIcon } from './IconComponents';
@@ -62,13 +61,13 @@ const VideoEditScreen: React.FC<VideoEditScreenProps> = ({ videoBlob, item, onBa
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             placeholder="Escreva uma legenda..."
-            className="w-full p-3 bg-[var(--bg-tertiary)] rounded-lg border-2 border-transparent focus:border-[var(--accent-primary)] focus:outline-none focus:ring-0 transition-colors resize-none"
+            className="w-full p-3 bg-[var(--bg-tertiary)] text-black rounded-lg border-2 border-transparent focus:border-[var(--accent-primary)] focus:outline-none focus:ring-0 transition-colors resize-none"
             rows={3}
           />
           <div className="flex gap-2">
             <button
               onClick={cyclePosition}
-              className="flex-1 flex items-center justify-center gap-2 py-3 bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-bold rounded-lg hover:brightness-110 active:scale-95 transition-all"
+              className="flex-1 flex items-center justify-center gap-2 py-3 bg-[var(--bg-tertiary)] text-black font-bold rounded-lg hover:brightness-110 active:scale-95 transition-all"
             >
               <RepositionIcon className="w-5 h-5" />
               Posição

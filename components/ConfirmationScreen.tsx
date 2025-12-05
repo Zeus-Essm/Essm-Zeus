@@ -2,7 +2,7 @@
 
 import React from 'react';
 import GradientButton from './GradientButton';
-import { CheckCircleIcon, HomeIcon } from './IconComponents';
+import { CheckCircleIcon, CompassIcon } from './IconComponents';
 
 interface ConfirmationScreenProps {
   message: string;
@@ -17,8 +17,8 @@ const ConfirmationScreen: React.FC<ConfirmationScreenProps> = ({ message, onHome
         <p className="text-[var(--text-tertiary)] text-lg mb-10">{message}</p>
         <GradientButton onClick={onHome}>
             <div className="flex items-center justify-center gap-2">
-                 <HomeIcon className="w-5 h-5" />
-                Voltar ao Início
+                 <CompassIcon className="w-5 h-5" />
+                Voltar ao Feed
             </div>
         </GradientButton>
     </div>
