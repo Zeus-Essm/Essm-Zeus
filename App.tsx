@@ -56,29 +56,6 @@ import DecorationPlacementScreen from './components/DecorationPlacementScreen';
 
 // FORCE REFRESH v2.3 - Apply new wig items and ensure AI logic is active
 
-// FIX: To resolve the "Subsequent property declarations must have the same type" error for 'aistudio',
-// the AIStudio interface is moved inside the `declare global` block. This ensures it's treated
-// as a single, mergeable global interface rather than a module-scoped type that can conflict with other declarations.
-declare global {
-  interface AIStudio {
-    hasSelectedApiKey: () => Promise<boolean>;
-    openSelectKey: () => Promise<void>;
-  }
-
-  interface Window {
-    aistudio?: AIStudio;
-  }
-  interface Navigator {
-      canShare(data?: ShareData): boolean;
-  }
-  interface ShareData {
-    files?: File[];
-    text?: string;
-    title?: string;
-    url?: string;
-  }
-}
-
 // Helper para converter data URL para Blob para upload
 const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
     const res = await fetch(dataUrl);
@@ -254,6 +231,8 @@ const App: React.FC = () => {
     const [repostingItem, setRepostingItem] = React.useState<Item | null>(null);
     const [placingItem, setPlacingItem] = React.useState<Item | null>(null);
 
+    // Use type assertion to avoid generic syntax errors in some parsers
+    const profileImageInputRef = React.useRef(null) as React.MutableRefObject<HTMLInputElement | null>;
 
     const unreadNotificationCount = notifications.filter(n => !n.read).length;
     const unreadMessagesCount = conversations.reduce((acc, conv) => acc + conv.unreadCount, 0);

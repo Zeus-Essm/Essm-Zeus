@@ -16,7 +16,7 @@ const DecorationPlacementScreen: React.FC<DecorationPlacementScreenProps> = ({ u
   const [position, setPosition] = useState({ x: 50, y: 50 }); // Center in percentage
   const [scale, setScale] = useState(0.3); // 30% of container width
   const [isDragging, setIsDragging] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef(null);
   const dragStartRef = useRef({ x: 0, y: 0, itemX: 0, itemY: 0 });
 
   const handleInteractionStart = (clientX: number, clientY: number) => {
@@ -25,8 +25,9 @@ const DecorationPlacementScreen: React.FC<DecorationPlacementScreenProps> = ({ u
   };
 
   const handleInteractionMove = (clientX: number, clientY: number) => {
-    if (!isDragging || !containerRef.current) return;
-    const containerRect = containerRef.current.getBoundingClientRect();
+    const container = containerRef.current as HTMLDivElement | null;
+    if (!isDragging || !container) return;
+    const containerRect = container.getBoundingClientRect();
     const dx = ((clientX - dragStartRef.current.x) / containerRect.width) * 100;
     const dy = ((clientY - dragStartRef.current.y) / containerRect.height) * 100;
     setPosition({
