@@ -280,12 +280,13 @@ const App: React.FC = () => {
         };
 
         const setupAuth = async () => {
-            // Important for handling Supabase OAuth redirects in an SPA context.
-            // When Supabase redirects back, it includes the token in the hash.
-            // We wait slightly to allow the Supabase client to process this hash.
-            const isOAuthRedirect = window.location.hash.includes('access_token') || window.location.hash.includes('type=recovery');
-            if (isOAuthRedirect) {
-                await new Promise(resolve => setTimeout(resolve, 1000));
+            // Handle Supabase OAuth redirects
+            // We check for 'access_token' or 'type=recovery' in the hash.
+            const hasAuthHash = window.location.hash.includes('access_token') || window.location.hash.includes('type=recovery');
+            
+            // If we are on the /callback route (or any route that shouldn't be visible) OR have a hash
+            if (hasAuthHash || window.location.pathname === '/callback') {
+                await new Promise(resolve => setTimeout(resolve, 1000)); // Allow Supabase client to process
             }
 
             const { data: { session } } = await supabase.auth.getSession();
@@ -295,9 +296,13 @@ const App: React.FC = () => {
             }
             setAuthLoading(false);
 
-            // Clean up the URL hash after processing
-            if (isOAuthRedirect) {
-                 window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            // Clean up the URL to root '/' if we just handled an auth redirect or if we are on a callback path
+            if (hasAuthHash || window.location.pathname !== '/') {
+                try {
+                     window.history.replaceState(null, '', '/');
+                } catch (e) {
+                    console.warn('Could not replace history state:', e);
+                }
             }
         };
 

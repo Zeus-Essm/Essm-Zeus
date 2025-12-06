@@ -1,3 +1,4 @@
+
 // FIX: Replaced placeholder content with a functional LoginScreen component.
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
