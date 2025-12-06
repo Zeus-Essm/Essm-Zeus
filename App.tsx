@@ -280,9 +280,12 @@ const App: React.FC = () => {
         };
 
         const setupAuth = async () => {
-            const isOAuthRedirect = window.location.hash.includes('access_token');
+            // Important for handling Supabase OAuth redirects in an SPA context.
+            // When Supabase redirects back, it includes the token in the hash.
+            // We wait slightly to allow the Supabase client to process this hash.
+            const isOAuthRedirect = window.location.hash.includes('access_token') || window.location.hash.includes('type=recovery');
             if (isOAuthRedirect) {
-                await new Promise(resolve => setTimeout(resolve, 3000));
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
 
             const { data: { session } } = await supabase.auth.getSession();
@@ -292,6 +295,7 @@ const App: React.FC = () => {
             }
             setAuthLoading(false);
 
+            // Clean up the URL hash after processing
             if (isOAuthRedirect) {
                  window.history.replaceState(null, '', window.location.pathname + window.location.search);
             }
@@ -299,7 +303,7 @@ const App: React.FC = () => {
 
         setupAuth();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             setError(null);
             setSession(session);
             if (session) {

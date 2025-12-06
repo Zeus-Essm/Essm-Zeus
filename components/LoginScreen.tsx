@@ -40,12 +40,13 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
         setLoading(true);
         setError(null);
         try {
-            // FIX: Explicitly set the redirectTo option to ensure the OAuth provider returns to the app's root URL.
-            // This prevents "Page not found" errors on servers not configured for SPAs.
+            // FIX: Use window.location.origin to dynamically set the redirect URL to the root of the current domain.
+            // This works for both localhost and https://essm-zeus.vercel.app/ without hardcoding.
+            // The vercel.json rewrite rule ensures that even if a path is appended, it loads the app.
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: provider,
                 options: {
-                    redirectTo: 'https://essm-zeus.vercel.app/callback',
+                    redirectTo: window.location.origin, 
                 },
             });
             if (error) throw error;
