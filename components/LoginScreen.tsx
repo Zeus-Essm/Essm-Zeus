@@ -41,9 +41,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
         setLoading(true);
         setError(null);
         try {
-            // FIX: Use window.location.origin to dynamically set the redirect URL to the root of the current domain.
-            // This works for both localhost and https://essm-zeus.vercel.app/ without hardcoding.
-            // The vercel.json rewrite rule ensures that even if a path is appended, it loads the app.
+            // Configuração crítica para SPA na Vercel:
+            // Redireciona para a origem (raiz) para que o App.tsx capture o hash #access_token
+            // O vercel.json garante que todas as rotas caiam no index.html, e o App.tsx processa o login.
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: provider,
                 options: {

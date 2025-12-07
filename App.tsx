@@ -277,49 +277,59 @@ const App: React.FC = () => {
                     setCurrentScreen(Screen.Feed);
                 }
             }
-        };
-
-        const setupAuth = async () => {
-            // Handle Supabase OAuth redirects
-            // We check for 'access_token' or 'type=recovery' in the hash.
-            const hasAuthHash = window.location.hash.includes('access_token') || window.location.hash.includes('type=recovery');
-            
-            // If we are on the /callback route (or any route that shouldn't be visible) OR have a hash
-            if (hasAuthHash || window.location.pathname === '/callback') {
-                await new Promise(resolve => setTimeout(resolve, 1000)); // Allow Supabase client to process
-            }
-
-            const { data: { session } } = await supabase.auth.getSession();
-            setSession(session);
-            if (session) {
-                await fetchAndSetUserData(session);
-            }
             setAuthLoading(false);
-
-            // Clean up the URL to root '/' if we just handled an auth redirect or if we are on a callback path
-            if (hasAuthHash || window.location.pathname !== '/') {
-                try {
-                     window.history.replaceState(null, '', '/');
-                } catch (e) {
-                    console.warn('Could not replace history state:', e);
-                }
-            }
         };
 
-        setupAuth();
-
+        // Listener para mudanças de autenticação (Login, Logout, Refresh)
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            setError(null);
-            setSession(session);
-            if (session) {
+            // console.log("Auth Event:", event); // Debug
+
+            if (event === 'SIGNED_IN' && session) {
+                // IMPORTANT: Set authLoading to true immediately on sign in to show splash screen
+                // while fetching profile data. This prevents empty states or errors.
+                setAuthLoading(true);
+                
+                // Login bem-sucedido (incluindo retorno do OAuth)
+                setSession(session);
                 await fetchAndSetUserData(session);
-            } else {
+                
+                // Limpar o hash da URL (que contém os tokens do Supabase) para evitar erros e deixar a URL limpa
+                if (window.location.hash) {
+                    try {
+                        // Reseta a URL para a raiz (/) ou para o pathname limpo, garantindo que o token desapareça.
+                        window.history.replaceState(null, '', '/'); 
+                    } catch (e) {
+                        console.warn('Could not clean URL hash', e);
+                    }
+                }
+            } else if (event === 'SIGNED_OUT') {
+                setSession(null);
                 setProfile(null);
                 setBusinessProfile(null);
                 setViewedProfileId(null);
                 setPosts(INITIAL_POSTS);
                 setSavedLooks([]);
+                setCurrentScreen(Screen.Login);
+                setAuthLoading(false);
+            } else if (event === 'INITIAL_SESSION') {
+                // Verificação inicial da sessão
+                setSession(session);
+                if (session) {
+                    await fetchAndSetUserData(session);
+                } else {
+                    setAuthLoading(false);
+                }
             }
+        });
+
+        // Fallback para verificar sessão se o evento INITIAL_SESSION não disparar
+        supabase.auth.getSession().then(({ data: { session } }) => {
+             if (session && !profile) {
+                 setSession(session);
+                 fetchAndSetUserData(session);
+             } else if (!session) {
+                 setAuthLoading(false);
+             }
         });
 
         return () => subscription?.unsubscribe();
@@ -1660,10 +1670,17 @@ const App: React.FC = () => {
         return <LoginScreen onContinueAsVisitor={handleContinueAsVisitor} />;
     }
     
+    // Safety check: If session exists but profile load failed after authLoading finished.
     if (!profile) {
         return (
-            <div className="flex items-center justify-center h-full w-full bg-[var(--bg-main)] text-[var(--text-primary)]">
-                Carregando...
+            <div className="flex flex-col items-center justify-center h-full w-full bg-[var(--bg-main)] text-red-400 p-6 text-center">
+                <p className="mb-4">Não foi possível carregar o perfil. Tente fazer login novamente.</p>
+                <button 
+                    onClick={handleSignOut} 
+                    className="px-4 py-2 bg-[var(--bg-tertiary)] rounded-lg text-white font-bold hover:bg-[var(--accent-primary)] transition-colors"
+                >
+                    Sair
+                </button>
             </div>
         );
     }
