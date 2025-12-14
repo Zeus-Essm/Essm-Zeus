@@ -1,5 +1,4 @@
 
-
 import type { Category, Item, Post, Story, Conversation, CollaborationPost } from './types';
 
 // Sub-categorias de Roupas reutilizáveis
@@ -314,13 +313,12 @@ export const ITEMS: Item[] = [
     { id: 'item-fem-jaqueta-2', name: 'jaqueta 2', description: 'Jaqueta feminina exclusiva Louis Vuitton.', category: 'lv_feminino_jaqueta', image: 'https://i.postimg.cc/fySNJKQc/Gemini_Generated_Image_binoenbinoenbino.png', price: 20000 },
 
     // Noivas - Vestido (NOVOS)
-    { id: 'noivas-vestido-nova-1', name: 'nova 1', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/G2z4DQWx/Gemini_Generated_Image_2650mg2650mg2650-Photoroom.png', price: 20000 },
-    { id: 'noivas-vestido-nova-2', name: 'nova 2', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/26Cq3JKV/Gemini_Generated_Image_a1effta1effta1ef-Photoroom.png', price: 20000 },
-    { id: 'noivas-vestido-nova-3', name: 'nova 3', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/26T1WwsW/Gemini_Generated_Image_ft6rlgft6rlgft6r-Photoroom.png', price: 20000 },
-    { id: 'noivas-vestido-nova-4', name: 'nova 4', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/hjKJhw5h/Gemini_Generated_Image_mo1c0dmo1c0dmo1c-Photoroom.png', price: 20000 },
-    { id: 'noivas-vestido-nova-5', name: 'nova 5', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/W3sDtKHF/Gemini_Generated_Image_yy6m84yy6m84yy6m-Photoroom.png', price: 20000 },
-    { id: 'noivas-vestido-nova-6', name: 'nova 6', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/sXKMWckP/Gemini_Generated_Image_z8z8hwz8z8hwz8z8-Photoroom.png', price: 20000 },
-    { id: 'noivas-vestido-nova-7', name: 'nova 7', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/HsQLzpFT/Gemini_Generated_Image_ft6rlgft6rlgft6r_Photoroom.png', price: 20000 },
+    { id: 'noivas-vestido-nova-1', name: 'nova 1', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/3Jgw1KzK/Gemini_Generated_Image_2650mg2650mg2650_Photoroom.png', price: 20000 },
+    { id: 'noivas-vestido-nova-2', name: 'nova 2', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/rFSpj87K/Gemini_Generated_Image_a1effta1effta1ef_Photoroom.png', price: 20000 },
+    { id: 'noivas-vestido-nova-3', name: 'nova 3', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/HsQLzpFT/Gemini_Generated_Image_ft6rlgft6rlgft6r_Photoroom.png', price: 20000 },
+    { id: 'noivas-vestido-nova-4', name: 'nova 4', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/MKyG5Wgc/Gemini_Generated_Image_mo1c0dmo1c0dmo1c_Photoroom.png', price: 20000 },
+    { id: 'noivas-vestido-nova-5', name: 'nova 5', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/QxLtcBY3/Gemini_Generated_Image_yy6m84yy6m84yy6m_Photoroom.png', price: 20000 },
+    { id: 'noivas-vestido-nova-6', name: 'nova 6', description: 'Vestido de noiva exclusivo.', category: 'noivas_vestido', image: 'https://i.postimg.cc/sDFX5B6t/Gemini_Generated_Image_z8z8hwz8z8hwz8z8_Photoroom.png', price: 20000 },
 
     // NEW FEELING - Masculino - Fato (NOVOS)
     { id: 'nf-masc-fato-1', name: 'fato 1', description: 'Fato New Feeling elegante.', category: 'nf_masculino_fato', image: 'https://i.postimg.cc/TwNdQgN6/Gemini_Generated_Image_1tdh7l1tdh7l1tdh.png', price: 20000 },
