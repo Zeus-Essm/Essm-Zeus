@@ -240,37 +240,68 @@ export const generateDecorationImage = async (compositeImage: string): Promise<s
         
         const { base64, mimeType } = getBase64Parts(compositeImage);
 
-        // Prompt aligned with the success of the Try On feature (using the same robust model)
-        const prompt = `
-            Fix this image. It is a composite of a room with a piece of furniture pasted on top.
-            - Make the furniture look like it belongs in the room naturally.
-            - Add realistic shadows (contact shadows and drop shadows) based on the room's lighting.
-            - Correct the lighting and color tone of the furniture to match the environment.
-            - Blend the edges to remove the "cut-out" look.
-            - Maintain the high quality and details of the original room.
-            - Output a photorealistic result.
+        // Prompt avançado para alcançar a qualidade do Gemini (Image 2)
+        const proPrompt = `
+            You are a professional interior designer and CGI artist.
+            The input image contains a room with a decoration item roughly placed on it.
+            
+            **YOUR TASK:** Seamlessly integrate the decoration item into the room to create a photorealistic photo.
+            
+            **CRITICAL DETAILS TO FIX:**
+            1.  **Perspective & Angle:** The item is currently flat. You MUST warp/tilt it to perfectly match the perspective of the wall or surface it's attached to. It should look like it was physically mounted there.
+            2.  **Lighting Match:** Analyze the light sources in the room (windows, lamps). Apply the EXACT same lighting direction and color temperature to the item.
+            3.  **Reflections (Material):** If the item has a frame (e.g., gold, wood) or glass, add realistic reflections from the room environment. The gold frame should gleam correctly.
+            4.  **Shadows:** Add realistic contact shadows where the item meets the wall, and subtle drop shadows based on the light direction to show depth.
+            5.  **Color Grading:** Match the contrast and saturation of the item to the rest of the room.
+            
+            **Output:** A single, high-resolution, indistinguishable-from-reality photograph.
         `;
 
-        // Using gemini-2.5-flash-image directly, as it is the most reliable model for this use case currently
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
-            contents: {
-                parts: [
-                    { inlineData: { mimeType: mimeType, data: base64 } },
-                    { text: prompt },
-                ]
-            },
-            config: {
-                safetySettings: [
-                    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
-                    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
-                ]
-            }
-        });
+        try {
+            // Tentativa Principal: Usar o modelo PRO para máxima qualidade (perspectiva e luz corretas)
+            const response = await ai.models.generateContent({
+                model: 'gemini-3-pro-image-preview',
+                contents: {
+                    parts: [
+                        { inlineData: { mimeType: mimeType, data: base64 } },
+                        { text: proPrompt },
+                    ]
+                },
+                config: {
+                    // Configuração para garantir que o modelo use a capacidade total de processamento de imagem
+                    safetySettings: [
+                        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    ]
+                }
+            });
+            return extractImageFromResponse(response);
 
-        return extractImageFromResponse(response);
+        } catch (proError: any) {
+            console.warn("Falha no Gemini 3 Pro (provavelmente limite de cota). Usando fallback...", proError);
+            
+            // Fallback robusto para o modelo Flash (mais rápido, qualidade aceitável)
+            const fallbackResponse = await ai.models.generateContent({
+                model: 'gemini-2.5-flash-image',
+                contents: {
+                    parts: [
+                        { inlineData: { mimeType: mimeType, data: base64 } },
+                        { text: proPrompt }, // Usa o mesmo prompt detalhado
+                    ]
+                },
+                config: {
+                    safetySettings: [
+                        { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                        { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    ]
+                }
+            });
+            return extractImageFromResponse(fallbackResponse);
+        }
 
     } catch (error: any) {
         console.error("Error in generateDecorationImage:", error);
