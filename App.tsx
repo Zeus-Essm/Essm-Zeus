@@ -757,7 +757,7 @@ const App: React.FC = () => {
         }
 
         setIsLoading(true);
-        setLoadingMessage("Aplicando a magia do design de interiores com Gemini 3 Pro...");
+        setLoadingMessage("Decorando o ambiente com IA...");
         setError(null);
         try {
             const newImage = await generateDecorationImage(compositeImage);

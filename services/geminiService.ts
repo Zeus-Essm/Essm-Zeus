@@ -1,10 +1,6 @@
 
-import { GoogleGenAI, Modality, GenerateContentResponse } from '@google/genai';
+import { GoogleGenAI, Modality, GenerateContentResponse, HarmCategory, HarmBlockThreshold } from '@google/genai';
 import type { Item } from '../types';
-
-// The Google GenAI client is initialized here.
-// As per the guidelines, it securely uses the API_KEY from the environment variables.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 // Utility to convert a data URL string into its base64 and mimeType parts.
 const getBase64Parts = (dataUrl: string): { base64: string; mimeType: string } => {
@@ -93,7 +89,8 @@ const extractImageFromResponse = (response: GenerateContentResponse): string => 
     // Check for text part which might contain an error from the model
     const textPart = candidate.content.parts.find(part => part.text);
     if (textPart && textPart.text) {
-        throw new Error(`A IA retornou uma mensagem em vez de uma imagem: "${textPart.text}"`);
+        console.warn("Model text response:", textPart.text);
+        throw new Error(`A IA retornou texto em vez de imagem. Pode ter recusado o pedido.`);
     }
     throw new Error("A resposta da IA não continha uma imagem válida.");
 };
@@ -101,6 +98,9 @@ const extractImageFromResponse = (response: GenerateContentResponse): string => 
 
 export const generateTryOnImage = async (userImage: string, newItem: Item, existingItems: Item[]): Promise<string> => {
     try {
+        // Initialize AI client here to ensure it picks up the latest API key from the environment/dialog
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        
         const itemImage = await imageUrlToDataUrl(newItem.image);
         const { base64: userBase64, mimeType: userMime } = getBase64Parts(userImage);
         const { base64: itemBase64, mimeType: itemMime } = getBase64Parts(itemImage);
@@ -138,6 +138,9 @@ export const generateTryOnImage = async (userImage: string, newItem: Item, exist
 
 export const generateBeautyTryOnImage = async (userImage: string, newItem: Item): Promise<string> => {
      try {
+        // Initialize AI client here to ensure it picks up the latest API key from the environment/dialog
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
         const { base64: userBase64, mimeType: userMime } = getBase64Parts(userImage);
 
         let prompt = '';
@@ -182,6 +185,7 @@ export const generateFashionVideo = async (
 ): Promise<string> => {
     try {
         onProgress("Preparando para criar seu vídeo...");
+        // Initialize AI client here to ensure it picks up the latest API key from the environment/dialog
         const veoAi = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const { base64, mimeType } = getBase64Parts(generatedImage);
 
@@ -231,27 +235,25 @@ export const generateFashionVideo = async (
 
 export const generateDecorationImage = async (compositeImage: string): Promise<string> => {
     try {
+        // Initialize AI client here to ensure it picks up the latest API key from the environment/dialog
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        
         const { base64, mimeType } = getBase64Parts(compositeImage);
 
-        // Prompt otimizado para o modelo Gemini 3 Pro Image Preview
-        // Focado em realismo extremo e correção de iluminação/perspectiva
+        // Prompt aligned with the success of the Try On feature (using the same robust model)
         const prompt = `
-            You are a professional interior design visualizer. 
-            The input image is a composite showing a piece of furniture placed in a room. 
-            Your task is to render this into a single, cohesive, high-quality photorealistic image.
-            
-            Instructions:
-            1.  **Analyze Lighting:** Identify the direction, intensity, and temperature of the light sources in the room. Apply this lighting to the furniture item so it matches perfectly.
-            2.  **Cast Shadows:** Create realistic drop shadows and contact shadows where the furniture meets the floor/wall, matching the room's lighting logic.
-            3.  **Refine Perspective:** Ensure the furniture's perspective lines align perfectly with the room's geometry and vanishing points.
-            4.  **Blend Edges:** Eliminate any "cut-out" artifacts. The furniture should look like it physically belongs in the space.
-            5.  **Maintain Background:** Do NOT alter the room's existing details or structure significantly. Focus on the integration of the new item.
-            6.  **High Quality:** The final output must be crisp, clear, and indistinguishable from a real photo.
+            Fix this image. It is a composite of a room with a piece of furniture pasted on top.
+            - Make the furniture look like it belongs in the room naturally.
+            - Add realistic shadows (contact shadows and drop shadows) based on the room's lighting.
+            - Correct the lighting and color tone of the furniture to match the environment.
+            - Blend the edges to remove the "cut-out" look.
+            - Maintain the high quality and details of the original room.
+            - Output a photorealistic result.
         `;
-        
-        // Use Gemini 3 Pro Image Preview for superior quality and interpretation
+
+        // Using gemini-2.5-flash-image directly, as it is the most reliable model for this use case currently
         const response = await ai.models.generateContent({
-            model: 'gemini-3-pro-image-preview',
+            model: 'gemini-2.5-flash-image',
             contents: {
                 parts: [
                     { inlineData: { mimeType: mimeType, data: base64 } },
@@ -259,13 +261,15 @@ export const generateDecorationImage = async (compositeImage: string): Promise<s
                 ]
             },
             config: {
-                imageConfig: {
-                    imageSize: "2K", // High resolution output
-                    aspectRatio: "1:1"
-                }
+                safetySettings: [
+                    { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                ]
             }
         });
-        
+
         return extractImageFromResponse(response);
 
     } catch (error: any) {

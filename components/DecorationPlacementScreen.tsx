@@ -48,27 +48,44 @@ const DecorationPlacementScreen: React.FC<DecorationPlacementScreenProps> = ({ u
     const bgImage = new Image();
     bgImage.crossOrigin = "anonymous";
     bgImage.onload = () => {
-      canvas.width = bgImage.naturalWidth;
-      canvas.height = bgImage.naturalHeight;
-      ctx.drawImage(bgImage, 0, 0);
+      // Otimização: Limitar resolução máxima para evitar erro de payload na API
+      const maxDimension = 1024;
+      let width = bgImage.naturalWidth;
+      let height = bgImage.naturalHeight;
+
+      if (width > maxDimension || height > maxDimension) {
+        const ratio = width / height;
+        if (width > height) {
+            width = maxDimension;
+            height = maxDimension / ratio;
+        } else {
+            height = maxDimension;
+            width = maxDimension * ratio;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      
+      // Desenhar fundo redimensionado
+      ctx.drawImage(bgImage, 0, 0, width, height);
 
       const fgImage = new Image();
       fgImage.crossOrigin = "anonymous";
       fgImage.onload = () => {
         const aspectRatio = fgImage.naturalWidth / fgImage.naturalHeight;
-        // The scale state represents percentage of the container width.
-        // We need to apply this relative to the canvas width.
-        // However, in the UI, the item width is relative to container width.
-        // So drawing width should be canvas.width * scale.
         
-        const drawWidth = canvas.width * scale;
+        // Calcular tamanho e posição baseado nas coordenadas relativas (%)
+        const drawWidth = width * scale;
         const drawHeight = drawWidth / aspectRatio;
         
-        const drawX = (position.x / 100) * canvas.width - drawWidth / 2;
-        const drawY = (position.y / 100) * canvas.height - drawHeight / 2;
+        const drawX = (position.x / 100) * width - drawWidth / 2;
+        const drawY = (position.y / 100) * height - drawHeight / 2;
 
         ctx.drawImage(fgImage, drawX, drawY, drawWidth, drawHeight);
-        onConfirm(canvas.toDataURL('image/jpeg', 0.95));
+        
+        // Qualidade 0.9 para bom equilíbrio
+        onConfirm(canvas.toDataURL('image/jpeg', 0.9));
       };
       fgImage.src = item.image;
     };
