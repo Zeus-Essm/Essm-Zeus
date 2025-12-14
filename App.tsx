@@ -89,11 +89,14 @@ const getOrCreateProfile = async (session: Session, setError: (msg: string) => v
             .from('profiles')
             .insert({
                 id: user.id,
+                user_id: user.id, // Required by DB schema constraints
                 username: username,
                 profile_image_url: avatar,
                 account_type: null, // Ensure new profiles start with a null account type
                 verification_status: 'unverified',
                 reward_points: 0,
+                bio: '', // Added default value
+                cover_image_url: null // Added default value
             })
             .select()
             .single();
@@ -230,6 +233,9 @@ const App: React.FC = () => {
     // Repost & Decoration State
     const [repostingItem, setRepostingItem] = React.useState<Item | null>(null);
     const [placingItem, setPlacingItem] = React.useState<Item | null>(null);
+
+    // Generic Action for Modal Resume
+    const [pendingAction, setPendingAction] = React.useState<(() => void) | null>(null);
 
     // Use type assertion to avoid generic syntax errors in some parsers
     const profileImageInputRef = React.useRef(null) as React.MutableRefObject<HTMLInputElement | null>;
@@ -739,8 +745,19 @@ const App: React.FC = () => {
     };
 
     const handleConfirmPlacement = async (compositeImage: string) => {
+        // Check API Key for Gemini 3 Pro
+        const aiStudio = (window as any).aistudio;
+        if (aiStudio && typeof aiStudio.hasSelectedApiKey === 'function') {
+            const hasKey = await aiStudio.hasSelectedApiKey();
+            if (!hasKey) {
+                setPendingAction(() => () => handleConfirmPlacement(compositeImage));
+                setIsVeoKeyFlowNeeded(true);
+                return;
+            }
+        }
+
         setIsLoading(true);
-        setLoadingMessage("Aplicando a magia do design de interiores...");
+        setLoadingMessage("Aplicando a magia do design de interiores com Gemini 3 Pro...");
         setError(null);
         try {
             const newImage = await generateDecorationImage(compositeImage);
@@ -826,6 +843,7 @@ const App: React.FC = () => {
         if (aiStudio && typeof aiStudio.hasSelectedApiKey === 'function') {
             const hasKey = await aiStudio.hasSelectedApiKey();
             if (!hasKey) {
+                setPendingAction(() => handleGenerateVideo);
                 setIsVeoKeyFlowNeeded(true);
                 return;
             }
@@ -1749,10 +1767,18 @@ const App: React.FC = () => {
                     onSelectKey={async () => {
                         await (window as any).aistudio.openSelectKey();
                         setIsVeoKeyFlowNeeded(false);
-                        // Assume key selection was successful and retry.
-                        setTimeout(() => {
-                           handleGenerateVideo();
-                        }, 100);
+                        // Execute pending action if exists
+                        if (pendingAction) {
+                            setTimeout(() => {
+                                pendingAction();
+                                setPendingAction(null);
+                            }, 100);
+                        } else {
+                            // Fallback if no pending action is set (should not happen with new logic, but safe)
+                             setTimeout(() => {
+                               handleGenerateVideo(); 
+                            }, 100);
+                        }
                     }}
                 />
             )}

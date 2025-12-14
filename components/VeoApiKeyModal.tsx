@@ -1,3 +1,4 @@
+
 import React from 'react';
 import GradientButton from './GradientButton';
 
@@ -44,7 +45,7 @@ const VeoApiKeyModal: React.FC<VeoApiKeyModalProps> = ({ onClose, onSelectKey })
         <h2 id="veo-key-title" className="text-2xl font-bold mb-3 text-center text-[var(--accent-primary)] text-glow">Chave de API Necessária</h2>
         
         <p className="text-[var(--text-secondary)] text-center mb-6">
-          A geração de vídeo com Veo requer que você selecione uma chave de API com uma conta de faturamento ativa.
+          Para acessar recursos avançados de IA (como geração de vídeo ou imagens de alta resolução), você precisa selecionar uma chave de API com uma conta de faturamento ativa.
         </p>
 
         <GradientButton onClick={onSelectKey}>

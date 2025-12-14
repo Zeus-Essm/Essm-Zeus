@@ -233,26 +233,37 @@ export const generateDecorationImage = async (compositeImage: string): Promise<s
     try {
         const { base64, mimeType } = getBase64Parts(compositeImage);
 
+        // Prompt otimizado para o modelo Gemini 3 Pro Image Preview
+        // Focado em realismo extremo e correção de iluminação/perspectiva
         const prompt = `
-            This is a composite image showing a room and a roughly placed furniture/decoration item.
-            Your task is to regenerate this image to make it look completely photorealistic.
-            - Integrate the item seamlessly into the room.
-            - Adjust the lighting on the item to match the room's lighting conditions perfectly.
-            - Cast realistic shadows from the item onto the floor and surrounding objects.
-            - Correct the perspective and scale of the item if needed to make it look natural.
-            - Maintain the original room's appearance, textures, and colors.
-            - The final output must be a single, high-quality, photorealistic image.
-            - Do not add any text, watermarks, or other objects.
+            You are a professional interior design visualizer. 
+            The input image is a composite showing a piece of furniture placed in a room. 
+            Your task is to render this into a single, cohesive, high-quality photorealistic image.
+            
+            Instructions:
+            1.  **Analyze Lighting:** Identify the direction, intensity, and temperature of the light sources in the room. Apply this lighting to the furniture item so it matches perfectly.
+            2.  **Cast Shadows:** Create realistic drop shadows and contact shadows where the furniture meets the floor/wall, matching the room's lighting logic.
+            3.  **Refine Perspective:** Ensure the furniture's perspective lines align perfectly with the room's geometry and vanishing points.
+            4.  **Blend Edges:** Eliminate any "cut-out" artifacts. The furniture should look like it physically belongs in the space.
+            5.  **Maintain Background:** Do NOT alter the room's existing details or structure significantly. Focus on the integration of the new item.
+            6.  **High Quality:** The final output must be crisp, clear, and indistinguishable from a real photo.
         `;
         
+        // Use Gemini 3 Pro Image Preview for superior quality and interpretation
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
+            model: 'gemini-3-pro-image-preview',
             contents: {
                 parts: [
                     { inlineData: { mimeType: mimeType, data: base64 } },
                     { text: prompt },
                 ]
             },
+            config: {
+                imageConfig: {
+                    imageSize: "2K", // High resolution output
+                    aspectRatio: "1:1"
+                }
+            }
         });
         
         return extractImageFromResponse(response);
