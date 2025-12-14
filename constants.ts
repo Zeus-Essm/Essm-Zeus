@@ -197,7 +197,7 @@ export const CATEGORIES: Category[] = [
   {
     id: 'beleza',
     name: 'Bonita',
-    image: 'https://i.postimg.cc/k5QnMSp1/Gemini_Generated_Image_a9r49ea9r49ea9r4.png',
+    image: 'https://i.postimg.cc/Hx3xYJvP/469854347_597462169307087_8299951859133309802_n.jpg',
     type: 'beauty',
     subCategories: [
         { id: 'beleza_linda', name: 'Linda', image: 'https://i.postimg.cc/YS6p2Fsd/Gemini_Generated_Image_fz7zo1fz7zo1fz7z.png' },
