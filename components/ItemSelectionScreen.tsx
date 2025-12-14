@@ -72,22 +72,17 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
   const [quickViewItem, setQuickViewItem] = useState<Item | null>(null);
   const [itemForOptions, setItemForOptions] = useState<Item | null>(null);
   
-  const [pressedItemId, setPressedItemId] = useState<string | null>(null);
   const [animatingCartItemId, setAnimatingCartItemId] = useState<string | null>(null);
-  const pressTimer = useRef<number | null>(null);
+  const lastClickDataRef = useRef<{ id: string, time: number }>({ id: '', time: 0 });
 
-  const handlePressStart = (item: Item) => {
-    setPressedItemId(item.id);
-    pressTimer.current = window.setTimeout(() => {
+  const handleCardClick = (item: Item) => {
+    const now = Date.now();
+    // Detecta duplo clique se for o mesmo item e o intervalo for menor que 300ms
+    if (lastClickDataRef.current.id === item.id && now - lastClickDataRef.current.time < 300) {
       setQuickViewItem(item);
-      setPressedItemId(null);
-    }, 500);
-  };
-
-  const handlePressEnd = () => {
-    setPressedItemId(null);
-    if (pressTimer.current) {
-      clearTimeout(pressTimer.current);
+      lastClickDataRef.current = { id: '', time: 0 }; // Reset
+    } else {
+      lastClickDataRef.current = { id: item.id, time: now };
     }
   };
 
@@ -144,12 +139,8 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, co
               {categoryItems.map(item => (
                 <div 
                     key={item.id}
-                    className={`bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-xl p-2 flex flex-col hover:bg-[var(--accent-primary)]/5 cursor-pointer transition-all duration-200 ease-out ${pressedItemId === item.id ? 'transform scale-95 shadow-inner' : 'hover:scale-[1.02] shadow-sm'}`}
-                    onMouseDown={() => handlePressStart(item)}
-                    onMouseUp={handlePressEnd}
-                    onMouseLeave={handlePressEnd}
-                    onTouchStart={() => handlePressStart(item)}
-                    onTouchEnd={handlePressEnd}
+                    className="bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-xl p-2 flex flex-col hover:bg-[var(--accent-primary)]/5 cursor-pointer transition-all duration-200 ease-out hover:scale-[1.02] shadow-sm active:scale-95"
+                    onClick={() => handleCardClick(item)}
                     onContextMenu={(e) => e.preventDefault()}
                 >
                   <div className="relative overflow-hidden rounded-lg mb-2">
