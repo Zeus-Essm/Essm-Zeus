@@ -105,16 +105,41 @@ export const generateTryOnImage = async (userImage: string, newItem: Item, exist
         const { base64: userBase64, mimeType: userMime } = getBase64Parts(userImage);
         const { base64: itemBase64, mimeType: itemMime } = getBase64Parts(itemImage);
 
+        // Detectar se é um vestido de noiva ou roupa formal para aplicar regras mais estritas
+        const isWeddingDress = newItem.category.includes('noivas') || newItem.name.toLowerCase().includes('noiva') || newItem.category.includes('vestido');
+
+        let specificInstructions = "";
+        
+        if (isWeddingDress) {
+            specificInstructions = `
+                **CRITICAL INSTRUCTION FOR WEDDING DRESS/GOWN:**
+                - The item is a WEDDING DRESS. It MUST completely replace the user's current outfit from the neck down.
+                - Do NOT blend the dress with existing clothes. The existing clothes must be gone.
+                - Pay extreme attention to the fabric texture (lace, satin, tulle, white/ivory color) and the skirt volume.
+                - Ensure the dress fits the waist and bust line naturally based on the user's pose.
+                - If the dress has a long skirt or train, render it naturally draping towards the floor/bottom of the frame.
+                - Keep the user's arms and shoulders visible/bare if the dress design is sleeveless/strapless.
+                - The look must be elegant, premium, and photorealistic.
+            `;
+        }
+
         const prompt = `
-            Take the user's image and realistically place the clothing item on them.
-            - The user is wearing: ${existingItems.map(i => i.name).join(', ') || 'their original clothes'}.
-            - The new item to add is: a ${newItem.name}.
-            - The output should be a photorealistic image of the person wearing all the items, including the new one.
-            - Maintain the original background and the person's pose and appearance.
-            - Ensure the new clothing item fits naturally, with correct lighting, shadows, and perspective.
-            - Do NOT change the person's face or body.
-            - The final image should be the same size and aspect ratio as the original user image.
-            - Do not include any text, logos, or watermarks in the output image.
+            Act as a professional virtual try-on AI.
+            Your task is to realistically generate an image of the user wearing the new clothing item.
+
+            - **User:** The person in the first image.
+            - **Clothing Item:** The product in the second image (${newItem.name}).
+            - **Context:** ${existingItems.length > 0 ? `The user is already wearing: ${existingItems.map(i => i.name).join(', ')}.` : 'The user is wearing their original clothes.'}
+
+            **EXECUTION RULES:**
+            1. **Replacement:** Seamlessly overlay/swap the user's current clothes with the [Clothing Item].
+            2. **Fit & Physics:** Ensure the clothing folds, shadows, and fit are realistic for the user's body pose.
+            3. **Preservation:** You MUST preserve the user's face, hair, head shape, and the original background exactly as they are. Only change the clothing.
+            4. **Lighting:** Match the lighting of the clothing to the user's environment.
+            
+            ${specificInstructions}
+
+            **Output:** A high-quality photorealistic image of the user wearing the new item. No text, no watermarks.
         `;
 
         const response = await ai.models.generateContent({
