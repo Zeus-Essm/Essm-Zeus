@@ -8,7 +8,6 @@ import { generateTryOnImage, normalizeImageAspectRatio, generateBeautyTryOnImage
 import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, ITEMS, INITIAL_CONVERSATIONS, INITIAL_COLLABORATION_REQUESTS } from './constants';
 
 // Screen Components
-import SplashScreen from './components/SplashScreen';
 import LoginScreen from './components/LoginScreen';
 import HomeScreen from './components/HomeScreen';
 import SettingsScreen from './components/SettingsScreen';
@@ -1681,7 +1680,7 @@ const App: React.FC = () => {
     };
 
     if (authLoading) {
-        return <SplashScreen />;
+        return <div className="fixed inset-0 w-full h-full bg-[var(--bg-main)]" />;
     }
 
     if (!session) {
