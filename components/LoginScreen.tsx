@@ -51,14 +51,25 @@ const LoginScreen: React.FC = () => {
     };
 
     return (
-        <div className="relative flex flex-col items-center justify-center min-h-full w-full bg-[#FFFFFF] overflow-hidden p-8 animate-fadeIn">
-            {/* Premium Background Elements */}
-            <div className="absolute top-[-10%] right-[-10%] w-[300px] h-[300px] bg-amber-500/5 rounded-full blur-[100px] animate-pulse"></div>
-            <div className="absolute bottom-[-5%] left-[-5%] w-[250px] h-[250px] bg-amber-600/5 rounded-full blur-[80px]"></div>
-            
+        <div className="relative flex flex-col items-center justify-center min-h-full w-full bg-[#FFFFFF] overflow-hidden p-8 animate-fadeIn font-sans">
             <div className="w-full max-w-sm z-10">
-                {/* Brand Identity Removed as requested */}
-                <div className="h-12"></div> {/* Spacing instead of logo */}
+                <div className="text-center mb-10 flex flex-col items-center">
+                    <img 
+                      src="https://i.postimg.cc/L4190LN2/PUMP-startup-2.png" 
+                      alt="PUMP Logo" 
+                      className="h-16 w-auto mb-6 animate-logo-pulse" 
+                    />
+                    {isSignUp && (
+                      <div className="animate-slideUp">
+                        <h1 className="text-4xl font-bold text-[#F59E0B] leading-tight mb-2">
+                            Criar Conta
+                        </h1>
+                        <p className="text-lg text-zinc-500">
+                            Preencha os dados para começar.
+                        </p>
+                      </div>
+                    )}
+                </div>
 
                 {error && (
                     <div className="bg-red-500/5 border border-red-500/10 text-red-500 p-4 rounded-2xl mb-6 text-xs font-bold animate-slideUp flex items-center gap-3">
@@ -69,13 +80,13 @@ const LoginScreen: React.FC = () => {
 
                 <form onSubmit={handleAuth} className="space-y-5">
                     <div className="space-y-1.5">
-                        <label className="text-[10px] font-black uppercase text-zinc-400 ml-4 tracking-[0.15em]">Identificação</label>
+                        <label className="text-[11px] font-black uppercase text-zinc-400 ml-4 tracking-[0.15em]">E-mail</label>
                         <input
                             type="email"
-                            placeholder="seu@email.com"
+                            placeholder="exemplo@email.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:border-amber-500/40 focus:bg-white focus:outline-none transition-all text-sm font-semibold text-zinc-900 placeholder:text-zinc-300 shadow-sm"
+                            className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:border-[#F59E0B]/40 focus:bg-white focus:outline-none transition-all text-sm font-semibold text-zinc-900 placeholder:text-zinc-300 shadow-sm"
                             disabled={loading}
                             required
                         />
@@ -83,15 +94,15 @@ const LoginScreen: React.FC = () => {
                     
                     <div className="space-y-1.5">
                          <div className="flex justify-between items-center px-4">
-                            <label className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.15em]">Segurança</label>
-                            {!isSignUp && <button type="button" className="text-[10px] font-black uppercase text-amber-600 hover:text-amber-700 transition-colors">Esqueci</button>}
+                            <label className="text-[11px] font-black uppercase text-zinc-400 tracking-[0.15em]">Senha</label>
+                            {!isSignUp && <button type="button" className="text-[10px] font-black uppercase text-[#F59E0B] hover:text-amber-700 transition-colors">Esqueci</button>}
                         </div>
                         <input
                             type="password"
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:border-amber-500/40 focus:bg-white focus:outline-none transition-all text-sm font-semibold text-zinc-900 placeholder:text-zinc-300 shadow-sm"
+                            className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:border-[#F59E0B]/40 focus:bg-white focus:outline-none transition-all text-sm font-semibold text-zinc-900 placeholder:text-zinc-300 shadow-sm"
                             disabled={loading}
                             required
                         />
@@ -101,17 +112,9 @@ const LoginScreen: React.FC = () => {
                         <button 
                             type="submit" 
                             disabled={loading}
-                            className="w-full py-4 bg-amber-500 hover:bg-amber-400 text-white font-black uppercase text-xs tracking-[0.2em] rounded-2xl shadow-[0_10px_20px_rgba(245,158,11,0.2)] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                            className="w-full py-4 bg-[#F59E0B] hover:bg-amber-400 text-white font-black uppercase text-xs tracking-[0.2em] rounded-2xl shadow-[0_10px_20px_rgba(245,158,11,0.2)] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                         >
-                            {loading ? (
-                                <>
-                                    <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Processando...
-                                </>
-                            ) : (isSignUp ? 'Finalizar Cadastro' : 'Entrar na Plataforma')}
+                            {loading ? 'Processando...' : (isSignUp ? 'Finalizar Cadastro' : 'Entrar agora')}
                         </button>
                     </div>
                 </form>
@@ -126,7 +129,7 @@ const LoginScreen: React.FC = () => {
 
                     <div className="w-full flex items-center gap-4">
                         <div className="flex-grow h-[1px] bg-zinc-100"></div>
-                        <span className="text-[10px] font-black text-zinc-300 uppercase tracking-[0.2em]">ou continuar com</span>
+                        <span className="text-[10px] font-black text-zinc-300 uppercase tracking-[0.2em]">ou</span>
                         <div className="flex-grow h-[1px] bg-zinc-100"></div>
                     </div>
                     
@@ -136,15 +139,14 @@ const LoginScreen: React.FC = () => {
                         disabled={loading}
                     >
                         <GoogleIcon className="w-5 h-5" />
-                        <span className="font-bold text-xs uppercase tracking-widest">Google</span>
+                        <span className="font-bold text-xs uppercase tracking-widest text-zinc-600">Continuar com Google</span>
                     </button>
                 </div>
             </div>
 
-            {/* Legal Links */}
             <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-8 text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em]">
-                <a href="/terms.html" className="hover:text-amber-600 transition-colors">Termos</a>
-                <a href="/privacy.html" className="hover:text-amber-600 transition-colors">Privacidade</a>
+                <a href="/terms.html" className="hover:text-[#F59E0B] transition-colors">Termos</a>
+                <a href="/privacy.html" className="hover:text-[#F59E0B] transition-colors">Privacidade</a>
             </div>
         </div>
     );

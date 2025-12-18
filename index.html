@@ -9,46 +9,44 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
       
-      :root { /* Light Mode Defaults (Now the base) */
-        --bg-main: #FFFFFF; /* Pure White Background */
-        --bg-secondary: #f9fafb; /* off-white (gray-50) */
-        --bg-tertiary: #f3f4f6; /* gray-100 for buttons */
+      :root { /* Light Mode Defaults (Reference Image Aesthetic) */
+        --bg-main: #FFFFFF;
+        --bg-secondary: #f9fafb;
+        --bg-tertiary: #f3f4f6;
         --bg-header: rgba(255, 255, 255, 0.8);
-        --bg-modal-overlay: rgba(255, 255, 255, 0.6);
+        --bg-modal-overlay: rgba(255, 255, 255, 0.7);
 
-        --text-primary: #111827; /* Deep Gray-900 */
+        --text-primary: #111827; /* Gray-900 */
         --text-secondary: #4b5563; /* Gray-600 */
         --text-tertiary: #6b7280; /* Gray-500 */
         --text-inverted: #ffffff;
 
-        --accent-primary: #F59E0B; /* Solid Amber-500 */
+        --accent-primary: #F59E0B; /* Match Reference Orange */
         --accent-primary-glow: rgba(245, 158, 11, 0.2);
-        --accent-primary-text: #000000;
         
         --border-primary: #e5e7eb; /* Gray-200 */
-        --border-secondary: #f3f4f6; /* Gray-100 */
+        --border-secondary: #f3f4f6;
       }
 
-      html.dark { /* Dark Mode Overrides */
+      html.dark {
         --bg-main: #000000;
         --bg-secondary: #0a0a0a;
-        --bg-tertiary: #374151; /* gray-700 for buttons */
+        --bg-tertiary: #1f2937;
         --bg-header: rgba(0, 0, 0, 0.5);
         --bg-modal-overlay: rgba(0, 0, 0, 0.8);
 
-        --text-primary: #f3f4f6; /* gray-100 */
-        --text-secondary: #a1a1aa; /* zinc-400 */
-        --text-tertiary: #d4d4d8; /* zinc-300 */
+        --text-primary: #f3f4f6;
+        --text-secondary: #a1a1aa;
+        --text-tertiary: #d4d4d8;
         --text-inverted: #000000;
 
-        --accent-primary: #FBBF24; /* amber-400 */
+        --accent-primary: #FBBF24;
         --accent-primary-glow: rgba(251, 191, 36, 0.5);
-        --accent-primary-text: #1f2937; /* gray-800 */
         
-        --border-primary: rgba(251, 191, 36, 0.2);
-        --border-secondary: rgba(251, 191, 36, 0.1);
+        --border-primary: rgba(255, 255, 255, 0.1);
+        --border-secondary: rgba(255, 255, 255, 0.05);
       }
       
       html, body, #root {
@@ -62,7 +60,6 @@
         background-color: var(--bg-main);
         color: var(--text-primary);
         -webkit-font-smoothing: antialiased;
-        -moz-osx-font-smoothing: grayscale;
         transition: background-color 0.3s ease, color 0.3s ease;
       }
 
@@ -78,6 +75,14 @@
         animation: fadeIn 0.7s ease-in-out forwards;
       }
       
+      @keyframes logo-pulse {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.05); opacity: 0.9; }
+      }
+      .animate-logo-pulse {
+        animation: logo-pulse 2.5s infinite ease-in-out;
+      }
+
       @keyframes slideUp {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
@@ -85,49 +90,7 @@
       .animate-slideUp {
         animation: slideUp 0.5s ease-out forwards;
       }
-      
-      @keyframes gold-pulse {
-        0% {
-          box-shadow: 0 0 0 0px var(--accent-primary-glow);
-        }
-        100% {
-          box-shadow: 0 0 0 25px rgba(251, 191, 36, 0);
-        }
-      }
-      .animate-gold-pulse {
-        animation: gold-pulse 2s infinite cubic-bezier(0.4, 0, 0.2, 1);
-      }
 
-      @keyframes logo-pulse {
-        0%, 100% {
-          filter: drop-shadow(0 0 5px var(--accent-primary));
-          transform: scale(1);
-        }
-        50% {
-          filter: drop-shadow(0 0 15px var(--accent-primary));
-          transform: scale(1.05);
-        }
-      }
-      .animate-logo-pulse {
-        animation: logo-pulse 2.5s infinite ease-in-out;
-      }
-
-      @keyframes imageAppear {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
-      }
-      .animate-imageAppear {
-        animation: imageAppear 0.8s ease-out forwards;
-      }
-      
-      @keyframes modalFadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-      .animate-modalFadeIn {
-        animation: modalFadeIn 0.3s ease-out forwards;
-      }
-      
       @keyframes modalZoomIn {
         from { opacity: 0; transform: scale(0.95); }
         to { opacity: 1; transform: scale(1); }
@@ -136,50 +99,28 @@
         animation: modalZoomIn 0.3s ease-out forwards;
       }
 
-      @keyframes cart-pulse {
-        0% { transform: scale(1); box-shadow: 0 0 0 0 var(--accent-primary-glow); }
-        50% { transform: scale(1.1); box-shadow: 0 0 15px 5px var(--accent-primary-glow); }
-        100% { transform: scale(1); box-shadow: 0 0 0 0 var(--accent-primary-glow); }
-      }
-      .animate-cart-pulse {
-        animation: cart-pulse 0.6s ease-in-out;
-      }
-
-      /* COIN ANIMATIONS */
+      /* COIN BURST */
       @keyframes coin-explosion {
-        0% {
-          transform: translate(-50%, -50%) scale(0.5) rotateY(0deg);
-          opacity: 0;
-        }
-        20% {
-          opacity: 1;
-        }
-        100% {
-          transform: translate(var(--tx), var(--ty)) scale(1) rotateY(var(--rot));
-          opacity: 0;
-        }
+        0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+        20% { opacity: 1; }
+        100% { transform: translate(var(--tx), var(--ty)) scale(1); opacity: 0; }
       }
-
       .coin-burst-item {
         position: absolute;
         top: 50%;
         left: 50%;
-        width: 40px;
-        height: 40px;
+        width: 30px;
+        height: 30px;
         border-radius: 50%;
-        background: radial-gradient(circle at 30% 30%, #fef3c7, #f59e0b, #b45309);
+        background: radial-gradient(circle at 30% 30%, #fef3c7, #f59e0b);
         border: 2px solid #fcd34d;
-        box-shadow: 0 0 10px rgba(251, 191, 36, 0.8), inset 0 0 5px rgba(255,255,255,0.5);
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: bold;
+        font-weight: 900;
         color: #78350f;
-        font-size: 20px;
-        pointer-events: none;
+        font-size: 14px;
         z-index: 9999;
-        /* Simulated 3D thickness */
-        border-bottom: 4px solid #b45309; 
       }
     </style>
   <script type="importmap">
