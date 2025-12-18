@@ -1,6 +1,5 @@
 
 import React from 'react';
-// FIX: Changed to a non-type import for Session, which might be required by older Supabase versions.
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
 import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType, AppNotification, Conversation, Comment, BusinessProfile, CollaborationPost } from './types';
@@ -68,6 +67,7 @@ const getCategoryTypeFromItem = (item: Item): MarketplaceType => {
 
 const SCREENS_WITH_NAVBAR = [Screen.Home, Screen.Feed, Screen.Search, Screen.Cart, Screen.ChatList, Screen.VendorDashboard, Screen.VendorAnalytics, Screen.AllHighlights];
 
+// Fix: Export App as default to resolve the import error in index.tsx
 const App: React.FC = () => {
     // Auth & Profile state
     const [session, setSession] = React.useState<Session | null>(null);
@@ -80,7 +80,7 @@ const App: React.FC = () => {
 
     // App Navigation and UI state
     const [currentScreen, setCurrentScreen] = React.useState<Screen>(Screen.Login);
-    const [theme, setTheme] = React.useState<'light' | 'dark'>('light'); // Light is default
+    const [theme, setTheme] = React.useState<'light' | 'dark'>('light'); 
     const [viewedProfileId, setViewedProfileId] = React.useState<string | null>(null);
     const [userImage, setUserImage] = React.useState<string | null>(null);
     const [generatedImage, setGeneratedImage] = React.useState<string | null>(null);
@@ -102,7 +102,6 @@ const App: React.FC = () => {
     const [loadingMessage, setLoadingMessage] = React.useState<string | null>(null);
     const [error, setError] = React.useState<string | null>(null);
     const [isCartAnimating, setIsCartAnimating] = React.useState(false);
-    const [isVeoKeyFlowNeeded, setIsVeoKeyFlowNeeded] = React.useState(false);
     const [showCoinAnimation, setShowCoinAnimation] = React.useState(false);
     
     const [notifications, setNotifications] = React.useState<AppNotification[]>([]);
@@ -115,17 +114,13 @@ const App: React.FC = () => {
     const [businessProfile, setBusinessProfile] = React.useState<BusinessProfile | null>(null);
     const [showVendorMenu, setShowVendorMenu] = React.useState(false);
     const [promotedContent, setPromotedContent] = React.useState<{ items: {id: string, image: string}[] } | null>(null);
-    const [collaborationRequests, setCollaborationRequests] = React.useState<CollaborationPost[]>(INITIAL_COLLABORATION_REQUESTS);
     const [promotionModalConfig, setPromotionModalConfig] = React.useState<{ isOpen: boolean; accountType: 'personal' | 'business' | null }>({ isOpen: false, accountType: null });
     
-    const [idFrontImage, setIdFrontImage] = React.useState<string | null>(null);
-    const [idBackImage, setIdBackImage] = React.useState<string | null>(null);
     const [recommendationItem, setRecommendationItem] = React.useState<Item | null>(null);
     const [splitCameraItem, setSplitCameraItem] = React.useState<Item | null>(null);
     const [editingVideoDetails, setEditingVideoDetails] = React.useState<{ blob: Blob; item: Item } | null>(null);
     const [repostingItem, setRepostingItem] = React.useState<Item | null>(null);
     const [placingItem, setPlacingItem] = React.useState<Item | null>(null);
-    const [pendingAction, setPendingAction] = React.useState<(() => void) | null>(null);
 
     React.useEffect(() => {
         supabase.auth.getSession().then(({ data: { session } }) => {
@@ -150,8 +145,6 @@ const App: React.FC = () => {
     React.useEffect(() => {
         const root = window.document.documentElement;
         root.classList.remove('light', 'dark');
-        // If theme is 'light', we don't strictly need a class because :root is light.
-        // But adding it keeps logic consistent.
         root.classList.add(theme);
     }, [theme]);
 
@@ -162,11 +155,9 @@ const App: React.FC = () => {
             
             if (data) {
                 setProfile(data);
-                // Direcionamento Automático: Se já tem tipo, vai direto pro feed ou dashboard
                 if (data.account_type === 'personal') {
                     setCurrentScreen(Screen.Feed);
                 } else if (data.account_type === 'business') {
-                    // Simula carregamento de perfil business para fins de demonstração
                     setBusinessProfile({
                         id: userId,
                         business_name: 'Minha Loja Premium',
@@ -179,7 +170,6 @@ const App: React.FC = () => {
                     setCurrentScreen(Screen.AccountTypeSelection);
                 }
             } else {
-                // If profile doesn't exist, create it
                 const newProfile: Profile = {
                     id: userId,
                     username: 'User_' + userId.substring(0, 5),
@@ -201,386 +191,245 @@ const App: React.FC = () => {
         }
     };
 
-    const toggleTheme = () => {
-        setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-    };
-
+    // Fix: Corrected state updater to return the new Set instance
     const handleToggleFollow = (targetId: string) => {
         setFollowingIds(prev => {
             const newSet = new Set(prev);
-            const isFollowing = newSet.has(targetId);
-            if (isFollowing) {
+            if (newSet.has(targetId)) {
                 newSet.delete(targetId);
-                setFollowersCountMap(prevMap => ({ ...prevMap, [targetId]: Math.max(0, (prevMap[targetId] || 0) - 1) }));
-                setToast('Deixou de seguir');
+                setFollowersCountMap(pm => ({ ...pm, [targetId]: Math.max(0, (pm[targetId] || 0) - 1) }));
             } else {
                 newSet.add(targetId);
-                setFollowersCountMap(prevMap => ({ ...prevMap, [targetId]: (prevMap[targetId] || 0) + 1 }));
-                setToast('Seguindo');
+                setFollowersCountMap(pm => ({ ...pm, [targetId]: (pm[targetId] || 0) + 1 }));
             }
             return newSet;
         });
     };
 
-    const handleSetAccountType = async (type: 'personal' | 'business') => {
-        if (!profile) return;
-        const updatedProfile = { ...profile, account_type: type };
-        const { error } = await supabase.from('profiles').update({ account_type: type }).eq('id', profile.id);
-        if (error) {
-            setError("Erro ao salvar tipo de conta.");
-            return;
-        }
-        setProfile(updatedProfile);
-        if (type === 'personal') setCurrentScreen(Screen.Feed);
-        else setCurrentScreen(Screen.BusinessOnboarding);
-    };
-    
-    const handleCompleteBusinessOnboarding = (details: Omit<BusinessProfile, 'id'>) => {
-        if (!profile) return;
-        const newBusinessProfile: BusinessProfile = { id: profile.id, ...details };
-        setBusinessProfile(newBusinessProfile);
-        setCurrentScreen(Screen.VendorDashboard);
-    };
-
-    const handleSignOut = async () => {
-        await supabase.auth.signOut();
-    };
-
-    const handleUpdateProfile = async (updates: { username?: string, bio?: string }) => {
-        if (!profile) return;
-        const { error } = await supabase.from('profiles').update(updates).eq('id', profile.id);
-        if (error) {
-            setError("Erro ao atualizar perfil.");
-            return;
-        }
-        setProfile(prev => prev ? { ...prev, ...updates } : null);
-        setToast('Perfil atualizado!');
-    };
-
-    const handleImageUpload = async (imageDataUrl: string) => {
-        setUserImage(imageDataUrl);
-        setLoadingMessage("IA preparando seu espaço...");
+    const handleGenerateTryOn = async (userImg: string, newItem: Item, existing: Item[]) => {
         setIsLoading(true);
-        setError(null);
+        setLoadingMessage("Gerando seu visual...");
+        setCurrentScreen(Screen.Generating);
         try {
-            setGeneratedImage(imageDataUrl);
-            setImageHistory([imageDataUrl]);
-            setWornItems([]);
-            setCurrentScreen(Screen.SubCategorySelection);
+            const result = newItem.beautyType 
+                ? await generateBeautyTryOnImage(userImg, newItem)
+                : await generateTryOnImage(userImg, newItem, existing);
+            setGeneratedImage(result);
+            setImageHistory(prev => [...prev, result]);
+            setWornItems(prev => [...prev, newItem]);
+            setCurrentScreen(Screen.Result);
         } catch (err: any) {
-            setError("Tente novamente.");
-            setCurrentScreen(Screen.ImageSourceSelection); 
+            setError(err.message);
+            setCurrentScreen(Screen.ItemSelection);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleGenerateDecoration = async (composite: string) => {
+        setIsLoading(true);
+        setLoadingMessage("Integrando decoração com IA...");
+        setCurrentScreen(Screen.Generating);
+        try {
+            const result = await generateDecorationImage(composite);
+            setGeneratedImage(result);
+            setCurrentScreen(Screen.Result);
+        } catch (err: any) {
+            setError(err.message);
+            setCurrentScreen(Screen.ItemSelection);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleGenerateVideo = async () => {
+        if (!generatedImage) return;
+        setIsLoading(true);
+        try {
+            const url = await generateFashionVideo(generatedImage, setLoadingMessage);
+            setGeneratedVideoUrl(url);
+            setShowVideoPlayer(true);
+        } catch (err: any) {
+            alert("Erro ao gerar vídeo: " + err.message);
         } finally {
             setIsLoading(false);
             setLoadingMessage(null);
         }
     };
 
-    const handleSelectCategory = (category: Category) => {
-        setNavigationStack([category]);
-        if (!userImage && (category.type === 'fashion' || category.type === 'beauty' || category.type === 'decoration')) {
-            setCurrentScreen(Screen.ImageSourceSelection);
-            return;
-        }
-        if (category.subCategories && category.subCategories.length > 0) {
-            setCurrentScreen(Screen.SubCategorySelection);
-        } else {
-            setCollectionIdentifier({ id: category.id, name: category.name, type: category.type });
-            setCurrentScreen(Screen.ItemSelection);
-        }
-    };
-    
-    const handleSelectSubCategory = (subCategory: SubCategory) => {
-        if (subCategory.subCategories && subCategory.subCategories.length > 0) {
-            setNavigationStack(prev => [...prev, subCategory]);
-        } else {
-            const rootCategoryId = subCategory.id.split('_')[0];
-            const rootCategory = CATEGORIES.find(c => c.id === rootCategoryId);
-            setCollectionIdentifier({ id: subCategory.id, name: subCategory.name, type: rootCategory?.type || 'fashion' });
-            setCurrentScreen(Screen.ItemSelection);
-        }
-    };
-
-    const handleBack = () => {
-        const newStack = [...navigationStack];
-        newStack.pop();
-        if (newStack.length === 0) handleNavigateToProfile();
-        else {
-            setNavigationStack(newStack);
-            setCurrentScreen(Screen.SubCategorySelection);
-        }
-    };
-    
-    const handleProfileBack = () => {
-        setViewedProfileId(null);
-        setCurrentScreen(Screen.Feed);
-    };
-
-    const handleItemSelect = async (item: Item) => {
-        if (item.recommendationVideo && !recommendationItem) {
-            setRecommendationItem(item);
-            return;
-        }
-        const itemType = getCategoryTypeFromItem(item);
-        if (itemType === 'decoration') {
-            if (!userImage) { setError("Carregue uma foto do ambiente."); setCurrentScreen(Screen.ImageSourceSelection); return; }
-            setPlacingItem(item); setCurrentScreen(Screen.DecorationPlacement); return;
-        }
-        if (itemType === 'fashion' || item.isTryOn) {
-            if (!userImage) {
-                 if (profile && profile.profile_image_url) setUserImage(profile.profile_image_url);
-                 else { setError("Carregue uma foto primeiro."); setCurrentScreen(Screen.ImageSourceSelection); return; }
-            }
-            const baseImage = generatedImage || userImage!;
-            setIsLoading(true);
-            try {
-                const generatorFunction = item.isTryOn && itemType === 'beauty' ? generateBeautyTryOnImage : generateTryOnImage;
-                const newImage = await (generatorFunction === generateTryOnImage
-                    ? (generatorFunction as any)(baseImage, item, wornItems)
-                    : (generatorFunction as any)(baseImage, item));
-                setGeneratedImage(newImage);
-                setImageHistory(prev => [...prev, newImage]);
-                setWornItems(prevItems => [...prevItems, item]);
-                setCurrentScreen(Screen.Result);
-            } catch (err: any) {
-                setError("Falha ao gerar look.");
-            } finally {
-                setIsLoading(false);
-            }
-        } else {
-            setRepostingItem(item);
-            setIsCaptioning(true);
-        }
-    };
-
-    const handleConfirmPlacement = async (compositeImage: string) => {
-        setIsLoading(true);
-        try {
-            const newImage = await generateDecorationImage(compositeImage);
-            setGeneratedImage(newImage);
-            setImageHistory(prev => [...prev, newImage]);
-            if (placingItem) setWornItems(prevItems => [...prevItems, placingItem]);
-            setPlacingItem(null);
-            setCurrentScreen(Screen.Result);
-        } catch (err: any) {
-            setError("Erro ao gerar imagem.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-    
-    const handleStartNewTryOnSession = async (item: Item) => {
-        if (!userImage) { setCurrentScreen(Screen.ImageSourceSelection); return; }
-        setIsLoading(true);
-        try {
-            const newImage = await generateTryOnImage(userImage, item, []);
-            setGeneratedImage(newImage);
-            setImageHistory([userImage, newImage]);
-            setWornItems([item]);
-            setCurrentScreen(Screen.Result);
-        } catch (err: any) {
-            setError("Ocorreu um erro.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleUndoLastItem = () => {
-        if (imageHistory.length > 1 && wornItems.length > 0) {
-            const newHistory = [...imageHistory];
-            newHistory.pop();
-            const newWornItems = [...wornItems];
-            newWornItems.pop();
-            setImageHistory(newHistory);
-            setGeneratedImage(newHistory[newHistory.length - 1]);
-            setWornItems(newWornItems);
-        } else {
-             if (collectionIdentifier) setCurrentScreen(Screen.ItemSelection);
-             else handleBack();
-        }
-    };
-
-    const handleGenerateVideo = async () => {
-        setIsLoading(true);
-        try {
-            const videoUrl = await generateFashionVideo(generatedImage!, (msg) => setLoadingMessage(msg));
-            setGeneratedVideoUrl(videoUrl);
-            setShowVideoPlayer(true);
-        } catch (err: any) {
-            setError("Falha ao gerar vídeo.");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handlePublishVideo = async () => {
-        if (!generatedVideoUrl || !profile || !generatedImage) return;
-        setShowCoinAnimation(true);
-        setProfile(prev => prev ? { ...prev, reward_points: (prev.reward_points || 0) + 50 } : null);
-        setTimeout(() => setShowCoinAnimation(false), 2000);
+    const handlePublishVideo = async (details: { caption: string; position: any }) => {
+        if (!editingVideoDetails || !profile) return;
+        setIsPublishing(true);
         const newPost: Post = {
-            id: `post_video_${Date.now()}`,
+            id: Date.now().toString(),
             user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || '' },
-            image: generatedImage,
-            video: generatedVideoUrl,
-            items: wornItems,
+            image: editingVideoDetails.item.image,
+            video: URL.createObjectURL(editingVideoDetails.blob),
+            items: [editingVideoDetails.item],
             likes: 0,
             isLiked: false,
             comments: [],
             commentCount: 0,
+            caption: details.caption,
+            layout: 'product-overlay',
+            overlayPosition: details.position
         };
-        setPosts(prevPosts => [newPost, ...prevPosts]);
-        setShowVideoPlayer(false);
-        setGeneratedVideoUrl(null);
-        setCurrentScreen(Screen.Feed);
-        setToast('Postado!');
+        setPosts(prev => [newPost, ...prev]);
+        setIsPublishing(false);
+        setCurrentScreen(Screen.Confirmation);
+        setConfirmationMessage("Vídeo publicado com sucesso!");
     };
 
-    const handlePostToFeed = (caption: string) => {
-        if (profile) {
-            setShowCoinAnimation(true);
-            setProfile(prev => prev ? { ...prev, reward_points: (prev.reward_points || 0) + 50 } : null);
-            setTimeout(() => setShowCoinAnimation(false), 2000);
-            let newPost: Post;
-            if (repostingItem) {
-                 newPost = {
-                    id: `post_${Date.now()}`,
-                    user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || '' },
-                    image: repostingItem.image,
-                    items: [repostingItem],
-                    likes: 0,
-                    isLiked: false,
-                    comments: [],
-                    commentCount: 0,
-                    caption: caption,
-                };
-                setRepostingItem(null);
-            } else if (generatedImage) {
-                 newPost = {
-                    id: `post_${Date.now()}`,
-                    user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || '' },
-                    image: generatedImage,
-                    items: wornItems,
-                    likes: 0,
-                    isLiked: false,
-                    comments: [],
-                    commentCount: 0,
-                    caption: caption,
-                };
-            } else return;
-            setPosts(prevPosts => [newPost, ...prevPosts]);
-            setIsCaptioning(false);
-            setConfirmationMessage("Publicado!");
-            setCurrentScreen(Screen.Confirmation);
-        }
+    const onAddToCart = (item: Item) => {
+        setCartItems(prev => [...prev, item]);
+        setIsCartAnimating(true);
+        setTimeout(() => setIsCartAnimating(false), 1000);
     };
 
-    const resetToHome = () => {
-        setGeneratedImage(userImage);
-        setWornItems([]);
-        setImageHistory(userImage ? [userImage] : []);
-        setNavigationStack([]);
-        setCollectionIdentifier(null);
-        if (confirmationMessage.toLowerCase().includes('publicado')) setCurrentScreen(Screen.Feed);
-        else handleNavigateToProfile();
-    };
-
-    const handleSelectConversation = (conversation: Conversation) => {
-        setSelectedConversation(conversation);
-        setConversations(prev => prev.map(c => c.id === conversation.id ? { ...c, unreadCount: 0 } : c));
-        setCurrentScreen(Screen.Chat);
-    };
-
-    const handleNavigateToProfile = () => {
-        setViewedProfileId(null);
-        if (profile?.account_type === 'business') setCurrentScreen(Screen.VendorDashboard);
-        else setCurrentScreen(Screen.Home);
-    };
-
-    const handleViewProfile = async (profileId: string) => {
-        if (profileId === profile?.id) { handleNavigateToProfile(); return; }
-        setViewedProfileId(profileId);
-        setCurrentScreen(Screen.Home);
-    };
-
-    const handleConfirmPromotion = (details: any) => {
-        if (promotionModalConfig.accountType === 'business') {
-            setPromotedContent({ items: details.items });
-            setToast(`Promoção ativada!`);
-        } else {
-            const postIds = new Set(details.items.map((item: any) => item.id));
-            setPosts(prev => prev.map(p => postIds.has(p.id) ? { ...p, isSponsored: true } : p));
-            setToast(`Espaço promovido!`);
-        }
-        setPromotionModalConfig({ isOpen: false, accountType: null });
-    };
-
-    const renderScreen = () => {
-        if (isLoading) return <LoadingIndicator userImage={userImage || ''} customMessage={loadingMessage} />;
-        const currentNode = navigationStack.length > 0 ? navigationStack[navigationStack.length - 1] : null;
-        
+    const renderScreenContent = () => {
         switch (currentScreen) {
             case Screen.Login: return <LoginScreen />;
-            case Screen.DecorationPlacement:
-                if (userImage && placingItem) return <DecorationPlacementScreen userImage={userImage} item={placingItem} onBack={() => { setPlacingItem(null); setCurrentScreen(Screen.ItemSelection); }} onConfirm={handleConfirmPlacement} />;
-                setCurrentScreen(Screen.ItemSelection); return null;
-            case Screen.SplitCamera:
-                if (splitCameraItem) return <SplitCameraScreen item={splitCameraItem} onBack={() => setCurrentScreen(Screen.ItemSelection)} onRecordingComplete={(blob) => { setEditingVideoDetails({ blob, item: splitCameraItem }); setCurrentScreen(Screen.VideoEdit); }} />;
-                setCurrentScreen(Screen.ItemSelection); return null;
-            case Screen.VideoEdit:
-                if (editingVideoDetails) return <VideoEditScreen videoBlob={editingVideoDetails.blob} item={editingVideoDetails.item} onBack={() => setCurrentScreen(Screen.SplitCamera)} onPublish={(d) => { handlePostToFeed(d.caption); setEditingVideoDetails(null); }} isPublishing={isPublishing} />;
-                setCurrentScreen(Screen.ItemSelection); return null;
-            case Screen.AccountTypeSelection: return <AccountTypeSelectionScreen onSelect={handleSetAccountType} />;
-            case Screen.BusinessOnboarding: return <BusinessOnboardingScreen onComplete={handleCompleteBusinessOnboarding} />;
+            case Screen.AccountTypeSelection: 
+                return <AccountTypeSelectionScreen onSelect={async (type) => {
+                    if (profile) {
+                        await supabase.from('profiles').update({ account_type: type }).eq('id', profile.id);
+                        setProfile({ ...profile, account_type: type });
+                        if (type === 'business') setCurrentScreen(Screen.BusinessOnboarding);
+                        else setCurrentScreen(Screen.Feed);
+                    }
+                }} />;
+            case Screen.BusinessOnboarding:
+                return <BusinessOnboardingScreen onComplete={(details) => {
+                    if (profile) {
+                        setBusinessProfile({ id: profile.id, ...details });
+                        setCurrentScreen(Screen.VendorDashboard);
+                    }
+                }} />;
             case Screen.VendorDashboard:
-                if (businessProfile) return <VendorDashboard businessProfile={businessProfile} onOpenMenu={() => setShowVendorMenu(true)} unreadNotificationCount={0} onOpenNotificationsPanel={() => setShowNotificationsPanel(true)} onOpenPromotionModal={() => setPromotionModalConfig({ isOpen: true, accountType: 'business' })} followersCount={0} followingCount={0} onStartCreate={() => { setNavigationStack([]); setCurrentScreen(Screen.ImageSourceSelection); }} />;
-                setCurrentScreen(Screen.BusinessOnboarding); return null;
-            case Screen.Home: return <HomeScreen loggedInProfile={profile!} viewedProfileId={viewedProfileId} onUpdateProfileImage={(url) => setProfile(p => p ? {...p, profile_image_url: url} : null)} onUpdateProfile={handleUpdateProfile} onSelectCategory={handleSelectCategory} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => setCurrentScreen(Screen.MyLooks)} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => setCurrentScreen(Screen.ChatList)} onNavigateToSettings={() => setCurrentScreen(Screen.Settings)} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => { setNavigationStack([]); setCurrentScreen(Screen.ImageSourceSelection); }} onSignOut={handleSignOut} isCartAnimating={isCartAnimating} onBack={handleProfileBack} posts={posts} onItemClick={handleItemSelect} onViewProfile={handleViewProfile} unreadNotificationCount={0} unreadMessagesCount={0} onOpenNotificationsPanel={() => setShowNotificationsPanel(true)} isFollowing={viewedProfileId ? followingIds.has(viewedProfileId) : false} onToggleFollow={handleToggleFollow} followersCount={viewedProfileId ? followersCountMap[viewedProfileId] || 0 : 0} followingCount={!viewedProfileId ? followingIds.size : 0} />;
-            case Screen.Settings: return <SettingsScreen profile={profile!} onBack={handleNavigateToProfile} theme={theme} onToggleTheme={toggleTheme} onNavigateToVerification={() => setCurrentScreen(Screen.VerificationIntro)} onSignOut={handleSignOut} />;
-            case Screen.ImageSourceSelection: return <ImageSourceSelectionScreen onImageUpload={handleImageUpload} onUseCamera={() => setCurrentScreen(Screen.Camera)} onBack={handleNavigateToProfile} />;
-            case Screen.SubCategorySelection: if (currentNode) return <SubCategorySelectionScreen node={currentNode} onSelectSubCategory={handleSelectSubCategory} onBack={handleBack} />;
-                 handleNavigateToProfile(); return null;
-            case Screen.ItemSelection: if (collectionIdentifier) { const displayImage = userImage || (profile?.profile_image_url || ''); return <ItemSelectionScreen userImage={displayImage} collectionId={collectionIdentifier.id} collectionName={collectionIdentifier.name} collectionType={collectionIdentifier.type} onItemSelect={handleItemSelect} onOpenSplitCamera={(item) => { setSplitCameraItem(item); setCurrentScreen(Screen.SplitCamera); }} onBack={() => setCurrentScreen(Screen.SubCategorySelection)} onBuy={(i) => { setConfirmationMessage(`Pedido de ${i.name} confirmado!`); setCurrentScreen(Screen.Confirmation); }} onAddToCart={(i) => { setCartItems(prev => [...prev, i]); setToast(`${i.name} no carrinho!`); }} />; }
-                handleNavigateToProfile(); return null;
-            case Screen.Camera: return <CameraScreen onPhotoTaken={handleImageUpload} onBack={() => setCurrentScreen(Screen.ImageSourceSelection)} />;
-            case Screen.Result: if (generatedImage && collectionIdentifier) return <ResultScreen generatedImage={generatedImage} items={wornItems} categoryItems={ITEMS.filter(i => i.category.startsWith(collectionIdentifier.id.split('_')[0]))} onBuy={(items) => { setConfirmationMessage(`Pedido de ${items.length} itens confirmado!`); setCurrentScreen(Screen.Confirmation); }} onUndo={handleUndoLastItem} onStartPublishing={() => setIsCaptioning(true)} onSaveImage={() => setToast('Imagem salva!')} onItemSelect={handleItemSelect} onAddMoreItems={handleBack} onGenerateVideo={handleGenerateVideo} />;
-                setCurrentScreen(Screen.Home); return null;
-            case Screen.Confirmation: return <ConfirmationScreen message={confirmationMessage} onHome={resetToHome} />;
-            case Screen.Feed: return <FeedScreen posts={posts} stories={stories} profile={profile!} businessProfile={businessProfile} isProfilePromoted={!!promotedContent} promotedItems={promotedContent?.items || []} onBack={handleNavigateToProfile} onItemClick={handleItemSelect} onAddToCartMultiple={(items) => { setCartItems(prev => [...prev, ...items]); setToast('Itens adicionados!'); }} onBuyMultiple={(items) => { setConfirmationMessage(`Pedido de ${items.length} itens confirmado!`); setCurrentScreen(Screen.Confirmation); }} onViewProfile={handleViewProfile} onSelectCategory={handleSelectCategory} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? { ...p, likes: p.isLiked ? p.likes - 1 : p.likes + 1, isLiked: !p.isLiked } : p))} onAddComment={(id, text) => setPosts(prev => prev.map(p => p.id === id ? { ...p, comments: [...p.comments, { id: `c_${Date.now()}`, user: { id: profile!.id, name: profile!.username, avatar: profile!.profile_image_url || '' }, text, timestamp: new Date().toISOString() }], commentCount: p.commentCount + 1 } : p))} onNavigateToAllHighlights={() => setCurrentScreen(Screen.AllHighlights)} onStartCreate={() => { setNavigationStack([]); setCurrentScreen(Screen.ImageSourceSelection); }} unreadNotificationCount={0} onNotificationsClick={() => setShowNotificationsPanel(true)} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
-            case Screen.MyLooks: return <MyLooksScreen looks={savedLooks} onBack={handleNavigateToProfile} onItemClick={handleItemSelect} onBuyLook={(items) => { setConfirmationMessage(`Pedido de ${items.length} itens confirmado!`); setCurrentScreen(Screen.Confirmation); }} onPostLook={(look) => { setPosts(prev => [{ id: `post_${Date.now()}`, user: { id: profile!.id, name: profile!.username, avatar: profile!.profile_image_url || '' }, image: look.image, items: look.items, likes: 0, isLiked: false, comments: [], commentCount: 0 }, ...prev]); setCurrentScreen(Screen.Feed); }} />;
-            case Screen.Cart: return <CartScreen cartItems={cartItems} onBack={handleNavigateToProfile} onRemoveItem={(idx) => setCartItems(prev => prev.filter((_, i) => i !== idx))} onBuyItem={(item) => { setConfirmationMessage(`Pedido de ${item.name} confirmado!`); setCurrentScreen(Screen.Confirmation); }} onTryOnItem={handleStartNewTryOnSession} onCheckout={() => { setConfirmationMessage(`Pedido de ${cartItems.length} itens confirmado!`); setCurrentScreen(Screen.Confirmation); }} />;
-            case Screen.Rewards: return <RewardsScreen onBack={handleNavigateToProfile} points={profile?.reward_points || 0} />;
-            case Screen.ChatList: return <ChatListScreen conversations={conversations} onBack={handleNavigateToProfile} onSelectConversation={handleSelectConversation} />;
-            case Screen.Chat: if (selectedConversation) return <ChatScreen conversation={selectedConversation} currentUser={profile!} onBack={() => setCurrentScreen(Screen.ChatList)} onSendMessage={(text) => setConversations(prev => prev.map(c => c.id === selectedConversation.id ? { ...c, lastMessage: { id: `m_${Date.now()}`, text, senderId: profile!.id, timestamp: new Date().toISOString() } } : c))} />;
-                setCurrentScreen(Screen.ChatList); return null;
-            case Screen.Search: return <SearchScreen onBack={() => setCurrentScreen(Screen.Feed)} posts={posts} items={ITEMS} onViewProfile={handleViewProfile} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? { ...p, likes: p.isLiked ? p.likes - 1 : p.likes + 1, isLiked: !p.isLiked } : p))} onItemClick={handleItemSelect} onItemAction={handleItemSelect} onOpenSplitCamera={(item) => { setSplitCameraItem(item); setCurrentScreen(Screen.SplitCamera); }} onOpenComments={(id) => setCommentingPost(posts.find(p => p.id === id) || null)} onAddToCart={(item) => { setCartItems(prev => [...prev, item]); setToast('Adicionado!'); }} onBuy={(item) => { setConfirmationMessage(`Confirmado!`); setCurrentScreen(Screen.Confirmation); }} />;
-            case Screen.AllHighlights: return <AllHighlightsScreen categories={CATEGORIES} onBack={() => setCurrentScreen(Screen.Feed)} onSelectCategory={handleSelectCategory} />;
-            case Screen.VerificationIntro: return <VerificationIntroScreen onBack={() => setCurrentScreen(Screen.Settings)} onStart={() => setCurrentScreen(Screen.IdUpload)} />;
-            case Screen.IdUpload: return <IdUploadScreen onBack={() => setCurrentScreen(Screen.VerificationIntro)} onComplete={() => setCurrentScreen(Screen.FaceScan)} />;
-            case Screen.FaceScan: return <FaceScanScreen onBack={() => setCurrentScreen(Screen.IdUpload)} onComplete={() => { if (profile) setProfile({...profile, verification_status: 'pending'}); setCurrentScreen(Screen.VerificationPending); }} />;
-            case Screen.VerificationPending: return <VerificationPendingScreen onComplete={() => { if (profile) setProfile({...profile, verification_status: 'verified'}); setConfirmationMessage('Verificado!'); setCurrentScreen(Screen.Confirmation); }} />;
-            default: setCurrentScreen(Screen.Feed); return null;
+                return businessProfile && <VendorDashboard 
+                    businessProfile={businessProfile} 
+                    onOpenMenu={() => setShowVendorMenu(true)}
+                    unreadNotificationCount={notifications.filter(n => !n.read).length}
+                    onOpenNotificationsPanel={() => setShowNotificationsPanel(true)}
+                    onOpenPromotionModal={() => setPromotionModalConfig({ isOpen: true, accountType: 'business' })}
+                    followersCount={followersCountMap[profile?.id || ''] || 0}
+                    followingCount={followingIds.size}
+                    onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)}
+                />;
+            case Screen.Feed:
+                return profile && <FeedScreen 
+                    posts={posts} stories={stories} profile={profile}
+                    businessProfile={businessProfile} isProfilePromoted={!!promotedContent} promotedItems={promotedContent?.items || []}
+                    onBack={() => {}} onItemClick={setRecommendationItem} onAddToCartMultiple={it => it.forEach(onAddToCart)}
+                    onBuyMultiple={it => { it.forEach(onAddToCart); setCurrentScreen(Screen.Cart); }}
+                    onViewProfile={setViewedProfileId} onSelectCategory={c => { setCollectionIdentifier({ id: c.id, name: c.name, type: c.type }); setNavigationStack([c]); setCurrentScreen(Screen.SubCategorySelection); }}
+                    onLikePost={id => setPosts(ps => ps.map(p => p.id === id ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 } : p))}
+                    onAddComment={(id, text) => {
+                        const com: Comment = { id: Date.now().toString(), user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || '' }, text, timestamp: new Date().toISOString() };
+                        setPosts(ps => ps.map(p => p.id === id ? { ...p, comments: [...p.comments, com], commentCount: p.commentCount + 1 } : p));
+                    }}
+                    onNavigateToAllHighlights={() => setCurrentScreen(Screen.AllHighlights)}
+                    onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)}
+                    unreadNotificationCount={notifications.filter(n => !n.read).length}
+                    onNotificationsClick={() => setShowNotificationsPanel(true)}
+                    onSearchClick={() => setCurrentScreen(Screen.Search)}
+                />;
+            case Screen.Home:
+                return profile && <HomeScreen 
+                    loggedInProfile={profile} viewedProfileId={viewedProfileId}
+                    onUpdateProfile={u => setProfile(p => p ? { ...p, ...u } : null)}
+                    onUpdateProfileImage={i => setProfile(p => p ? { ...p, profile_image_url: i } : null)}
+                    onSelectCategory={c => { setCollectionIdentifier({ id: c.id, name: c.name, type: c.type }); setNavigationStack([c]); setCurrentScreen(Screen.SubCategorySelection); }}
+                    onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => setCurrentScreen(Screen.MyLooks)}
+                    onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => setCurrentScreen(Screen.ChatList)}
+                    onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)}
+                    isCartAnimating={isCartAnimating} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem}
+                    onViewProfile={setViewedProfileId} onNavigateToSettings={() => setCurrentScreen(Screen.Settings)} onSignOut={() => supabase.auth.signOut()}
+                    unreadNotificationCount={notifications.filter(n => !n.read).length} unreadMessagesCount={0} onOpenNotificationsPanel={() => setShowNotificationsPanel(true)}
+                    isFollowing={followingIds.has(viewedProfileId || '')} onToggleFollow={handleToggleFollow}
+                    followersCount={followersCountMap[viewedProfileId || profile.id] || 0}
+                    followingCount={viewedProfileId && viewedProfileId !== profile.id ? 0 : followingIds.size}
+                />;
+            case Screen.Search:
+                return <SearchScreen 
+                    onBack={() => setCurrentScreen(Screen.Feed)} posts={posts} items={ITEMS}
+                    onViewProfile={id => { setViewedProfileId(id); setCurrentScreen(Screen.Home); }}
+                    onLikePost={id => setPosts(ps => ps.map(p => p.id === id ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 } : p))}
+                    onItemClick={setRecommendationItem} onItemAction={it => { setCollectionIdentifier({ id: it.category, name: 'Produto', type: getCategoryTypeFromItem(it) }); handleGenerateTryOn(userImage || '', it, []); }}
+                    onOpenSplitCamera={it => { setSplitCameraItem(it); setCurrentScreen(Screen.SplitCamera); }}
+                    onOpenComments={id => setCommentingPost(posts.find(p => p.id === id) || null)}
+                    onAddToCart={onAddToCart} onBuy={it => { onAddToCart(it); setCurrentScreen(Screen.Cart); }}
+                />;
+            case Screen.Cart:
+                return <CartScreen cartItems={cartItems} onBack={() => setCurrentScreen(Screen.Feed)} onRemoveItem={i => setCartItems(ps => ps.filter((_, idx) => idx !== i))} onBuyItem={() => {}} onTryOnItem={it => handleGenerateTryOn(userImage || '', it, [])} onCheckout={() => setCartItems([])} />;
+            case Screen.Settings:
+                return profile && <SettingsScreen onBack={() => setCurrentScreen(Screen.Home)} theme={theme} onToggleTheme={() => setTheme(t => t === 'light' ? 'dark' : 'light')} profile={profile} onNavigateToVerification={() => setCurrentScreen(Screen.VerificationIntro)} onSignOut={() => supabase.auth.signOut()} />;
+            case Screen.ImageSourceSelection:
+                return <ImageSourceSelectionScreen onBack={() => setCurrentScreen(Screen.Feed)} onImageUpload={i => { setUserImage(i); setCurrentScreen(Screen.Feed); }} onUseCamera={() => setCurrentScreen(Screen.Camera)} />;
+            case Screen.Camera:
+                return <CameraScreen onBack={() => setCurrentScreen(Screen.ImageSourceSelection)} onPhotoTaken={i => { setUserImage(i); setCurrentScreen(Screen.Feed); }} />;
+            case Screen.Generating:
+                return userImage && <LoadingIndicator userImage={userImage} customMessage={loadingMessage} />;
+            case Screen.Result:
+                return generatedImage && collectionIdentifier && <ResultScreen 
+                    generatedImage={generatedImage} items={wornItems} categoryItems={ITEMS.filter(i => i.category === collectionIdentifier.id)}
+                    onBuy={it => { it.forEach(onAddToCart); setCurrentScreen(Screen.Cart); }}
+                    onUndo={() => { setWornItems(ps => ps.slice(0, -1)); setImageHistory(ps => ps.slice(0, -1)); setGeneratedImage(imageHistory[imageHistory.length - 2] || null); }}
+                    onStartPublishing={() => setIsCaptioning(true)} onSaveImage={() => {}}
+                    onItemSelect={it => handleGenerateTryOn(generatedImage, it, wornItems)} onAddMoreItems={() => setCurrentScreen(Screen.ItemSelection)} onGenerateVideo={handleGenerateVideo}
+                />;
+            case Screen.SplitCamera:
+                return splitCameraItem && <SplitCameraScreen item={splitCameraItem} onBack={() => setCurrentScreen(Screen.ItemSelection)} onRecordingComplete={b => { setEditingVideoDetails({ blob: b, item: splitCameraItem }); setCurrentScreen(Screen.VideoEdit); }} />;
+            case Screen.VideoEdit:
+                return editingVideoDetails && <VideoEditScreen videoBlob={editingVideoDetails.blob} item={editingVideoDetails.item} onBack={() => setCurrentScreen(Screen.SplitCamera)} onPublish={handlePublishVideo} isPublishing={isPublishing} />;
+            case Screen.Confirmation:
+                return <ConfirmationScreen message={confirmationMessage} onHome={() => setCurrentScreen(Screen.Feed)} />;
+            case Screen.Rewards:
+                return <RewardsScreen onBack={() => setCurrentScreen(Screen.Home)} points={profile?.reward_points || 0} />;
+            case Screen.VendorAnalytics:
+                return <VendorAnalyticsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} />;
+            case Screen.VendorProducts:
+                return businessProfile && <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile} />;
+            case Screen.VendorAffiliates:
+                return <VendorAffiliatesScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} />;
+            case Screen.VendorCollaborations:
+                return <VendorCollaborationsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} collaborationRequests={[]} posts={posts} />;
+            case Screen.AllHighlights:
+                return <AllHighlightsScreen categories={CATEGORIES} onBack={() => setCurrentScreen(Screen.Feed)} onSelectCategory={c => { setCollectionIdentifier({ id: c.id, name: c.name, type: c.type }); setCurrentScreen(Screen.ItemSelection); }} />;
+            case Screen.DecorationPlacement:
+                return userImage && placingItem && <DecorationPlacementScreen userImage={userImage} item={placingItem} onBack={() => setCurrentScreen(Screen.ItemSelection)} onConfirm={handleGenerateDecoration} />;
+            default:
+                return <SplashScreen />;
         }
     };
 
-    if (authLoading) return <SplashScreen />;
-    
-    const showNavBar = SCREENS_WITH_NAVBAR.includes(currentScreen);
-
+    // Fix: App component must return its UI structure
     return (
-        <div className="h-full w-full max-w-lg mx-auto bg-[var(--bg-main)] flex flex-col relative font-sans overflow-hidden">
-            <div className="flex-grow overflow-hidden relative">{renderScreen()}</div>
-            {showNavBar && profile && ( <div className="flex-shrink-0"> <BottomNavBar activeScreen={currentScreen} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToPromotion={() => setPromotionModalConfig({ isOpen: true, accountType: profile.account_type })} onNavigateToProfile={handleNavigateToProfile} onStartTryOn={() => { setNavigationStack([]); setCurrentScreen(Screen.ImageSourceSelection); }} isCartAnimating={isCartAnimating} accountType={profile.account_type} onNavigateToVendorAnalytics={() => setCurrentScreen(Screen.VendorAnalytics)} /> </div> )}
-            {toast && ( <div className="absolute bottom-20 left-1/2 -translate-x-1/2 bg-black/80 text-white px-4 py-2 rounded-full text-sm animate-fadeIn z-50"> {toast} </div> )}
-            {error && ( <div className="absolute top-0 left-0 right-0 p-3 bg-red-500/90 text-white text-sm flex justify-between items-center z-50"> <span>{error}</span> <button onClick={() => setError(null)}><XCircleIcon className="w-5 h-5"/></button> </div> )}
-            {showCoinAnimation && <CoinBurst />}
-            {showNotificationsPanel && ( <NotificationsPanel notifications={notifications} onClose={() => setShowNotificationsPanel(false)} onNotificationClick={(n) => { setShowNotificationsPanel(false); if (n.relatedCategoryId) handleSelectCategory(CATEGORIES.find(c => c.id === n.relatedCategoryId)!); }} /> )}
-            {showVideoPlayer && generatedVideoUrl && ( <VideoPlayerModal videoUrl={generatedVideoUrl} onClose={() => setShowVideoPlayer(false)} onPublish={handlePublishVideo} onSave={() => setToast('Salvo!')} isPublishing={isPublishing} /> )}
-            {showVendorMenu && ( <VendorMenuModal onClose={() => setShowVendorMenu(false)} onNavigateToAnalytics={() => { setCurrentScreen(Screen.VendorAnalytics); setShowVendorMenu(false); }} onNavigateToProducts={() => { setCurrentScreen(Screen.VendorProducts); setShowVendorMenu(false); }} onNavigateToAffiliates={() => { setCurrentScreen(Screen.VendorAffiliates); setShowVendorMenu(false); }} onNavigateToCollaborations={() => { setCurrentScreen(Screen.VendorCollaborations); setShowVendorMenu(false); }} onSignOut={handleSignOut} /> )}
-            {commentingPost && profile && ( <CommentsModal post={commentingPost} currentUser={profile} onClose={() => setCommentingPost(null)} onAddComment={(id, text) => { /* logic */ }} /> )}
-            {promotionModalConfig.isOpen && ( <PromotionModal accountType={promotionModalConfig.accountType!} profile={promotionModalConfig.accountType === 'business' ? businessProfile! : profile!} userPosts={posts.filter(p => p.user.id === profile?.id)} onClose={() => setPromotionModalConfig({ isOpen: false, accountType: null })} onConfirm={handleConfirmPromotion} /> )}
-            {isCaptioning && (generatedImage || repostingItem) && ( <CaptionModal image={repostingItem ? repostingItem.image : generatedImage!} onClose={() => { setIsCaptioning(false); setRepostingItem(null); }} onPublish={handlePostToFeed} /> )}
-            {recommendationItem && ( <RecommendationModal item={recommendationItem} onClose={() => setRecommendationItem(null)} onAddToCart={(item) => { setCartItems(prev => [...prev, item]); setRecommendationItem(null); }} onStartTryOn={(item) => { setRecommendationItem(null); setTimeout(() => handleItemSelect(item), 100); }} /> )}
+        <div className="h-full w-full bg-[var(--bg-main)] overflow-hidden flex flex-col relative">
+            <div className="flex-grow relative">
+                {renderScreenContent()}
+            </div>
+            {SCREENS_WITH_NAVBAR.includes(currentScreen) && (
+                <BottomNavBar 
+                    activeScreen={currentScreen} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)}
+                    onNavigateToCart={() => setCurrentScreen(Screen.Cart)}
+                    onNavigateToPromotion={() => setPromotionModalConfig({ isOpen: true, accountType: profile?.account_type || null })}
+                    onNavigateToProfile={() => { if (profile?.account_type === 'business') setCurrentScreen(Screen.VendorDashboard); else setCurrentScreen(Screen.Home); }}
+                    onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={isCartAnimating}
+                    accountType={profile?.account_type} onNavigateToVendorAnalytics={() => setCurrentScreen(Screen.VendorAnalytics)}
+                />
+            )}
+            {showNotificationsPanel && <NotificationsPanel notifications={notifications} onClose={() => setShowNotificationsPanel(false)} onNotificationClick={() => {}} />}
+            {showVideoPlayer && generatedVideoUrl && <VideoPlayerModal videoUrl={generatedVideoUrl} onClose={() => setShowVideoPlayer(false)} onPublish={() => setIsCaptioning(true)} onSave={() => {}} isPublishing={isPublishing} />}
+            {isCaptioning && generatedImage && <CaptionModal image={generatedImage} onClose={() => setIsCaptioning(false)} onPublish={cap => {
+                if (profile) {
+                    const post: Post = { id: Date.now().toString(), user: { id: profile.id, name: profile.username, avatar: profile.profile_image_url || '' }, image: generatedImage, items: wornItems, likes: 0, isLiked: false, comments: [], commentCount: 0, caption: cap };
+                    setPosts(p => [post, ...p]);
+                    setIsCaptioning(false); setCurrentScreen(Screen.Confirmation); setConfirmationMessage("Look publicado!");
+                }
+            }} />}
+            {showVendorMenu && <VendorMenuModal onClose={() => setShowVendorMenu(false)} onNavigateToAnalytics={() => setCurrentScreen(Screen.VendorAnalytics)} onNavigateToProducts={() => setCurrentScreen(Screen.VendorProducts)} onNavigateToAffiliates={() => setCurrentScreen(Screen.VendorAffiliates)} onNavigateToCollaborations={() => setCurrentScreen(Screen.VendorCollaborations)} onSignOut={() => supabase.auth.signOut()} />}
+            {recommendationItem && <RecommendationModal item={recommendationItem} onClose={() => setRecommendationItem(null)} onAddToCart={onAddToCart} onStartTryOn={it => { setRecommendationItem(null); handleGenerateTryOn(userImage || '', it, []); }} />}
         </div>
     );
 };

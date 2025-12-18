@@ -55,7 +55,7 @@ const LoginScreen: React.FC = () => {
             <div className="w-full max-w-sm z-10">
                 <div className="text-center mb-10 flex flex-col items-center">
                     <img 
-                      src="https://i.postimg.cc/L4190LN2/PUMP-startup-2.png" 
+                      src="https://i.postimg.cc/L4190LN2/PUMP_startup_2.png" 
                       alt="PUMP Logo" 
                       className="h-16 w-auto mb-6 animate-logo-pulse" 
                     />
