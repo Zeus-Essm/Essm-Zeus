@@ -92,9 +92,9 @@ const App: React.FC = () => {
     const [followingIds, setFollowingIds] = React.useState<Set<string>>(new Set());
     const [followersCountMap, setFollowersCountMap] = React.useState<Record<string, number>>({});
 
-    // App Navigation and UI state - Starting strictly empty
+    // App Navigation and UI state - Starting with Light Mode as Priority
     const [currentScreen, setCurrentScreen] = React.useState<Screen>(Screen.AccountTypeSelection);
-    const [theme, setTheme] = React.useState<'light' | 'dark'>('dark');
+    const [theme, setTheme] = React.useState<'light' | 'dark'>('light');
     const [viewedProfileId, setViewedProfileId] = React.useState<string | null>(null);
     const [userImage, setUserImage] = React.useState<string | null>(null);
     const [generatedImage, setGeneratedImage] = React.useState<string | null>(null);
@@ -780,7 +780,7 @@ const App: React.FC = () => {
             case Screen.AccountTypeSelection: return <AccountTypeSelectionScreen onSelect={handleSetAccountType} />;
             case Screen.BusinessOnboarding: return <BusinessOnboardingScreen onComplete={handleCompleteBusinessOnboarding} />;
             case Screen.VendorDashboard:
-                if (businessProfile) return <VendorDashboard businessProfile={businessProfile} onOpenMenu={() => setShowVendorMenu(true)} unreadNotificationCount={unreadNotificationCount} onOpenNotificationsPanel={handleOpenNotificationsPanel} onOpenPromotionModal={() => handleOpenPromotionModal('business')} followersCount={followersCountMap[businessProfile.id] || 0} followingCount={0} />;
+                if (businessProfile) return <VendorDashboard businessProfile={businessProfile} onOpenMenu={() => setShowVendorMenu(true)} unreadNotificationCount={unreadNotificationCount} onOpenNotificationsPanel={handleOpenNotificationsPanel} onOpenPromotionModal={() => handleOpenPromotionModal('business')} followersCount={followersCountMap[businessProfile.id] || 0} followingCount={0} onStartCreate={handleStartTryOn} />;
                 setCurrentScreen(Screen.BusinessOnboarding); return null;
             case Screen.VendorAnalytics: return <VendorAnalyticsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} isProfilePromoted={!!promotedContent} />;
             case Screen.VendorProducts: if (businessProfile) return <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile} />;

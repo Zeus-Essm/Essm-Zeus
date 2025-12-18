@@ -318,7 +318,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           <button onClick={() => setActiveTab('posts')} className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider ${activeTab === 'posts' ? 'text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}>Publicações</button>
         </div>
 
-        <div>
+        <div className="animate-fadeIn">
             {activeTab === 'market' ? (
                 <div>
                     <div className="px-4 py-2 border-b border-[var(--border-primary)]">
@@ -340,12 +340,27 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                     </div>
                 </div>
             ) : (
-                <div className="grid grid-cols-3 gap-1 p-1">
-                    {localProfilePosts.map((post, index) => (
-                        <div key={post.id} onClick={() => setViewingPostIndex(index)} className="aspect-w-1 aspect-h-1 bg-zinc-800 rounded-sm cursor-pointer">
-                           {post.image && <img src={post.image} alt="Post" className="w-full h-full object-cover"/>}
+                <div className="min-h-[200px]">
+                    {localProfilePosts.length > 0 ? (
+                        <div className="grid grid-cols-3 gap-1 p-1">
+                            {localProfilePosts.map((post, index) => (
+                                <div key={post.id} onClick={() => setViewingPostIndex(index)} className="aspect-w-1 aspect-h-1 bg-zinc-800 rounded-sm cursor-pointer overflow-hidden">
+                                   {post.image && <img src={post.image} alt="Post" className="w-full h-full object-cover"/>}
+                                </div>
+                            ))}
                         </div>
-                    ))}
+                    ) : (
+                        <div className="py-16 text-center flex flex-col items-center animate-slideUp">
+                            <button 
+                                onClick={onStartTryOn}
+                                className="w-20 h-20 bg-[var(--bg-tertiary)] rounded-full flex items-center justify-center mb-4 border-2 border-dashed border-[var(--accent-primary)]/50 hover:bg-[var(--accent-primary)]/10 hover:border-[var(--accent-primary)] transition-all active:scale-95 shadow-lg group"
+                            >
+                                <PlusIcon className="w-10 h-10 text-[var(--accent-primary)] group-hover:scale-110 transition-transform" />
+                            </button>
+                            <p className="text-[var(--text-primary)] font-bold text-lg">Nenhuma publicação ainda.</p>
+                            <p className="text-sm text-[var(--text-secondary)] opacity-70 mt-1 max-w-[200px]">Crie e publique seus looks para que outros vejam!</p>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

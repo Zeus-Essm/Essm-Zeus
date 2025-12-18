@@ -110,10 +110,6 @@ const LoginScreen: React.FC<LoginScreenProps> = () => {
                     {isSignUp ? 'Faça Login' : 'Cadastre-se'}
                 </button>
             </p>
-            
-            <div className="mt-6 px-3 py-1 bg-green-500/20 rounded-full border border-green-500/40">
-                <span className="text-[10px] font-bold text-green-400 uppercase tracking-widest">✓ Sistema Atualizado: Real Space Mode</span>
-            </div>
         </div>
     );
 };
