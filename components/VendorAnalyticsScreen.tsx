@@ -1,90 +1,97 @@
+
 import React from 'react';
 import Header from './Header';
-import { ChartBarIcon } from './IconComponents';
+import { ChartBarIcon, EyeIcon, ShoppingBagIcon, UsersIcon, StarIcon } from './IconComponents';
 
 interface VendorAnalyticsScreenProps {
     onBack: () => void;
-    isProfilePromoted: boolean;
 }
 
-const VendorAnalyticsScreen: React.FC<VendorAnalyticsScreenProps> = ({ onBack, isProfilePromoted }) => (
-    <div className="w-full h-full flex flex-col bg-[var(--bg-main)] text-[var(--text-primary)]">
-        <Header title="Visão Geral" onBack={onBack} />
-        <main className="flex-grow overflow-y-auto pt-16 p-4 space-y-6 animate-fadeIn">
-            <div>
-                <h2 className="text-lg font-bold text-[var(--text-secondary)] mb-2">Desempenho Geral</h2>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="bg-[var(--bg-secondary)] p-4 rounded-lg border border-[var(--border-secondary)]">
-                        <h3 className="text-sm font-bold text-[var(--text-secondary)]">Visitas ao Perfil (30d)</h3>
-                        <p className="text-3xl font-bold text-[var(--accent-primary)] text-glow">12,8K</p>
-                        <p className="text-sm text-green-400">+15%</p>
-                    </div>
-                    <div className="bg-[var(--bg-secondary)] p-4 rounded-lg border border-[var(--border-secondary)]">
-                        <h3 className="text-sm font-bold text-[var(--text-secondary)]">Usos no Provador (30d)</h3>
-                        <p className="text-3xl font-bold text-[var(--accent-primary)] text-glow">4,2K</p>
-                        <p className="text-sm text-green-400">+22%</p>
-                    </div>
-                    <div className="bg-[var(--bg-secondary)] p-4 rounded-lg border border-[var(--border-secondary)]">
-                        <h3 className="text-sm font-bold text-[var(--text-secondary)]">Novos Afiliados (30d)</h3>
-                        <p className="text-3xl font-bold text-[var(--accent-primary)] text-glow">8</p>
-                        <p className="text-sm text-green-400">+5%</p>
-                    </div>
-                    <div className="bg-[var(--bg-secondary)] p-4 rounded-lg border border-[var(--border-secondary)]">
-                        <h3 className="text-sm font-bold text-[var(--text-secondary)]">Vendas Totais (30d)</h3>
-                        <p className="text-3xl font-bold text-[var(--accent-primary)] text-glow">{(5670).toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
-                        <p className="text-sm text-red-400">-2%</p>
-                    </div>
-                </div>
+const StatCard: React.FC<{ title: string; value: string | number; trend: string; isPositive: boolean; icon: React.ReactNode }> = ({ title, value, trend, isPositive, icon }) => (
+    <div className="bg-[var(--bg-secondary)] p-4 rounded-2xl border border-[var(--border-primary)] shadow-sm">
+        <div className="flex justify-between items-start mb-2">
+            <div className="p-2 rounded-lg bg-[var(--accent-primary)]/10 text-[var(--accent-primary)]">
+                {icon}
             </div>
-
-            {isProfilePromoted ? (
-                <div>
-                    <h2 className="text-lg font-bold text-[var(--text-secondary)] mb-2">Desempenho da Promoção (Ativa)</h2>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-amber-600/10 p-4 rounded-lg border border-amber-500/30">
-                            <h3 className="text-sm font-bold text-amber-300">Alcance</h3>
-                            <p className="text-3xl font-bold text-amber-400 text-glow">2.315</p>
-                            <p className="text-sm text-amber-200">pessoas alcançadas</p>
-                        </div>
-                        <div className="bg-amber-600/10 p-4 rounded-lg border border-amber-500/30">
-                            <h3 className="text-sm font-bold text-amber-300">Cliques no Perfil</h3>
-                            <p className="text-3xl font-bold text-amber-400 text-glow">142</p>
-                            <p className="text-sm text-amber-200">visitas da promoção</p>
-                        </div>
-                        <div className="bg-amber-600/10 p-4 rounded-lg border border-amber-500/30 col-span-2">
-                            <h3 className="text-sm font-bold text-amber-300">Orçamento Gasto</h3>
-                            <p className="text-3xl font-bold text-amber-400 text-glow">{(8.50).toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })} / {(20.00).toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
-                            <div className="w-full h-2 bg-amber-900/50 rounded-full mt-2 overflow-hidden"><div className="w-[42.5%] h-full bg-amber-400 rounded-full"></div></div>
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                 <div className="bg-[var(--bg-secondary)] p-6 rounded-lg border border-dashed border-[var(--border-secondary)] text-center">
-                    <ChartBarIcon className="w-12 h-12 mx-auto text-[var(--text-secondary)] mb-2" />
-                    <h3 className="font-bold text-[var(--text-primary)]">Promova seu perfil</h3>
-                    <p className="text-sm text-[var(--text-secondary)] mt-1">Ative uma promoção para ver as estatísticas de desempenho aqui.</p>
-                </div>
-            )}
-
-            <div className="bg-[var(--bg-secondary)] p-4 rounded-lg border border-[var(--border-secondary)]">
-                <h3 className="text-sm font-bold text-[var(--text-secondary)] mb-2">Vendas por Categoria</h3>
-                <div className="space-y-3">
-                    <div className="flex items-center">
-                        <span className="w-20 text-xs uppercase text-[var(--text-tertiary)]">T-shirts</span>
-                        <div className="flex-grow h-2 bg-zinc-700 rounded-full"><div className="w-[80%] h-full bg-[var(--accent-primary)] rounded-full"></div></div>
-                    </div>
-                    <div className="flex items-center">
-                        <span className="w-20 text-xs uppercase text-[var(--text-tertiary)]">Calças</span>
-                        <div className="flex-grow h-2 bg-zinc-700 rounded-full"><div className="w-[60%] h-full bg-[var(--accent-primary)] rounded-full"></div></div>
-                    </div>
-                    <div className="flex items-center">
-                        <span className="w-20 text-xs uppercase text-[var(--text-tertiary)]">Ténis</span>
-                        <div className="flex-grow h-2 bg-zinc-700 rounded-full"><div className="w-[45%] h-full bg-[var(--accent-primary)] rounded-full"></div></div>
-                    </div>
-                </div>
-            </div>
-        </main>
+            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isPositive ? 'bg-green-500/10 text-green-400' : 'bg-zinc-500/10 text-zinc-400'}`}>
+                {trend}
+            </span>
+        </div>
+        <h3 className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">{title}</h3>
+        <p className="text-2xl font-black text-[var(--text-primary)] mt-1">{value}</p>
     </div>
 );
+
+const VendorAnalyticsScreen: React.FC<VendorAnalyticsScreenProps> = ({ onBack }) => {
+    return (
+        <div className="w-full h-full flex flex-col bg-[var(--bg-main)] text-[var(--text-primary)]">
+            <Header title="Visão Geral" onBack={onBack} />
+            <main className="flex-grow overflow-y-auto pt-16 p-4 space-y-6 animate-fadeIn pb-24">
+                
+                {/* Métricas Zeradas para Novo Usuário */}
+                <div className="grid grid-cols-2 gap-4">
+                    <StatCard title="Vendas Totais" value="0" trend="0%" isPositive={true} icon={<ShoppingBagIcon className="w-5 h-5" />} />
+                    <StatCard title="Visitas" value="0" trend="0%" isPositive={true} icon={<EyeIcon className="w-5 h-5" />} />
+                    <StatCard title="Novos Seguidores" value="0" trend="0%" isPositive={true} icon={<UsersIcon className="w-5 h-5" />} />
+                    <StatCard title="Engajamento" value="0%" trend="0%" isPositive={true} icon={<StarIcon className="w-5 h-5" />} />
+                </div>
+
+                {/* Estrutura de Funil Pronta */}
+                <div className="bg-[var(--bg-secondary)] p-5 rounded-2xl border border-[var(--border-primary)]">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-secondary)] mb-4">Funil de Conversão</h3>
+                    <div className="space-y-4 opacity-40">
+                        <div className="relative">
+                            <div className="flex justify-between text-[10px] font-bold mb-1 uppercase">
+                                <span>Visualizações</span>
+                                <span>0</span>
+                            </div>
+                            <div className="w-full h-2 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
+                                <div className="h-full bg-[var(--accent-primary)] w-0"></div>
+                            </div>
+                        </div>
+                        <div className="relative pl-4">
+                            <div className="flex justify-between text-[10px] font-bold mb-1 uppercase">
+                                <span>Provador IA</span>
+                                <span>0</span>
+                            </div>
+                            <div className="w-full h-2 bg-[var(--bg-tertiary)] rounded-full overflow-hidden border-l border-[var(--accent-primary)]">
+                                <div className="h-full bg-[var(--accent-primary)]/50 w-0"></div>
+                            </div>
+                        </div>
+                        <div className="relative pl-8">
+                            <div className="flex justify-between text-[10px] font-bold mb-1 uppercase">
+                                <span>Vendas</span>
+                                <span>0</span>
+                            </div>
+                            <div className="w-full h-2 bg-[var(--bg-tertiary)] rounded-full overflow-hidden border-l border-green-500">
+                                <div className="h-full bg-green-500 w-0"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <p className="text-[10px] text-center text-zinc-500 mt-4 font-medium uppercase italic">Aguardando as primeiras interações dos clientes...</p>
+                </div>
+
+                {/* Gráfico de Desempenho Vazio */}
+                <div className="bg-[var(--bg-secondary)] p-5 rounded-2xl border border-[var(--border-primary)]">
+                    <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-secondary)] mb-6">Desempenho Semanal</h3>
+                    <div className="flex items-end justify-between h-24 gap-2">
+                        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                            <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                                <div className="w-full bg-[var(--bg-tertiary)] rounded-t-sm h-1"></div>
+                                <span className="text-[8px] font-bold text-zinc-600">D{i}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+            </main>
+            {/* Update Confirmation Seal */}
+            <div className="fixed bottom-24 right-4 bg-green-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg z-50 animate-bounce flex items-center gap-1">
+                <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                SISTEMA PRONTO
+            </div>
+        </div>
+    );
+};
 
 export default VendorAnalyticsScreen;

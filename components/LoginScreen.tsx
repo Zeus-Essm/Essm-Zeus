@@ -52,15 +52,31 @@ const LoginScreen: React.FC = () => {
 
     return (
         <div className="relative flex flex-col items-center justify-center min-h-full w-full bg-[var(--bg-main)] overflow-hidden p-8 animate-fadeIn">
-            {/* Background elements - Cleaned up */}
+            {/* Background elements */}
             <div className="absolute top-0 left-0 w-full h-64 bg-gradient-to-b from-amber-500/5 to-transparent pointer-events-none"></div>
             <div className="absolute -top-24 -left-24 w-64 h-64 bg-amber-400/5 rounded-full blur-3xl"></div>
             
             <div className="w-full max-w-sm z-10">
-                <div className="flex flex-col items-center mb-14">
-                    <div className="w-24 h-24 p-1 bg-white rounded-[2rem] shadow-2xl shadow-amber-500/10 border border-zinc-100 flex items-center justify-center animate-logo-pulse">
-                        <img src="https://i.postimg.cc/XJf6gckX/Pump_STARTAP.png" alt="PUMP Logo" className="w-16 h-auto" />
+                <div className="flex flex-col items-center mb-10">
+                    <div className="w-20 h-20 p-1 bg-white rounded-2xl shadow-2xl shadow-amber-500/10 border border-zinc-100 flex items-center justify-center animate-logo-pulse">
+                        <img src="https://i.postimg.cc/XJf6gckX/Pump_STARTAP.png" alt="PUMP Logo" className="w-14 h-auto" />
                     </div>
+                </div>
+
+                {/* Tab Switcher */}
+                <div className="flex p-1 bg-zinc-100 dark:bg-zinc-900 rounded-2xl mb-8 border border-zinc-200 dark:border-zinc-800">
+                    <button 
+                        onClick={() => setIsSignUp(false)}
+                        className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${!isSignUp ? 'bg-white dark:bg-zinc-800 text-black dark:text-white shadow-md' : 'text-zinc-400 hover:text-zinc-600'}`}
+                    >
+                        Entrar
+                    </button>
+                    <button 
+                        onClick={() => setIsSignUp(true)}
+                        className={`flex-1 py-3 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${isSignUp ? 'bg-white dark:bg-zinc-800 text-black dark:text-white shadow-md' : 'text-zinc-400 hover:text-zinc-600'}`}
+                    >
+                        Criar Conta
+                    </button>
                 </div>
                 
                 {error && (
@@ -78,7 +94,7 @@ const LoginScreen: React.FC = () => {
                             placeholder="seu@email.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full p-4 bg-zinc-50/50 rounded-2xl border border-zinc-100 focus:border-[var(--accent-primary)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/5 transition-all text-sm font-semibold text-black placeholder:text-zinc-300 shadow-inner"
+                            className="w-full p-4 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800 focus:border-[var(--accent-primary)] focus:bg-white dark:focus:bg-zinc-900 focus:outline-none focus:ring-4 focus:ring-amber-500/5 transition-all text-sm font-semibold text-[var(--text-primary)] placeholder:text-zinc-300 shadow-inner"
                             disabled={loading}
                             required
                         />
@@ -94,7 +110,7 @@ const LoginScreen: React.FC = () => {
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full p-4 bg-zinc-50/50 rounded-2xl border border-zinc-100 focus:border-[var(--accent-primary)] focus:bg-white focus:outline-none focus:ring-4 focus:ring-amber-500/5 transition-all text-sm font-semibold text-black placeholder:text-zinc-300 shadow-inner"
+                            className="w-full p-4 bg-zinc-50/50 dark:bg-zinc-900/50 rounded-2xl border border-zinc-100 dark:border-zinc-800 focus:border-[var(--accent-primary)] focus:bg-white dark:focus:bg-zinc-900 focus:outline-none focus:ring-4 focus:ring-amber-500/5 transition-all text-sm font-semibold text-[var(--text-primary)] placeholder:text-zinc-300 shadow-inner"
                             disabled={loading}
                             required
                         />
@@ -120,29 +136,25 @@ const LoginScreen: React.FC = () => {
                 </form>
 
                 <div className="my-8 flex items-center gap-4">
-                    <div className="flex-grow h-px bg-zinc-100"></div>
+                    <div className="flex-grow h-px bg-zinc-100 dark:bg-zinc-800"></div>
                     <span className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">ou</span>
-                    <div className="flex-grow h-px bg-zinc-100"></div>
+                    <div className="flex-grow h-px bg-zinc-100 dark:bg-zinc-800"></div>
                 </div>
                 
                 <button
                     onClick={() => handleSocialLogin('google')}
-                    className="w-full flex items-center justify-center gap-3 p-4 bg-white text-black rounded-2xl border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 transition-all shadow-sm active:scale-98"
+                    className="w-full flex items-center justify-center gap-3 p-4 bg-white dark:bg-zinc-900 text-[var(--text-primary)] rounded-2xl border border-zinc-200 dark:border-zinc-800 hover:border-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all shadow-sm active:scale-98"
                     disabled={loading}
                 >
                     <GoogleIcon className="w-5 h-5" />
-                    <span className="font-bold text-sm">Entrar com Google</span>
+                    <span className="font-bold text-sm">Continuar com Google</span>
                 </button>
-                
-                <p className="mt-12 text-center">
-                    <span className="text-zinc-400 text-xs font-semibold">{isSignUp ? 'Já tem uma conta?' : 'Ainda não é membro?'}</span>
-                    <button 
-                        onClick={() => setIsSignUp(!isSignUp)} 
-                        className="ml-2 text-xs font-black text-black uppercase underline decoration-amber-500 decoration-2 underline-offset-4 hover:text-amber-600 transition-colors"
-                    >
-                        {isSignUp ? 'Faça Login' : 'Cadastre-se Grátis'}
-                    </button>
-                </p>
+            </div>
+
+            {/* Update Confirmation Seal */}
+            <div className="fixed top-6 right-6 bg-green-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg z-50 flex items-center gap-1.5 animate-bounce">
+                <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
+                LOGIN ATUALIZADO
             </div>
 
             {/* Legal Links */}
