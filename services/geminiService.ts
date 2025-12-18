@@ -45,34 +45,10 @@ const imageUrlToDataUrl = async (url: string): Promise<string> => {
 
 /**
  * Normalizes the image to a square aspect ratio (1:1) by adding black bars.
- * This is crucial for consistent results from the image generation model.
+ * Updated: Now returns the original image to avoid black bars as requested.
  */
 export const normalizeImageAspectRatio = async (dataUrl: string): Promise<string> => {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-            const size = Math.max(img.width, img.height);
-            const canvas = document.createElement('canvas');
-            canvas.width = size;
-            canvas.height = size;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) {
-                return reject(new Error('Não foi possível obter o contexto do canvas.'));
-            }
-            // Fill background with black
-            ctx.fillStyle = 'black';
-            ctx.fillRect(0, 0, size, size);
-
-            // Center the image
-            const x = (size - img.width) / 2;
-            const y = (size - img.height) / 2;
-            ctx.drawImage(img, x, y);
-
-            resolve(canvas.toDataURL('image/jpeg', 0.95));
-        };
-        img.onerror = () => reject(new Error('Falha ao carregar a imagem para normalização.'));
-        img.src = dataUrl;
-    });
+    return dataUrl; // Mantém a imagem original sem adicionar barras pretas
 };
 
 const extractImageFromResponse = (response: GenerateContentResponse): string => {

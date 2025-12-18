@@ -1,9 +1,10 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import type { Post, Item, Story, MarketplaceType, Category, Profile, Comment, BusinessProfile } from '../types';
 import { CATEGORIES, INITIAL_POSTS } from '../constants';
 import Header from './Header';
 import PostCard from './PostCard';
-import { PlusIcon } from './IconComponents';
+import { PlusIcon, UserIcon } from './IconComponents';
 import ImageViewModal from './ImageViewModal';
 import ShopTheLookModal from './ShopTheLookModal';
 import CommentsModal from './CommentsModal';
@@ -33,11 +34,17 @@ interface FeedScreenProps {
 const YourStoryCard: React.FC<{ profileImage: string | null }> = ({ profileImage }) => (
     <div className="flex-shrink-0 flex flex-col items-center gap-1.5 w-24 cursor-pointer group snap-start">
         <div className="relative w-20 h-20">
-             <img 
-                src={profileImage || 'https://i.pravatar.cc/150?u=me'} 
-                alt="Seu story"
-                className="w-full h-full rounded-full object-cover"
-            />
+            <div className="w-full h-full rounded-full bg-zinc-800 border-2 border-[var(--border-primary)] overflow-hidden flex items-center justify-center">
+                {profileImage ? (
+                    <img 
+                        src={profileImage} 
+                        alt="Seu story"
+                        className="w-full h-full object-cover"
+                    />
+                ) : (
+                    <UserIcon className="w-10 h-10 text-zinc-600" />
+                )}
+            </div>
             <div className="absolute bottom-0 right-0 w-7 h-7 bg-[var(--accent-primary)] rounded-full flex items-center justify-center border-2 border-[var(--bg-main)] group-hover:bg-amber-600 transition-colors">
               <PlusIcon className="w-4 h-4 text-[var(--accent-primary-text)]" />
             </div>
@@ -134,14 +141,12 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
     };
   }, [featuredCategories.length]);
   
-  // Keep commentingPost state in sync with the main posts state
   useEffect(() => {
     if (commentingPost) {
         const updatedPost = posts.find(p => p.id === commentingPost.id);
         if (updatedPost) {
             setCommentingPost(updatedPost);
         } else {
-            // The post might have been deleted, so close the modal
             setCommentingPost(null);
         }
     }
@@ -202,7 +207,6 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
             onSearchClick={onSearchClick}
         />
         <div className="flex-grow pt-16 overflow-y-auto scroll-smooth pb-20">
-          {/* Stories Section */}
           <div className="py-4 border-b border-[var(--border-primary)]">
             <div className="flex items-start space-x-4 px-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory scroll-smooth">
               <YourStoryCard profileImage={profile?.profile_image_url || null} />
@@ -215,7 +219,6 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
             </div>
           </div>
           
-          {/* Featured Categories (Highlights) Section */}
           <div className="relative border-b border-[var(--border-primary)] py-4">
             <div className="px-4 flex justify-between items-center mb-3">
                 <button
@@ -288,7 +291,6 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
             )}
           </div>
           
-           {/* For You Section */}
           <div className="px-4 pt-4">
               <h2 className="text-xl font-bold text-[var(--accent-primary)] text-glow tracking-wide">Para você</h2>
           </div>

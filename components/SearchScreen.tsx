@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { ArrowLeftIcon, SearchIcon } from './IconComponents';
+import { ArrowLeftIcon, SearchIcon, UserIcon } from './IconComponents';
 import type { Post, Profile, Item, MarketplaceType } from '../types';
 import ImageViewModal from './ImageViewModal';
 import QuickViewModal from './QuickViewModal';
@@ -144,7 +144,13 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                                                 onClick={() => onViewProfile(profile.id)}
                                                 className="w-full flex items-center gap-4 p-3 text-left hover:bg-[var(--bg-tertiary)] transition-colors"
                                             >
-                                                <img src={profile.profile_image_url || 'https://i.postimg.cc/jSVNgmm4/IMG-2069.jpg'} alt={profile.username} className="w-12 h-12 rounded-full object-cover"/>
+                                                <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden border border-zinc-700">
+                                                    {profile.profile_image_url ? (
+                                                        <img src={profile.profile_image_url} alt={profile.username} className="w-full h-full object-cover"/>
+                                                    ) : (
+                                                        <UserIcon className="w-6 h-6 text-zinc-600" />
+                                                    )}
+                                                </div>
                                                 <div>
                                                     <p className="font-semibold">{profile.username}</p>
                                                 </div>
