@@ -80,7 +80,7 @@ const App: React.FC = () => {
 
     // App Navigation and UI state
     const [currentScreen, setCurrentScreen] = React.useState<Screen>(Screen.Login);
-    const [theme, setTheme] = React.useState<'light' | 'dark'>('light');
+    const [theme, setTheme] = React.useState<'light' | 'dark'>('light'); // Light is default
     const [viewedProfileId, setViewedProfileId] = React.useState<string | null>(null);
     const [userImage, setUserImage] = React.useState<string | null>(null);
     const [generatedImage, setGeneratedImage] = React.useState<string | null>(null);
@@ -147,6 +147,14 @@ const App: React.FC = () => {
         return () => subscription.unsubscribe();
     }, []);
 
+    React.useEffect(() => {
+        const root = window.document.documentElement;
+        root.classList.remove('light', 'dark');
+        // If theme is 'light', we don't strictly need a class because :root is light.
+        // But adding it keeps logic consistent.
+        root.classList.add(theme);
+    }, [theme]);
+
     const fetchProfile = async (userId: string) => {
         try {
             const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).single();
@@ -192,12 +200,6 @@ const App: React.FC = () => {
             setAuthLoading(false);
         }
     };
-
-    React.useEffect(() => {
-        const root = window.document.documentElement;
-        root.classList.remove('light', 'dark');
-        root.classList.add(theme);
-    }, [theme]);
 
     const toggleTheme = () => {
         setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');

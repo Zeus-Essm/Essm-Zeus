@@ -11,27 +11,7 @@
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap');
       
-      :root { /* Dark Mode Defaults */
-        --bg-main: #000000;
-        --bg-secondary: #0a0a0a;
-        --bg-tertiary: #374151; /* gray-700 for buttons */
-        --bg-header: rgba(0, 0, 0, 0.5);
-        --bg-modal-overlay: rgba(0, 0, 0, 0.8);
-
-        --text-primary: #f3f4f6; /* gray-100 */
-        --text-secondary: #a1a1aa; /* zinc-400 */
-        --text-tertiary: #d4d4d8; /* zinc-300 */
-        --text-inverted: #000000;
-
-        --accent-primary: #FBBF24; /* amber-400 */
-        --accent-primary-glow: rgba(251, 191, 36, 0.5);
-        --accent-primary-text: #1f2937; /* gray-800 */
-        
-        --border-primary: rgba(251, 191, 36, 0.2);
-        --border-secondary: rgba(251, 191, 36, 0.1);
-      }
-
-      html.light {
+      :root { /* Light Mode Defaults (Now the base) */
         --bg-main: #FFFFFF; /* Pure White Background */
         --bg-secondary: #f9fafb; /* off-white (gray-50) */
         --bg-tertiary: #f3f4f6; /* gray-100 for buttons */
@@ -49,6 +29,26 @@
         
         --border-primary: #e5e7eb; /* Gray-200 */
         --border-secondary: #f3f4f6; /* Gray-100 */
+      }
+
+      html.dark { /* Dark Mode Overrides */
+        --bg-main: #000000;
+        --bg-secondary: #0a0a0a;
+        --bg-tertiary: #374151; /* gray-700 for buttons */
+        --bg-header: rgba(0, 0, 0, 0.5);
+        --bg-modal-overlay: rgba(0, 0, 0, 0.8);
+
+        --text-primary: #f3f4f6; /* gray-100 */
+        --text-secondary: #a1a1aa; /* zinc-400 */
+        --text-tertiary: #d4d4d8; /* zinc-300 */
+        --text-inverted: #000000;
+
+        --accent-primary: #FBBF24; /* amber-400 */
+        --accent-primary-glow: rgba(251, 191, 36, 0.5);
+        --accent-primary-text: #1f2937; /* gray-800 */
+        
+        --border-primary: rgba(251, 191, 36, 0.2);
+        --border-secondary: rgba(251, 191, 36, 0.1);
       }
       
       html, body, #root {
@@ -104,7 +104,7 @@
           transform: scale(1);
         }
         50% {
-          filter: drop-shadow(0 0 20px var(--accent-primary));
+          filter: drop-shadow(0 0 15px var(--accent-primary));
           transform: scale(1.05);
         }
       }
