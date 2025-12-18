@@ -14,7 +14,8 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ conversation, currentUser, onBa
   // Mock messages for this specific conversation
   const [messages, setMessages] = useState<Message[]>([
     { id: 'm1', text: 'Olá! Adorei seu último look, ficou incrível!', senderId: conversation.participant.id, timestamp: new Date(Date.now() - 1000 * 60 * 6).toISOString() },
-    { id: 'm2', text: 'Obrigado! Fico feliz que tenha gostado 😊', senderId: currentUser.id, timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString() },
+    // Fix: access user_id instead of id on Profile type
+    { id: 'm2', text: 'Obrigado! Fico feliz que tenha gostado 😊', senderId: currentUser.user_id, timestamp: new Date(Date.now() - 1000 * 60 * 5).toISOString() },
   ]);
   const [newMessage, setNewMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -35,7 +36,8 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ conversation, currentUser, onBa
     const messageToSend: Message = {
       id: `msg_user_${Date.now()}`,
       text: newMessage,
-      senderId: currentUser.id,
+      // Fix: access user_id instead of id on Profile type
+      senderId: currentUser.user_id,
       timestamp: new Date().toISOString(),
     };
     
@@ -61,7 +63,8 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ conversation, currentUser, onBa
           newMessages.push({
               id: `msg_user_${Date.now()}`,
               text: userInput,
-              senderId: currentUser.id,
+              // Fix: access user_id instead of id on Profile type
+              senderId: currentUser.user_id,
               timestamp: new Date().toISOString(),
           });
       }
@@ -117,7 +120,8 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ conversation, currentUser, onBa
       {/* Messages Area */}
       <main className="flex-grow overflow-y-auto pt-16 pb-4 px-4 space-y-4">
         {messages.map(msg => {
-          const isSentByMe = msg.senderId === currentUser.id;
+          // Fix: access user_id instead of id on Profile type
+          const isSentByMe = msg.senderId === currentUser.user_id;
           return (
             <div key={msg.id} className={`flex ${isSentByMe ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-xs md:max-w-md lg:max-w-lg p-3 rounded-2xl ${isSentByMe ? 'bg-[var(--accent-primary)] text-white rounded-br-lg' : 'bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-bl-lg'}`}>

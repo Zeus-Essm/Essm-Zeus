@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { ArrowLeftIcon, SearchIcon, UserIcon } from './IconComponents';
 import type { Post, Profile, Item, MarketplaceType } from '../types';
@@ -49,7 +48,8 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
         posts.forEach(post => {
             if (!profileMap.has(post.user.id)) {
                 profileMap.set(post.user.id, {
-                    id: post.user.id,
+                    // Fix: use user_id instead of id in Profile object literal
+                    user_id: post.user.id,
                     username: post.user.name,
                     profile_image_url: post.user.avatar,
                     bio: null,
@@ -140,8 +140,10 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                                     {filteredProfiles.length > 0 ? (
                                         filteredProfiles.map(profile => (
                                             <button 
-                                                key={profile.id}
-                                                onClick={() => onViewProfile(profile.id)}
+                                                // Fix: access user_id instead of id on Profile type
+                                                key={profile.user_id}
+                                                // Fix: access user_id instead of id on Profile type
+                                                onClick={() => onViewProfile(profile.user_id)}
                                                 className="w-full flex items-center gap-4 p-3 text-left hover:bg-[var(--bg-tertiary)] transition-colors"
                                             >
                                                 <div className="w-12 h-12 rounded-full overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center">

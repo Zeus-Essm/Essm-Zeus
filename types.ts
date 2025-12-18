@@ -1,5 +1,4 @@
 
-
 export type MarketplaceType = 'fashion' | 'restaurant' | 'supermarket' | 'beauty' | 'technology' | 'decoration';
 
 export interface User {
@@ -84,7 +83,7 @@ export interface SavedLook {
 }
 
 export interface Profile {
-  id: string;
+  user_id: string; // Identidade única agora é user_id
   username: string;
   bio: string | null;
   profile_image_url: string | null;

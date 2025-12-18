@@ -150,7 +150,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   const [localProfilePosts, setLocalProfilePosts] = useState<Post[]>([]);
   const [viewingPostIndex, setViewingPostIndex] = useState<number | null>(null);
   const [isEditingBio, setIsEditingBio] = useState(false);
-  const isMyProfile = !viewedProfileId || viewedProfileId === loggedInProfile.id;
+  // Alterado para comparar user_id
+  const isMyProfile = !viewedProfileId || viewedProfileId === loggedInProfile.user_id;
   const profileImageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -163,7 +164,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
       setLoading(true);
       setError(null);
       try {
-        const { data, error } = await supabase.from('profiles').select('*').eq('id', viewedProfileId).single();
+        // Substituído 'id' por 'user_id'
+        const { data, error } = await supabase.from('profiles').select('*').eq('user_id', viewedProfileId).single();
         if (error) throw error;
         setProfile(data);
       } catch (err: any) {
@@ -176,7 +178,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   }, [viewedProfileId, loggedInProfile]);
   
   useEffect(() => {
-      if (profile) setLocalProfilePosts(posts.filter(p => p.user.id === profile.id));
+      // Posts do usuário usam profiles.user_id como referência no objeto User
+      if (profile) setLocalProfilePosts(posts.filter(p => p.user.id === profile.user_id));
       else setLocalProfilePosts([]);
   }, [profile, posts]);
 
@@ -300,13 +303,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                  <div className="flex items-center gap-2">
                     {isFollowing ? (
                         <button 
-                            onClick={() => onToggleFollow(profile.id)} 
+                            onClick={() => onToggleFollow(profile.user_id)} 
                             className="flex-1 py-2.5 text-xs font-bold bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg border border-[var(--border-primary)] transition-all"
                         >
                             Seguindo
                         </button>
                     ) : (
-                        <GradientButton onClick={() => onToggleFollow(profile.id)} className="flex-1 !py-2.5 text-xs">Seguir</GradientButton>
+                        <GradientButton onClick={() => onToggleFollow(profile.user_id)} className="flex-1 !py-2.5 text-xs">Seguir</GradientButton>
                     )}
                     <GradientButton onClick={onNavigateToChat} className="flex-1 !py-2.5 text-xs">Mensagem</GradientButton>
                 </div>
