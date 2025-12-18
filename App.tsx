@@ -88,7 +88,11 @@ const App: React.FC = () => {
     const [businessProfile, setBusinessProfile] = React.useState<BusinessProfile | null>(null);
     const [authLoading, setAuthLoading] = React.useState(false); // Set to false directly
 
-    // App Navigation and UI state
+    // Real Follow System State
+    const [followingIds, setFollowingIds] = React.useState<Set<string>>(new Set());
+    const [followersCountMap, setFollowersCountMap] = React.useState<Record<string, number>>({});
+
+    // App Navigation and UI state - Starting strictly empty
     const [currentScreen, setCurrentScreen] = React.useState<Screen>(Screen.AccountTypeSelection);
     const [theme, setTheme] = React.useState<'light' | 'dark'>('dark');
     const [viewedProfileId, setViewedProfileId] = React.useState<string | null>(null);
@@ -101,8 +105,10 @@ const App: React.FC = () => {
     const [navigationStack, setNavigationStack] = React.useState<(Category | SubCategory)[]>([]);
     const [collectionIdentifier, setCollectionIdentifier] = React.useState<{id: string, name: string, type: MarketplaceType} | null>(null);
     const [wornItems, setWornItems] = React.useState<Item[]>([]);
-    const [posts, setPosts] = React.useState<Post[]>(INITIAL_POSTS);
-    const [stories, setStories] = React.useState<Story[]>(INITIAL_STORIES);
+    
+    // Core data lists initialized strictly empty for Real Space Mode
+    const [posts, setPosts] = React.useState<Post[]>([]);
+    const [stories, setStories] = React.useState<Story[]>([]);
     const [savedLooks, setSavedLooks] = React.useState<SavedLook[]>([]);
     const [cartItems, setCartItems] = React.useState<Item[]>([]);
     const [toast, setToast] = React.useState<string | null>(null);
@@ -117,7 +123,7 @@ const App: React.FC = () => {
     // Notifications & Messages State
     const [notifications, setNotifications] = React.useState<AppNotification[]>([]);
     const [showNotificationsPanel, setShowNotificationsPanel] = React.useState(false);
-    const [conversations, setConversations] = React.useState<Conversation[]>(INITIAL_CONVERSATIONS);
+    const [conversations, setConversations] = React.useState<Conversation[]>([]);
     const [selectedConversation, setSelectedConversation] = React.useState<Conversation | null>(null);
     const [commentingPost, setCommentingPost] = React.useState<Post | null>(null);
     const [isCaptioning, setIsCaptioning] = React.useState(false);
@@ -125,7 +131,7 @@ const App: React.FC = () => {
     // Vendor State & Promotion State
     const [showVendorMenu, setShowVendorMenu] = React.useState(false);
     const [promotedContent, setPromotedContent] = React.useState<{ items: {id: string, image: string}[] } | null>(null);
-    const [collaborationRequests, setCollaborationRequests] = React.useState<CollaborationPost[]>(INITIAL_COLLABORATION_REQUESTS);
+    const [collaborationRequests, setCollaborationRequests] = React.useState<CollaborationPost[]>([]);
     const [promotionModalConfig, setPromotionModalConfig] = React.useState<{ isOpen: boolean; accountType: 'personal' | 'business' | null }>({ isOpen: false, accountType: null });
     
     // Verification State
@@ -161,25 +167,6 @@ const App: React.FC = () => {
         setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
     };
 
-    // Removed the auth listener effect as it would redirect to login screen
-    
-    React.useEffect(() => {
-        if (!session) return;
-        const timer = setTimeout(() => {
-            setConversations(prevConvos => {
-                const newConvos = JSON.parse(JSON.stringify(prevConvos));
-                const convoToUpdate = newConvos.find((c: Conversation) => c.id === 'conv1');
-                if (convoToUpdate) {
-                    convoToUpdate.unreadCount += 1;
-                    convoToUpdate.lastMessage.text = "Bem-vindo ao seu espaço!";
-                    convoToUpdate.lastMessage.timestamp = new Date().toISOString();
-                }
-                return newConvos;
-            });
-        }, 3000);
-        return () => clearTimeout(timer);
-    }, [session]);
-    
     React.useEffect(() => {
         if (error) {
             const timer = setTimeout(() => {
@@ -188,6 +175,30 @@ const App: React.FC = () => {
             return () => clearTimeout(timer);
         }
     }, [error]);
+
+    const handleToggleFollow = (targetId: string) => {
+        setFollowingIds(prev => {
+            const newSet = new Set(prev);
+            const isFollowing = newSet.has(targetId);
+            
+            if (isFollowing) {
+                newSet.delete(targetId);
+                setFollowersCountMap(prevMap => ({
+                    ...prevMap,
+                    [targetId]: Math.max(0, (prevMap[targetId] || 0) - 1)
+                }));
+                setToast('Deixou de seguir');
+            } else {
+                newSet.add(targetId);
+                setFollowersCountMap(prevMap => ({
+                    ...prevMap,
+                    [targetId]: (prevMap[targetId] || 0) + 1
+                }));
+                setToast('Seguindo');
+            }
+            return newSet;
+        });
+    };
 
     const handleSetAccountType = async (type: 'personal' | 'business') => {
         if (!profile) return;
@@ -212,7 +223,6 @@ const App: React.FC = () => {
     };
 
     const handleSignOut = () => {
-        // In dev mode, we just reset the profile locally
         setProfile({
             ...profile!,
             account_type: null
@@ -223,11 +233,10 @@ const App: React.FC = () => {
 
     const handleUpdateProfile = async (updates: { username?: string, bio?: string }) => {
         setProfile(prev => prev ? { ...prev, ...updates } : null);
-        setToast('Perfil atualizado localmente!');
+        setToast('Perfil atualizado!');
     };
     
     const uploadImage = async (bucket: string, imageDataUrl: string): Promise<string | null> => {
-        // Mock upload for dev mode
         return imageDataUrl;
     };
 
@@ -771,14 +780,14 @@ const App: React.FC = () => {
             case Screen.AccountTypeSelection: return <AccountTypeSelectionScreen onSelect={handleSetAccountType} />;
             case Screen.BusinessOnboarding: return <BusinessOnboardingScreen onComplete={handleCompleteBusinessOnboarding} />;
             case Screen.VendorDashboard:
-                if (businessProfile) return <VendorDashboard businessProfile={businessProfile} onOpenMenu={() => setShowVendorMenu(true)} unreadNotificationCount={unreadNotificationCount} onOpenNotificationsPanel={handleOpenNotificationsPanel} onOpenPromotionModal={() => handleOpenPromotionModal('business')} />;
+                if (businessProfile) return <VendorDashboard businessProfile={businessProfile} onOpenMenu={() => setShowVendorMenu(true)} unreadNotificationCount={unreadNotificationCount} onOpenNotificationsPanel={handleOpenNotificationsPanel} onOpenPromotionModal={() => handleOpenPromotionModal('business')} followersCount={followersCountMap[businessProfile.id] || 0} followingCount={0} />;
                 setCurrentScreen(Screen.BusinessOnboarding); return null;
             case Screen.VendorAnalytics: return <VendorAnalyticsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} isProfilePromoted={!!promotedContent} />;
             case Screen.VendorProducts: if (businessProfile) return <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile} />;
                 setCurrentScreen(Screen.VendorDashboard); return null;
             case Screen.VendorAffiliates: return <VendorAffiliatesScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} />;
              case Screen.VendorCollaborations: return <VendorCollaborationsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} collaborationRequests={collaborationRequests} posts={posts} onApprove={handleApproveCollaboration} onReject={(id) => setCollaborationRequests(prev => prev.map(r => r.id === id ? {...r, status: 'rejected'} : r))} onSponsor={handleSponsorPost} />;
-            case Screen.Home: return <HomeScreen loggedInProfile={profile!} viewedProfileId={viewedProfileId} onUpdateProfileImage={handleUpdateProfileImage} onUpdateProfile={handleUpdateProfile} onSelectCategory={handleSelectCategory} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={handleNavigateToMyLooks} onNavigateToCart={handleNavigateToCart} onNavigateToChat={handleNavigateToChat} onNavigateToSettings={handleNavigateToSettings} onNavigateToRewards={handleNavigateToRewards} onStartTryOn={handleStartTryOn} onSignOut={handleSignOut} isCartAnimating={isCartAnimating} onBack={handleProfileBack} posts={posts} onItemClick={handleItemClick} onViewProfile={handleViewProfile} unreadNotificationCount={unreadNotificationCount} unreadMessagesCount={unreadMessagesCount} onOpenNotificationsPanel={handleOpenNotificationsPanel} />;
+            case Screen.Home: return <HomeScreen loggedInProfile={profile!} viewedProfileId={viewedProfileId} onUpdateProfileImage={handleUpdateProfileImage} onUpdateProfile={handleUpdateProfile} onSelectCategory={handleSelectCategory} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={handleNavigateToMyLooks} onNavigateToCart={handleNavigateToCart} onNavigateToChat={handleNavigateToChat} onNavigateToSettings={handleNavigateToSettings} onNavigateToRewards={handleNavigateToRewards} onStartTryOn={handleStartTryOn} onSignOut={handleSignOut} isCartAnimating={isCartAnimating} onBack={handleProfileBack} posts={posts} onItemClick={handleItemClick} onViewProfile={handleViewProfile} unreadNotificationCount={unreadNotificationCount} unreadMessagesCount={unreadMessagesCount} onOpenNotificationsPanel={handleOpenNotificationsPanel} isFollowing={viewedProfileId ? followingIds.has(viewedProfileId) : false} onToggleFollow={handleToggleFollow} followersCount={viewedProfileId ? followersCountMap[viewedProfileId] || 0 : 0} followingCount={!viewedProfileId ? followingIds.size : 0} />;
             case Screen.Settings: return <SettingsScreen profile={profile!} onBack={handleNavigateToProfile} theme={theme} onToggleTheme={toggleTheme} onNavigateToVerification={handleNavigateToVerification} />;
             case Screen.ImageSourceSelection: return <ImageSourceSelectionScreen onImageUpload={handleImageUpload} onUseCamera={handleUseCamera} onBack={handleNavigateToProfile} />;
             case Screen.SubCategorySelection: if (currentNode) return <SubCategorySelectionScreen node={currentNode} onSelectSubCategory={handleSelectSubCategory} onBack={handleBack} />;
@@ -789,7 +798,7 @@ const App: React.FC = () => {
             case Screen.Result: if (generatedImage && collectionIdentifier) { const categoryItems = ITEMS.filter(item => item.category.startsWith(collectionIdentifier.id.split('_')[0])); return <ResultScreen generatedImage={generatedImage} items={wornItems} categoryItems={categoryItems} onBuy={handleBuyLook} onUndo={handleUndoLastItem} onStartPublishing={handleStartPublishing} onSaveImage={handleSaveImage} onItemSelect={handleItemSelect} onAddMoreItems={handleNavigateToAddMoreItems} onGenerateVideo={handleGenerateVideo} />; }
                 setCurrentScreen(Screen.Home); return null;
             case Screen.Confirmation: return <ConfirmationScreen message={confirmationMessage} onHome={resetToHome} />;
-            case Screen.Feed: return <FeedScreen posts={posts} stories={stories} profile={profile!} businessProfile={businessProfile} isProfilePromoted={!!promotedContent} promotedItems={promotedContent?.items || []} onBack={handleNavigateToProfile} onItemClick={handleItemClick} onAddToCartMultiple={handleAddToCartMultiple} onBuyMultiple={handleBuyLook} onViewProfile={handleViewProfile} onSelectCategory={handleSelectCategory} onLikePost={handleLikePost} onAddComment={handleAddComment} onNavigateToAllHighlights={handleNavigateToAllHighlights} unreadNotificationCount={unreadNotificationCount} onNotificationsClick={handleOpenNotificationsPanel} onSearchClick={handleNavigateToSearch} />;
+            case Screen.Feed: return <FeedScreen posts={posts} stories={stories} profile={profile!} businessProfile={businessProfile} isProfilePromoted={!!promotedContent} promotedItems={promotedContent?.items || []} onBack={handleNavigateToProfile} onItemClick={handleItemClick} onAddToCartMultiple={handleAddToCartMultiple} onBuyMultiple={handleBuyLook} onViewProfile={handleViewProfile} onSelectCategory={handleSelectCategory} onLikePost={handleLikePost} onAddComment={handleAddComment} onNavigateToAllHighlights={handleNavigateToAllHighlights} onStartCreate={handleStartTryOn} unreadNotificationCount={unreadNotificationCount} onNotificationsClick={handleOpenNotificationsPanel} onSearchClick={handleNavigateToSearch} />;
             case Screen.MyLooks: return <MyLooksScreen looks={savedLooks} onBack={handleNavigateToProfile} onItemClick={handleItemClick} onBuyLook={handleBuyLook} onPostLook={handlePostLookFromSaved} />;
             case Screen.Cart: return <CartScreen cartItems={cartItems} onBack={handleNavigateToProfile} onRemoveItem={handleRemoveFromCart} onBuyItem={(item) => handleBuy(item)} onTryOnItem={handleStartNewTryOnSession} onCheckout={() => handleBuyLook(cartItems)} />;
             case Screen.Rewards: return <RewardsScreen onBack={handleNavigateToProfile} points={profile?.reward_points || 0} />;

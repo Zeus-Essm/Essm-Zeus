@@ -23,9 +23,11 @@ interface VendorDashboardProps {
   unreadNotificationCount: number;
   onOpenNotificationsPanel: () => void;
   onOpenPromotionModal: () => void;
+  followersCount: number;
+  followingCount: number;
 }
 
-const VendorDashboard: React.FC<VendorDashboardProps> = ({ businessProfile, onOpenMenu, unreadNotificationCount, onOpenNotificationsPanel, onOpenPromotionModal }) => {
+const VendorDashboard: React.FC<VendorDashboardProps> = ({ businessProfile, onOpenMenu, unreadNotificationCount, onOpenNotificationsPanel, onOpenPromotionModal, followersCount, followingCount }) => {
     const [activeTab, setActiveTab] = useState<'shop' | 'posts'>('shop');
     const [activeGenderTab, setActiveGenderTab] = useState<'male' | 'female' | 'kid'>('male');
     const [activeShopCategory, setActiveShopCategory] = useState<{ id: string; name: string } | null>(null);
@@ -257,8 +259,8 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ businessProfile, onOp
                 
                 <div className="mt-4 py-3 flex justify-around text-center border-y border-[var(--border-primary)]">
                     <div><span className="text-lg font-bold">{vendorItems.length}</span><p className="text-sm text-[var(--text-secondary)]">produtos</p></div>
-                    <div><span className="text-lg font-bold">12,8K</span><p className="text-sm text-[var(--text-secondary)]">seguidores</p></div>
-                    <div><span className="text-lg font-bold">6.989</span><p className="text-sm text-[var(--text-secondary)]">seguindo</p></div>
+                    <div><span className="text-lg font-bold">{followersCount}</span><p className="text-sm text-[var(--text-secondary)]">seguidores</p></div>
+                    <div><span className="text-lg font-bold">{followingCount}</span><p className="text-sm text-[var(--text-secondary)]">seguindo</p></div>
                 </div>
 
                  <div className="px-4 mt-4">

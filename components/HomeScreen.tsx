@@ -105,11 +105,13 @@ interface HomeScreenProps {
   onViewProfile: (profileId: string) => void;
   onNavigateToSettings: () => void;
   onSignOut: () => void;
-  isPreviewingAsVisitor: boolean;
-  onToggleVisitorPreview: () => void;
   unreadNotificationCount: number;
   unreadMessagesCount: number;
   onOpenNotificationsPanel: () => void;
+  isFollowing: boolean;
+  onToggleFollow: (id: string) => void;
+  followersCount: number;
+  followingCount: number;
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({
@@ -134,6 +136,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   unreadNotificationCount,
   unreadMessagesCount,
   onOpenNotificationsPanel,
+  isFollowing,
+  onToggleFollow,
+  followersCount,
+  followingCount
 }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -144,7 +150,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   const [localProfilePosts, setLocalProfilePosts] = useState<Post[]>([]);
   const [viewingPostIndex, setViewingPostIndex] = useState<number | null>(null);
   const [isEditingBio, setIsEditingBio] = useState(false);
-  const [affiliationStatus, setAffiliationStatus] = useState<'none' | 'pending'>('none');
   const isMyProfile = !viewedProfileId || viewedProfileId === loggedInProfile.id;
   const profileImageInputRef = useRef<HTMLInputElement>(null);
 
@@ -286,14 +291,23 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         
         <div className="mt-4 py-3 flex justify-around text-center border-y border-[var(--border-primary)]">
             <div><span className="text-lg font-bold">{localProfilePosts.length}</span><p className="text-sm text-[var(--text-secondary)]">posts</p></div>
-            <div><span className="text-lg font-bold">0</span><p className="text-sm text-[var(--text-secondary)]">seguidores</p></div>
-            <div><span className="text-lg font-bold">0</span><p className="text-sm text-[var(--text-secondary)]">seguindo</p></div>
+            <div><span className="text-lg font-bold">{followersCount}</span><p className="text-sm text-[var(--text-secondary)]">seguidores</p></div>
+            <div><span className="text-lg font-bold">{followingCount}</span><p className="text-sm text-[var(--text-secondary)]">seguindo</p></div>
         </div>
         
         <div className="px-4 mt-4">
             {!isMyProfile && (
                  <div className="flex items-center gap-2">
-                    <GradientButton onClick={() => alert('Seguindo!')} className="flex-1 !py-2.5 text-xs">Seguir</GradientButton>
+                    {isFollowing ? (
+                        <button 
+                            onClick={() => onToggleFollow(profile.id)} 
+                            className="flex-1 py-2.5 text-xs font-bold bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg border border-[var(--border-primary)] transition-all"
+                        >
+                            Seguindo
+                        </button>
+                    ) : (
+                        <GradientButton onClick={() => onToggleFollow(profile.id)} className="flex-1 !py-2.5 text-xs">Seguir</GradientButton>
+                    )}
                     <GradientButton onClick={onNavigateToChat} className="flex-1 !py-2.5 text-xs">Mensagem</GradientButton>
                 </div>
             )}

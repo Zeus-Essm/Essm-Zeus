@@ -26,6 +26,7 @@ interface FeedScreenProps {
   onLikePost: (postId: string) => void;
   onAddComment: (postId: string, text: string) => void;
   onNavigateToAllHighlights: () => void;
+  onStartCreate: () => void; // Nova ação para o estado vazio
   unreadNotificationCount: number;
   onNotificationsClick: () => void;
   onSearchClick: () => void;
@@ -88,6 +89,7 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
     onLikePost,
     onAddComment,
     onNavigateToAllHighlights,
+    onStartCreate,
     unreadNotificationCount,
     onNotificationsClick,
     onSearchClick,
@@ -256,11 +258,14 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
                 ))
             ) : (
                 <div className="p-10 text-center flex flex-col items-center">
-                    <div className="w-20 h-20 bg-[var(--bg-tertiary)] rounded-full flex items-center justify-center mb-4">
-                        <PlusIcon className="w-10 h-10 text-[var(--text-secondary)] opacity-30" />
-                    </div>
-                    <p className="text-[var(--text-secondary)] font-medium">Nenhuma publicação ainda.</p>
-                    <p className="text-sm text-[var(--text-secondary)] opacity-70">Crie e publique seus looks para que outros vejam!</p>
+                    <button 
+                        onClick={onStartCreate}
+                        className="w-20 h-20 bg-[var(--bg-tertiary)] rounded-full flex items-center justify-center mb-4 border-2 border-dashed border-[var(--accent-primary)]/50 hover:bg-[var(--accent-primary)]/10 hover:border-[var(--accent-primary)] transition-all active:scale-95 shadow-lg group"
+                    >
+                        <PlusIcon className="w-10 h-10 text-[var(--accent-primary)] group-hover:scale-110 transition-transform" />
+                    </button>
+                    <p className="text-[var(--text-primary)] font-bold text-lg">Nenhuma publicação ainda.</p>
+                    <p className="text-sm text-[var(--text-secondary)] opacity-70 mt-1 max-w-[200px]">Crie e publique seus looks para que outros vejam!</p>
                 </div>
             )}
           </div>
