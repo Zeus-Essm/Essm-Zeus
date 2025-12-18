@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import type { BusinessProfile, Item, Post, Profile } from '../types';
 import GradientButton from './GradientButton';
 import { INITIAL_VENDOR_ITEMS, VENDOR_POSTS } from '../constants';
-import { CheckCircleIconFilled } from './IconComponents';
+import { CheckCircleIconFilled, UserIcon } from './IconComponents';
 
 const XIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -103,7 +104,13 @@ const PromotionModal: React.FC<PromotionModalProps> = ({ accountType, profile, u
                     <div className="bg-[var(--bg-main)] p-2 rounded-lg">
                         <div className="relative border border-[var(--border-primary)] rounded-lg p-3">
                              <div className="flex items-center gap-3 mb-3">
-                                <img src={profileAvatar || 'https://i.postimg.cc/jSVNgmm4/IMG-2069.jpg'} alt={profileName} className="w-10 h-10 rounded-full object-cover"/>
+                                <div className="w-10 h-10 rounded-full overflow-hidden bg-[var(--bg-tertiary)] flex items-center justify-center">
+                                    {profileAvatar ? (
+                                        <img src={profileAvatar} alt={profileName} className="w-full h-full object-cover"/>
+                                    ) : (
+                                        <UserIcon className="w-6 h-6 text-[var(--text-secondary)] opacity-50" />
+                                    )}
+                                </div>
                                 <div>
                                     <p className="font-bold text-sm">{profileName}</p>
                                     <p className="text-xs text-[var(--text-secondary)]">Patrocinado</p>

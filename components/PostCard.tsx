@@ -1,7 +1,7 @@
 
 import React, { useRef, useEffect, useState } from 'react';
 import type { Post, Item } from '../types';
-import { HeartIcon, ShoppingBagIcon, ChatBubbleIcon, PlayIcon } from './IconComponents';
+import { HeartIcon, ShoppingBagIcon, ChatBubbleIcon, PlayIcon, UserIcon } from './IconComponents';
 
 interface PostCardProps {
   post: Post;
@@ -89,7 +89,13 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
     <div ref={cardRef} className="bg-[var(--bg-main)] flex flex-col animate-fadeIn border-b border-[var(--border-primary)]">
       {/* Card Header */}
       <button onClick={onViewProfile} className="p-3 flex items-center gap-3 text-left hover:bg-[var(--accent-primary)]/10 transition-colors">
-        <img src={post.user.avatar} alt={post.user.name} className="w-10 h-10 rounded-full object-cover border-2 border-zinc-700" />
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center border-2 border-zinc-700">
+            {post.user.avatar ? (
+                <img src={post.user.avatar} alt={post.user.name} className="w-full h-full object-cover" />
+            ) : (
+                <UserIcon className="w-6 h-6 text-[var(--text-secondary)] opacity-50" />
+            )}
+        </div>
         <div>
             <span className="font-bold text-sm text-black">{post.user.name}</span>
             {post.isSponsored && <p className="text-xs text-zinc-900 font-medium">Patrocinado</p>}
@@ -97,7 +103,6 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
       </button>
 
       {/* Post Image or Video */}
-      {/* Updated: Respect original aspect ratio for images (w-full h-auto) */}
       <div className={`relative bg-black overflow-hidden w-full ${post.video ? 'aspect-[9/16]' : ''}`}>
         {post.video ? (
             <>

@@ -144,11 +144,11 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                                                 onClick={() => onViewProfile(profile.id)}
                                                 className="w-full flex items-center gap-4 p-3 text-left hover:bg-[var(--bg-tertiary)] transition-colors"
                                             >
-                                                <div className="w-12 h-12 rounded-full bg-zinc-800 flex items-center justify-center overflow-hidden border border-zinc-700">
+                                                <div className="w-12 h-12 rounded-full overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center">
                                                     {profile.profile_image_url ? (
                                                         <img src={profile.profile_image_url} alt={profile.username} className="w-full h-full object-cover"/>
                                                     ) : (
-                                                        <UserIcon className="w-6 h-6 text-zinc-600" />
+                                                        <UserIcon className="w-6 h-6 text-[var(--text-secondary)] opacity-50" />
                                                     )}
                                                 </div>
                                                 <div>

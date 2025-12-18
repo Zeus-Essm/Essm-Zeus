@@ -1,14 +1,15 @@
 
+// FIX: Replaced placeholder content with a functional LoginScreen component.
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 import GradientButton from './GradientButton';
-import { GoogleIcon, ShieldCheckIcon } from './IconComponents';
+import { FacebookIcon, GoogleIcon } from './IconComponents';
 
 interface LoginScreenProps {
     onContinueAsVisitor: () => void;
 }
 
-const LoginScreen: React.FC<LoginScreenProps> = () => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -40,6 +41,9 @@ const LoginScreen: React.FC<LoginScreenProps> = () => {
         setLoading(true);
         setError(null);
         try {
+            // Configuração crítica para SPA na Vercel:
+            // Redireciona para a origem (raiz) para que o App.tsx capture o hash #access_token
+            // O vercel.json garante que todas as rotas caiam no index.html, e o App.tsx processa o login.
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: provider,
                 options: {
@@ -55,16 +59,11 @@ const LoginScreen: React.FC<LoginScreenProps> = () => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center h-full w-full bg-[var(--bg-main)] text-[var(--text-primary)] p-6 animate-fadeIn relative overflow-hidden">
-            <div className="absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
-                <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                <span className="text-[10px] font-bold text-green-500 uppercase tracking-tighter">Sessão Segura</span>
-            </div>
-
+        <div className="flex flex-col items-center justify-center h-full w-full bg-[var(--bg-main)] text-[var(--text-primary)] p-6 animate-fadeIn">
             <img src="https://i.postimg.cc/XJf6gckX/Pump_STARTAP.png" alt="PUMP Logo" className="w-24 h-auto mb-8 animate-logo-pulse" />
             
-            <h1 className="text-3xl font-bold mb-2 text-glow text-[var(--accent-primary)] opacity-90">{isSignUp ? 'Crie sua Conta' : 'Bem-vindo!'}</h1>
-            <p className="text-[var(--text-secondary)] mb-8">Faça login para acessar sua conta real.</p>
+            <h1 className="text-3xl font-bold mb-2 text-glow text-[var(--accent-primary)] opacity-90">{isSignUp ? 'Crie sua Conta' : 'Bem-vindo de Volta!'}</h1>
+            <p className="text-[var(--text-secondary)] mb-8">{isSignUp ? 'Comece sua jornada de estilo.' : 'Faça login para continuar.'}</p>
             
             {error && <p className="bg-red-500/20 text-red-400 p-3 rounded-lg mb-4 text-sm w-full text-center">{error}</p>}
 
@@ -93,9 +92,9 @@ const LoginScreen: React.FC<LoginScreenProps> = () => {
             </form>
 
             <div className="my-6 flex items-center w-full">
-                <div className="flex-grow border-t border-[var(--border-primary)]"></div>
+                <div className="flex-grow border-t border-[var(--accent-primary)]/20"></div>
                 <span className="flex-shrink mx-4 text-zinc-500 text-sm">OU</span>
-                <div className="flex-grow border-t border-[var(--border-primary)]"></div>
+                <div className="flex-grow border-t border-[var(--accent-primary)]/20"></div>
             </div>
             
             <div className="w-full space-y-3">
@@ -105,11 +104,17 @@ const LoginScreen: React.FC<LoginScreenProps> = () => {
                     disabled={loading}
                 >
                     <GoogleIcon className="w-6 h-6" />
-                    <span className="font-semibold">Entrar com Google</span>
+                    <span className="font-semibold">{isSignUp ? 'Continue com Google' : 'Entrar com Google'}</span>
                 </button>
             </div>
             
-            <p className="mt-8 text-[var(--text-secondary)]">
+            <div className="my-4 text-center text-sm">
+                <button onClick={onContinueAsVisitor} className="font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] underline transition-colors">
+                    Continuar como Visitante
+                </button>
+            </div>
+
+            <p className="mt-4 text-[var(--text-secondary)]">
                 {isSignUp ? 'Já tem uma conta? ' : 'Não tem uma conta? '}
                 <button onClick={() => setIsSignUp(!isSignUp)} className="font-semibold text-[var(--accent-primary)] hover:underline">
                     {isSignUp ? 'Faça Login' : 'Inscreva-se'}

@@ -1,6 +1,7 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import type { Post, Profile, Comment } from '../types';
-import { PaperAirplaneIcon } from './IconComponents';
+import { PaperAirplaneIcon, UserIcon } from './IconComponents';
 
 const XIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -94,7 +95,13 @@ const CommentsModal: React.FC<CommentsModalProps> = ({ post, currentUser, onClos
             ) : (
                 post.comments.map(comment => (
                     <div key={comment.id} className="flex items-start gap-3">
-                        <img src={comment.user.avatar} alt={comment.user.name} className="w-9 h-9 rounded-full object-cover flex-shrink-0"/>
+                        <div className="w-9 h-9 rounded-full overflow-hidden bg-[var(--bg-tertiary)] flex items-center justify-center flex-shrink-0">
+                            {comment.user.avatar ? (
+                                <img src={comment.user.avatar} alt={comment.user.name} className="w-full h-full object-cover"/>
+                            ) : (
+                                <UserIcon className="w-5 h-5 text-[var(--text-secondary)] opacity-50" />
+                            )}
+                        </div>
                         <div className="flex-grow">
                             <p>
                                 <span className="font-bold text-sm mr-2">{comment.user.name}</span>
@@ -110,7 +117,13 @@ const CommentsModal: React.FC<CommentsModalProps> = ({ post, currentUser, onClos
         
         <footer className="flex-shrink-0 p-2 bg-[var(--bg-main)] border-t border-[var(--border-primary)]">
             <form onSubmit={handleSubmit} className="flex items-center gap-2">
-                 <img src={currentUser.profile_image_url || 'https://i.pravatar.cc/150?u=me'} alt="Seu avatar" className="w-10 h-10 rounded-full object-cover" />
+                 <div className="w-10 h-10 rounded-full overflow-hidden bg-[var(--bg-tertiary)] flex items-center justify-center flex-shrink-0">
+                    {currentUser.profile_image_url ? (
+                        <img src={currentUser.profile_image_url} alt="Seu avatar" className="w-full h-full object-cover" />
+                    ) : (
+                        <UserIcon className="w-6 h-6 text-[var(--text-secondary)] opacity-50" />
+                    )}
+                 </div>
                 <input
                     type="text"
                     value={newComment}
