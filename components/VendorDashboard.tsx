@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useRef } from 'react';
 import type { BusinessProfile, Item, Post, MarketplaceType } from '../types';
 import { MenuIcon, CameraIcon, PencilIcon, PlusIcon, StarIcon, XCircleIcon, BellIcon } from './IconComponents';
@@ -313,10 +314,11 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({ businessProfile, onOp
 
             {isEditingBio && (
                 <BioEditModal
+                    initialUsername={localProfile.business_name}
                     initialBio={localProfile.description || ''}
                     onClose={() => setIsEditingBio(false)}
-                    onSave={(newBio) => {
-                        setLocalProfile(prev => ({ ...prev, description: newBio }));
+                    onSave={(newBusinessName, newDescription) => {
+                        setLocalProfile(prev => ({ ...prev, business_name: newBusinessName, description: newDescription }));
                         setIsEditingBio(false);
                     }}
                 />

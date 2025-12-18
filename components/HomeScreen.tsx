@@ -338,7 +338,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
       </main>
 
       {viewingPostIndex !== null && <ProfilePostModal posts={localProfilePosts} startIndex={viewingPostIndex} onClose={() => setViewingPostIndex(null)} />}
-      {isEditingBio && profile && <BioEditModal initialBio={profile.bio || ''} onClose={() => setIsEditingBio(false)} onSave={(newBio) => { onUpdateProfile({ bio: newBio }); setProfile(prev => prev ? { ...prev, bio: newBio } : null); setIsEditingBio(false); }} />}
+      {isEditingBio && profile && <BioEditModal initialUsername={profile.username} initialBio={profile.bio || ''} onClose={() => setIsEditingBio(false)} onSave={(newUsername, newBio) => { onUpdateProfile({ username: newUsername, bio: newBio }); setProfile(prev => prev ? { ...prev, username: newUsername, bio: newBio } : null); setIsEditingBio(false); }} />}
     </div>
   );
 };

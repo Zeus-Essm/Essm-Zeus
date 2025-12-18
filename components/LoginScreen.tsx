@@ -1,15 +1,14 @@
 
-// FIX: Replaced placeholder content with a functional LoginScreen component.
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 import GradientButton from './GradientButton';
-import { FacebookIcon, GoogleIcon } from './IconComponents';
+import { GoogleIcon } from './IconComponents';
 
 interface LoginScreenProps {
-    onContinueAsVisitor: () => void;
+    // onContinueAsVisitor removed as the visitor system no longer exists
 }
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
+const LoginScreen: React.FC<LoginScreenProps> = () => {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -41,9 +40,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
         setLoading(true);
         setError(null);
         try {
-            // Configuração crítica para SPA na Vercel:
-            // Redireciona para a origem (raiz) para que o App.tsx capture o hash #access_token
-            // O vercel.json garante que todas as rotas caiam no index.html, e o App.tsx processa o login.
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: provider,
                 options: {
@@ -62,8 +58,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
         <div className="flex flex-col items-center justify-center h-full w-full bg-[var(--bg-main)] text-[var(--text-primary)] p-6 animate-fadeIn">
             <img src="https://i.postimg.cc/XJf6gckX/Pump_STARTAP.png" alt="PUMP Logo" className="w-24 h-auto mb-8 animate-logo-pulse" />
             
-            <h1 className="text-3xl font-bold mb-2 text-glow text-[var(--accent-primary)] opacity-90">{isSignUp ? 'Crie sua Conta' : 'Bem-vindo de Volta!'}</h1>
-            <p className="text-[var(--text-secondary)] mb-8">{isSignUp ? 'Comece sua jornada de estilo.' : 'Faça login para continuar.'}</p>
+            <h1 className="text-3xl font-bold mb-2 text-glow text-[var(--accent-primary)] opacity-90">{isSignUp ? 'Crie sua Conta' : 'Bem-vindo ao PUMP'}</h1>
+            <p className="text-[var(--text-secondary)] mb-8 text-center">{isSignUp ? 'Comece sua jornada de estilo real.' : 'Faça login para gerenciar seu espaço.'}</p>
             
             {error && <p className="bg-red-500/20 text-red-400 p-3 rounded-lg mb-4 text-sm w-full text-center">{error}</p>}
 
@@ -87,7 +83,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
                     required
                 />
                 <GradientButton type="submit" disabled={loading}>
-                    {loading ? 'Carregando...' : (isSignUp ? 'Criar Conta' : 'Entrar')}
+                    {loading ? 'Carregando...' : (isSignUp ? 'Criar Minha Conta' : 'Entrar')}
                 </GradientButton>
             </form>
 
@@ -104,22 +100,20 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onContinueAsVisitor }) => {
                     disabled={loading}
                 >
                     <GoogleIcon className="w-6 h-6" />
-                    <span className="font-semibold">{isSignUp ? 'Continue com Google' : 'Entrar com Google'}</span>
+                    <span className="font-semibold">Entrar com Google</span>
                 </button>
             </div>
             
-            <div className="my-4 text-center text-sm">
-                <button onClick={onContinueAsVisitor} className="font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] underline transition-colors">
-                    Continuar como Visitante
-                </button>
-            </div>
-
-            <p className="mt-4 text-[var(--text-secondary)]">
-                {isSignUp ? 'Já tem uma conta? ' : 'Não tem uma conta? '}
+            <p className="mt-8 text-[var(--text-secondary)]">
+                {isSignUp ? 'Já tem uma conta? ' : 'Novo por aqui? '}
                 <button onClick={() => setIsSignUp(!isSignUp)} className="font-semibold text-[var(--accent-primary)] hover:underline">
-                    {isSignUp ? 'Faça Login' : 'Inscreva-se'}
+                    {isSignUp ? 'Faça Login' : 'Cadastre-se'}
                 </button>
             </p>
+            
+            <div className="mt-6 px-3 py-1 bg-green-500/20 rounded-full border border-green-500/40">
+                <span className="text-[10px] font-bold text-green-400 uppercase tracking-widest">✓ Sistema Atualizado: Real Space Mode</span>
+            </div>
         </div>
     );
 };
