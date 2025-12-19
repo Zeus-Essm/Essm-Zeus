@@ -50,7 +50,8 @@ const PromotionModal: React.FC<PromotionModalProps> = ({ accountType, profile, u
     };
 
     const profileName = accountType === 'business' ? (profile as BusinessProfile).business_name : (profile as Profile).username;
-    const profileAvatar = accountType === 'business' ? (profile as BusinessProfile).logo_url : (profile as Profile).profile_image_url;
+    // Fix: Property 'profile_image_url' does not exist on type 'Profile', using 'avatar_url' instead
+    const profileAvatar = accountType === 'business' ? (profile as BusinessProfile).logo_url : (profile as Profile).avatar_url;
     
     const renderSelectionStep = () => (
         <>

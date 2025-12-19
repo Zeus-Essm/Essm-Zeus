@@ -42,10 +42,6 @@ const VendorCollaborationsScreen: React.FC<VendorCollaborationsScreenProps> = ({
                 </div>
 
             </main>
-            {/* Update Confirmation Seal */}
-            <div className="fixed bottom-24 right-4 bg-purple-600 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg z-50 animate-bounce">
-                MEDIA HUB ATIVO
-            </div>
         </div>
     );
 };

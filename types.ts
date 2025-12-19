@@ -30,7 +30,7 @@ export interface Item {
   beautyType?: 'lipstick' | 'wig' | 'eyeshadow';
   gender?: 'male' | 'female' | 'kid' | 'unisex';
   vendorSubCategory?: string;
-  recommendationVideo?: string; // New field for split-screen recommendation
+  recommendationVideo?: string; 
 }
 
 export interface Comment {
@@ -83,10 +83,11 @@ export interface SavedLook {
 }
 
 export interface Profile {
-  user_id: string; // Identidade única agora é user_id
-  username: string;
+  user_id: string; 
+  username: string; // Handle/Slug
+  full_name: string | null; // Nome de exibição persistente
   bio: string | null;
-  profile_image_url: string | null;
+  avatar_url: string | null; // URL da foto persistente
   cover_image_url: string | null;
   account_type: 'personal' | 'business' | null;
   verification_status?: 'unverified' | 'pending' | 'verified';

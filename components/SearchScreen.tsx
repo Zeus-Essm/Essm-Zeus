@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { ArrowLeftIcon, SearchIcon, UserIcon } from './IconComponents';
 import type { Post, Profile, Item, MarketplaceType } from '../types';
@@ -47,11 +48,12 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
         const profileMap = new Map<string, Profile>();
         posts.forEach(post => {
             if (!profileMap.has(post.user.id)) {
+                // Fix: Add missing full_name property to satisfy Profile interface
                 profileMap.set(post.user.id, {
-                    // Fix: use user_id instead of id in Profile object literal
-                    user_id: post.user.id,
+                    user_id: post.user.id, 
                     username: post.user.name,
-                    profile_image_url: post.user.avatar,
+                    full_name: post.user.name,
+                    avatar_url: post.user.avatar,
                     bio: null,
                     cover_image_url: null,
                     account_type: 'personal',
@@ -140,15 +142,14 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                                     {filteredProfiles.length > 0 ? (
                                         filteredProfiles.map(profile => (
                                             <button 
-                                                // Fix: access user_id instead of id on Profile type
                                                 key={profile.user_id}
-                                                // Fix: access user_id instead of id on Profile type
                                                 onClick={() => onViewProfile(profile.user_id)}
                                                 className="w-full flex items-center gap-4 p-3 text-left hover:bg-[var(--bg-tertiary)] transition-colors"
                                             >
                                                 <div className="w-12 h-12 rounded-full overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center">
-                                                    {profile.profile_image_url ? (
-                                                        <img src={profile.profile_image_url} alt={profile.username} className="w-full h-full object-cover"/>
+                                                    {/* Fix: Property 'profile_image_url' does not exist on type 'Profile', using 'avatar_url' instead */}
+                                                    {profile.avatar_url ? (
+                                                        <img src={profile.avatar_url} alt={profile.username} className="w-full h-full object-cover"/>
                                                     ) : (
                                                         <UserIcon className="w-6 h-6 text-[var(--text-secondary)] opacity-50" />
                                                     )}

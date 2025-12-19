@@ -52,10 +52,6 @@ const VendorAffiliatesScreen: React.FC<VendorAffiliatesScreenProps> = ({ onBack 
                 </section>
 
             </main>
-            {/* Update Confirmation Seal */}
-            <div className="fixed bottom-24 right-4 bg-blue-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg z-50 flex items-center gap-1">
-                PAINEL DE AFILIADOS
-            </div>
         </div>
     );
 };

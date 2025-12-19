@@ -85,11 +85,6 @@ const VendorAnalyticsScreen: React.FC<VendorAnalyticsScreenProps> = ({ onBack })
                 </div>
 
             </main>
-            {/* Update Confirmation Seal */}
-            <div className="fixed bottom-24 right-4 bg-green-500 text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-lg z-50 animate-bounce flex items-center gap-1">
-                <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" />
-                SISTEMA PRONTO
-            </div>
         </div>
     );
 };

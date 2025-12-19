@@ -118,8 +118,9 @@ const CommentsModal: React.FC<CommentsModalProps> = ({ post, currentUser, onClos
         <footer className="flex-shrink-0 p-2 bg-[var(--bg-main)] border-t border-[var(--border-primary)]">
             <form onSubmit={handleSubmit} className="flex items-center gap-2">
                  <div className="w-10 h-10 rounded-full overflow-hidden bg-[var(--bg-tertiary)] flex items-center justify-center flex-shrink-0">
-                    {currentUser.profile_image_url ? (
-                        <img src={currentUser.profile_image_url} alt="Seu avatar" className="w-full h-full object-cover" />
+                    {/* Fix: Property 'profile_image_url' does not exist on type 'Profile', using 'avatar_url' instead */}
+                    {currentUser.avatar_url ? (
+                        <img src={currentUser.avatar_url} alt="Seu avatar" className="w-full h-full object-cover" />
                     ) : (
                         <UserIcon className="w-6 h-6 text-[var(--text-secondary)] opacity-50" />
                     )}

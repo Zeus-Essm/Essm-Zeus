@@ -50,7 +50,7 @@ const YourStoryCard: React.FC<{ profileImage: string | null }> = ({ profileImage
               <PlusIcon className="w-4 h-4 text-[var(--accent-primary-text)]" />
             </div>
         </div>
-        <span className="text-xs text-[var(--text-tertiary)] w-full text-center truncate">Seu story</span>
+        <span className="text-xs text-[var(--text-secondary)] w-full text-center truncate">Seu story</span>
     </div>
 );
 
@@ -189,7 +189,8 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
         <div className="flex-grow pt-16 overflow-y-auto scroll-smooth pb-20">
           <div className="py-4 border-b border-[var(--border-primary)]">
             <div className="flex items-start space-x-4 px-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden snap-x snap-mandatory scroll-smooth">
-              <YourStoryCard profileImage={profile?.profile_image_url || null} />
+              {/* Fix: Property 'profile_image_url' does not exist on type 'Profile', using 'avatar_url' instead */}
+              <YourStoryCard profileImage={profile?.avatar_url || null} />
               {stories.map(story => (
                 <StoryCard key={story.id} story={story} />
               ))}

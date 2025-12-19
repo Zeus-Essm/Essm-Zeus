@@ -1,7 +1,7 @@
 
 import React from 'react';
 import Header from './Header';
-import { SunIcon, MoonIcon, ChevronRightIcon, ShieldCheckIcon, LogoutIcon } from './IconComponents';
+import { SunIcon, MoonIcon, ChevronRightIcon, LogoutIcon } from './IconComponents';
 import type { Profile } from '../types';
 
 interface SettingsScreenProps {
@@ -22,37 +22,10 @@ const MenuItem: React.FC<{ icon: React.ReactNode; text: string; trailing?: React
 );
 
 const SettingsScreen: React.FC<SettingsScreenProps> = ({ onBack, theme, onToggleTheme, profile, onNavigateToVerification, onSignOut }) => {
-    const getVerificationStatus = () => {
-        switch (profile.verification_status) {
-            case 'verified':
-                return <span className="text-sm font-semibold text-green-400">Verificado</span>;
-            case 'pending':
-                return <span className="text-sm font-semibold text-yellow-400">Em Análise</span>;
-            default:
-                return <span className="text-sm font-semibold text-[var(--text-secondary)]">Não Verificado</span>;
-        }
-    };
-
   return (
     <div className="w-full h-full flex flex-col bg-[var(--bg-main)] text-[var(--text-primary)] animate-fadeIn">
       <Header title="Configurações e Atividade" onBack={onBack} />
       <div className="flex-grow pt-16 overflow-y-auto p-4 space-y-4 pb-20">
-        <div>
-          <h3 className="font-bold text-sm text-[var(--text-secondary)] px-3 py-2">Conta</h3>
-           <div className="space-y-1">
-             <MenuItem 
-                icon={<ShieldCheckIcon />} 
-                text="Verificação de Perfil" 
-                onClick={onNavigateToVerification}
-                trailing={
-                  <div className="flex items-center gap-2">
-                    {getVerificationStatus()}
-                    <ChevronRightIcon className="w-5 h-5 text-[var(--text-tertiary)]" />
-                  </div>
-                }
-            />
-           </div>
-        </div>
         <div>
           <h3 className="font-bold text-sm text-[var(--text-secondary)] px-3 py-2">Preferências</h3>
            <div className="space-y-1">

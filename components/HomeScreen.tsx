@@ -2,94 +2,18 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '../services/supabaseClient';
 import type { Profile, Category, Post, Item, MarketplaceType } from '../types';
-import { CATEGORIES, INITIAL_STORIES } from '../constants';
+import { CATEGORIES } from '../constants';
 import { 
-    PlusIcon, CameraIcon, ShoppingBagIcon, UserIcon, CompassIcon, 
-    GiftIcon, VerifiedIcon, ChevronDownIcon, MenuIcon,
-    BellIcon, PencilIcon, ChatBubbleIcon, StarIcon, ShieldCheckIcon
+    PlusIcon, CameraIcon, UserIcon, 
+    ChevronDownIcon, MenuIcon,
+    BellIcon, PencilIcon, ChatBubbleIcon
 } from './IconComponents';
 import BioEditModal from './BioEditModal';
-import GradientButton from './GradientButton';
-
-// Self-contained modal for viewing profile posts in an Instagram-style overlay.
-const ProfilePostModal: React.FC<{
-    posts: Post[];
-    startIndex: number;
-    onClose: () => void;
-}> = ({ posts, startIndex, onClose }) => {
-    const [currentIndex, setCurrentIndex] = useState(startIndex);
-    const post = posts[currentIndex];
-
-    const goToPrevious = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setCurrentIndex(prev => (prev > 0 ? prev - 1 : posts.length - 1));
-    };
-
-    const goToNext = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setCurrentIndex(prev => (prev < posts.length - 1 ? prev + 1 : 0));
-    };
-
-    useEffect(() => {
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') onClose();
-            if (event.key === 'ArrowLeft') goToPrevious(new MouseEvent('click') as any);
-            if (event.key === 'ArrowRight') goToNext(new MouseEvent('click') as any);
-        };
-        window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [currentIndex]);
-
-    if (!post) return null;
-
-    return (
-        <div
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 animate-modalFadeIn"
-            onClick={onClose}
-        >
-            <button
-                onClick={onClose}
-                className="absolute top-4 right-4 p-2 rounded-full bg-black/50 hover:bg-black/80 transition-colors z-20"
-                aria-label="Fechar"
-            >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-white"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-            </button>
-            
-            {posts.length > 1 && (
-                 <button
-                    onClick={goToPrevious}
-                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/40 rounded-full hover:bg-black/70 backdrop-blur-sm transition-all z-20"
-                    aria-label="Anterior"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6 text-white">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                    </svg>
-                </button>
-            )}
-
-            <div className="w-[90vw] max-w-xl aspect-square bg-black animate-modalZoomIn" onClick={(e) => e.stopPropagation()}>
-                <img src={post.image} alt="Post" className="w-full h-full object-contain" />
-            </div>
-
-             {posts.length > 1 && (
-                <button
-                    onClick={goToNext}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/40 rounded-full hover:bg-black/70 backdrop-blur-sm transition-all z-20"
-                    aria-label="Próximo"
-                >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6 text-white">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                    </svg>
-                </button>
-            )}
-        </div>
-    );
-};
 
 interface HomeScreenProps {
   loggedInProfile: Profile;
   viewedProfileId: string | null;
-  onUpdateProfile: (updates: { username?: string, bio?: string }) => void;
+  onUpdateProfile: (updates: { username?: string, bio?: string, full_name?: string }) => void;
   onUpdateProfileImage: (imageDataUrl: string) => void;
   onSelectCategory: (category: Category) => void;
   onNavigateToFeed: () => void;
@@ -121,256 +45,174 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   onUpdateProfileImage,
   onSelectCategory,
   onNavigateToFeed,
-  onNavigateToMyLooks,
   onNavigateToCart,
   onNavigateToChat,
   onNavigateToRewards,
   onStartTryOn,
-  isCartAnimating,
-  onBack,
-  posts,
-  onItemClick,
-  onViewProfile,
   onNavigateToSettings,
-  onSignOut,
   unreadNotificationCount,
   unreadMessagesCount,
   onOpenNotificationsPanel,
   isFollowing,
   onToggleFollow,
   followersCount,
-  followingCount
+  followingCount,
+  posts
 }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'market' | 'posts'>('market');
-  const [activeMarketplaceType, setActiveMarketplaceType] = useState<MarketplaceType>('fashion');
-  const marketplaceTypesContainerRef = useRef<HTMLDivElement>(null);
-  const [localProfilePosts, setLocalProfilePosts] = useState<Post[]>([]);
-  const [viewingPostIndex, setViewingPostIndex] = useState<number | null>(null);
-  const [isEditingBio, setIsEditingBio] = useState(false);
-  // Alterado para comparar user_id
+  const [activeTab, setActiveTab] = useState<'market' | 'posts'>('posts');
+  
   const isMyProfile = !viewedProfileId || viewedProfileId === loggedInProfile.user_id;
   const profileImageInputRef = useRef<HTMLInputElement>(null);
+  const [isEditingBio, setIsEditingBio] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
-      if (!viewedProfileId) {
+      if (isMyProfile) {
         setProfile(loggedInProfile);
         setLoading(false);
         return;
       }
       setLoading(true);
-      setError(null);
       try {
-        // Substituído 'id' por 'user_id'
-        const { data, error } = await supabase.from('profiles').select('*').eq('user_id', viewedProfileId).single();
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', viewedProfileId)
+          .single();
         if (error) throw error;
         setProfile(data);
-      } catch (err: any) {
-        setError("Não foi possível carregar o perfil.");
+      } catch (err) {
+        console.error("Perfil externo não encontrado");
       } finally {
         setLoading(false);
       }
     };
     fetchProfile();
-  }, [viewedProfileId, loggedInProfile]);
-  
-  useEffect(() => {
-      // Posts do usuário usam profiles.user_id como referência no objeto User
-      if (profile) setLocalProfilePosts(posts.filter(p => p.user.id === profile.user_id));
-      else setLocalProfilePosts([]);
-  }, [profile, posts]);
+  }, [viewedProfileId, loggedInProfile, isMyProfile]);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, callback: (dataUrl: string) => void) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => callback(reader.result as string);
+      reader.onloadend = () => onUpdateProfileImage(reader.result as string);
       reader.readAsDataURL(file);
     }
   };
 
-  const handleMarketplaceTypeClick = (type: MarketplaceType) => {
-    setActiveMarketplaceType(type);
-    if (marketplaceTypesContainerRef.current) {
-      const container = marketplaceTypesContainerRef.current;
-      const clickedButton = Array.from(container.children).find(child => (child as HTMLElement).dataset.type === type) as HTMLElement | undefined;
-      if (clickedButton) {
-        const containerRect = container.getBoundingClientRect();
-        const buttonRect = clickedButton.getBoundingClientRect();
-        const scrollLeft = container.scrollLeft + buttonRect.left - containerRect.left - (containerRect.width / 2) + (buttonRect.width / 2);
-        container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
-      }
-    }
-  };
-
-  if (loading) return <div className="flex items-center justify-center h-full w-full bg-[var(--bg-main)]">Carregando...</div>;
-  if (error || !profile) return <div className="flex items-center justify-center h-full w-full bg-[var(--bg-main)] text-red-400 p-4">{error || "Perfil não encontrado."}</div>;
+  if (loading) return (
+      <div className="h-full w-full bg-white flex flex-col items-center justify-center gap-4">
+          <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Carregando Perfil...</span>
+      </div>
+  );
   
-  const marketplaceTypes: { type: MarketplaceType; label: string }[] = [
-    { type: 'fashion', label: 'Moda' },
-    { type: 'restaurant', label: 'Restaurantes' },
-    { type: 'supermarket', label: 'Supermercados' },
-    { type: 'beauty', label: 'Beleza' },
-    { type: 'technology', label: 'Tecnologia' },
-    { type: 'decoration', label: 'Decoração' },
-  ];
+  if (!profile) return null;
 
   return (
-    <div className="w-full h-full flex flex-col bg-[var(--bg-main)] text-[var(--text-primary)]">
-      <header className="px-4 pt-4 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-2">
-              <h1 className="text-lg font-extrabold">{profile.username}</h1>
-              {profile.verification_status === 'verified' ? (
-                  <span title="Perfil Verificado">
-                    <ShieldCheckIcon className="w-5 h-5 text-zinc-800 dark:text-white" />
-                  </span>
-              ) : profile.reward_points && profile.reward_points >= 1000 ? (
-                  <span title="Usuário Destaque">
-                    <VerifiedIcon className="w-5 h-5 text-[var(--accent-primary)]" />
-                  </span>
-              ) : null}
-              <ChevronDownIcon className="w-3 h-3" />
+    <div className="w-full h-full flex flex-col bg-white text-zinc-900 animate-fadeIn">
+      <header className="px-5 pt-6 pb-2 flex items-center justify-between flex-shrink-0 bg-white z-10 sticky top-0">
+          <div className="flex items-center gap-1.5">
+              <h1 className="text-xl font-black uppercase tracking-tighter italic">{profile.full_name || profile.username}</h1>
+              <ChevronDownIcon className="w-3 h-3 text-zinc-300" />
           </div>
-          <div className="flex items-center gap-5 relative">
-              <button onClick={onNavigateToChat} className="relative">
+          <div className="flex items-center gap-6">
+              <button onClick={onNavigateToChat} className="relative active:scale-90 transition-transform">
                   <ChatBubbleIcon className="w-7 h-7" />
-                  {unreadMessagesCount > 0 && (
-                     <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-[var(--bg-main)]">
-                        {unreadMessagesCount > 9 ? '9+' : unreadMessagesCount}
-                     </span>
-                  )}
+                  {unreadMessagesCount > 0 && <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white border border-white">{unreadMessagesCount}</span>}
               </button>
-              <button onClick={onOpenNotificationsPanel} className="relative">
-                <BellIcon className="w-7 h-7" />
-                {unreadNotificationCount > 0 && (
-                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-[var(--bg-main)]">
-                        {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
-                    </span>
-                )}
-              </button>
-              <button onClick={onNavigateToSettings}><MenuIcon className="w-7 h-7" /></button>
+              <button onClick={onNavigateToSettings} className="active:rotate-45 transition-transform"><MenuIcon className="w-7 h-7" /></button>
           </div>
       </header>
 
-      <main className="flex-grow overflow-y-auto pb-20 pt-4">
-        <div className="px-4 flex items-start justify-between">
-            <div className="flex items-start gap-4">
-                <div className="relative flex-shrink-0">
-                    <div className="w-24 h-24 rounded-full p-0.5 bg-[var(--bg-tertiary)] flex items-center justify-center overflow-hidden">
-                        {profile.profile_image_url ? (
-                            <img src={profile.profile_image_url} alt="Profile" className="w-full h-full object-cover rounded-full border-2 border-[var(--bg-main)]" />
+      <main className="flex-grow overflow-y-auto pb-24">
+        <div className="px-5 py-8 flex flex-col items-center text-center">
+            <div className="relative mb-6">
+                <div className="w-32 h-32 rounded-[3rem] p-0.5 bg-gradient-to-tr from-amber-500 to-amber-200 flex items-center justify-center overflow-hidden shadow-2xl shadow-amber-500/20">
+                    <div className="w-full h-full rounded-[2.8rem] bg-white flex items-center justify-center overflow-hidden border-2 border-white">
+                        {profile.avatar_url ? (
+                            <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                         ) : (
-                            <UserIcon className="w-12 h-12 text-[var(--text-secondary)] opacity-40" />
+                            <UserIcon className="w-14 h-14 text-zinc-200" />
                         )}
                     </div>
-                    {isMyProfile && (
-                    <>
-                        <button onClick={() => profileImageInputRef.current?.click()} className="absolute bottom-0 -right-1 p-1.5 bg-black/60 rounded-full border-2 border-[var(--bg-main)]" aria-label="Alterar foto">
-                            <CameraIcon className="w-5 h-5 text-white" />
-                        </button>
-                        <input type="file" accept="image/*" ref={profileImageInputRef} onChange={(e) => handleFileChange(e, onUpdateProfileImage)} className="hidden" />
-                    </>
-                    )}
                 </div>
-                <div className="flex-grow pt-2">
-                    <p className="font-semibold text-sm">{profile.username}</p>
-                    {profile.bio && <p className="text-sm text-[var(--text-tertiary)] whitespace-pre-line mt-1">{profile.bio}</p>}
-                </div>
-            </div>
-            <div className="flex flex-col items-center space-y-4 pt-2 flex-shrink-0">
                 {isMyProfile && (
-                    <button onClick={() => setIsEditingBio(true)} className="p-1 text-[var(--text-secondary)]" aria-label="Editar bio">
-                        <PencilIcon className="w-5 h-5" />
-                    </button>
+                    <>
+                        <button 
+                            onClick={() => profileImageInputRef.current?.click()} 
+                            className="absolute -bottom-1 -right-1 p-3 bg-zinc-900 rounded-2xl border-4 border-white text-white shadow-xl active:scale-90 transition-all hover:bg-amber-500"
+                        >
+                            <CameraIcon className="w-5 h-5" />
+                        </button>
+                        <input type="file" accept="image/*" ref={profileImageInputRef} onChange={handleFileChange} className="hidden" />
+                    </>
                 )}
-                <button onClick={onNavigateToRewards}>
-                    <img src="https://i.postimg.cc/YqhLvSCM/moeda-pump-coin.png" alt="Pontos" className="w-10 h-10" />
-                </button>
+            </div>
+            
+            <div className="flex flex-col items-center max-w-xs">
+                <h2 className="font-black text-lg uppercase tracking-[0.15em] mb-1">{profile.full_name || profile.username}</h2>
+                <div className="flex items-center gap-2">
+                    {profile.bio ? (
+                        <p className="text-xs text-zinc-500 font-medium leading-relaxed italic">"{profile.bio}"</p>
+                    ) : isMyProfile && (
+                        <button onClick={() => setIsEditingBio(true)} className="text-[10px] font-bold uppercase text-amber-500 tracking-[0.2em] border-b border-amber-500/20 pb-0.5">Adicionar biografia</button>
+                    )}
+                    {isMyProfile && profile.bio && (
+                        <button onClick={() => setIsEditingBio(true)} className="p-1.5 bg-zinc-50 rounded-full border border-zinc-100 text-zinc-400 active:scale-95 transition-all">
+                            <PencilIcon className="w-3 h-3" />
+                        </button>
+                    )}
+                </div>
             </div>
         </div>
         
-        <div className="mt-4 py-3 flex justify-around text-center border-y border-[var(--border-primary)]">
-            <div><span className="text-lg font-bold">{localProfilePosts.length}</span><p className="text-sm text-[var(--text-secondary)]">posts</p></div>
-            <div><span className="text-lg font-bold">{followersCount}</span><p className="text-sm text-[var(--text-secondary)]">seguidores</p></div>
-            <div><span className="text-lg font-bold">{followingCount}</span><p className="text-sm text-[var(--text-secondary)]">seguindo</p></div>
+        <div className="px-10 grid grid-cols-3 gap-4 text-center py-6 border-y border-zinc-50 bg-zinc-50/30">
+            <div><span className="text-lg font-black tracking-tight">0</span><p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest mt-1">Posts</p></div>
+            <div><span className="text-lg font-black tracking-tight">{followersCount}</span><p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest mt-1">Seguidores</p></div>
+            <div><span className="text-lg font-black tracking-tight">{followingCount}</span><p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest mt-1">Seguindo</p></div>
         </div>
         
-        <div className="px-4 mt-4">
-            {!isMyProfile && (
-                 <div className="flex items-center gap-2">
-                    {isFollowing ? (
-                        <button 
-                            onClick={() => onToggleFollow(profile.user_id)} 
-                            className="flex-1 py-2.5 text-xs font-bold bg-[var(--bg-tertiary)] text-[var(--text-primary)] rounded-lg border border-[var(--border-primary)] transition-all"
-                        >
-                            Seguindo
-                        </button>
-                    ) : (
-                        <GradientButton onClick={() => onToggleFollow(profile.user_id)} className="flex-1 !py-2.5 text-xs">Seguir</GradientButton>
-                    )}
-                    <GradientButton onClick={onNavigateToChat} className="flex-1 !py-2.5 text-xs">Mensagem</GradientButton>
-                </div>
-            )}
+        <div className="flex px-5 mt-6">
+          <button onClick={() => setActiveTab('posts')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-[0.3em] transition-all ${activeTab === 'posts' ? 'text-zinc-900 border-b-2 border-zinc-900' : 'text-zinc-300'}`}>Vitrine</button>
+          <button onClick={() => setActiveTab('market')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-[0.3em] transition-all ${activeTab === 'market' ? 'text-zinc-900 border-b-2 border-zinc-900' : 'text-zinc-300'}`}>Marcas</button>
         </div>
 
-        <div className="border-b border-[var(--border-primary)] flex mt-4">
-          <button onClick={() => setActiveTab('market')} className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider ${activeTab === 'market' ? 'text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}>Mercado</button>
-          <button onClick={() => setActiveTab('posts')} className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider ${activeTab === 'posts' ? 'text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}>Publicações</button>
-        </div>
-
-        <div className="animate-fadeIn">
-            {activeTab === 'market' ? (
-                <div>
-                    <div className="px-4 py-2 border-b border-[var(--border-primary)]">
-                        <div ref={marketplaceTypesContainerRef} className="flex space-x-4 overflow-x-auto [&::-webkit-scrollbar]:hidden scroll-smooth">
-                        {marketplaceTypes.map(({ type, label }) => (
-                            <button key={type} data-type={type} onClick={() => handleMarketplaceTypeClick(type)} className={`py-2 px-3 text-sm font-semibold whitespace-nowrap rounded-md transition-colors ${activeMarketplaceType === type ? 'bg-[var(--accent-primary)] text-[var(--accent-primary-text)]' : 'bg-transparent text-[var(--text-secondary)]'}`}>{label}</button>
-                        ))}
-                        </div>
+        <div className="p-1 min-h-[300px]">
+            {activeTab === 'posts' ? (
+                <div className="py-24 text-center flex flex-col items-center opacity-30">
+                    <div className="w-16 h-16 rounded-full bg-zinc-50 border border-dashed border-zinc-300 flex items-center justify-center mb-4">
+                        <PlusIcon className="w-6 h-6 text-zinc-400" />
                     </div>
-                    <div className="p-4 grid grid-cols-2 gap-4">
-                        {CATEGORIES.filter(c => c.type === activeMarketplaceType).map(category => (
-                        <div key={category.id} onClick={() => onSelectCategory(category)} className="relative w-full h-56 rounded-2xl overflow-hidden cursor-pointer transform hover:scale-105 transition-all shadow-lg">
-                            <img src={category.image} alt={category.name} className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-4">
-                            <h3 className="text-2xl font-black tracking-tighter uppercase text-white">{category.name}</h3>
-                            </div>
-                        </div>
-                        ))}
-                    </div>
+                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-500">Comece sua coleção</p>
                 </div>
             ) : (
-                <div className="min-h-[200px]">
-                    {localProfilePosts.length > 0 ? (
-                        <div className="grid grid-cols-3 gap-1 p-1">
-                            {localProfilePosts.map((post, index) => (
-                                <div key={post.id} onClick={() => setViewingPostIndex(index)} className="aspect-w-1 aspect-h-1 bg-zinc-800 rounded-sm cursor-pointer overflow-hidden">
-                                   {post.image && <img src={post.image} alt="Post" className="w-full h-full object-cover"/>}
-                                </div>
-                            ))}
+                <div className="grid grid-cols-2 gap-4 p-4">
+                    {CATEGORIES.slice(0, 4).map(category => (
+                        <div key={category.id} onClick={() => onSelectCategory(category)} className="relative h-48 rounded-[2rem] overflow-hidden group shadow-lg shadow-zinc-100/50 transition-all active:scale-[0.98]">
+                            <img src={category.image} alt={category.name} className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-1000" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-5">
+                                <h3 className="text-sm font-black text-white italic uppercase tracking-tight">{category.name}</h3>
+                            </div>
                         </div>
-                    ) : (
-                        <div className="py-16 text-center flex flex-col items-center animate-slideUp">
-                            <button 
-                                onClick={onStartTryOn}
-                                className="w-20 h-20 bg-[var(--bg-tertiary)] rounded-full flex items-center justify-center mb-4 border-2 border-dashed border-[var(--accent-primary)]/50 hover:bg-[var(--accent-primary)]/10 hover:border-[var(--accent-primary)] transition-all active:scale-95 shadow-lg group"
-                            >
-                                <PlusIcon className="w-10 h-10 text-[var(--accent-primary)] group-hover:scale-110 transition-transform" />
-                            </button>
-                            <p className="text-[var(--text-primary)] font-bold text-lg">Nenhuma publicação ainda.</p>
-                            <p className="text-sm text-[var(--text-secondary)] opacity-70 mt-1 max-w-[200px]">Crie e publique seus looks para que outros vejam!</p>
-                        </div>
-                    )}
+                    ))}
                 </div>
             )}
         </div>
       </main>
 
-      {viewingPostIndex !== null && <ProfilePostModal posts={localProfilePosts} startIndex={viewingPostIndex} onClose={() => setViewingPostIndex(null)} />}
-      {isEditingBio && profile && <BioEditModal initialUsername={profile.username} initialBio={profile.bio || ''} onClose={() => setIsEditingBio(false)} onSave={(newUsername, newBio) => { onUpdateProfile({ username: newUsername, bio: newBio }); setProfile(prev => prev ? { ...prev, username: newUsername, bio: newBio } : null); setIsEditingBio(false); }} />}
+      {isEditingBio && (
+          <BioEditModal 
+            initialUsername={profile.full_name || profile.username} 
+            initialBio={profile.bio || ''} 
+            onClose={() => setIsEditingBio(false)} 
+            onSave={(newName, newBio) => {
+                onUpdateProfile({ full_name: newName, bio: newBio });
+                setIsEditingBio(false);
+            }} 
+          />
+      )}
     </div>
   );
 };
