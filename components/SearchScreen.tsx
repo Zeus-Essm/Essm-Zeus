@@ -55,7 +55,8 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                     full_name: post.user.name,
                     avatar_url: post.user.avatar,
                     bio: null,
-                    cover_image_url: null,
+                    // FIX: Renamed cover_image_url to cover_url to match Profile interface in types.ts
+                    cover_url: null,
                     account_type: 'personal',
                 });
             }

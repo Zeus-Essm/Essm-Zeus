@@ -2,8 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
-import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType, AppNotification, Conversation, Comment, BusinessProfile, CollaborationPost, Folder } from './types';
-import { generateTryOnImage, normalizeImageAspectRatio, generateBeautyTryOnImage, generateFashionVideo, generateDecorationImage } from './services/geminiService';
+import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType, AppNotification, Conversation, Comment, BusinessProfile, CollaborationPost, Folder, ShowcaseItem } from './types';
 import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, ITEMS, INITIAL_CONVERSATIONS, INITIAL_COLLABORATION_REQUESTS } from './constants';
 
 // Screen Components
@@ -13,20 +12,9 @@ import AccountTypeSelectionScreen from './components/AccountTypeSelectionScreen'
 import BusinessOnboardingScreen from './components/BusinessOnboardingScreen';
 import HomeScreen from './components/HomeScreen';
 import SettingsScreen from './components/SettingsScreen';
-import SubCategorySelectionScreen from './components/SubCategorySelectionScreen';
-import ItemSelectionScreen from './components/ItemSelectionScreen';
-import LoadingIndicator from './components/LoadingIndicator';
-import ResultScreen from './components/ResultScreen';
-import ConfirmationScreen from './components/ConfirmationScreen';
 import FeedScreen from './components/FeedScreen';
-import MyLooksScreen from './components/MyLooksScreen';
-import CameraScreen from './components/CameraScreen';
-import ImageSourceSelectionScreen from './components/ImageSourceSelectionScreen';
 import CartScreen from './components/CartScreen';
-import RewardsScreen from './components/RewardsScreen';
 import BottomNavBar from './components/BottomNavBar';
-import ChatListScreen from './components/ChatListScreen';
-import ChatScreen from './components/ChatScreen';
 import VendorDashboard from './components/VendorDashboard';
 import VendorMenuModal from './components/VendorMenuModal';
 import VendorAnalyticsScreen from './components/VendorAnalyticsScreen';
@@ -43,19 +31,21 @@ const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
 };
 
 const App: React.FC = () => {
-    const [session, setSession] = React.useState<Session | null>(null);
-    const [profile, setProfile] = React.useState<Profile | null>(null);
-    const [products, setProducts] = React.useState<Item[]>([]);
-    const [folders, setFolders] = React.useState<Folder[]>([]);
-    const [authLoading, setAuthLoading] = React.useState(true);
-    const [currentScreen, setCurrentScreen] = React.useState<Screen>(Screen.Splash);
-    const [viewedProfileId, setViewedProfileId] = React.useState<string | null>(null);
-    const [posts, setPosts] = React.useState<Post[]>(INITIAL_POSTS);
-    const [cartItems, setCartItems] = React.useState<Item[]>([]);
-    const [isLoading, setIsLoading] = React.useState(false);
-    const [businessProfile, setBusinessProfile] = React.useState<BusinessProfile | null>(null);
-    const [showVendorMenu, setShowVendorMenu] = React.useState(false);
-    const [recommendationItem, setRecommendationItem] = React.useState<Item | null>(null);
+    const [session, setSession] = useState<Session | null>(null);
+    const [profile, setProfile] = useState<Profile | null>(null);
+    const [products, setProducts] = useState<Item[]>([]);
+    const [showcase, setShowcase] = useState<ShowcaseItem[]>([]);
+    const [folders, setFolders] = useState<Folder[]>([]);
+    const [authLoading, setAuthLoading] = useState(true);
+    const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Splash);
+    const [viewedProfileId, setViewedProfileId] = useState<string | null>(null);
+    const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
+    const [cartItems, setCartItems] = useState<Item[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
+    const [showVendorMenu, setShowVendorMenu] = useState(false);
+    const [recommendationItem, setRecommendationItem] = useState<Item | null>(null);
+    const [showUpdateBadge, setShowUpdateBadge] = useState(false);
 
     useEffect(() => {
         const handleAuthState = async (currentSession: Session | null) => {
@@ -73,11 +63,24 @@ const App: React.FC = () => {
                     });
                 }
                 const { data: freshProfile } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
-                const { data: freshProducts } = await supabase.from('items').select('*').eq('user_id', user.id);
+                
+                const { data: freshProducts } = await supabase.from('products').select('*').eq('owner_id', user.id);
+                const { data: freshShowcase } = await supabase.from('showcase').select('*').eq('owner_id', user.id);
                 const { data: freshFolders } = await supabase.from('folders').select('*').eq('user_id', user.id);
                 
                 setProfile(freshProfile);
-                setProducts(freshProducts || []);
+                setShowcase(freshShowcase || []);
+                
+                const mappedProducts: Item[] = (freshProducts || []).map(p => ({
+                    id: p.id,
+                    name: p.title,
+                    description: p.description,
+                    price: p.price,
+                    image: p.image_url,
+                    category: 'general',
+                    owner_id: p.owner_id
+                }));
+                setProducts(mappedProducts);
                 setFolders(freshFolders || []);
 
                 if (freshProfile) {
@@ -93,204 +96,172 @@ const App: React.FC = () => {
                         setCurrentScreen(Screen.VendorDashboard);
                     } else setCurrentScreen(Screen.AccountTypeSelection);
                 }
-            } else handleLogoutReset();
+            } else {
+                handleLogoutReset();
+            }
             setAuthLoading(false);
         };
+
         const handleLogoutReset = () => {
-            setProfile(null); setProducts([]); setFolders([]); setBusinessProfile(null); setCartItems([]); setSession(null); setCurrentScreen(Screen.Login);
+            setProfile(null); setProducts([]); setShowcase([]); setFolders([]); setBusinessProfile(null); setCartItems([]); setSession(null); setCurrentScreen(Screen.Login);
         };
+
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_OUT') handleLogoutReset(); else handleAuthState(session);
+            if (event === 'SIGNED_OUT') handleLogoutReset(); 
+            else handleAuthState(session);
         });
+
         supabase.auth.getSession().then(({ data: { session } }) => handleAuthState(session));
         return () => subscription.unsubscribe();
     }, []);
 
-    const handleSignOut = async () => {
+    const showConfirmation = () => {
+        setShowUpdateBadge(true);
+        setTimeout(() => setShowUpdateBadge(false), 3000);
+    };
+
+    const uploadImage = async ({ bucket, file, path }: { bucket: string, file: Blob, path: string }) => {
+        const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
+        if (error) throw error;
+        const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+        return data.publicUrl;
+    };
+
+    // --- Snippets Integrados ---
+
+    const handleUpdateProfileImage = async (dataUrl: string) => {
         setIsLoading(true);
-        try { await supabase.auth.signOut(); setShowVendorMenu(false); } catch (err) { console.error(err); } finally { setIsLoading(false); }
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const fileBlob = await dataUrlToBlob(dataUrl);
+            const path = `${user.id}/avatar.jpg`;
+            const avatarUrl = await uploadImage({ bucket: "avatars", file: fileBlob, path });
+            await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("user_id", user.id);
+            setProfile(p => p ? ({ ...p, avatar_url: avatarUrl }) : null);
+            showConfirmation();
+        } catch (err: any) { alert(err.message); } finally { setIsLoading(false); }
+    };
+
+    const handleUpdateCoverImage = async (dataUrl: string) => {
+        setIsLoading(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const fileBlob = await dataUrlToBlob(dataUrl);
+            const path = `${user.id}/cover.jpg`;
+            const coverUrl = await uploadImage({ bucket: "covers", file: fileBlob, path });
+            await supabase.from("profiles").update({ cover_url: coverUrl }).eq("user_id", user.id);
+            setProfile(p => p ? ({ ...p, cover_url: coverUrl }) : null);
+            showConfirmation();
+        } catch (err: any) { alert(err.message); } finally { setIsLoading(false); }
+    };
+
+    const handleCreateProduct = async ({ title, description, price, file }: { title: string, description: string, price: number, file: Blob }) => {
+        setIsLoading(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const imagePath = `${user.id}/${Date.now()}.jpg`;
+            const imageUrl = await uploadImage({ bucket: "products", file, path: imagePath });
+            await supabase.from("products").insert({ owner_id: user.id, title, description, price, image_url: imageUrl });
+            const { data: freshProducts } = await supabase.from('products').select('*').eq('owner_id', user.id);
+            setProducts((freshProducts || []).map(p => ({ id: p.id, name: p.title, description: p.description, price: p.price, image: p.image_url, category: 'general', owner_id: p.owner_id })));
+            showConfirmation();
+        } catch (err: any) { alert(err.message); } finally { setIsLoading(false); }
+    };
+
+    const handleAddToShowcase = async (title: string, file: Blob) => {
+        setIsLoading(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+            const imagePath = `${user.id}/${Date.now()}.jpg`;
+            const imageUrl = await uploadImage({ bucket: "showcase", file, path: imagePath });
+            await supabase.from("showcase").insert({ owner_id: user.id, title, image_url: imageUrl });
+            const { data: freshShowcase } = await supabase.from('showcase').select('*').eq('owner_id', user.id);
+            setShowcase(freshShowcase || []);
+            showConfirmation();
+        } catch (err: any) { alert(err.message); } finally { setIsLoading(false); }
     };
 
     /**
-     * handleUpdateProfile implementa a lógica exata solicitada (handleSaveProfile).
+     * handleCreateFolder - Versão atualizada conforme snippet do usuário
+     * Realiza um teste criando um produto dummy.
      */
-    const handleUpdateProfile = async (updates: { name: string, bio: string }) => {
+    const handleCreateFolder = async (name: string) => {
+        console.log("CLIQUEI EM CRIAR PASTA");
+        setIsLoading(true);
         try {
-            setIsLoading(true);
-
-            const { data: { user }, error: userError } = await supabase.auth.getUser();
-
-            if (userError || !user) {
-                console.error("Usuário não autenticado", userError);
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                console.log("Usuário não autenticado");
+                setIsLoading(false);
                 return;
             }
 
+            console.log("USER:", user.id);
+
+            // TESTE: criar produto dummy conforme solicitado pelo snippet do usuário
             const { data, error } = await supabase
-                .from("profiles")
-                .update({
-                    full_name: updates.name,   // 👈 campo real
-                    bio: updates.bio,          // 👈 novo campo
-                    updated_at: new Date().toISOString(),
-                })
-                .eq("user_id", user.id)        // 👈 PK REAL
-                .select()
-                .single();
+                .from("products")
+                .insert({
+                    owner_id: user.id,
+                    title: "Novo produto (Dummy)",
+                    description: `Pasta criada: ${name}`,
+                    price: 0,
+                    image_url: null,
+                });
 
             if (error) {
-                console.error("Erro ao atualizar perfil:", error);
-                alert("Erro ao atualizar perfil");
-                return;
+                console.error("Erro ao criar produto:", error);
+                throw error;
             }
 
-            setProfile(data);
-            alert("Perfil atualizado com sucesso");
+            console.log("Produto criado:", data);
 
-        } catch (err) {
-            console.error("Erro inesperado:", err);
+            // Atualiza a lista de pastas (para manter o comportamento original de exibição)
+            await supabase.from("folders").insert({ user_id: user.id, name, item_count: 0 });
+            const { data: freshFolders } = await supabase.from('folders').select('*').eq('user_id', user.id);
+            setFolders(freshFolders || []);
+
+            showConfirmation();
+        } catch (err: any) {
+            alert(err.message);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleUpdateProfileImage = async (dataUrl: string) => {
-        if (!session?.user) return;
-        setIsLoading(true);
-        try {
-            const blob = await dataUrlToBlob(dataUrl);
-            const path = `avatars/${session.user.id}/${crypto.randomUUID()}.png`;
-            await supabase.storage.from('media').upload(path, blob);
-            const { data: storageData } = supabase.storage.from('media').getPublicUrl(path);
-            await supabase.from('profiles').update({ avatar_url: storageData.publicUrl }).eq('user_id', session.user.id);
-            const { data: freshProfile } = await supabase.from('profiles').select('*').eq('user_id', session.user.id).single();
-            setProfile(freshProfile);
-        } catch (err: any) { alert(err.message); } finally { setIsLoading(false); }
-    };
-
-    const handleUpdateCoverImage = async (dataUrl: string) => {
-        if (!session?.user) return;
-        setIsLoading(true);
-        try {
-            const blob = await dataUrlToBlob(dataUrl);
-            const path = `covers/${session.user.id}/${crypto.randomUUID()}.png`;
-            await supabase.storage.from('media').upload(path, blob);
-            const { data: storageData } = supabase.storage.from('media').getPublicUrl(path);
-            await supabase.from('profiles').update({ cover_image_url: storageData.publicUrl }).eq('user_id', session.user.id);
-            const { data: freshProfile } = await supabase.from('profiles').select('*').eq('user_id', session.user.id).single();
-            setProfile(freshProfile);
-        } catch (err: any) { alert(err.message); } finally { setIsLoading(false); }
-    };
-
-    const handleCreateFolder = async (name: string) => {
-        if (!session?.user) return;
-        setIsLoading(true);
-        try {
-            const { data, error } = await supabase.from('folders').insert([{ name, user_id: session.user.id, item_count: 0 }]).select().single();
-            if (error) throw error;
-            setFolders(prev => [...prev, data]);
-        } catch (err: any) { alert("Erro: " + err.message); } finally { setIsLoading(false); }
-    };
-
-    const handleCreateProductInFolder = async (productData: Partial<Item>, folderId: string) => {
-        if (!session?.user) return;
-        setIsLoading(true);
-        try {
-            await supabase.from('items').insert([{ ...productData, user_id: session.user.id, folder_id: folderId }]);
-            const { data: freshProducts } = await supabase.from('items').select('*').eq('user_id', session.user.id);
-            const { data: freshFolders } = await supabase.from('folders').select('*').eq('user_id', session.user.id);
-            setProducts(freshProducts || []);
-            setFolders(freshFolders || []);
-        } catch (err: any) { alert("Erro: " + err.message); } finally { setIsLoading(false); }
-    };
-
-    const renderScreenContent = () => {
-        if (authLoading) return <SplashScreen />;
+    const renderScreen = () => {
+        if (authLoading || currentScreen === Screen.Splash) return <SplashScreen />;
         switch (currentScreen) {
             case Screen.Login: return <LoginScreen />;
-            case Screen.AccountTypeSelection: 
-                return <AccountTypeSelectionScreen onSelect={async (type) => {
-                    const uid = session?.user.id;
-                    if (uid) {
-                        await supabase.from('profiles').update({ account_type: type }).eq('user_id', uid);
-                        const { data } = await supabase.from('profiles').select('*').eq('user_id', uid).single();
-                        setProfile(data);
-                        if (type === 'business') setCurrentScreen(Screen.BusinessOnboarding);
-                        else setCurrentScreen(Screen.Feed);
-                    }
-                }} />;
-            case Screen.BusinessOnboarding:
-                return <BusinessOnboardingScreen onComplete={async (details) => {
-                    if (session?.user) {
-                        await supabase.from('profiles').update({ full_name: details.business_name, bio: details.description }).eq('user_id', session.user.id);
-                        setBusinessProfile({ id: session.user.id, ...details });
-                        setCurrentScreen(Screen.VendorDashboard);
-                    }
-                }} />;
-            case Screen.VendorDashboard:
-                return businessProfile && profile && <VendorDashboard 
-                    businessProfile={businessProfile} 
-                    profile={profile} 
-                    onOpenMenu={() => setShowVendorMenu(true)} 
-                    unreadNotificationCount={0} 
-                    onOpenNotificationsPanel={() => {}} 
-                    onOpenPromotionModal={() => {}} 
-                    followersCount={0} 
-                    followingCount={0} 
-                    folders={folders}
-                    products={products}
-                    onCreateFolder={handleCreateFolder}
-                    onCreateProductInFolder={handleCreateProductInFolder}
-                    onUpdateProfile={(updates: any) => handleUpdateProfile({ name: updates.name, bio: updates.bio })}
-                    onUpdateProfileImage={handleUpdateProfileImage}
-                    onUpdateCoverImage={handleUpdateCoverImage}
-                    onNavigateToProducts={() => setCurrentScreen(Screen.VendorProducts)} 
-                />;
-            case Screen.VendorProducts:
-                return businessProfile && <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile} products={products} onCreateProduct={async (d) => {}} />;
-            case Screen.VendorAnalytics:
-                return <VendorAnalyticsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} />;
-            case Screen.VendorAffiliates:
-                return <VendorAffiliatesScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} />;
-            case Screen.VendorCollaborations:
-                return <VendorCollaborationsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} collaborationRequests={INITIAL_COLLABORATION_REQUESTS} posts={posts} />;
-            case Screen.Feed:
-                return profile && <FeedScreen posts={posts} stories={INITIAL_STORIES} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={setRecommendationItem} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={c => { setCurrentScreen(Screen.SubCategorySelection); }} onLikePost={id => setPosts(ps => ps.map(p => p.id === id ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 } : p))} onAddComment={() => {}} onNavigateToAllHighlights={() => setCurrentScreen(Screen.AllHighlights)} onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)} unreadNotificationCount={0} onNotificationsClick={() => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
-            case Screen.Home:
-                return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} onUpdateProfile={(updates: any) => handleUpdateProfile({ name: updates.name, bio: updates.bio })} onUpdateProfileImage={handleUpdateProfileImage} onSelectCategory={() => {}} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={(id) => { setViewedProfileId(id); setCurrentScreen(Screen.Home); }} onNavigateToSettings={() => setCurrentScreen(Screen.Settings)} onSignOut={handleSignOut} unreadNotificationCount={0} unreadMessagesCount={0} onOpenNotificationsPanel={() => {}} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} />;
-            case Screen.Search:
-                return <SearchScreen onBack={() => setCurrentScreen(Screen.Feed)} posts={posts} items={ITEMS} onViewProfile={id => { setViewedProfileId(id); setCurrentScreen(Screen.Home); }} onLikePost={() => {}} onItemClick={setRecommendationItem} onItemAction={() => {}} onOpenSplitCamera={() => {}} onOpenComments={() => {}} onAddToCart={i => setCartItems(p => [...p, i])} onBuy={i => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
-            case Screen.Cart:
-                return <CartScreen cartItems={cartItems} onBack={() => setCurrentScreen(Screen.Feed)} onRemoveItem={i => setCartItems(ps => ps.filter((_, idx) => idx !== i))} onBuyItem={() => {}} onTryOnItem={() => {}} onCheckout={() => setCurrentScreen(Screen.Cart)} />;
-            default:
-                return <SplashScreen />;
+            case Screen.AccountTypeSelection: return <AccountTypeSelectionScreen onSelect={async (type) => { const uid = session?.user.id; if (uid) { await supabase.from('profiles').update({ account_type: type }).eq('user_id', uid); const { data } = await supabase.from('profiles').select('*').eq('user_id', uid).single(); setProfile(data); if (type === 'business') setCurrentScreen(Screen.BusinessOnboarding); else setCurrentScreen(Screen.Feed); } }} />;
+            case Screen.BusinessOnboarding: return <BusinessOnboardingScreen onComplete={async (details) => { if (session?.user) { await supabase.from('profiles').update({ full_name: details.business_name, bio: details.description }).eq('user_id', session.user.id); setBusinessProfile({ id: session.user.id, ...details }); setCurrentScreen(Screen.VendorDashboard); } }} />;
+            case Screen.VendorDashboard: return businessProfile && profile && <VendorDashboard businessProfile={businessProfile} profile={profile} onOpenMenu={() => setShowVendorMenu(true)} unreadNotificationCount={0} onOpenNotificationsPanel={() => {}} onOpenPromotionModal={() => {}} followersCount={0} followingCount={0} folders={folders} products={products} showcase={showcase} onCreateFolder={handleCreateFolder} onCreateProductInFolder={() => {}} onUpdateProfile={async (u) => { const { data } = await supabase.from('profiles').update({ full_name: u.name, bio: u.bio }).eq('user_id', profile.user_id).select().single(); if (data) setProfile(data); }} onUpdateProfileImage={handleUpdateProfileImage} onUpdateCoverImage={handleUpdateCoverImage} onNavigateToProducts={() => setCurrentScreen(Screen.VendorProducts)} onAddToShowcase={handleAddToShowcase} />;
+            case Screen.VendorProducts: return businessProfile && <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile} products={products} onCreateProduct={handleCreateProduct} />;
+            case Screen.Feed: return profile && <FeedScreen posts={posts} stories={INITIAL_STORIES} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={setRecommendationItem} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={() => {}} onLikePost={id => setPosts(ps => ps.map(p => p.id === id ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 } : p))} onAddComment={() => {}} onNavigateToAllHighlights={() => setCurrentScreen(Screen.AllHighlights)} onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)} unreadNotificationCount={0} onNotificationsClick={() => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
+            case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} onUpdateProfile={async (u) => { const { data } = await supabase.from('profiles').update({ full_name: u.name, bio: u.bio }).eq('user_id', profile?.user_id).select().single(); if (data) setProfile(data); }} onUpdateProfileImage={handleUpdateProfileImage} onSelectCategory={() => {}} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={(id) => setViewedProfileId(id)} onNavigateToSettings={() => setCurrentScreen(Screen.Settings)} onSignOut={() => supabase.auth.signOut()} unreadNotificationCount={0} unreadMessagesCount={0} onOpenNotificationsPanel={() => {}} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} />;
+            default: return <SplashScreen />;
         }
     };
 
-    const SCREENS_WITH_NAVBAR = [Screen.Home, Screen.Feed, Screen.Search, Screen.Cart, Screen.ChatList, Screen.VendorDashboard, Screen.VendorAnalytics, Screen.AllHighlights];
-
     return (
-        <div className="h-[100dvh] w-full bg-[var(--bg-main)] overflow-hidden flex flex-col relative">
-            <div className="flex-grow relative overflow-hidden">{renderScreenContent()}</div>
-            {SCREENS_WITH_NAVBAR.includes(currentScreen) && (
-                <BottomNavBar 
-                    activeScreen={currentScreen} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)}
-                    onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToPromotion={() => {}}
-                    onNavigateToProfile={() => { if (profile?.account_type === 'business') setCurrentScreen(Screen.VendorDashboard); else setCurrentScreen(Screen.Home); }}
-                    onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false}
-                    accountType={profile?.account_type} onNavigateToVendorAnalytics={() => setCurrentScreen(Screen.VendorAnalytics)}
-                />
+        <div className="h-[100dvh] w-full bg-white overflow-hidden flex flex-col relative">
+            <div className="flex-grow relative overflow-hidden">{renderScreen()}</div>
+            
+            {showUpdateBadge && (
+                <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[250] bg-zinc-900 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl animate-slideUp flex items-center gap-2 border border-white/10">
+                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                    Atualizado com Sucesso!
+                </div>
             )}
-            {isLoading && (<div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center"><div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div></div>)}
+
+            {profile && profile.account_type === 'personal' && [Screen.Feed, Screen.Home, Screen.Cart, Screen.Rewards, Screen.AllHighlights].includes(currentScreen) && <BottomNavBar activeScreen={currentScreen} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToPromotion={() => {}} onNavigateToProfile={() => { setCurrentScreen(Screen.Home); setViewedProfileId(null); }} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} accountType={profile.account_type} onNavigateToVendorAnalytics={() => setCurrentScreen(Screen.VendorAnalytics)} />}
+            {isLoading && <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center"><div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div></div>}
+            {showVendorMenu && <VendorMenuModal onClose={() => setShowVendorMenu(false)} onNavigateToAnalytics={() => { setCurrentScreen(Screen.VendorAnalytics); setShowVendorMenu(false); }} onNavigateToProducts={() => { setCurrentScreen(Screen.VendorProducts); setShowVendorMenu(false); }} onNavigateToAffiliates={() => { setCurrentScreen(Screen.VendorAffiliates); setShowVendorMenu(false); }} onNavigateToCollaborations={() => { setCurrentScreen(Screen.VendorCollaborations); setShowVendorMenu(false); }} onSignOut={() => supabase.auth.signOut()} />}
             {recommendationItem && <RecommendationModal item={recommendationItem} onClose={() => setRecommendationItem(null)} onAddToCart={i => setCartItems(p => [...p, i])} onStartTryOn={() => {}} />}
-            {showVendorMenu && (
-                <VendorMenuModal 
-                    onClose={() => setShowVendorMenu(false)}
-                    onNavigateToAnalytics={() => { setCurrentScreen(Screen.VendorAnalytics); setShowVendorMenu(false); }}
-                    onNavigateToProducts={() => { setCurrentScreen(Screen.VendorProducts); setShowVendorMenu(false); }}
-                    onNavigateToAffiliates={() => { setCurrentScreen(Screen.VendorAffiliates); setShowVendorMenu(false); }}
-                    onNavigateToCollaborations={() => { setCurrentScreen(Screen.VendorCollaborations); setShowVendorMenu(false); }}
-                    onSignOut={handleSignOut}
-                />
-            )}
         </div>
     );
 };

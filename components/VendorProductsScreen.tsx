@@ -1,52 +1,114 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import Header from './Header';
 import type { Item, BusinessProfile } from '../types';
-import { PlusIcon, PencilIcon, EyeIcon, XCircleIcon, ShoppingBagIcon } from './IconComponents';
+import { PlusIcon, PencilIcon, EyeIcon, XCircleIcon, ShoppingBagIcon, CameraIcon } from './IconComponents';
 import GradientButton from './GradientButton';
 
 interface VendorProductsScreenProps {
     onBack: () => void;
     businessProfile: BusinessProfile;
     products: Item[];
-    onCreateProduct: (data: Partial<Item>) => Promise<void>;
+    onCreateProduct: (data: { title: string, description: string, price: number, file: Blob }) => Promise<void>;
 }
 
-const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, businessProfile, products, onCreateProduct }) => {
+const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, products, onCreateProduct }) => {
     const [isCreating, setIsCreating] = useState(false);
+    const [title, setTitle] = useState('');
+    const [description, setDescription] = useState('');
+    const [price, setPrice] = useState('');
+    const [file, setFile] = useState<Blob | null>(null);
+    const [preview, setPreview] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleCreateDummy = async () => {
-        const name = prompt("Nome do Produto:");
-        const price = prompt("Preço (AOA):");
-        if (name && price) {
-            await onCreateProduct({
-                name,
-                price: parseFloat(price),
-                image: 'https://i.postimg.cc/XJf6gckX/Pump_STARTAP.png', // Placeholder
-                category: 'general',
-                description: 'Produto adicionado via painel vendedor.'
-            });
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const selected = e.target.files?.[0];
+        if (selected) {
+            setFile(selected);
+            const reader = new FileReader();
+            reader.onloadend = () => setPreview(reader.result as string);
+            reader.readAsDataURL(selected);
         }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!title || !price || !file) return;
+        await onCreateProduct({ title, description, price: parseFloat(price), file });
+        setIsCreating(false);
+        setTitle('');
+        setDescription('');
+        setPrice('');
+        setFile(null);
+        setPreview(null);
     };
 
     return (
         <div className="w-full h-full flex flex-col bg-[var(--bg-main)] text-[var(--text-primary)]">
-            <Header title="Gerenciar Catálogo" onBack={onBack} />
+            <Header title={isCreating ? "Novo Produto" : "Gerenciar Catálogo"} onBack={isCreating ? () => setIsCreating(false) : onBack} />
             <main className="flex-grow overflow-y-auto pt-16 p-4 space-y-4 animate-fadeIn pb-24">
                 
-                <div className="flex gap-2">
-                    <GradientButton onClick={handleCreateDummy} className="flex-1 !py-3 !text-sm">
-                        <div className="flex items-center justify-center gap-2">
-                            <PlusIcon className="w-5 h-5" />
-                            Cadastrar Produto
-                        </div>
-                    </GradientButton>
-                    <button className="px-4 bg-[var(--bg-tertiary)] rounded-xl border border-[var(--border-primary)] text-[var(--accent-primary)]">
-                        <EyeIcon className="w-5 h-5" />
-                    </button>
-                </div>
+                {!isCreating && (
+                    <div className="flex gap-2">
+                        <GradientButton onClick={() => setIsCreating(true)} className="flex-1 !py-3 !text-sm">
+                            <div className="flex items-center justify-center gap-2">
+                                <PlusIcon className="w-5 h-5" />
+                                Cadastrar Produto
+                            </div>
+                        </GradientButton>
+                        <button className="px-4 bg-[var(--bg-tertiary)] rounded-xl border border-[var(--border-primary)] text-[var(--accent-primary)]">
+                            <EyeIcon className="w-5 h-5" />
+                        </button>
+                    </div>
+                )}
 
-                {products.length > 0 ? (
+                {isCreating ? (
+                    <form onSubmit={handleSubmit} className="space-y-6 animate-slideUp">
+                        <div 
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-full h-64 border-2 border-dashed border-zinc-200 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer bg-zinc-50 overflow-hidden"
+                        >
+                            {preview ? (
+                                <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                            ) : (
+                                <>
+                                    <CameraIcon className="w-10 h-10 text-zinc-300 mb-2" />
+                                    <span className="text-[10px] font-black uppercase text-zinc-400">Foto do Produto</span>
+                                </>
+                            )}
+                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+                        </div>
+
+                        <div className="space-y-4">
+                            <input
+                                type="text"
+                                placeholder="Título do Produto"
+                                value={title}
+                                onChange={e => setTitle(e.target.value)}
+                                className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:outline-none focus:border-amber-500 font-bold text-sm"
+                                required
+                            />
+                            <input
+                                type="number"
+                                placeholder="Preço (AOA)"
+                                value={price}
+                                onChange={e => setPrice(e.target.value)}
+                                className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:outline-none focus:border-amber-500 font-bold text-sm"
+                                required
+                            />
+                            <textarea
+                                placeholder="Descrição"
+                                value={description}
+                                onChange={e => setDescription(e.target.value)}
+                                className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:outline-none focus:border-amber-500 font-bold text-sm h-32 resize-none"
+                            />
+                        </div>
+
+                        <GradientButton type="submit" disabled={!title || !price || !file}>
+                            Salvar no Banco de Dados
+                        </GradientButton>
+                    </form>
+                ) : products.length > 0 ? (
                     <div className="grid grid-cols-1 gap-3">
                         {products.map(item => (
                             <div key={item.id} className="bg-[var(--bg-secondary)] border border-[var(--border-secondary)] p-3 rounded-2xl flex items-center gap-4">
@@ -79,7 +141,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, bus
                             <h3 className="font-black uppercase text-sm">Catálogo Vazio</h3>
                             <p className="text-xs text-zinc-500 max-w-[200px] mx-auto mt-1">O seu estoque está vazio. Adicione produtos para começar a vender.</p>
                         </div>
-                        <button onClick={handleCreateDummy} className="text-[10px] font-black text-[var(--accent-primary)] uppercase underline tracking-widest">
+                        <button onClick={() => setIsCreating(true)} className="text-[10px] font-black text-[var(--accent-primary)] uppercase underline tracking-widest">
                             Cadastrar meu primeiro produto
                         </button>
                     </div>

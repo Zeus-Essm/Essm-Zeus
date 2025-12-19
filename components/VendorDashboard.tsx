@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useRef } from 'react';
-import type { BusinessProfile, Item, Post, Profile, Folder } from '../types';
+import type { BusinessProfile, Item, Profile, Folder, ShowcaseItem } from '../types';
 import { 
     MenuIcon, CameraIcon, PencilIcon, PlusIcon, StarIcon, 
     BellIcon, UserIcon, ChevronDownIcon, ArchiveIcon, ShoppingBagIcon
@@ -18,12 +18,14 @@ interface VendorDashboardProps {
   followingCount: number;
   folders: Folder[];
   products: Item[];
+  showcase: ShowcaseItem[];
   onCreateFolder: (name: string) => void;
   onCreateProductInFolder: (product: Partial<Item>, folderId: string) => void;
   onUpdateProfile: (updates: { username?: string, bio?: string, name?: string }) => void;
   onUpdateProfileImage: (dataUrl: string) => void;
   onUpdateCoverImage: (dataUrl: string) => void;
   onNavigateToProducts: () => void;
+  onAddToShowcase: (title: string, file: Blob) => Promise<void>;
 }
 
 const FolderCard: React.FC<{ folder: Folder; onClick: () => void }> = ({ folder, onClick }) => (
@@ -68,19 +70,23 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     followingCount,
     folders,
     products,
+    showcase,
     onCreateFolder,
     onCreateProductInFolder,
     onUpdateProfile,
     onUpdateProfileImage,
     onUpdateCoverImage,
-    onNavigateToProducts
+    onNavigateToProducts,
+    onAddToShowcase
 }) => {
     const [activeTab, setActiveTab] = useState<'shop' | 'posts'>('shop');
     const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
     const [isEditingBio, setIsEditingBio] = useState(false);
+    const [showcaseLoading, setShowcaseLoading] = useState(false);
 
     const avatarInputRef = useRef<HTMLInputElement>(null);
     const coverInputRef = useRef<HTMLInputElement>(null);
+    const showcaseInputRef = useRef<HTMLInputElement>(null);
 
     const folderProducts = useMemo(() => {
         if (!selectedFolderId) return [];
@@ -99,8 +105,23 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
         }
     };
 
+    const handleAddToShowcaseClick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const title = prompt("Título para o item da vitrine:");
+        if (!title) return;
+        
+        setShowcaseLoading(true);
+        try {
+            await onAddToShowcase(title, file);
+        } finally {
+            setShowcaseLoading(false);
+            if (showcaseInputRef.current) showcaseInputRef.current.value = "";
+        }
+    };
+
     const handleCreateFolderClick = () => {
-        const name = prompt("Nome da Nova Coleção/Pasta:");
+        const name = prompt("Nome da Nova Pasta:");
         if (name) onCreateFolder(name);
     };
 
@@ -123,7 +144,6 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
 
     return (
         <div className="w-full h-full flex flex-col bg-white text-zinc-900 relative overflow-hidden">
-            {/* Header Flutuante */}
             <header className="px-5 pt-6 absolute top-0 left-0 right-0 flex items-center justify-between z-30 pointer-events-none">
                 <div className="flex items-center gap-2 pointer-events-auto">
                     <button onClick={onOpenNotificationsPanel} className="p-2.5 bg-black/40 backdrop-blur-md rounded-2xl border border-white/20 text-white active:scale-90 transition-transform">
@@ -139,10 +159,9 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
             </header>
 
             <main className="flex-grow overflow-y-auto pb-32">
-                {/* Foto de Capa */}
                 <div className="relative w-full h-48 bg-zinc-900 overflow-hidden group">
-                    {profile.cover_image_url ? (
-                        <img src={profile.cover_image_url} alt="Capa" className="w-full h-full object-cover" />
+                    {profile.cover_url ? (
+                        <img src={profile.cover_url} alt="Capa" className="w-full h-full object-cover" />
                     ) : (
                         <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
                             <span className="text-zinc-600 font-black uppercase text-[10px] tracking-[0.4em]">Banner da Loja</span>
@@ -157,10 +176,8 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                     <input type="file" accept="image/*" ref={coverInputRef} onChange={(e) => handleFileChange(e, 'cover')} className="hidden" />
                 </div>
 
-                {/* Perfil Minimalista */}
                 <div className="relative px-6 -mt-12 flex flex-col">
                     <div className="flex items-center justify-between w-full">
-                        {/* Avatar */}
                         <div className="relative flex-shrink-0">
                             <div className="w-24 h-24 rounded-full p-1 bg-white shadow-lg overflow-hidden border border-zinc-100">
                                 {profile.avatar_url ? (
@@ -180,24 +197,22 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                             <input type="file" accept="image/*" ref={avatarInputRef} onChange={(e) => handleFileChange(e, 'avatar')} className="hidden" />
                         </div>
 
-                        {/* Estatísticas (Estilo Instagram) */}
                         <div className="flex-1 flex justify-around pl-4">
                             <div className="text-center">
-                                <span className="block text-sm font-black text-zinc-900 leading-none">{products.length}</span>
+                                <span className="block text-sm font-black text-zinc-900 leading-none">{products.length || 0}</span>
                                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tight">Produtos</span>
                             </div>
                             <div className="text-center">
-                                <span className="block text-sm font-black text-zinc-900 leading-none">{followersCount}</span>
+                                <span className="block text-sm font-black text-zinc-900 leading-none">{followersCount || 0}</span>
                                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tight">Seguidores</span>
                             </div>
                             <div className="text-center">
-                                <span className="block text-sm font-black text-zinc-900 leading-none">{followingCount}</span>
+                                <span className="block text-sm font-black text-zinc-900 leading-none">{followingCount || 0}</span>
                                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tight">Seguindo</span>
                             </div>
                         </div>
                     </div>
 
-                    {/* Botão Editar Perfil Largo */}
                     <button 
                         onClick={() => setIsEditingBio(true)}
                         className="mt-6 w-full py-2.5 bg-zinc-100 hover:bg-zinc-200 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-800 transition-colors active:scale-[0.99]"
@@ -205,46 +220,26 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                         Editar Perfil
                     </button>
 
-                    {/* Nome e Bio (Zonas Vermelha, Verde e Azul) */}
                     <div className="mt-5 flex flex-col items-start relative group">
-                        {/* Nome do Usuário (Sinalizado em Vermelho) + Ícone Edição (Sinalizado em Azul) */}
-                        <div className="flex items-center gap-2 mb-1">
-                            <h2 className="font-black text-xl uppercase tracking-tighter italic text-zinc-900 leading-none">
-                                {profile.full_name || profile.username}
-                            </h2>
-                            <button 
-                                onClick={() => setIsEditingBio(true)}
-                                className="p-1.5 text-zinc-300 hover:text-amber-500 transition-colors active:scale-90"
-                                aria-label="Editar Nome e Bio"
-                            >
-                                <PencilIcon className="w-3.5 h-3.5" />
-                            </button>
-                        </div>
-                        
-                        <p className="text-[11px] font-bold text-zinc-400 tracking-tight mb-3">@{profile.username}</p>
-                        
-                        {/* Caixa de Bio (Sinalizado em Verde) */}
+                        <button 
+                            onClick={() => setIsEditingBio(true)}
+                            className="absolute top-0 right-0 p-2 text-zinc-300 hover:text-amber-500 transition-colors active:scale-90"
+                        >
+                            <PencilIcon className="w-4 h-4" />
+                        </button>
+                        <h2 className="font-black text-xl uppercase tracking-tighter italic text-zinc-900 leading-none mb-0.5">{profile.full_name || profile.username}</h2>
+                        <p className="text-[11px] font-bold text-zinc-400 tracking-tight mb-3 opacity-60">{profile.username}</p>
                         <div className="w-full">
                             {profile.bio ? (
-                                <p className="text-xs text-zinc-600 font-medium leading-relaxed italic pr-4">
-                                    "{profile.bio}"
-                                </p>
+                                <p className="text-xs text-zinc-600 font-medium leading-relaxed italic pr-8">"{profile.bio}"</p>
                             ) : (
-                                <button 
-                                    onClick={() => setIsEditingBio(true)}
-                                    className="text-[10px] font-bold text-zinc-300 italic uppercase tracking-widest hover:text-amber-500 transition-colors"
-                                >
-                                    Toque para adicionar uma biografia...
-                                </button>
+                                <button onClick={() => setIsEditingBio(true)} className="text-[10px] font-bold text-zinc-300 italic uppercase tracking-widest hover:text-amber-500 transition-colors">Toque no lápis para adicionar sua bio...</button>
                             )}
                         </div>
                     </div>
                 </div>
 
-                {/* Zona Vermelha Excluída (Os cards de estatísticas inferiores não existem mais aqui) */}
-
-                {/* Navegação de Conteúdo */}
-                <div className="flex mt-8 px-6 border-b border-zinc-100">
+                <div className="flex mt-10 px-6 border-b border-zinc-100">
                     <button onClick={() => { setActiveTab('shop'); setSelectedFolderId(null); }} className={`flex-1 py-4 text-[11px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === 'shop' && !selectedFolderId ? 'text-zinc-900' : 'text-zinc-300'}`}>
                         Catálogo
                         {activeTab === 'shop' && !selectedFolderId && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-amber-500 rounded-t-full"></div>}
@@ -283,21 +278,45 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                     {folders.map(folder => (
                                         <FolderCard key={folder.id} folder={folder} onClick={() => setSelectedFolderId(folder.id)} />
                                     ))}
-                                    <AddButton label="Criar Pasta" onClick={handleCreateFolderClick} />
+                                    {/* Botão de Criação de Pasta Requisitado */}
+                                    <button 
+                                        onClick={handleCreateFolderClick}
+                                        className="flex flex-col items-center justify-center gap-3 p-4 border-2 border-dashed border-amber-500/30 rounded-[2rem] bg-amber-50/20 group active:scale-95 transition-all w-full min-h-[160px] hover:border-amber-500"
+                                    >
+                                        <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center group-hover:bg-amber-500 transition-colors">
+                                            <PlusIcon className="w-6 h-6 text-amber-600 group-hover:text-white transition-colors" />
+                                        </div>
+                                        <p className="text-[11px] font-black uppercase tracking-widest text-amber-600">CRIAR PASTA</p>
+                                    </button>
                                 </div>
                             )}
                         </>
                     ) : (
-                        <div className="py-24 text-center flex flex-col items-center opacity-30 grayscale">
-                             <ShoppingBagIcon className="w-10 h-10 text-zinc-400 mb-4" />
-                             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Sua vitrine está vazia</p>
-                             <p className="text-[9px] font-bold text-zinc-400 mt-2 uppercase">Publique looks no feed para destacar aqui</p>
+                        <div className="animate-fadeIn">
+                            {showcase.length > 0 ? (
+                                <div className="grid grid-cols-2 gap-4">
+                                    {showcase.map(item => (
+                                        <div key={item.id} className="bg-zinc-50 p-3 rounded-[2rem] border border-zinc-100 relative group active:scale-95 transition-all overflow-hidden">
+                                            <img src={item.image_url} alt={item.title} className="w-full aspect-square object-cover rounded-[1.5rem] mb-3 shadow-sm" />
+                                            <p className="text-[11px] font-bold uppercase truncate px-1 text-center">{item.title}</p>
+                                        </div>
+                                    ))}
+                                    <AddButton label="Adicionar Look" onClick={() => showcaseInputRef.current?.click()} />
+                                </div>
+                            ) : (
+                                <div className="py-24 text-center flex flex-col items-center opacity-30 grayscale">
+                                     <ShoppingBagIcon className="w-10 h-10 text-zinc-400 mb-4" />
+                                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Sua vitrine está vazia</p>
+                                     <p className="text-[9px] font-bold text-zinc-400 mt-2 uppercase">Adicione fotos dos seus melhores looks</p>
+                                     <button onClick={() => showcaseInputRef.current?.click()} className="mt-6 px-6 py-2 bg-amber-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">Começar</button>
+                                </div>
+                            )}
+                            <input type="file" ref={showcaseInputRef} onChange={handleAddToShowcaseClick} className="hidden" accept="image/*" />
                         </div>
                     )}
                 </div>
             </main>
 
-            {/* CTA de Promoção Flutuante */}
             <div className="absolute bottom-28 right-6 z-20">
                 <button onClick={onOpenPromotionModal} className="w-16 h-16 bg-gradient-to-tr from-amber-500 to-amber-400 rounded-3xl flex items-center justify-center shadow-[0_15px_30px_rgba(245,158,11,0.3)] active:scale-90 transition-all group">
                     <StarIcon className="w-7 h-7 text-white group-hover:rotate-12 transition-transform" />
@@ -313,6 +332,15 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                         setIsEditingBio(false);
                     }} 
                 />
+            )}
+            
+            {showcaseLoading && (
+                <div className="fixed inset-0 z-[300] bg-black/20 backdrop-blur-[1px] flex items-center justify-center">
+                    <div className="bg-white p-6 rounded-[2rem] flex flex-col items-center gap-4 shadow-xl">
+                        <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Enviando para Vitrine...</p>
+                    </div>
+                </div>
             )}
         </div>
     );

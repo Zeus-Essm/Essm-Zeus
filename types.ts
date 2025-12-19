@@ -15,6 +15,14 @@ export interface Folder {
   item_count: number;
 }
 
+export interface ShowcaseItem {
+  id: string;
+  owner_id: string;
+  title: string;
+  image_url: string;
+  created_at?: string;
+}
+
 export interface SubCategory {
   id: string;
   name: string;
@@ -40,6 +48,7 @@ export interface Item {
   vendorSubCategory?: string;
   recommendationVideo?: string; 
   folder_id?: string;
+  owner_id?: string;
 }
 
 export interface Comment {
@@ -94,10 +103,10 @@ export interface SavedLook {
 export interface Profile {
   user_id: string; 
   username: string; 
-  full_name: string | null; // 👈 Campo real conforme snippet do usuário
+  full_name: string | null; 
   bio: string | null;
   avatar_url: string | null; 
-  cover_image_url: string | null;
+  cover_url: string | null;
   account_type: 'personal' | 'business' | null;
   verification_status?: 'unverified' | 'pending' | 'verified';
   reward_points?: number;
