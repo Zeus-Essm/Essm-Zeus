@@ -13,7 +13,7 @@ import BioEditModal from './BioEditModal';
 interface HomeScreenProps {
   loggedInProfile: Profile;
   viewedProfileId: string | null;
-  onUpdateProfile: (updates: { username?: string, bio?: string, full_name?: string }) => void;
+  onUpdateProfile: (updates: { username?: string, bio?: string, name?: string }) => void;
   onUpdateProfileImage: (imageDataUrl: string) => void;
   onSelectCategory: (category: Category) => void;
   onNavigateToFeed: () => void;
@@ -127,8 +127,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
       </header>
 
       <main className="flex-grow overflow-y-auto pb-24">
-        <div className="px-5 py-8 flex flex-col items-center text-center">
-            <div className="relative mb-6">
+        <div className="px-5 py-12 flex flex-col items-center text-center">
+            <div className="relative mb-8">
                 <div className="w-32 h-32 rounded-[3rem] p-0.5 bg-gradient-to-tr from-amber-500 to-amber-200 flex items-center justify-center overflow-hidden shadow-2xl shadow-amber-500/20">
                     <div className="w-full h-full rounded-[2.8rem] bg-white flex items-center justify-center overflow-hidden border-2 border-white">
                         {profile.avatar_url ? (
@@ -151,8 +151,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                 )}
             </div>
             
-            <div className="flex flex-col items-center max-w-xs">
-                <h2 className="font-black text-lg uppercase tracking-[0.15em] mb-1">{profile.full_name || profile.username}</h2>
+            <div className="flex flex-col items-center max-w-xs mt-2">
+                <h2 className="font-black text-lg uppercase tracking-[0.15em] mb-1.5">{profile.full_name || profile.username}</h2>
                 <div className="flex items-center gap-2">
                     {profile.bio ? (
                         <p className="text-xs text-zinc-500 font-medium leading-relaxed italic">"{profile.bio}"</p>
@@ -204,11 +204,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
       {isEditingBio && (
           <BioEditModal 
-            initialUsername={profile.full_name || profile.username} 
-            initialBio={profile.bio || ''} 
+            profile={profile}
             onClose={() => setIsEditingBio(false)} 
             onSave={(newName, newBio) => {
-                onUpdateProfile({ full_name: newName, bio: newBio });
+                onUpdateProfile({ name: newName, bio: newBio });
                 setIsEditingBio(false);
             }} 
           />

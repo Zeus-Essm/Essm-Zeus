@@ -48,7 +48,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
         const profileMap = new Map<string, Profile>();
         posts.forEach(post => {
             if (!profileMap.has(post.user.id)) {
-                // Fix: Add missing full_name property to satisfy Profile interface
+                // FIX: Use full_name instead of name to match the Profile interface in types.ts
                 profileMap.set(post.user.id, {
                     user_id: post.user.id, 
                     username: post.user.name,
@@ -78,8 +78,10 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
 
         const lowercasedQuery = query.toLowerCase();
         
+        // FIX: Include full_name in the search filter if available.
         const profileResults = allProfiles.filter(profile =>
-            profile.username.toLowerCase().includes(lowercasedQuery)
+            profile.username.toLowerCase().includes(lowercasedQuery) ||
+            (profile.full_name && profile.full_name.toLowerCase().includes(lowercasedQuery))
         );
         setFilteredProfiles(profileResults);
         

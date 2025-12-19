@@ -56,7 +56,6 @@ const App: React.FC = () => {
     const [businessProfile, setBusinessProfile] = React.useState<BusinessProfile | null>(null);
     const [showVendorMenu, setShowVendorMenu] = React.useState(false);
     const [recommendationItem, setRecommendationItem] = React.useState<Item | null>(null);
-    const [showUpdateBadge, setShowUpdateBadge] = React.useState(true);
 
     useEffect(() => {
         const handleAuthState = async (currentSession: Session | null) => {
@@ -104,17 +103,81 @@ const App: React.FC = () => {
             if (event === 'SIGNED_OUT') handleLogoutReset(); else handleAuthState(session);
         });
         supabase.auth.getSession().then(({ data: { session } }) => handleAuthState(session));
-        
-        const timer = setTimeout(() => setShowUpdateBadge(false), 4000);
-        return () => {
-            subscription.unsubscribe();
-            clearTimeout(timer);
-        };
+        return () => subscription.unsubscribe();
     }, []);
 
     const handleSignOut = async () => {
         setIsLoading(true);
         try { await supabase.auth.signOut(); setShowVendorMenu(false); } catch (err) { console.error(err); } finally { setIsLoading(false); }
+    };
+
+    /**
+     * handleUpdateProfile implementa a lógica exata solicitada (handleSaveProfile).
+     */
+    const handleUpdateProfile = async (updates: { name: string, bio: string }) => {
+        try {
+            setIsLoading(true);
+
+            const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+            if (userError || !user) {
+                console.error("Usuário não autenticado", userError);
+                return;
+            }
+
+            const { data, error } = await supabase
+                .from("profiles")
+                .update({
+                    full_name: updates.name,   // 👈 campo real
+                    bio: updates.bio,          // 👈 novo campo
+                    updated_at: new Date().toISOString(),
+                })
+                .eq("user_id", user.id)        // 👈 PK REAL
+                .select()
+                .single();
+
+            if (error) {
+                console.error("Erro ao atualizar perfil:", error);
+                alert("Erro ao atualizar perfil");
+                return;
+            }
+
+            setProfile(data);
+            alert("Perfil atualizado com sucesso");
+
+        } catch (err) {
+            console.error("Erro inesperado:", err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleUpdateProfileImage = async (dataUrl: string) => {
+        if (!session?.user) return;
+        setIsLoading(true);
+        try {
+            const blob = await dataUrlToBlob(dataUrl);
+            const path = `avatars/${session.user.id}/${crypto.randomUUID()}.png`;
+            await supabase.storage.from('media').upload(path, blob);
+            const { data: storageData } = supabase.storage.from('media').getPublicUrl(path);
+            await supabase.from('profiles').update({ avatar_url: storageData.publicUrl }).eq('user_id', session.user.id);
+            const { data: freshProfile } = await supabase.from('profiles').select('*').eq('user_id', session.user.id).single();
+            setProfile(freshProfile);
+        } catch (err: any) { alert(err.message); } finally { setIsLoading(false); }
+    };
+
+    const handleUpdateCoverImage = async (dataUrl: string) => {
+        if (!session?.user) return;
+        setIsLoading(true);
+        try {
+            const blob = await dataUrlToBlob(dataUrl);
+            const path = `covers/${session.user.id}/${crypto.randomUUID()}.png`;
+            await supabase.storage.from('media').upload(path, blob);
+            const { data: storageData } = supabase.storage.from('media').getPublicUrl(path);
+            await supabase.from('profiles').update({ cover_image_url: storageData.publicUrl }).eq('user_id', session.user.id);
+            const { data: freshProfile } = await supabase.from('profiles').select('*').eq('user_id', session.user.id).single();
+            setProfile(freshProfile);
+        } catch (err: any) { alert(err.message); } finally { setIsLoading(false); }
     };
 
     const handleCreateFolder = async (name: string) => {
@@ -132,9 +195,6 @@ const App: React.FC = () => {
         setIsLoading(true);
         try {
             await supabase.from('items').insert([{ ...productData, user_id: session.user.id, folder_id: folderId }]);
-            // Atualizar contagem da pasta
-            await supabase.rpc('increment_folder_count', { folder_id: folderId });
-            
             const { data: freshProducts } = await supabase.from('items').select('*').eq('user_id', session.user.id);
             const { data: freshFolders } = await supabase.from('folders').select('*').eq('user_id', session.user.id);
             setProducts(freshProducts || []);
@@ -179,6 +239,9 @@ const App: React.FC = () => {
                     products={products}
                     onCreateFolder={handleCreateFolder}
                     onCreateProductInFolder={handleCreateProductInFolder}
+                    onUpdateProfile={(updates: any) => handleUpdateProfile({ name: updates.name, bio: updates.bio })}
+                    onUpdateProfileImage={handleUpdateProfileImage}
+                    onUpdateCoverImage={handleUpdateCoverImage}
                     onNavigateToProducts={() => setCurrentScreen(Screen.VendorProducts)} 
                 />;
             case Screen.VendorProducts:
@@ -192,7 +255,7 @@ const App: React.FC = () => {
             case Screen.Feed:
                 return profile && <FeedScreen posts={posts} stories={INITIAL_STORIES} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={setRecommendationItem} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={c => { setCurrentScreen(Screen.SubCategorySelection); }} onLikePost={id => setPosts(ps => ps.map(p => p.id === id ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 } : p))} onAddComment={() => {}} onNavigateToAllHighlights={() => setCurrentScreen(Screen.AllHighlights)} onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)} unreadNotificationCount={0} onNotificationsClick={() => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
             case Screen.Home:
-                return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} onUpdateProfile={async (u) => {}} onUpdateProfileImage={async (i) => {}} onSelectCategory={() => {}} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={(id) => { setViewedProfileId(id); setCurrentScreen(Screen.Home); }} onNavigateToSettings={() => setCurrentScreen(Screen.Settings)} onSignOut={handleSignOut} unreadNotificationCount={0} unreadMessagesCount={0} onOpenNotificationsPanel={() => {}} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} />;
+                return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} onUpdateProfile={(updates: any) => handleUpdateProfile({ name: updates.name, bio: updates.bio })} onUpdateProfileImage={handleUpdateProfileImage} onSelectCategory={() => {}} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={(id) => { setViewedProfileId(id); setCurrentScreen(Screen.Home); }} onNavigateToSettings={() => setCurrentScreen(Screen.Settings)} onSignOut={handleSignOut} unreadNotificationCount={0} unreadMessagesCount={0} onOpenNotificationsPanel={() => {}} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} />;
             case Screen.Search:
                 return <SearchScreen onBack={() => setCurrentScreen(Screen.Feed)} posts={posts} items={ITEMS} onViewProfile={id => { setViewedProfileId(id); setCurrentScreen(Screen.Home); }} onLikePost={() => {}} onItemClick={setRecommendationItem} onItemAction={() => {}} onOpenSplitCamera={() => {}} onOpenComments={() => {}} onAddToCart={i => setCartItems(p => [...p, i])} onBuy={i => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
             case Screen.Cart:
@@ -206,11 +269,6 @@ const App: React.FC = () => {
 
     return (
         <div className="h-[100dvh] w-full bg-[var(--bg-main)] overflow-hidden flex flex-col relative">
-            {showUpdateBadge && (
-                <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-zinc-900 text-white text-[9px] font-black px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 animate-slideUp tracking-widest uppercase">
-                    CATÁLOGO ORGANIZADO ATIVADO
-                </div>
-            )}
             <div className="flex-grow relative overflow-hidden">{renderScreenContent()}</div>
             {SCREENS_WITH_NAVBAR.includes(currentScreen) && (
                 <BottomNavBar 

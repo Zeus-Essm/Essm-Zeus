@@ -93,10 +93,10 @@ export interface SavedLook {
 
 export interface Profile {
   user_id: string; 
-  username: string; // Handle/Slug
-  full_name: string | null; // Nome de exibição persistente
+  username: string; 
+  full_name: string | null; // 👈 Campo real conforme snippet do usuário
   bio: string | null;
-  avatar_url: string | null; // URL da foto persistente
+  avatar_url: string | null; 
   cover_image_url: string | null;
   account_type: 'personal' | 'business' | null;
   verification_status?: 'unverified' | 'pending' | 'verified';
