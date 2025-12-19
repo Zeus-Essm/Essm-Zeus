@@ -7,6 +7,14 @@ export interface User {
   avatar: string;
 }
 
+export interface Folder {
+  id: string;
+  name: string;
+  user_id: string;
+  cover_image?: string;
+  item_count: number;
+}
+
 export interface SubCategory {
   id: string;
   name: string;
@@ -31,6 +39,7 @@ export interface Item {
   gender?: 'male' | 'female' | 'kid' | 'unisex';
   vendorSubCategory?: string;
   recommendationVideo?: string; 
+  folder_id?: string;
 }
 
 export interface Comment {

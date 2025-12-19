@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
-import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType, AppNotification, Conversation, Comment, BusinessProfile, CollaborationPost } from './types';
+import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType, AppNotification, Conversation, Comment, BusinessProfile, CollaborationPost, Folder } from './types';
 import { generateTryOnImage, normalizeImageAspectRatio, generateBeautyTryOnImage, generateFashionVideo, generateDecorationImage } from './services/geminiService';
 import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, ITEMS, INITIAL_CONVERSATIONS, INITIAL_COLLABORATION_REQUESTS } from './constants';
 
@@ -46,6 +46,7 @@ const App: React.FC = () => {
     const [session, setSession] = React.useState<Session | null>(null);
     const [profile, setProfile] = React.useState<Profile | null>(null);
     const [products, setProducts] = React.useState<Item[]>([]);
+    const [folders, setFolders] = React.useState<Folder[]>([]);
     const [authLoading, setAuthLoading] = React.useState(true);
     const [currentScreen, setCurrentScreen] = React.useState<Screen>(Screen.Splash);
     const [viewedProfileId, setViewedProfileId] = React.useState<string | null>(null);
@@ -55,6 +56,7 @@ const App: React.FC = () => {
     const [businessProfile, setBusinessProfile] = React.useState<BusinessProfile | null>(null);
     const [showVendorMenu, setShowVendorMenu] = React.useState(false);
     const [recommendationItem, setRecommendationItem] = React.useState<Item | null>(null);
+    const [showUpdateBadge, setShowUpdateBadge] = React.useState(true);
 
     useEffect(() => {
         const handleAuthState = async (currentSession: Session | null) => {
@@ -73,8 +75,12 @@ const App: React.FC = () => {
                 }
                 const { data: freshProfile } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
                 const { data: freshProducts } = await supabase.from('items').select('*').eq('user_id', user.id);
+                const { data: freshFolders } = await supabase.from('folders').select('*').eq('user_id', user.id);
+                
                 setProfile(freshProfile);
                 setProducts(freshProducts || []);
+                setFolders(freshFolders || []);
+
                 if (freshProfile) {
                     if (freshProfile.account_type === 'personal') setCurrentScreen(Screen.Feed);
                     else if (freshProfile.account_type === 'business') {
@@ -92,13 +98,18 @@ const App: React.FC = () => {
             setAuthLoading(false);
         };
         const handleLogoutReset = () => {
-            setProfile(null); setProducts([]); setBusinessProfile(null); setCartItems([]); setSession(null); setCurrentScreen(Screen.Login);
+            setProfile(null); setProducts([]); setFolders([]); setBusinessProfile(null); setCartItems([]); setSession(null); setCurrentScreen(Screen.Login);
         };
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             if (event === 'SIGNED_OUT') handleLogoutReset(); else handleAuthState(session);
         });
         supabase.auth.getSession().then(({ data: { session } }) => handleAuthState(session));
-        return () => subscription.unsubscribe();
+        
+        const timer = setTimeout(() => setShowUpdateBadge(false), 4000);
+        return () => {
+            subscription.unsubscribe();
+            clearTimeout(timer);
+        };
     }, []);
 
     const handleSignOut = async () => {
@@ -106,38 +117,29 @@ const App: React.FC = () => {
         try { await supabase.auth.signOut(); setShowVendorMenu(false); } catch (err) { console.error(err); } finally { setIsLoading(false); }
     };
 
-    const handleUpdateProfile = async (updates: { username?: string, bio?: string, full_name?: string }) => {
+    const handleCreateFolder = async (name: string) => {
         if (!session?.user) return;
         setIsLoading(true);
         try {
-            await supabase.from('profiles').update(updates).eq('user_id', session.user.id);
-            const { data: freshProfile } = await supabase.from('profiles').select('*').eq('user_id', session.user.id).single();
-            setProfile(freshProfile);
-        } catch (err) { alert(err); } finally { setIsLoading(false); }
+            const { data, error } = await supabase.from('folders').insert([{ name, user_id: session.user.id, item_count: 0 }]).select().single();
+            if (error) throw error;
+            setFolders(prev => [...prev, data]);
+        } catch (err: any) { alert("Erro: " + err.message); } finally { setIsLoading(false); }
     };
 
-    const handleUpdateProfileImage = async (dataUrl: string) => {
+    const handleCreateProductInFolder = async (productData: Partial<Item>, folderId: string) => {
         if (!session?.user) return;
         setIsLoading(true);
         try {
-            const blob = await dataUrlToBlob(dataUrl);
-            const path = `avatars/${session.user.id}/${crypto.randomUUID()}.png`;
-            await supabase.storage.from('media').upload(path, blob);
-            const { data: storageData } = supabase.storage.from('media').getPublicUrl(path);
-            await supabase.from('profiles').update({ avatar_url: storageData.publicUrl }).eq('user_id', session.user.id);
-            const { data: freshProfile } = await supabase.from('profiles').select('*').eq('user_id', session.user.id).single();
-            setProfile(freshProfile);
-        } catch (err) { alert(err); } finally { setIsLoading(false); }
-    };
-
-    const handleCreateProduct = async (productData: Partial<Item>) => {
-        if (!session?.user) return;
-        setIsLoading(true);
-        try {
-            await supabase.from('items').insert([{ ...productData, user_id: session.user.id }]);
+            await supabase.from('items').insert([{ ...productData, user_id: session.user.id, folder_id: folderId }]);
+            // Atualizar contagem da pasta
+            await supabase.rpc('increment_folder_count', { folder_id: folderId });
+            
             const { data: freshProducts } = await supabase.from('items').select('*').eq('user_id', session.user.id);
+            const { data: freshFolders } = await supabase.from('folders').select('*').eq('user_id', session.user.id);
             setProducts(freshProducts || []);
-        } catch (err) { alert(err); } finally { setIsLoading(false); }
+            setFolders(freshFolders || []);
+        } catch (err: any) { alert("Erro: " + err.message); } finally { setIsLoading(false); }
     };
 
     const renderScreenContent = () => {
@@ -158,15 +160,29 @@ const App: React.FC = () => {
             case Screen.BusinessOnboarding:
                 return <BusinessOnboardingScreen onComplete={async (details) => {
                     if (session?.user) {
-                        await handleUpdateProfile({ full_name: details.business_name, bio: details.description });
+                        await supabase.from('profiles').update({ full_name: details.business_name, bio: details.description }).eq('user_id', session.user.id);
                         setBusinessProfile({ id: session.user.id, ...details });
                         setCurrentScreen(Screen.VendorDashboard);
                     }
                 }} />;
             case Screen.VendorDashboard:
-                return businessProfile && profile && <VendorDashboard businessProfile={businessProfile} profile={profile} onOpenMenu={() => setShowVendorMenu(true)} unreadNotificationCount={0} onOpenNotificationsPanel={() => {}} onOpenPromotionModal={() => {}} followersCount={0} followingCount={0} onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)} onNavigateToProducts={() => setCurrentScreen(Screen.VendorProducts)} />;
+                return businessProfile && profile && <VendorDashboard 
+                    businessProfile={businessProfile} 
+                    profile={profile} 
+                    onOpenMenu={() => setShowVendorMenu(true)} 
+                    unreadNotificationCount={0} 
+                    onOpenNotificationsPanel={() => {}} 
+                    onOpenPromotionModal={() => {}} 
+                    followersCount={0} 
+                    followingCount={0} 
+                    folders={folders}
+                    products={products}
+                    onCreateFolder={handleCreateFolder}
+                    onCreateProductInFolder={handleCreateProductInFolder}
+                    onNavigateToProducts={() => setCurrentScreen(Screen.VendorProducts)} 
+                />;
             case Screen.VendorProducts:
-                return businessProfile && <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile} products={products} onCreateProduct={handleCreateProduct} />;
+                return businessProfile && <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile} products={products} onCreateProduct={async (d) => {}} />;
             case Screen.VendorAnalytics:
                 return <VendorAnalyticsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} />;
             case Screen.VendorAffiliates:
@@ -176,7 +192,7 @@ const App: React.FC = () => {
             case Screen.Feed:
                 return profile && <FeedScreen posts={posts} stories={INITIAL_STORIES} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={setRecommendationItem} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={c => { setCurrentScreen(Screen.SubCategorySelection); }} onLikePost={id => setPosts(ps => ps.map(p => p.id === id ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 } : p))} onAddComment={() => {}} onNavigateToAllHighlights={() => setCurrentScreen(Screen.AllHighlights)} onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)} unreadNotificationCount={0} onNotificationsClick={() => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
             case Screen.Home:
-                return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={handleUpdateProfileImage} onSelectCategory={() => {}} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={(id) => { setViewedProfileId(id); setCurrentScreen(Screen.Home); }} onNavigateToSettings={() => setCurrentScreen(Screen.Settings)} onSignOut={handleSignOut} unreadNotificationCount={0} unreadMessagesCount={0} onOpenNotificationsPanel={() => {}} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} />;
+                return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} onUpdateProfile={async (u) => {}} onUpdateProfileImage={async (i) => {}} onSelectCategory={() => {}} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={(id) => { setViewedProfileId(id); setCurrentScreen(Screen.Home); }} onNavigateToSettings={() => setCurrentScreen(Screen.Settings)} onSignOut={handleSignOut} unreadNotificationCount={0} unreadMessagesCount={0} onOpenNotificationsPanel={() => {}} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} />;
             case Screen.Search:
                 return <SearchScreen onBack={() => setCurrentScreen(Screen.Feed)} posts={posts} items={ITEMS} onViewProfile={id => { setViewedProfileId(id); setCurrentScreen(Screen.Home); }} onLikePost={() => {}} onItemClick={setRecommendationItem} onItemAction={() => {}} onOpenSplitCamera={() => {}} onOpenComments={() => {}} onAddToCart={i => setCartItems(p => [...p, i])} onBuy={i => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
             case Screen.Cart:
@@ -190,6 +206,11 @@ const App: React.FC = () => {
 
     return (
         <div className="h-[100dvh] w-full bg-[var(--bg-main)] overflow-hidden flex flex-col relative">
+            {showUpdateBadge && (
+                <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[100] bg-zinc-900 text-white text-[9px] font-black px-4 py-2 rounded-full shadow-2xl flex items-center gap-2 animate-slideUp tracking-widest uppercase">
+                    CATÁLOGO ORGANIZADO ATIVADO
+                </div>
+            )}
             <div className="flex-grow relative overflow-hidden">{renderScreenContent()}</div>
             {SCREENS_WITH_NAVBAR.includes(currentScreen) && (
                 <BottomNavBar 
