@@ -3,9 +3,10 @@ import React, { useState, useMemo, useRef } from 'react';
 import type { BusinessProfile, Item, Profile, Folder, ShowcaseItem } from '../types';
 import { 
     MenuIcon, CameraIcon, PencilIcon, PlusIcon, StarIcon, 
-    BellIcon, UserIcon, ChevronDownIcon, ArchiveIcon, ShoppingBagIcon
+    BellIcon, UserIcon, ChevronDownIcon, ArchiveIcon, ShoppingBagIcon, RepositionIcon
 } from './IconComponents';
 import BioEditModal from './BioEditModal';
+import GradientButton from './GradientButton';
 
 interface VendorDashboardProps {
   businessProfile: BusinessProfile;
@@ -19,8 +20,9 @@ interface VendorDashboardProps {
   folders: Folder[];
   products: Item[];
   showcase: ShowcaseItem[];
-  onCreateFolder: (name: string) => void;
-  onCreateProductInFolder: (product: Partial<Item>, folderId: string) => void;
+  onCreateFolder: (title: string) => void;
+  onCreateProductInFolder: (folderId: string, details: { title: string, description: string, price: number, file: Blob }) => Promise<any>;
+  onMoveProductToFolder: (productId: string, folderId: string | null) => Promise<void>;
   onUpdateProfile: (updates: { username?: string, bio?: string, name?: string }) => void;
   onUpdateProfileImage: (dataUrl: string) => void;
   onUpdateCoverImage: (dataUrl: string) => void;
@@ -41,26 +43,13 @@ const FolderCard: React.FC<{ folder: Folder; onClick: () => void }> = ({ folder,
             )}
         </div>
         <div className="text-center">
-            <p className="text-[11px] font-black uppercase tracking-tight text-zinc-800 truncate max-w-[100px]">{folder.name}</p>
-            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{folder.item_count} itens</p>
+            <p className="text-[11px] font-black uppercase tracking-tight text-zinc-800 truncate max-w-[100px]">{folder.title}</p>
+            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{(folder.item_count || 0)} itens</p>
         </div>
-    </button>
-);
-
-const AddButton: React.FC<{ label: string; onClick: () => void }> = ({ label, onClick }) => (
-    <button 
-        onClick={onClick}
-        className="flex flex-col items-center justify-center gap-3 p-4 border-2 border-dashed border-zinc-200 rounded-[2rem] group active:scale-95 transition-all w-full min-h-[160px] hover:border-amber-500 hover:bg-amber-50/30"
-    >
-        <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center group-hover:bg-amber-500 transition-colors">
-            <PlusIcon className="w-6 h-6 text-zinc-400 group-hover:text-white transition-colors" />
-        </div>
-        <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-amber-600 transition-colors">{label}</p>
     </button>
 );
 
 const VendorDashboard: React.FC<VendorDashboardProps> = ({ 
-    businessProfile, 
     profile,
     onOpenMenu, 
     unreadNotificationCount, 
@@ -73,74 +62,78 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     showcase,
     onCreateFolder,
     onCreateProductInFolder,
+    onMoveProductToFolder,
     onUpdateProfile,
     onUpdateProfileImage,
     onUpdateCoverImage,
-    onNavigateToProducts,
-    onAddToShowcase
 }) => {
     const [activeTab, setActiveTab] = useState<'shop' | 'posts'>('shop');
     const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
     const [isEditingBio, setIsEditingBio] = useState(false);
-    const [showcaseLoading, setShowcaseLoading] = useState(false);
+    const [isAddingItem, setIsAddingItem] = useState(false);
+    const [movingProduct, setMovingProduct] = useState<Item | null>(null);
+    
+    const [newItemTitle, setNewItemTitle] = useState('');
+    const [newItemPrice, setNewItemPrice] = useState('');
+    const [newItemDesc, setNewItemDesc] = useState('');
+    const [newItemFile, setNewItemFile] = useState<Blob | null>(null);
+    const [newItemPreview, setNewItemPreview] = useState<string | null>(null);
 
     const avatarInputRef = useRef<HTMLInputElement>(null);
     const coverInputRef = useRef<HTMLInputElement>(null);
-    const showcaseInputRef = useRef<HTMLInputElement>(null);
+    const itemFileInputRef = useRef<HTMLInputElement>(null);
 
+    const currentFolder = folders.find(f => f.id === selectedFolderId);
+    
     const folderProducts = useMemo(() => {
         if (!selectedFolderId) return [];
         return products.filter(p => p.folder_id === selectedFolderId);
     }, [products, selectedFolderId]);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'cover') => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'cover' | 'item') => {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
                 if (type === 'avatar') onUpdateProfileImage(reader.result as string);
-                else onUpdateCoverImage(reader.result as string);
+                else if (type === 'cover') onUpdateCoverImage(reader.result as string);
+                else if (type === 'item') {
+                    setNewItemFile(file);
+                    setNewItemPreview(reader.result as string);
+                }
             };
             reader.readAsDataURL(file);
         }
     };
 
-    const handleAddToShowcaseClick = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        const title = prompt("Título para o item da vitrine:");
-        if (!title) return;
-        
-        setShowcaseLoading(true);
-        try {
-            await onAddToShowcase(title, file);
-        } finally {
-            setShowcaseLoading(false);
-            if (showcaseInputRef.current) showcaseInputRef.current.value = "";
-        }
-    };
-
     const handleCreateFolderClick = () => {
-        const name = prompt("Nome da Nova Pasta:");
-        if (name) onCreateFolder(name);
+        const title = prompt("Título da Nova Coleção:");
+        if (title) onCreateFolder(title);
     };
 
-    const handleCreateItemClick = () => {
-        if (!selectedFolderId) return;
-        const name = prompt("Nome do Produto:");
-        const price = prompt("Preço (AOA):");
-        if (name && price) {
-            onCreateProductInFolder({
-                name,
-                price: parseFloat(price),
-                image: 'https://i.postimg.cc/XJf6gckX/Pump_STARTAP.png',
-                category: 'vendor',
-                description: 'Novo item na coleção.'
-            }, selectedFolderId);
+    const handleSaveItem = async (keepAdding: boolean = false) => {
+        if (!selectedFolderId || !newItemTitle || !newItemPrice || !newItemFile) {
+            alert("Por favor, preencha o Nome, Preço e adicione uma Foto.");
+            return;
+        }
+        
+        await onCreateProductInFolder(selectedFolderId, {
+            title: newItemTitle,
+            description: newItemDesc,
+            price: parseFloat(newItemPrice),
+            file: newItemFile
+        });
+        
+        setNewItemTitle('');
+        setNewItemPrice('');
+        setNewItemDesc('');
+        setNewItemFile(null);
+        setNewItemPreview(null);
+        
+        if (!keepAdding) {
+            setIsAddingItem(false);
         }
     };
-
-    const currentFolder = folders.find(f => f.id === selectedFolderId);
 
     return (
         <div className="w-full h-full flex flex-col bg-white text-zinc-900 relative overflow-hidden">
@@ -148,7 +141,6 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                 <div className="flex items-center gap-2 pointer-events-auto">
                     <button onClick={onOpenNotificationsPanel} className="p-2.5 bg-black/40 backdrop-blur-md rounded-2xl border border-white/20 text-white active:scale-90 transition-transform">
                         <BellIcon className="w-5 h-5" />
-                        {unreadNotificationCount > 0 && <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white border border-white">1</span>}
                     </button>
                 </div>
                 <div className="flex items-center gap-4 pointer-events-auto">
@@ -167,10 +159,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                             <span className="text-zinc-600 font-black uppercase text-[10px] tracking-[0.4em]">Banner da Loja</span>
                         </div>
                     )}
-                    <button 
-                        onClick={() => coverInputRef.current?.click()}
-                        className="absolute bottom-4 right-4 p-2.5 bg-black/50 backdrop-blur-md border border-white/20 rounded-xl text-white opacity-0 group-hover:opacity-100 transition-opacity active:scale-95"
-                    >
+                    <button onClick={() => coverInputRef.current?.click()} className="absolute bottom-4 right-4 p-2.5 bg-black/50 backdrop-blur-md border border-white/20 rounded-xl text-white opacity-0 group-hover:opacity-100 transition-opacity active:scale-95">
                         <CameraIcon className="w-5 h-5" />
                     </button>
                     <input type="file" accept="image/*" ref={coverInputRef} onChange={(e) => handleFileChange(e, 'cover')} className="hidden" />
@@ -188,10 +177,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                     </div>
                                 )}
                             </div>
-                            <button 
-                                onClick={() => avatarInputRef.current?.click()}
-                                className="absolute bottom-0 right-0 p-1.5 bg-amber-500 text-white rounded-full border-2 border-white shadow-md active:scale-90"
-                            >
+                            <button onClick={() => avatarInputRef.current?.click()} className="absolute bottom-0 right-0 p-1.5 bg-amber-500 text-white rounded-full border-2 border-white shadow-md active:scale-90">
                                 <CameraIcon className="w-3 h-3" />
                             </button>
                             <input type="file" accept="image/*" ref={avatarInputRef} onChange={(e) => handleFileChange(e, 'avatar')} className="hidden" />
@@ -213,35 +199,25 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                         </div>
                     </div>
 
-                    <button 
-                        onClick={() => setIsEditingBio(true)}
-                        className="mt-6 w-full py-2.5 bg-zinc-100 hover:bg-zinc-200 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-800 transition-colors active:scale-[0.99]"
-                    >
+                    <button onClick={() => setIsEditingBio(true)} className="mt-6 w-full py-2.5 bg-zinc-100 hover:bg-zinc-200 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-800 transition-colors active:scale-[0.99]">
                         Editar Perfil
                     </button>
 
                     <div className="mt-5 flex flex-col items-start relative group">
-                        <button 
-                            onClick={() => setIsEditingBio(true)}
-                            className="absolute top-0 right-0 p-2 text-zinc-300 hover:text-amber-500 transition-colors active:scale-90"
-                        >
+                        <button onClick={() => setIsEditingBio(true)} className="absolute top-0 right-0 p-2 text-zinc-300 hover:text-amber-500 transition-colors active:scale-90">
                             <PencilIcon className="w-4 h-4" />
                         </button>
                         <h2 className="font-black text-xl uppercase tracking-tighter italic text-zinc-900 leading-none mb-0.5">{profile.full_name || profile.username}</h2>
                         <p className="text-[11px] font-bold text-zinc-400 tracking-tight mb-3 opacity-60">{profile.username}</p>
                         <div className="w-full">
-                            {profile.bio ? (
-                                <p className="text-xs text-zinc-600 font-medium leading-relaxed italic pr-8">"{profile.bio}"</p>
-                            ) : (
-                                <button onClick={() => setIsEditingBio(true)} className="text-[10px] font-bold text-zinc-300 italic uppercase tracking-widest hover:text-amber-500 transition-colors">Toque no lápis para adicionar sua bio...</button>
-                            )}
+                            {profile.bio ? <p className="text-xs text-zinc-600 font-medium leading-relaxed italic pr-8">"{profile.bio}"</p> : <button onClick={() => setIsEditingBio(true)} className="text-[10px] font-bold text-zinc-300 italic uppercase tracking-widest hover:text-amber-500 transition-colors">Toque no lápis para adicionar sua bio...</button>}
                         </div>
                     </div>
                 </div>
 
                 <div className="flex mt-10 px-6 border-b border-zinc-100">
                     <button onClick={() => { setActiveTab('shop'); setSelectedFolderId(null); }} className={`flex-1 py-4 text-[11px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === 'shop' && !selectedFolderId ? 'text-zinc-900' : 'text-zinc-300'}`}>
-                        Catálogo
+                        Coleções
                         {activeTab === 'shop' && !selectedFolderId && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-amber-500 rounded-t-full"></div>}
                     </button>
                     <button onClick={() => setActiveTab('posts')} className={`flex-1 py-4 text-[11px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === 'posts' ? 'text-zinc-900' : 'text-zinc-300'}`}>
@@ -260,7 +236,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                             <ChevronDownIcon className="w-3 h-3 rotate-90" />
                                             Voltar
                                         </button>
-                                        <h3 className="text-xs font-black uppercase tracking-widest text-amber-600">{currentFolder?.name}</h3>
+                                        <h3 className="text-xs font-black uppercase tracking-widest text-amber-600 italic">Coleção: {currentFolder?.title}</h3>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         {folderProducts.map(item => (
@@ -268,9 +244,21 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                                 <img src={item.image} alt="" className="w-full aspect-[4/5] object-cover rounded-[1.5rem] mb-3 shadow-sm" />
                                                 <p className="text-[11px] font-bold uppercase truncate px-1">{item.name}</p>
                                                 <p className="text-[10px] font-black text-amber-500 mt-0.5 px-1">{item.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
+                                                <button 
+                                                    onClick={() => setMovingProduct(item)}
+                                                    className="absolute top-4 right-4 p-2 bg-black/40 backdrop-blur-md rounded-xl text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                                >
+                                                    <RepositionIcon className="w-4 h-4" />
+                                                </button>
                                             </div>
                                         ))}
-                                        <AddButton label="Novo Item" onClick={handleCreateItemClick} />
+                                        
+                                        <button onClick={() => setIsAddingItem(true)} className="flex flex-col items-center justify-center gap-3 p-4 border-2 border-dashed border-zinc-200 rounded-[2rem] group active:scale-95 transition-all w-full min-h-[160px] hover:border-amber-500 hover:bg-amber-50/30">
+                                            <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center group-hover:bg-amber-500 transition-colors">
+                                                <PlusIcon className="w-6 h-6 text-zinc-400 group-hover:text-white transition-colors" />
+                                            </div>
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-amber-600 transition-colors">Novo Item</p>
+                                        </button>
                                     </div>
                                 </div>
                             ) : (
@@ -278,7 +266,6 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                     {folders.map(folder => (
                                         <FolderCard key={folder.id} folder={folder} onClick={() => setSelectedFolderId(folder.id)} />
                                     ))}
-                                    {/* Botão de Criação de Pasta Requisitado */}
                                     <button 
                                         onClick={handleCreateFolderClick}
                                         className="flex flex-col items-center justify-center gap-3 p-4 border-2 border-dashed border-amber-500/30 rounded-[2rem] bg-amber-50/20 group active:scale-95 transition-all w-full min-h-[160px] hover:border-amber-500"
@@ -286,7 +273,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                         <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center group-hover:bg-amber-500 transition-colors">
                                             <PlusIcon className="w-6 h-6 text-amber-600 group-hover:text-white transition-colors" />
                                         </div>
-                                        <p className="text-[11px] font-black uppercase tracking-widest text-amber-600">CRIAR PASTA</p>
+                                        <p className="text-[11px] font-black uppercase tracking-widest text-amber-600">CRIAR COLEÇÃO</p>
                                     </button>
                                 </div>
                             )}
@@ -301,21 +288,134 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                             <p className="text-[11px] font-bold uppercase truncate px-1 text-center">{item.title}</p>
                                         </div>
                                     ))}
-                                    <AddButton label="Adicionar Look" onClick={() => showcaseInputRef.current?.click()} />
                                 </div>
                             ) : (
                                 <div className="py-24 text-center flex flex-col items-center opacity-30 grayscale">
                                      <ShoppingBagIcon className="w-10 h-10 text-zinc-400 mb-4" />
                                      <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Sua vitrine está vazia</p>
-                                     <p className="text-[9px] font-bold text-zinc-400 mt-2 uppercase">Adicione fotos dos seus melhores looks</p>
-                                     <button onClick={() => showcaseInputRef.current?.click()} className="mt-6 px-6 py-2 bg-amber-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest transition-all active:scale-95">Começar</button>
                                 </div>
                             )}
-                            <input type="file" ref={showcaseInputRef} onChange={handleAddToShowcaseClick} className="hidden" accept="image/*" />
                         </div>
                     )}
                 </div>
             </main>
+
+            {isAddingItem && (
+                <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-end animate-fadeIn" onClick={() => setIsAddingItem(false)}>
+                    <div className="w-full max-h-[95vh] bg-white rounded-t-[3rem] p-8 flex flex-col gap-6 animate-slideUp overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center">
+                            <div className="flex flex-col">
+                                <h2 className="text-2xl font-black uppercase italic text-zinc-900 leading-none">Novo Item</h2>
+                                <span className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] mt-1.5 italic">Coleção: {currentFolder?.title}</span>
+                            </div>
+                            <button onClick={() => setIsAddingItem(false)} className="p-2.5 bg-zinc-50 rounded-2xl text-zinc-400 hover:text-zinc-900 transition-colors">
+                                <ChevronDownIcon className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="flex flex-col gap-5">
+                            <div 
+                                onClick={() => itemFileInputRef.current?.click()} 
+                                className="w-full aspect-[4/5] bg-zinc-50 border-2 border-dashed border-zinc-200 rounded-[2.5rem] flex flex-col items-center justify-center overflow-hidden transition-all hover:border-amber-200 group relative shadow-inner"
+                            >
+                                {newItemPreview ? (
+                                    <>
+                                        <img src={newItemPreview} className="w-full h-full object-cover" alt="Preview" />
+                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                                            <CameraIcon className="w-8 h-8 text-white" />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-sm mb-3">
+                                            <CameraIcon className="w-8 h-8 text-zinc-300" />
+                                        </div>
+                                        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Foto do Produto</p>
+                                    </>
+                                )}
+                            </div>
+                            <input type="file" ref={itemFileInputRef} accept="image/*" onChange={e => handleFileChange(e, 'item')} className="hidden" />
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black uppercase text-zinc-400 ml-4 tracking-[0.2em]">Nome do Produto</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Ex: T-shirt Oversized" 
+                                    value={newItemTitle} 
+                                    onChange={e => setNewItemTitle(e.target.value)} 
+                                    className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 font-bold text-sm focus:outline-none focus:border-amber-500/40 focus:bg-white transition-all shadow-sm" 
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black uppercase text-zinc-400 ml-4 tracking-[0.2em]">Preço (AOA)</label>
+                                <input 
+                                    type="number" 
+                                    placeholder="0" 
+                                    value={newItemPrice} 
+                                    onChange={e => setNewItemPrice(e.target.value)} 
+                                    className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 font-bold text-sm focus:outline-none focus:border-amber-500/40 focus:bg-white transition-all shadow-sm" 
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black uppercase text-zinc-400 ml-4 tracking-[0.2em]">Descrição Curta</label>
+                                <textarea 
+                                    placeholder="Tamanhos, cores, tecido..." 
+                                    value={newItemDesc} 
+                                    onChange={e => setNewItemDesc(e.target.value)} 
+                                    className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 font-bold text-sm h-32 resize-none focus:outline-none focus:border-amber-500/40 focus:bg-white transition-all shadow-sm" 
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-3 pt-2">
+                             <GradientButton 
+                                onClick={() => handleSaveItem(true)} 
+                                disabled={!newItemTitle || !newItemPrice || !newItemFile}
+                                className="!bg-white !text-amber-500 border-2 border-amber-500 shadow-none hover:!bg-amber-50 !py-5"
+                            >
+                                SALVAR E ADICIONAR OUTRO
+                            </GradientButton>
+                            <GradientButton 
+                                onClick={() => handleSaveItem(false)} 
+                                disabled={!newItemTitle || !newItemPrice || !newItemFile}
+                                className="!py-5"
+                            >
+                                SALVAR E CONCLUIR
+                            </GradientButton>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {movingProduct && (
+                <div className="fixed inset-0 z-[210] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn" onClick={() => setMovingProduct(null)}>
+                    <div className="bg-white rounded-[2.5rem] w-full max-w-sm p-8 flex flex-col gap-6 animate-modalZoomIn" onClick={e => e.stopPropagation()}>
+                        <h2 className="text-xl font-black uppercase tracking-tighter italic text-center">Mover para Coleção</h2>
+                        <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-2">
+                            <button 
+                                onClick={() => { onMoveProductToFolder(movingProduct.id, null); setMovingProduct(null); }}
+                                className="w-full p-4 bg-zinc-50 hover:bg-zinc-100 rounded-2xl border border-zinc-100 text-left font-bold text-xs uppercase tracking-widest transition-colors flex items-center justify-between"
+                            >
+                                <span>Remover da Coleção (Geral)</span>
+                                {!movingProduct.folder_id && <div className="w-2 h-2 bg-amber-500 rounded-full"></div>}
+                            </button>
+                            {folders.map(folder => (
+                                <button 
+                                    key={folder.id}
+                                    onClick={() => { onMoveProductToFolder(movingProduct.id, folder.id); setMovingProduct(null); }}
+                                    className="w-full p-4 bg-zinc-50 hover:bg-zinc-100 rounded-2xl border border-zinc-100 text-left font-bold text-xs uppercase tracking-widest transition-colors flex items-center justify-between"
+                                >
+                                    <span>{folder.title}</span>
+                                    {movingProduct.folder_id === folder.id && <div className="w-2 h-2 bg-amber-500 rounded-full"></div>}
+                                </button>
+                            ))}
+                        </div>
+                        <button onClick={() => setMovingProduct(null)} className="text-[10px] font-black uppercase text-zinc-400 tracking-widest text-center">Cancelar</button>
+                    </div>
+                </div>
+            )}
 
             <div className="absolute bottom-28 right-6 z-20">
                 <button onClick={onOpenPromotionModal} className="w-16 h-16 bg-gradient-to-tr from-amber-500 to-amber-400 rounded-3xl flex items-center justify-center shadow-[0_15px_30px_rgba(245,158,11,0.3)] active:scale-90 transition-all group">
@@ -332,15 +432,6 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                         setIsEditingBio(false);
                     }} 
                 />
-            )}
-            
-            {showcaseLoading && (
-                <div className="fixed inset-0 z-[300] bg-black/20 backdrop-blur-[1px] flex items-center justify-center">
-                    <div className="bg-white p-6 rounded-[2rem] flex flex-col items-center gap-4 shadow-xl">
-                        <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Enviando para Vitrine...</p>
-                    </div>
-                </div>
             )}
         </div>
     );

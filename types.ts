@@ -9,10 +9,11 @@ export interface User {
 
 export interface Folder {
   id: string;
-  name: string;
-  user_id: string;
+  title: string;
+  owner_id: string;
   cover_image?: string;
   item_count: number;
+  created_at?: string;
 }
 
 export interface ShowcaseItem {
@@ -47,7 +48,7 @@ export interface Item {
   gender?: 'male' | 'female' | 'kid' | 'unisex';
   vendorSubCategory?: string;
   recommendationVideo?: string; 
-  folder_id?: string;
+  folder_id?: string | null;
   owner_id?: string;
 }
 

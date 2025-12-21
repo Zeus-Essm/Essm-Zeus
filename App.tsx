@@ -47,6 +47,49 @@ const App: React.FC = () => {
     const [recommendationItem, setRecommendationItem] = useState<Item | null>(null);
     const [showUpdateBadge, setShowUpdateBadge] = useState(false);
 
+    const showSuccess = (msg: string) => {
+        alert(msg);
+        setShowUpdateBadge(true);
+        setTimeout(() => setShowUpdateBadge(false), 3000);
+    };
+
+    const fetchFolders = async (userId: string) => {
+        const { data, error } = await supabase
+            .from("folders")
+            .select("*")
+            .eq('owner_id', userId)
+            .order("created_at", { ascending: false });
+
+        if (error) {
+            console.error("Erro ao buscar pastas:", error);
+            return [];
+        }
+        return data || [];
+    };
+
+    const fetchAllProducts = async (userId: string) => {
+        const { data, error } = await supabase
+            .from("products")
+            .select("*")
+            .eq('owner_id', userId)
+            .order("created_at", { ascending: false });
+
+        if (error) {
+            console.error("Erro ao buscar produtos:", error);
+            return [];
+        }
+        return (data || []).map(p => ({
+            id: p.id,
+            name: p.title,
+            description: p.description,
+            price: p.price,
+            image: p.image_url,
+            category: 'general',
+            owner_id: p.owner_id,
+            folder_id: p.folder_id
+        }));
+    };
+
     useEffect(() => {
         const handleAuthState = async (currentSession: Session | null) => {
             setSession(currentSession);
@@ -64,24 +107,14 @@ const App: React.FC = () => {
                 }
                 const { data: freshProfile } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
                 
-                const { data: freshProducts } = await supabase.from('products').select('*').eq('owner_id', user.id);
+                const freshFolders = await fetchFolders(user.id);
+                const mappedProducts = await fetchAllProducts(user.id);
                 const { data: freshShowcase } = await supabase.from('showcase').select('*').eq('owner_id', user.id);
-                const { data: freshFolders } = await supabase.from('folders').select('*').eq('user_id', user.id);
                 
                 setProfile(freshProfile);
                 setShowcase(freshShowcase || []);
-                
-                const mappedProducts: Item[] = (freshProducts || []).map(p => ({
-                    id: p.id,
-                    name: p.title,
-                    description: p.description,
-                    price: p.price,
-                    image: p.image_url,
-                    category: 'general',
-                    owner_id: p.owner_id
-                }));
+                setFolders(freshFolders);
                 setProducts(mappedProducts);
-                setFolders(freshFolders || []);
 
                 if (freshProfile) {
                     if (freshProfile.account_type === 'personal') setCurrentScreen(Screen.Feed);
@@ -115,11 +148,6 @@ const App: React.FC = () => {
         return () => subscription.unsubscribe();
     }, []);
 
-    const showConfirmation = () => {
-        setShowUpdateBadge(true);
-        setTimeout(() => setShowUpdateBadge(false), 3000);
-    };
-
     const uploadImage = async ({ bucket, file, path }: { bucket: string, file: Blob, path: string }) => {
         const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
         if (error) throw error;
@@ -127,107 +155,143 @@ const App: React.FC = () => {
         return data.publicUrl;
     };
 
-    // --- Snippets Integrados ---
-
-    const handleUpdateProfileImage = async (dataUrl: string) => {
+    const handleCreateFolder = async (title: string) => {
         setIsLoading(true);
         try {
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-            const fileBlob = await dataUrlToBlob(dataUrl);
-            const path = `${user.id}/avatar.jpg`;
-            const avatarUrl = await uploadImage({ bucket: "avatars", file: fileBlob, path });
-            await supabase.from("profiles").update({ avatar_url: avatarUrl }).eq("user_id", user.id);
-            setProfile(p => p ? ({ ...p, avatar_url: avatarUrl }) : null);
-            showConfirmation();
-        } catch (err: any) { alert(err.message); } finally { setIsLoading(false); }
-    };
+            if (!user || !title) return;
 
-    const handleUpdateCoverImage = async (dataUrl: string) => {
-        setIsLoading(true);
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-            const fileBlob = await dataUrlToBlob(dataUrl);
-            const path = `${user.id}/cover.jpg`;
-            const coverUrl = await uploadImage({ bucket: "covers", file: fileBlob, path });
-            await supabase.from("profiles").update({ cover_url: coverUrl }).eq("user_id", user.id);
-            setProfile(p => p ? ({ ...p, cover_url: coverUrl }) : null);
-            showConfirmation();
-        } catch (err: any) { alert(err.message); } finally { setIsLoading(false); }
-    };
-
-    const handleCreateProduct = async ({ title, description, price, file }: { title: string, description: string, price: number, file: Blob }) => {
-        setIsLoading(true);
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-            const imagePath = `${user.id}/${Date.now()}.jpg`;
-            const imageUrl = await uploadImage({ bucket: "products", file, path: imagePath });
-            await supabase.from("products").insert({ owner_id: user.id, title, description, price, image_url: imageUrl });
-            const { data: freshProducts } = await supabase.from('products').select('*').eq('owner_id', user.id);
-            setProducts((freshProducts || []).map(p => ({ id: p.id, name: p.title, description: p.description, price: p.price, image: p.image_url, category: 'general', owner_id: p.owner_id })));
-            showConfirmation();
-        } catch (err: any) { alert(err.message); } finally { setIsLoading(false); }
-    };
-
-    const handleAddToShowcase = async (title: string, file: Blob) => {
-        setIsLoading(true);
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-            const imagePath = `${user.id}/${Date.now()}.jpg`;
-            const imageUrl = await uploadImage({ bucket: "showcase", file, path: imagePath });
-            await supabase.from("showcase").insert({ owner_id: user.id, title, image_url: imageUrl });
-            const { data: freshShowcase } = await supabase.from('showcase').select('*').eq('owner_id', user.id);
-            setShowcase(freshShowcase || []);
-            showConfirmation();
-        } catch (err: any) { alert(err.message); } finally { setIsLoading(false); }
-    };
-
-    /**
-     * handleCreateFolder - Versão atualizada conforme snippet do usuário
-     * Realiza um teste criando um produto dummy.
-     */
-    const handleCreateFolder = async (name: string) => {
-        console.log("CLIQUEI EM CRIAR PASTA");
-        setIsLoading(true);
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                console.log("Usuário não autenticado");
-                setIsLoading(false);
-                return;
-            }
-
-            console.log("USER:", user.id);
-
-            // TESTE: criar produto dummy conforme solicitado pelo snippet do usuário
             const { data, error } = await supabase
+                .from("folders")
+                .insert({ owner_id: user.id, title })
+                .select()
+                .single();
+
+            if (error) throw error;
+            
+            setFolders(prev => [data, ...prev]);
+            showSuccess("Coleção criada com sucesso");
+        } catch (err: any) {
+            console.error(err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleAddProductToFolder = async (folderId: string, details: { title: string, description: string, price: number, file: Blob }) => {
+        setIsLoading(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            const imagePath = `${user.id}/products/${Date.now()}.jpg`;
+            const imageUrl = await uploadImage({ bucket: "products", file: details.file, path: imagePath });
+
+            const { data: responseData, error } = await supabase
                 .from("products")
                 .insert({
                     owner_id: user.id,
-                    title: "Novo produto (Dummy)",
-                    description: `Pasta criada: ${name}`,
-                    price: 0,
-                    image_url: null,
-                });
+                    folder_id: folderId,
+                    title: details.title,
+                    price: details.price,
+                    description: details.description,
+                    image_url: imageUrl,
+                })
+                .select()
+                .single();
 
-            if (error) {
-                console.error("Erro ao criar produto:", error);
-                throw error;
-            }
+            if (error) throw error;
 
-            console.log("Produto criado:", data);
-
-            // Atualiza a lista de pastas (para manter o comportamento original de exibição)
-            await supabase.from("folders").insert({ user_id: user.id, name, item_count: 0 });
-            const { data: freshFolders } = await supabase.from('folders').select('*').eq('user_id', user.id);
-            setFolders(freshFolders || []);
-
-            showConfirmation();
+            const newProduct: Item = {
+                id: responseData.id,
+                name: responseData.title,
+                description: responseData.description,
+                price: responseData.price,
+                image: responseData.image_url,
+                category: 'general',
+                owner_id: responseData.owner_id,
+                folder_id: responseData.folder_id
+            };
+            
+            setProducts(prev => [newProduct, ...prev]);
+            
+            const updatedFolders = await fetchFolders(user.id);
+            setFolders(updatedFolders);
+            
+            showSuccess("Produto adicionado com sucesso");
+            return newProduct;
         } catch (err: any) {
-            alert(err.message);
+            console.error(err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleCreateDraftProduct = async (details: { title: string, description: string, price: number, file: Blob }) => {
+        setIsLoading(true);
+        try {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user || !details.title) return;
+
+            const imagePath = `${user.id}/drafts/${Date.now()}.jpg`;
+            const imageUrl = await uploadImage({ bucket: "products", file: details.file, path: imagePath });
+
+            const { data: responseData, error } = await supabase
+                .from("products")
+                .insert({
+                    owner_id: user.id,
+                    folder_id: null,
+                    title: details.title,
+                    price: details.price,
+                    description: details.description,
+                    image_url: imageUrl,
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            const newProduct: Item = {
+                id: responseData.id,
+                name: responseData.title,
+                description: responseData.description,
+                price: responseData.price,
+                image: responseData.image_url,
+                category: 'general',
+                owner_id: responseData.owner_id,
+                folder_id: null
+            };
+            
+            setProducts(prev => [newProduct, ...prev]);
+            showSuccess("Produto adicionado com sucesso");
+            return newProduct;
+        } catch (err: any) {
+            console.error(err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleMoveProductToFolder = async (productId: string, folderId: string | null) => {
+        setIsLoading(true);
+        try {
+            const { error } = await supabase
+                .from("products")
+                .update({ folder_id: folderId })
+                .eq("id", productId);
+
+            if (error) throw error;
+
+            setProducts(prev => prev.map(p => p.id === productId ? { ...p, folder_id: folderId } : p));
+            
+            if (session?.user.id) {
+                const updatedFolders = await fetchFolders(session.user.id);
+                setFolders(updatedFolders);
+            }
+            
+            showSuccess("Produto movido com sucesso");
+        } catch (err: any) {
+            console.error(err);
         } finally {
             setIsLoading(false);
         }
@@ -239,10 +303,39 @@ const App: React.FC = () => {
             case Screen.Login: return <LoginScreen />;
             case Screen.AccountTypeSelection: return <AccountTypeSelectionScreen onSelect={async (type) => { const uid = session?.user.id; if (uid) { await supabase.from('profiles').update({ account_type: type }).eq('user_id', uid); const { data } = await supabase.from('profiles').select('*').eq('user_id', uid).single(); setProfile(data); if (type === 'business') setCurrentScreen(Screen.BusinessOnboarding); else setCurrentScreen(Screen.Feed); } }} />;
             case Screen.BusinessOnboarding: return <BusinessOnboardingScreen onComplete={async (details) => { if (session?.user) { await supabase.from('profiles').update({ full_name: details.business_name, bio: details.description }).eq('user_id', session.user.id); setBusinessProfile({ id: session.user.id, ...details }); setCurrentScreen(Screen.VendorDashboard); } }} />;
-            case Screen.VendorDashboard: return businessProfile && profile && <VendorDashboard businessProfile={businessProfile} profile={profile} onOpenMenu={() => setShowVendorMenu(true)} unreadNotificationCount={0} onOpenNotificationsPanel={() => {}} onOpenPromotionModal={() => {}} followersCount={0} followingCount={0} folders={folders} products={products} showcase={showcase} onCreateFolder={handleCreateFolder} onCreateProductInFolder={() => {}} onUpdateProfile={async (u) => { const { data } = await supabase.from('profiles').update({ full_name: u.name, bio: u.bio }).eq('user_id', profile.user_id).select().single(); if (data) setProfile(data); }} onUpdateProfileImage={handleUpdateProfileImage} onUpdateCoverImage={handleUpdateCoverImage} onNavigateToProducts={() => setCurrentScreen(Screen.VendorProducts)} onAddToShowcase={handleAddToShowcase} />;
-            case Screen.VendorProducts: return businessProfile && <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile} products={products} onCreateProduct={handleCreateProduct} />;
+            case Screen.VendorDashboard: return businessProfile && profile && (
+                <VendorDashboard 
+                    businessProfile={businessProfile} 
+                    profile={profile} 
+                    onOpenMenu={() => setShowVendorMenu(true)} 
+                    unreadNotificationCount={0} 
+                    onOpenNotificationsPanel={() => {}} 
+                    onOpenPromotionModal={() => {}} 
+                    followersCount={0} 
+                    followingCount={0} 
+                    folders={folders} 
+                    products={products} 
+                    showcase={showcase} 
+                    onCreateFolder={handleCreateFolder} 
+                    onCreateProductInFolder={handleAddProductToFolder}
+                    onMoveProductToFolder={handleMoveProductToFolder} 
+                    onUpdateProfile={async (u) => { const { data } = await supabase.from('profiles').update({ full_name: u.name, bio: u.bio }).eq('user_id', profile.user_id).select().single(); if (data) setProfile(data); }} 
+                    onUpdateProfileImage={async (url) => {}} 
+                    onUpdateCoverImage={async (url) => {}} 
+                    onNavigateToProducts={() => setCurrentScreen(Screen.VendorProducts)} 
+                    onAddToShowcase={async () => {}} 
+                />
+            );
+            case Screen.VendorProducts: return businessProfile && (
+                <VendorProductsScreen 
+                    onBack={() => setCurrentScreen(Screen.VendorDashboard)} 
+                    businessProfile={businessProfile} 
+                    products={products} 
+                    onCreateProduct={handleCreateDraftProduct} 
+                />
+            );
             case Screen.Feed: return profile && <FeedScreen posts={posts} stories={INITIAL_STORIES} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={setRecommendationItem} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={() => {}} onLikePost={id => setPosts(ps => ps.map(p => p.id === id ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 } : p))} onAddComment={() => {}} onNavigateToAllHighlights={() => setCurrentScreen(Screen.AllHighlights)} onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)} unreadNotificationCount={0} onNotificationsClick={() => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
-            case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} onUpdateProfile={async (u) => { const { data } = await supabase.from('profiles').update({ full_name: u.name, bio: u.bio }).eq('user_id', profile?.user_id).select().single(); if (data) setProfile(data); }} onUpdateProfileImage={handleUpdateProfileImage} onSelectCategory={() => {}} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={(id) => setViewedProfileId(id)} onNavigateToSettings={() => setCurrentScreen(Screen.Settings)} onSignOut={() => supabase.auth.signOut()} unreadNotificationCount={0} unreadMessagesCount={0} onOpenNotificationsPanel={() => {}} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} />;
+            case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} onUpdateProfile={async (u) => { const { data } = await supabase.from('profiles').update({ full_name: u.name, bio: u.bio }).eq('user_id', profile?.user_id).select().single(); if (data) setProfile(data); }} onUpdateProfileImage={async (url) => {}} onSelectCategory={() => {}} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={(id) => setViewedProfileId(id)} onNavigateToSettings={() => setCurrentScreen(Screen.Settings)} onSignOut={() => supabase.auth.signOut()} unreadNotificationCount={0} unreadMessagesCount={0} onOpenNotificationsPanel={() => {}} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} />;
             default: return <SplashScreen />;
         }
     };
@@ -254,7 +347,7 @@ const App: React.FC = () => {
             {showUpdateBadge && (
                 <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[250] bg-zinc-900 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl animate-slideUp flex items-center gap-2 border border-white/10">
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    Atualizado com Sucesso!
+                    Banco de Dados Atualizado!
                 </div>
             )}
 
