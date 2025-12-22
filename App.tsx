@@ -24,6 +24,7 @@ import VendorCollaborationsScreen from './components/VendorCollaborationsScreen'
 import AllHighlightsScreen from './components/AllHighlightsScreen';
 import SearchScreen from './components/SearchScreen';
 import RecommendationModal from './components/RecommendationModal';
+import NotificationsPanel from './components/NotificationsPanel';
 
 const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
     const res = await fetch(dataUrl);
@@ -46,11 +47,27 @@ const App: React.FC = () => {
     const [showVendorMenu, setShowVendorMenu] = useState(false);
     const [recommendationItem, setRecommendationItem] = useState<Item | null>(null);
     const [showUpdateBadge, setShowUpdateBadge] = useState(false);
+    
+    // Notification State - Initialized empty for real users
+    const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [notifications, setNotifications] = useState<AppNotification[]>([]);
+
+    const unreadCount = notifications.filter(n => !n.read).length;
 
     const showSuccess = (msg: string) => {
         alert(msg);
         setShowUpdateBadge(true);
         setTimeout(() => setShowUpdateBadge(false), 3000);
+    };
+
+    const handleOpenNotifications = () => setIsNotificationsOpen(true);
+    const handleCloseNotifications = () => setIsNotificationsOpen(false);
+
+    const handleNotificationClick = (notif: AppNotification) => {
+        setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+        if (notif.relatedCategoryId) {
+            // Logic to navigate if needed
+        }
     };
 
     const fetchFolders = async (userId: string) => {
@@ -146,6 +163,7 @@ const App: React.FC = () => {
             setCartItems([]);
             setSession(null);
             setCurrentScreen(Screen.AccountTypeSelection);
+            setNotifications([]);
         };
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -312,8 +330,8 @@ const App: React.FC = () => {
                     businessProfile={businessProfile} 
                     profile={profile} 
                     onOpenMenu={() => setShowVendorMenu(true)} 
-                    unreadNotificationCount={0} 
-                    onOpenNotificationsPanel={() => {}} 
+                    unreadNotificationCount={unreadCount} 
+                    onOpenNotificationsPanel={handleOpenNotifications} 
                     onOpenPromotionModal={() => {}} 
                     followersCount={0} 
                     followingCount={0} 
@@ -341,13 +359,13 @@ const App: React.FC = () => {
             case Screen.VendorProducts: return businessProfile && (
                 <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile} products={products} onCreateProduct={handleCreateDraftProduct} />
             );
-            case Screen.Feed: return profile && <FeedScreen posts={posts} stories={INITIAL_STORIES} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={setRecommendationItem} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={() => {}} onLikePost={handleLikePost} onAddComment={handleAddComment} onNavigateToAllHighlights={() => setCurrentScreen(Screen.AllHighlights)} onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)} unreadNotificationCount={0} onNotificationsClick={() => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
+            case Screen.Feed: return profile && <FeedScreen posts={posts} stories={INITIAL_STORIES} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={setRecommendationItem} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={() => {}} onLikePost={handleLikePost} onAddComment={handleAddComment} onNavigateToAllHighlights={() => setCurrentScreen(Screen.AllHighlights)} onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)} unreadNotificationCount={unreadCount} onNotificationsClick={handleOpenNotifications} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
             case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} onUpdateProfile={async (u) => { 
                 if (session?.user) {
                     const { data } = await supabase.from('profiles').update({ full_name: u.name, bio: u.bio }).eq('user_id', profile?.user_id).select().single(); 
                     if (data) setProfile(data); 
                 } else setProfile(prev => prev ? { ...prev, full_name: u.name ?? prev.full_name, bio: u.bio ?? prev.bio } : null);
-            }} onUpdateProfileImage={async (url) => {}} onSelectCategory={() => {}} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={(id) => setViewedProfileId(id)} onNavigateToSettings={() => setCurrentScreen(Screen.Settings)} onSignOut={() => supabase.auth.signOut()} unreadNotificationCount={0} unreadMessagesCount={0} onOpenNotificationsPanel={() => {}} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} onLikePost={handleLikePost} onAddComment={handleAddComment} />;
+            }} onUpdateProfileImage={async (url) => {}} onSelectCategory={() => {}} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={(id) => setViewedProfileId(id)} onNavigateToSettings={() => setCurrentScreen(Screen.Settings)} onSignOut={() => supabase.auth.signOut()} unreadNotificationCount={unreadCount} unreadMessagesCount={0} onOpenNotificationsPanel={handleOpenNotifications} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} onLikePost={handleLikePost} onAddComment={handleAddComment} />;
             default: return <SplashScreen />;
         }
     };
@@ -356,6 +374,16 @@ const App: React.FC = () => {
         <div className="h-[100dvh] w-full bg-white overflow-hidden flex flex-col relative">
             <div className="flex-grow relative overflow-hidden">{renderScreen()}</div>
             {showUpdateBadge && <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[250] bg-zinc-900 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl animate-slideUp flex items-center gap-2 border border-white/10"><div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>Banco de Dados Atualizado!</div>}
+            
+            {/* Notifications Mini Window Overlay */}
+            {isNotificationsOpen && (
+                <NotificationsPanel 
+                    notifications={notifications} 
+                    onClose={handleCloseNotifications} 
+                    onNotificationClick={handleNotificationClick} 
+                />
+            )}
+
             {profile && [Screen.Feed, Screen.Home, Screen.Cart, Screen.Rewards, Screen.AllHighlights, Screen.VendorDashboard, Screen.VendorAnalytics].includes(currentScreen) && (
                 <BottomNavBar 
                     activeScreen={currentScreen} 
