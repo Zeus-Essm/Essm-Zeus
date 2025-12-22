@@ -10,6 +10,8 @@ import {
     ChatBubbleIcon, BellIcon, PencilIcon
 } from './IconComponents';
 import BioEditModal from './BioEditModal';
+import ImageViewModal from './ImageViewModal';
+import CommentsModal from './CommentsModal';
 
 interface HomeScreenProps {
   loggedInProfile: Profile;
@@ -37,8 +39,11 @@ interface HomeScreenProps {
   onToggleFollow: (id: string) => void;
   followersCount: number;
   followingCount: number;
+  onLikePost: (postId: string) => void;
+  onAddComment: (postId: string, text: string) => void;
 }
 
+// Added missing onViewProfile prop to destructuring
 const HomeScreen: React.FC<HomeScreenProps> = ({
   loggedInProfile,
   viewedProfileId,
@@ -52,12 +57,18 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   unreadMessagesCount,
   followersCount,
   followingCount,
-  posts
+  posts,
+  onLikePost,
+  onAddComment,
+  onItemClick,
+  onViewProfile
 }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'posts' | 'market'>('market'); 
   const [selectedCategory, setSelectedCategory] = useState<MarketplaceType>('fashion');
+  const [viewingPostIndex, setViewingPostIndex] = useState<number | null>(null);
+  const [commentingPost, setCommentingPost] = useState<Post | null>(null);
   
   const isMyProfile = !viewedProfileId || viewedProfileId === loggedInProfile.user_id;
   const profileImageInputRef = useRef<HTMLInputElement>(null);
@@ -100,7 +111,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
   const handleCategoryClick = (id: MarketplaceType, event: React.MouseEvent<HTMLButtonElement>) => {
     setSelectedCategory(id);
-    // Scroll element into view smoothly
     event.currentTarget.scrollIntoView({
       behavior: 'smooth',
       block: 'nearest',
@@ -187,11 +197,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                             </button>
                         )}
                     </div>
-                    <div className="text-xs text-zinc-600 font-medium leading-tight line-clamp-2 mt-0.5 whitespace-pre-line">
+                    <div className="text-xs text-zinc-600 font-medium leading-tight line-clamp-3 mt-0.5 whitespace-pre-line">
                         {profile.bio || "Seja bem-vindo ao PUMP!"}
-                    </div>
-                    <div className="mt-2">
-                        <img src="https://i.postimg.cc/tJyhN30f/pump-badge.png" alt="Badge" className="h-6 w-6 object-contain" />
                     </div>
                 </div>
             </div>
@@ -199,17 +206,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             <div className="flex justify-around py-4 border-t border-b border-zinc-100 mb-2">
                 <div className="flex flex-col items-center">
                     <span className="text-md font-bold text-zinc-900">{userPosts.length}</span>
-                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-tight">posts</span>
+                    <span className="text-[10px] text-zinc-400 font-black uppercase tracking-tight">posts</span>
                 </div>
                 <div className="flex flex-col items-center">
                     <span className="text-md font-bold text-zinc-900">
                         {followersCount >= 1000 ? `${(followersCount/1000).toFixed(1).replace('.', ',')} mil` : followersCount}
                     </span>
-                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-tight">seguidores</span>
+                    <span className="text-[10px] text-zinc-400 font-black uppercase tracking-tight">seguidores</span>
                 </div>
                 <div className="flex flex-col items-center">
                     <span className="text-md font-bold text-zinc-900">{followingCount}</span>
-                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-tight">seguindo</span>
+                    <span className="text-[10px] text-zinc-400 font-black uppercase tracking-tight">seguindo</span>
                 </div>
             </div>
         </div>
@@ -235,8 +242,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             {activeTab === 'posts' && (
                 <div className="grid grid-cols-3 gap-0.5 animate-fadeIn p-0.5">
                     {userPosts.length > 0 ? (
-                        userPosts.map(post => (
-                            <div key={post.id} className="aspect-square bg-zinc-100 overflow-hidden active:opacity-80 transition-opacity">
+                        userPosts.map((post, index) => (
+                            <div 
+                                key={post.id} 
+                                onClick={() => setViewingPostIndex(index)}
+                                className="aspect-square bg-zinc-100 overflow-hidden active:opacity-80 transition-opacity cursor-pointer"
+                            >
                                 <img src={post.image} alt="" className="w-full h-full object-cover" />
                             </div>
                         ))
@@ -290,6 +301,30 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             )}
         </div>
       </main>
+
+      {viewingPostIndex !== null && (
+          <ImageViewModal 
+            posts={userPosts} 
+            startIndex={viewingPostIndex} 
+            onClose={() => setViewingPostIndex(null)} 
+            onLike={onLikePost} 
+            onItemClick={onItemClick} 
+            onViewProfile={onViewProfile} 
+            onComment={(postId) => {
+                const post = userPosts.find(p => p.id === postId);
+                if (post) setCommentingPost(post);
+            }} 
+          />
+      )}
+
+      {commentingPost && (
+          <CommentsModal 
+            post={commentingPost} 
+            currentUser={loggedInProfile} 
+            onClose={() => setCommentingPost(null)} 
+            onAddComment={onAddComment} 
+          />
+      )}
 
       {isEditingBio && (
           <BioEditModal 

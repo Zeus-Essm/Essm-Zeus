@@ -16,12 +16,11 @@ const Header: React.FC<HeaderProps> = ({ title, showLogo, onBack, unreadNotifica
     <header className="fixed top-0 left-0 right-0 h-16 flex items-center justify-between bg-white border-b border-zinc-100 px-5 z-40">
       <div className="flex items-center">
         {showLogo ? (
-          <div className="flex items-center gap-0.5">
-            <span className="text-2xl font-black italic tracking-tighter text-[#F59E0B]">p</span>
-            <span className="text-2xl font-black italic tracking-tighter text-[#1D4ED8]">u</span>
-            <span className="text-2xl font-black italic tracking-tighter text-[#DC2626]">m</span>
-            <span className="text-2xl font-black italic tracking-tighter text-[#F59E0B]">p</span>
-          </div>
+          <img 
+            src="https://i.postimg.cc/L4190LN2/PUMP_startup_2.png" 
+            alt="PUMP" 
+            className="h-8 w-auto object-contain" 
+          />
         ) : (
           <div className="flex items-center gap-3">
             {onBack && (
