@@ -73,6 +73,23 @@ const App: React.FC = () => {
         else document.documentElement.classList.remove('dark');
     };
 
+    const handleSignOut = async () => {
+        setIsLoading(true);
+        try {
+            await supabase.auth.signOut();
+            // Resetar estados de UI explicitamente
+            setIsSettingsOpen(false);
+            setShowVendorMenu(false);
+            setViewedProfileId(null);
+            setCartItems([]);
+            setCurrentScreen(Screen.Login);
+        } catch (err) {
+            console.error("Erro ao sair:", err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const handleNotificationClick = (notif: AppNotification) => {
         setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
     };
@@ -132,7 +149,6 @@ const App: React.FC = () => {
                     setProducts(p.data || []);
                     setCurrentScreen(Screen.VendorDashboard);
                 } else {
-                    // Sem tipo de conta definido -> Escolha obrigatória
                     setCurrentScreen(Screen.AccountTypeSelection);
                 }
             }
@@ -278,7 +294,7 @@ const App: React.FC = () => {
             case Screen.VendorAnalytics: return <VendorAnalyticsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} />;
             case Screen.VendorProducts: return <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile!} products={products} onCreateProduct={(data) => handleAddProductToFolder(folders[0].id, data)} />;
             case Screen.Feed: return profile && <FeedScreen posts={posts} stories={[]} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={setRecommendationItem} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={(cat) => { setViewedProfileId(cat.id); setCurrentScreen(Screen.Home); }} onLikePost={(id) => {}} onAddComment={(id, text) => {}} onNavigateToAllHighlights={() => setCurrentScreen(Screen.AllHighlights)} onStartCreate={() => {}} unreadNotificationCount={unreadCount} onNotificationsClick={handleOpenNotifications} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
-            case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} realBusinesses={realBusinesses} onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={handleUpdateProfileImage} onSelectCategory={(cat) => setViewedProfileId(cat.id)} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => {}} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={setViewedProfileId} onNavigateToSettings={handleOpenSettings} onSignOut={() => supabase.auth.signOut()} unreadNotificationCount={unreadCount} unreadMessagesCount={0} onOpenNotificationsPanel={handleOpenNotifications} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} onLikePost={(id) => {}} onAddComment={(id, t) => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
+            case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} realBusinesses={realBusinesses} onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={handleUpdateProfileImage} onSelectCategory={(cat) => setViewedProfileId(cat.id)} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => {}} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={setViewedProfileId} onNavigateToSettings={handleOpenSettings} onSignOut={handleSignOut} unreadNotificationCount={unreadCount} unreadMessagesCount={0} onOpenNotificationsPanel={handleOpenNotifications} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} onLikePost={(id) => {}} onAddComment={(id, t) => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
             case Screen.Search: return <SearchScreen onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} posts={posts} items={[]} onViewProfile={(id) => { setViewedProfileId(id); setCurrentScreen(Screen.Home); }} onLikePost={(id) => {}} onItemClick={setRecommendationItem} onItemAction={setRecommendationItem} onOpenSplitCamera={() => {}} onOpenComments={(id) => {}} onAddToCart={(i) => setCartItems(p => [...p, i])} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
             case Screen.VerificationIntro: return <VerificationIntroScreen onBack={() => setCurrentScreen(Screen.Home)} onStart={() => setCurrentScreen(Screen.IdUpload)} />;
             case Screen.IdUpload: return <IdUploadScreen onBack={() => setCurrentScreen(Screen.VerificationIntro)} onComplete={() => setCurrentScreen(Screen.FaceScan)} />;
@@ -292,7 +308,7 @@ const App: React.FC = () => {
         <div className="h-[100dvh] w-full bg-white overflow-hidden flex flex-col relative">
             <div className="flex-grow relative overflow-hidden">{renderScreen()}</div>
             {isNotificationsOpen && <NotificationsPanel notifications={notifications} onClose={handleCloseNotifications} onNotificationClick={handleNotificationClick} />}
-            {isSettingsOpen && profile && <SettingsPanel profile={profile} theme={theme} onToggleTheme={toggleTheme} onClose={handleCloseSettings} onSignOut={() => supabase.auth.signOut()} onNavigateToVerification={() => { setIsSettingsOpen(false); setCurrentScreen(Screen.VerificationIntro); }} />}
+            {isSettingsOpen && profile && <SettingsPanel profile={profile} theme={theme} onToggleTheme={toggleTheme} onClose={handleCloseSettings} onSignOut={handleSignOut} onNavigateToVerification={() => { setIsSettingsOpen(false); setCurrentScreen(Screen.VerificationIntro); }} />}
             {profile && [Screen.Feed, Screen.Home, Screen.Cart, Screen.Rewards, Screen.AllHighlights, Screen.VendorDashboard, Screen.VendorAnalytics, Screen.VendorProducts].includes(currentScreen) && (
                 <BottomNavBar 
                     activeScreen={currentScreen} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} 
@@ -301,7 +317,7 @@ const App: React.FC = () => {
                 />
             )}
             {isLoading && <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center"><div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div></div>}
-            {showVendorMenu && <VendorMenuModal onClose={() => setShowVendorMenu(false)} onNavigateToAnalytics={() => { setCurrentScreen(Screen.VendorAnalytics); setShowVendorMenu(false); }} onNavigateToProducts={() => { setCurrentScreen(Screen.VendorProducts); setShowVendorMenu(false); }} onNavigateToAffiliates={() => { setShowVendorMenu(false); }} onNavigateToCollaborations={() => { setShowVendorMenu(false); }} onSignOut={() => supabase.auth.signOut()} />}
+            {showVendorMenu && <VendorMenuModal onClose={() => setShowVendorMenu(false)} onNavigateToAnalytics={() => { setCurrentScreen(Screen.VendorAnalytics); setShowVendorMenu(false); }} onNavigateToProducts={() => { setCurrentScreen(Screen.VendorProducts); setShowVendorMenu(false); }} onNavigateToAffiliates={() => { setShowVendorMenu(false); }} onNavigateToCollaborations={() => { setShowVendorMenu(false); }} onSignOut={handleSignOut} />}
             {recommendationItem && <RecommendationModal item={recommendationItem} onClose={() => setRecommendationItem(null)} onAddToCart={i => setCartItems(p => [...p, i])} onStartTryOn={() => {}} />}
         </div>
     );
