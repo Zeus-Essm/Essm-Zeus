@@ -59,9 +59,10 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
             if (!profileMap.has(post.user.id)) {
                 profileMap.set(post.user.id, {
                     user_id: post.user.id, 
-                    username: post.user.name,
-                    full_name: post.user.name,
-                    avatar_url: post.user.avatar,
+                    // FIX: Corrected property name from name and avatar to full_name and avatar_url to match User/Profile type
+                    username: post.user.full_name || '',
+                    full_name: post.user.full_name || '',
+                    avatar_url: post.user.avatar_url || null,
                     bio: null,
                     account_type: post.isSponsored ? 'business' : 'personal',
                 });

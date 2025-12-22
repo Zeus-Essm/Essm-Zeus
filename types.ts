@@ -1,11 +1,36 @@
 
-export type MarketplaceType = 'fashion' | 'restaurant' | 'supermarket' | 'beauty' | 'technology' | 'decoration';
+export type MarketplaceType =
+  | 'fashion'
+  | 'restaurant'
+  | 'supermarket'
+  | 'beauty'
+  | 'technology'
+  | 'decoration';
+
+/* ======================
+   USER / PROFILE (Supabase Schema)
+====================== */
 
 export interface User {
   id: string;
-  name: string;
-  avatar: string;
+  full_name: string | null;
+  avatar_url: string | null;
 }
+
+export interface Profile {
+  user_id: string;
+  username: string;
+  full_name: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+  account_type: 'personal' | 'business' | null;
+  verification_status?: 'unverified' | 'pending' | 'verified';
+  reward_points?: number;
+}
+
+/* ======================
+   CATALOG / VENDOR (Supabase Schema)
+====================== */
 
 export interface Folder {
   id: string;
@@ -23,7 +48,7 @@ export interface Product {
   title: string;
   description: string | null;
   price: number;
-  image_url: string;
+  image_url: string | null;
   created_at: string;
 }
 
@@ -35,18 +60,9 @@ export interface ShowcaseItem {
   created_at?: string;
 }
 
-export interface SubCategory {
-  id: string;
-  name: string;
-  image: string;
-  subCategories?: SubCategory[];
-}
-
-export interface Category extends SubCategory {
-  video?: string;
-  type: MarketplaceType;
-  isAd?: boolean;
-}
+/* ======================
+   FEED / TRY-ON (UI Model)
+====================== */
 
 export interface Item {
   id: string;
@@ -55,20 +71,28 @@ export interface Item {
   category: string;
   image: string;
   price: number;
+
+  // opcionais (uso em feed / try-on)
   isTryOn?: boolean;
   beautyType?: 'lipstick' | 'wig' | 'eyeshadow';
   gender?: 'male' | 'female' | 'kid' | 'unisex';
+
+  // ligação com vendedor
   vendorSubCategory?: string;
-  recommendationVideo?: string; 
+  recommendationVideo?: string;
   folder_id?: string | null;
   owner_id?: string;
 }
 
+/* ======================
+   SOCIAL
+====================== */
+
 export interface Comment {
-    id: string;
-    user: User;
-    text: string;
-    timestamp: string;
+  id: string;
+  user: User;
+  text: string;
+  timestamp: string;
 }
 
 export interface Post {
@@ -89,48 +113,31 @@ export interface Post {
 
 export interface Story {
   id: string;
-  user: { name: string; avatar: string };
+  user: { full_name: string | null; avatar_url: string | null };
   backgroundImage: string;
 }
 
+/* ======================
+   COMMUNICATION
+====================== */
+
 export interface Message {
-    id: string;
-    text: string;
-    senderId: string;
-    timestamp: string;
+  id: string;
+  text: string;
+  senderId: string;
+  timestamp: string;
 }
 
 export interface Conversation {
-    id: string;
-    participant: User;
-    lastMessage: Message;
-    unreadCount: number;
+  id: string;
+  participant: User;
+  lastMessage: Message;
+  unreadCount: number;
 }
 
-export interface SavedLook {
-    id: string;
-    image: string;
-    items: Item[];
-}
-
-export interface Profile {
-  user_id: string; 
-  username: string; 
-  full_name: string | null; 
-  bio: string | null;
-  avatar_url: string | null; 
-  account_type: 'personal' | 'business' | null;
-  verification_status?: 'unverified' | 'pending' | 'verified';
-  reward_points?: number;
-}
-
-export interface BusinessProfile {
-    id: string;
-    business_name: string;
-    business_category: string;
-    description: string;
-    logo_url: string;
-}
+/* ======================
+   UI NAVIGATION
+====================== */
 
 export enum Screen {
   Splash,
@@ -168,35 +175,62 @@ export enum Screen {
   DecorationPlacement
 }
 
+export interface SavedLook {
+  id: string;
+  image: string;
+  items: Item[];
+}
+
+export interface BusinessProfile {
+  id: string;
+  business_name: string;
+  business_category: string;
+  description: string;
+  logo_url: string;
+}
+
 export interface AppNotification {
-    id: string;
-    message: string;
-    read: boolean;
-    createdAt: Date;
-    relatedCategoryId?: string;
+  id: string;
+  message: string;
+  read: boolean;
+  createdAt: Date;
+  relatedCategoryId?: string;
 }
 
 export interface InfluencerAffiliationRequest {
+  id: string;
+  influencer: {
     id: string;
-    influencer: {
-        id: string;
-        name: string;
-        avatar: string;
-        followers: number;
-    };
-    status: 'pending' | 'approved' | 'rejected';
-    requestedAt: string;
+    name: string;
+    avatar: string;
+    followers: number;
+  };
+  status: 'pending' | 'approved' | 'rejected';
+  requestedAt: string;
 }
 
 export interface CollaborationPost {
+  id: string;
+  influencer: {
     id: string;
-    influencer: {
-        id: string;
-        name: string;
-        avatar: string;
-    };
-    businessId: string;
-    postId: string;
-    status: 'pending' | 'approved' | 'rejected';
-    submittedAt: string;
+    name: string;
+    avatar: string;
+  };
+  businessId: string;
+  postId: string;
+  status: 'pending' | 'approved' | 'rejected';
+  submittedAt: string;
+}
+
+export interface SubCategory {
+  id: string;
+  name: string;
+  image: string;
+  subCategories?: SubCategory[];
+}
+
+export interface Category extends SubCategory {
+  video?: string;
+  type: MarketplaceType;
+  isAd?: boolean;
 }

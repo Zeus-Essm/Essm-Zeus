@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
-import { Screen, Category, Item, Post, Profile, BusinessProfile, Folder, ShowcaseItem, AppNotification, Comment, User } from './types';
+import { Screen, Category, Item, Post, Profile, BusinessProfile, Folder, ShowcaseItem, AppNotification, Comment, User, Product } from './types';
 import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, MALE_CLOTHING_SUBCATEGORIES } from './constants';
 
 // Screen Components
@@ -30,6 +29,8 @@ import IdUploadScreen from './components/IdUploadScreen';
 import FaceScanScreen from './components/FaceScanScreen';
 import VerificationPendingScreen from './components/VerificationPendingScreen';
 
+const isNative = !!(window as any).Capacitor;
+
 const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
     const res = await fetch(dataUrl);
     return await res.blob();
@@ -38,8 +39,7 @@ const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
 const App: React.FC = () => {
     const [session, setSession] = useState<Session | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
-    const [products, setProducts] = useState<Item[]>([]);
-    const [showcase, setShowcase] = useState<ShowcaseItem[]>([]);
+    const [products, setProducts] = useState<Product[]>([]);
     const [folders, setFolders] = useState<Folder[]>([]);
     const [authLoading, setAuthLoading] = useState(true);
     const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Splash);
@@ -117,85 +117,118 @@ const App: React.FC = () => {
             .order("created_at", { ascending: false });
 
         if (error) return [];
-        return (data || []).map(p => ({
-            id: p.id,
-            name: p.title,
-            description: p.description,
-            price: p.price,
-            image: p.image_url,
-            category: 'general',
-            owner_id: p.owner_id,
-            folder_id: p.folder_id
-        }));
+        return data || [];
+    };
+
+    const handleAuthState = async (currentSession: Session | null, mounted: boolean) => {
+        if (!mounted) return;
+        
+        setSession(currentSession);
+        fetchRealBusinesses();
+
+        if (currentSession?.user) {
+            const user = currentSession.user;
+            
+            // Buscar perfil existente
+            const { data: existingProfile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('user_id', user.id)
+                .single();
+            
+            if (!mounted) return;
+
+            // Se não existir, criar um novo perfil básico
+            if (!existingProfile) {
+                await supabase.from('profiles').insert({
+                    user_id: user.id,
+                    username: user.user_metadata?.full_name?.toLowerCase().replace(/\s/g, '_') || `user_${user.id.substring(0, 5)}`,
+                    full_name: user.user_metadata?.full_name ?? '',
+                    avatar_url: user.user_metadata?.avatar_url ?? null,
+                    account_type: null
+                });
+            }
+            
+            if (!mounted) return;
+            
+            // Buscar perfil atualizado
+            const { data: freshProfile } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('user_id', user.id)
+                .single();
+            
+            if (!mounted) return;
+
+            // Buscar dados da loja/inventário
+            if (user.id) {
+                const [freshFolders, fetchedProducts] = await Promise.all([
+                    fetchFolders(user.id),
+                    fetchAllProducts(user.id)
+                ]);
+                if (!mounted) return;
+                setFolders(freshFolders);
+                setProducts(fetchedProducts);
+            }
+            
+            setProfile(freshProfile);
+
+            if (freshProfile) {
+                if (freshProfile.account_type === 'personal') {
+                    setCurrentScreen(Screen.Feed);
+                } else if (freshProfile.account_type === 'business') {
+                    setBusinessProfile({
+                        id: user.id,
+                        business_name: freshProfile.full_name || freshProfile.username,
+                        business_category: 'fashion',
+                        description: freshProfile.bio || '',
+                        logo_url: freshProfile.avatar_url || ''
+                    });
+                    setCurrentScreen(Screen.VendorDashboard);
+                } else {
+                    setCurrentScreen(Screen.AccountTypeSelection);
+                }
+            }
+        } else {
+            // Lógica de Sign Out / Sessão Expirada
+            setProfile(null);
+            setProducts([]);
+            setFolders([]);
+            setBusinessProfile(null);
+            setCartItems([]);
+            setCurrentScreen(Screen.AccountTypeSelection);
+        }
+        
+        if (mounted) setAuthLoading(false);
     };
 
     useEffect(() => {
-        const handleAuthState = async (currentSession: Session | null) => {
-            setSession(currentSession);
-            fetchRealBusinesses();
-            if (currentSession?.user) {
-                const user = currentSession.user;
-                const { data: existingProfile } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
-                if (!existingProfile) {
-                    await supabase.from('profiles').insert({
-                        user_id: user.id,
-                        username: user.user_metadata?.full_name?.toLowerCase().replace(/\s/g, '_') || `user_${user.id.substring(0, 5)}`,
-                        full_name: user.user_metadata?.full_name ?? '',
-                        avatar_url: user.user_metadata?.avatar_url ?? null,
-                        account_type: null
-                    });
-                }
-                const { data: freshProfile } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
-                
-                if (user.id) {
-                    const [freshFolders, mappedProducts] = await Promise.all([
-                        fetchFolders(user.id),
-                        fetchAllProducts(user.id)
-                    ]);
-                    setFolders(freshFolders);
-                    setProducts(mappedProducts);
-                }
-                
-                setProfile(freshProfile);
+        let mounted = true;
 
-                if (freshProfile) {
-                    if (freshProfile.account_type === 'personal') setCurrentScreen(Screen.Feed);
-                    else if (freshProfile.account_type === 'business') {
-                        setBusinessProfile({
-                            id: user.id,
-                            business_name: freshProfile.full_name || freshProfile.username,
-                            business_category: 'fashion',
-                            description: freshProfile.bio || '',
-                            logo_url: freshProfile.avatar_url || ''
-                        });
-                        setCurrentScreen(Screen.VendorDashboard);
-                    } else setCurrentScreen(Screen.AccountTypeSelection);
-                }
-            } else {
-                setCurrentScreen(Screen.AccountTypeSelection);
-            }
-            setAuthLoading(false);
+        const init = async () => {
+            const { data } = await supabase.auth.getSession();
+            if (!mounted) return;
+            handleAuthState(data.session, mounted);
         };
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-            if (event === 'SIGNED_OUT') {
-                setProfile(null);
-                setProducts([]);
-                setFolders([]);
-                setBusinessProfile(null);
-                setCartItems([]);
-                setCurrentScreen(Screen.AccountTypeSelection);
-            } else handleAuthState(session);
-        });
+        init();
 
-        supabase.auth.getSession().then(({ data: { session } }) => handleAuthState(session));
-        return () => subscription.unsubscribe();
+        const { data: listener } = supabase.auth.onAuthStateChange(
+            (event, session) => {
+                if (!mounted) return;
+                handleAuthState(session, mounted);
+            }
+        );
+
+        return () => {
+            mounted = false;
+            listener.subscription.unsubscribe();
+        };
     }, []);
 
     const handleCreateFolder = async (title: string) => {
         if (!profile) return;
         if (profile.user_id.startsWith('temp_')) {
-            // Updated mockFolder properties to match updated Folder interface
             const mockFolder: Folder = {
                 id: `temp_${Date.now()}`,
                 title,
@@ -226,24 +259,26 @@ const App: React.FC = () => {
         }
     };
 
-    const handleAddProductToFolder = async (folderId: string, details: { title: string, description: string, price: number, file: Blob }) => {
+    const handleAddProductToFolder = async (folderId: string, details: { title: string, description: string, price: number, file: Blob | null }) => {
         if (!profile || !session?.user) return;
         setIsLoading(true);
         try {
-            // 1. Upload da imagem para o bucket 'products'
-            const fileExt = details.file.type.split('/')[1] || 'jpg';
-            const fileName = `${profile.user_id}/${Date.now()}_${details.title.replace(/\s/g, '_')}.${fileExt}`;
+            let publicUrl: string | null = null;
             
-            const { error: uploadError } = await supabase.storage
-                .from('products')
-                .upload(fileName, details.file);
+            if (details.file) {
+                const fileExt = details.file.type.split('/')[1] || 'jpg';
+                const fileName = `${profile.user_id}/${Date.now()}_${details.title.replace(/\s/g, '_')}.${fileExt}`;
+                
+                const { error: uploadError } = await supabase.storage
+                    .from('products')
+                    .upload(fileName, details.file);
 
-            if (uploadError) throw uploadError;
+                if (uploadError) throw uploadError;
 
-            // 2. Pegar URL Pública
-            const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
+                const { data: urlData } = supabase.storage.from('products').getPublicUrl(fileName);
+                publicUrl = urlData.publicUrl;
+            }
 
-            // 3. Salvar metadados no Database
             const { data: productData, error: dbError } = await supabase
                 .from('products')
                 .insert({
@@ -259,26 +294,14 @@ const App: React.FC = () => {
 
             if (dbError) throw dbError;
 
-            // 4. Opcional: Incrementar contagem da pasta via RPC
-            await supabase.rpc('increment_folder_count', { row_id: folderId }).catch(() => {});
+            // Incremento via RPC (deve estar configurado no seu Supabase SQL)
+            await supabase.rpc('increment_folder_count', { row_id: folderId });
 
-            // 5. Atualizar UI
-            const newItem: Item = {
-                id: productData.id,
-                name: productData.title,
-                description: productData.description || '',
-                price: productData.price,
-                image: productData.image_url,
-                category: 'general',
-                owner_id: profile.user_id,
-                folder_id: folderId
-            };
-
-            setProducts(p => [newItem, ...p]);
+            setProducts(p => [productData, ...p]);
             setFolders(f => f.map(fold => fold.id === folderId ? { 
                 ...fold, 
                 item_count: (fold.item_count || 0) + 1,
-                cover_image: fold.cover_image || newItem.image
+                cover_image: fold.cover_image || productData.image_url
             } : fold));
             
             setShowUpdateBadge(true);
@@ -364,8 +387,8 @@ const App: React.FC = () => {
             id: `c_${Date.now()}`,
             user: {
                 id: profile.user_id,
-                name: profile.username || profile.full_name || 'User',
-                avatar: profile.avatar_url || ''
+                full_name: profile.full_name || profile.username || 'User',
+                avatar_url: profile.avatar_url || ''
             },
             text,
             timestamp: new Date().toISOString()
@@ -381,6 +404,18 @@ const App: React.FC = () => {
             return p;
         }));
     };
+
+    // Helper for Product to Item mapping (for Feed/Search UI)
+    const mappedItems: Item[] = products.map(p => ({
+        id: p.id,
+        name: p.title,
+        description: p.description || '',
+        price: p.price,
+        image: p.image_url || '',
+        category: 'catalog',
+        owner_id: p.owner_id,
+        folder_id: p.folder_id
+    }));
 
     const renderScreen = () => {
         if (authLoading || currentScreen === Screen.Splash) return <SplashScreen />;
@@ -437,10 +472,24 @@ const App: React.FC = () => {
                     onCreateFolder={handleCreateFolder} 
                     onCreateProductInFolder={handleAddProductToFolder}
                     onMoveProductToFolder={async (pId, fId) => {
-                        if (!profile.user_id.startsWith('temp_')) {
-                             await supabase.from('products').update({ folder_id: fId }).eq('id', pId);
-                        }
-                        setProducts(prev => prev.map(p => p.id === pId ? { ...p, folder_id: fId } : p));
+                      if (!profile.user_id.startsWith('temp_')) {
+                        await supabase.from('products').update({ folder_id: fId }).eq('id', pId);
+                      }
+
+                      const oldFolderId = products.find(p => p.id === pId)?.folder_id;
+
+                      setProducts(prev =>
+                        prev.map(p => (p.id === pId ? { ...p, folder_id: fId } : p))
+                      );
+
+                      setFolders(prev =>
+                        prev.map(f => {
+                          if (f.id === fId) return { ...f, item_count: (f.item_count || 0) + 1 };
+                          if (oldFolderId && f.id === oldFolderId)
+                            return { ...f, item_count: Math.max(0, (f.item_count || 0) - 1) };
+                          return f;
+                        })
+                      );
                     }} 
                     onUpdateProfile={handleUpdateProfile} 
                     onUpdateProfileImage={handleUpdateProfileImage} 
@@ -452,14 +501,41 @@ const App: React.FC = () => {
                 />
             );
             case Screen.VendorAnalytics: return <VendorAnalyticsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} />;
+            case Screen.VendorProducts:
+              return businessProfile && folders.length > 0 ? (
+                <VendorProductsScreen
+                  onBack={() => setCurrentScreen(Screen.VendorDashboard)}
+                  businessProfile={businessProfile}
+                  products={products}
+                  onCreateProduct={(data) =>
+                    handleAddProductToFolder(folders[0].id, data)
+                  }
+                />
+              ) : (
+                <div className="w-full h-full flex flex-col items-center justify-center p-8 text-center animate-fadeIn bg-white">
+                  <div className="w-20 h-20 rounded-[2.5rem] bg-zinc-50 flex items-center justify-center mb-6">
+                    <svg className="w-10 h-10 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" /></svg>
+                  </div>
+                  <h3 className="text-sm font-black uppercase tracking-widest text-zinc-900">Coleção Necessária</h3>
+                  <p className="text-[11px] text-zinc-500 mt-2 max-w-[240px] leading-relaxed">
+                    Você precisa criar pelo menos uma <span className="font-bold text-amber-600">Coleção</span> no painel principal antes de começar a cadastrar seus produtos.
+                  </p>
+                  <button 
+                    onClick={() => setCurrentScreen(Screen.VendorDashboard)}
+                    className="mt-8 text-[10px] font-black uppercase tracking-[0.2em] text-amber-600 hover:text-amber-700 underline"
+                  >
+                    Voltar ao Painel
+                  </button>
+                </div>
+              );
             case Screen.Feed: return profile && <FeedScreen posts={posts} stories={[]} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={setRecommendationItem} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={(cat) => { setViewedProfileId(cat.id); setCurrentScreen(Screen.Home); }} onLikePost={handleLikePost} onAddComment={handleAddComment} onNavigateToAllHighlights={() => setCurrentScreen(Screen.AllHighlights)} onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)} unreadNotificationCount={unreadCount} onNotificationsClick={handleOpenNotifications} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
             case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} realBusinesses={realBusinesses} onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={handleUpdateProfileImage} onSelectCategory={(cat) => setViewedProfileId(cat.id)} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={setViewedProfileId} onNavigateToSettings={handleOpenSettings} onSignOut={() => supabase.auth.signOut()} unreadNotificationCount={unreadCount} unreadMessagesCount={0} onOpenNotificationsPanel={handleOpenNotifications} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} onLikePost={handleLikePost} onAddComment={handleAddComment} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
-            case Screen.Search: return <SearchScreen onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} posts={posts} items={products} onViewProfile={(id) => { setViewedProfileId(id); setCurrentScreen(Screen.Home); }} onLikePost={handleLikePost} onItemClick={setRecommendationItem} onItemAction={setRecommendationItem} onOpenSplitCamera={() => {}} onOpenComments={handleLikePost} onAddToCart={(i) => setCartItems(p => [...p, i])} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
+            case Screen.Search: return <SearchScreen onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} posts={posts} items={mappedItems} onViewProfile={(id) => { setViewedProfileId(id); setCurrentScreen(Screen.Home); }} onLikePost={handleLikePost} onItemClick={setRecommendationItem} onItemAction={setRecommendationItem} onOpenSplitCamera={() => {}} onOpenComments={handleLikePost} onAddToCart={(i) => setCartItems(p => [...p, i])} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
             
             case Screen.VerificationIntro: return <VerificationIntroScreen onBack={() => setCurrentScreen(Screen.Home)} onStart={() => setCurrentScreen(Screen.IdUpload)} />;
             case Screen.IdUpload: return <IdUploadScreen onBack={() => setCurrentScreen(Screen.VerificationIntro)} onComplete={() => setCurrentScreen(Screen.FaceScan)} />;
             case Screen.FaceScan: return <FaceScanScreen onBack={() => setCurrentScreen(Screen.IdUpload)} onComplete={() => setCurrentScreen(Screen.VerificationPending)} />;
-            case Screen.VerificationPending: return <VerificationPendingScreen onComplete={() => { if (profile) setProfile({ ...profile, verification_status: 'pending' }); setCurrentScreen(Screen.Home); }} />;
+            case Screen.VerificationPending: return <VerificationPendingScreen onComplete={() => { if (profile) setProfile({ ...profile, verification_status: 'verified' }); setCurrentScreen(Screen.Home); }} />;
                 
             default: return <SplashScreen />;
         }
@@ -473,7 +549,7 @@ const App: React.FC = () => {
             {isNotificationsOpen && <NotificationsPanel notifications={notifications} onClose={handleCloseNotifications} onNotificationClick={handleNotificationClick} />}
             {isSettingsOpen && profile && <SettingsPanel profile={profile} theme={theme} onToggleTheme={toggleTheme} onClose={handleCloseSettings} onSignOut={() => supabase.auth.signOut()} onNavigateToVerification={() => { setIsSettingsOpen(false); setCurrentScreen(Screen.VerificationIntro); }} />}
 
-            {profile && [Screen.Feed, Screen.Home, Screen.Cart, Screen.Rewards, Screen.AllHighlights, Screen.VendorDashboard, Screen.VendorAnalytics].includes(currentScreen) && (
+            {profile && [Screen.Feed, Screen.Home, Screen.Cart, Screen.Rewards, Screen.AllHighlights, Screen.VendorDashboard, Screen.VendorAnalytics, Screen.VendorProducts].includes(currentScreen) && (
                 <BottomNavBar 
                     activeScreen={currentScreen} 
                     onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} 

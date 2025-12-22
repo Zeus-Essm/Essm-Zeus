@@ -96,15 +96,17 @@ const CommentsModal: React.FC<CommentsModalProps> = ({ post, currentUser, onClos
                 post.comments.map(comment => (
                     <div key={comment.id} className="flex items-start gap-3">
                         <div className="w-9 h-9 rounded-full overflow-hidden bg-[var(--bg-tertiary)] flex items-center justify-center flex-shrink-0">
-                            {comment.user.avatar ? (
-                                <img src={comment.user.avatar} alt={comment.user.name} className="w-full h-full object-cover"/>
+                            {/* FIX: Corrected property name from avatar and name to avatar_url and full_name to match User/Profile type */}
+                            {comment.user.avatar_url ? (
+                                <img src={comment.user.avatar_url} alt={comment.user.full_name || ''} className="w-full h-full object-cover"/>
                             ) : (
                                 <UserIcon className="w-5 h-5 text-[var(--text-secondary)] opacity-50" />
                             )}
                         </div>
                         <div className="flex-grow">
                             <p>
-                                <span className="font-bold text-sm mr-2">{comment.user.name}</span>
+                                {/* FIX: Corrected property name from name to full_name to match User/Profile type */}
+                                <span className="font-bold text-sm mr-2">{comment.user.full_name}</span>
                                 <span className="text-sm text-[var(--text-tertiary)]">{comment.text}</span>
                             </p>
                             <span className="text-xs text-[var(--text-secondary)] mt-1">{formatTimeAgo(comment.timestamp)}</span>

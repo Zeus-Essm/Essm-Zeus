@@ -35,9 +35,10 @@ const NavItem: React.FC<{
       className={`relative flex flex-col items-center justify-center h-full w-1/5 transition-all duration-200 ${isActive ? 'text-[#D97706]' : 'text-[#64748b]'}`}
     >
       <div className="mb-1">
-        {React.cloneElement(icon as React.ReactElement, { 
+        {/* FIX: Cast icon to React.ReactElement<any> to avoid typing errors when cloning with custom props like strokeWidth and className. */}
+        {React.cloneElement(icon as React.ReactElement<any>, { 
           strokeWidth: isActive ? 2 : 1.5,
-          className: (icon as React.ReactElement).props.className 
+          className: (icon as React.ReactElement<any>).props.className 
         })}
       </div>
       {badgeCount && badgeCount > 0 && (

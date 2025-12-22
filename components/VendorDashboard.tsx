@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useRef } from 'react';
-import type { BusinessProfile, Item, Profile, Folder, Post } from '../types';
+import type { BusinessProfile, Item, Profile, Folder, Post, Product } from '../types';
 import { 
     MenuIcon, CameraIcon, PlusIcon, StarIcon, 
     BellIcon, ChevronDownIcon, ArchiveIcon, ShoppingBagIcon, RepositionIcon,
@@ -21,10 +21,10 @@ interface VendorDashboardProps {
   followersCount: number;
   followingCount: number;
   folders: Folder[];
-  products: Item[];
+  products: Product[];
   posts: Post[];
   onCreateFolder: (title: string) => void;
-  onCreateProductInFolder: (folderId: string, details: { title: string, description: string, price: number, file: Blob }) => Promise<any>;
+  onCreateProductInFolder: (folderId: string, details: { title: string, description: string, price: number, file: Blob | null }) => Promise<any>;
   onMoveProductToFolder: (productId: string, folderId: string | null) => Promise<void>;
   onUpdateProfile: (updates: { username?: string, bio?: string, name?: string }) => void;
   onUpdateProfileImage: (dataUrl: string) => void;
@@ -80,7 +80,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     const [isAddingItem, setIsAddingItem] = useState(false);
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
     const [isEditingProfile, setIsEditingProfile] = useState(false);
-    const [movingProduct, setMovingProduct] = useState<Item | null>(null);
+    const [movingProduct, setMovingProduct] = useState<Product | null>(null);
     const [viewingPostIndex, setViewingPostIndex] = useState<number | null>(null);
     const [commentingPost, setCommentingPost] = useState<Post | null>(null);
     
@@ -131,16 +131,20 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     };
 
     const handleSaveItem = async (keepAdding: boolean = false) => {
-        if (!selectedFolderId || !newItemTitle || !newItemPrice || !newItemFile) {
-            alert("Campos obrigatórios: Nome, Preço e Foto.");
-            return;
+        if (!selectedFolderId || !newItemTitle) {
+          alert("O nome do produto é obrigatório.");
+          return;
         }
+
+        const priceValue = newItemPrice ? parseFloat(newItemPrice) : 0;
+
         await onCreateProductInFolder(selectedFolderId, {
             title: newItemTitle,
             description: newItemDesc,
-            price: parseFloat(newItemPrice),
+            price: priceValue,
             file: newItemFile
         });
+        
         setNewItemTitle('');
         setNewItemPrice('');
         setNewItemDesc('');
@@ -148,6 +152,17 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
         setNewItemPreview(null);
         if (!keepAdding) setIsAddingItem(false);
     };
+
+    const mapProductToItem = (p: Product): Item => ({
+        id: p.id,
+        name: p.title,
+        description: p.description || '',
+        image: p.image_url || '',
+        price: p.price,
+        category: 'catalog',
+        owner_id: p.owner_id,
+        folder_id: p.folder_id
+    });
 
     return (
         <div className="w-full h-full flex flex-col bg-white text-zinc-900 overflow-hidden font-sans">
@@ -262,15 +277,15 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-3 pb-12">
-                                        {folderProducts.map(item => (
-                                            <div key={item.id} className="relative aspect-[4/5] rounded-xl overflow-hidden shadow-sm border border-zinc-100 group">
-                                                <img src={item.image} alt="" className="w-full h-full object-cover" />
+                                        {folderProducts.map(product => (
+                                            <div key={product.id} className="relative aspect-[4/5] rounded-xl overflow-hidden shadow-sm border border-zinc-100 group cursor-pointer" onClick={() => onItemClick(mapProductToItem(product))}>
+                                                <img src={product.image_url || ''} alt="" className="w-full h-full object-cover" />
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex flex-col justify-end p-3">
-                                                    <p className="text-xs font-bold text-white uppercase italic truncate">{item.name}</p>
-                                                    <p className="text-[10px] font-bold text-amber-400 mt-0.5">{item.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
+                                                    <p className="text-xs font-bold text-white uppercase italic truncate">{product.title}</p>
+                                                    <p className="text-[10px] font-bold text-amber-400 mt-0.5">{product.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
                                                 </div>
                                                 <button 
-                                                    onClick={() => setMovingProduct(item)}
+                                                    onClick={(e) => { e.stopPropagation(); setMovingProduct(product); }}
                                                     className="absolute top-2 right-2 p-1.5 bg-black/40 backdrop-blur-sm rounded-lg text-white opacity-0 group-hover:opacity-100 transition-all"
                                                 >
                                                     <RepositionIcon className="w-3.5 h-3.5" />
@@ -389,7 +404,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                     <div className="w-full max-h-[95vh] bg-white rounded-t-[2.5rem] p-8 flex flex-col gap-6 animate-slideUp overflow-y-auto" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center">
                             <div className="flex flex-col">
-                                <h2 className="text-xl font-black uppercase italic text-zinc-900 tracking-tighter leading-none">Novo Item</h2>
+                                <h2 className="text-xl font-black uppercase italic text-zinc-900 tracking-tighter italic leading-none">Novo Item</h2>
                                 <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-1 italic">Na coleção: {currentFolder?.title}</span>
                             </div>
                             <button onClick={() => setIsAddingItem(false)} className="p-2 bg-zinc-50 rounded-xl text-zinc-400">
@@ -454,14 +469,14 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                         <div className="flex flex-col gap-3 pb-8">
                              <button 
                                 onClick={() => handleSaveItem(true)} 
-                                disabled={!newItemTitle || !newItemPrice || !newItemFile}
+                                disabled={!newItemTitle}
                                 className="w-full py-4 bg-transparent text-amber-600 border border-amber-600 rounded-2xl font-bold uppercase text-[11px] tracking-widest transition-all active:scale-[0.98] disabled:opacity-50"
                             >
                                 Salvar e Continuar
                             </button>
                             <GradientButton 
                                 onClick={() => handleSaveItem(false)} 
-                                disabled={!newItemTitle || !newItemPrice || !newItemFile}
+                                disabled={!newItemTitle}
                                 className="!py-4 !rounded-2xl !text-[11px]"
                             >
                                 CONCLUIR CADASTRO
@@ -473,7 +488,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
 
             {movingProduct && (
                 <div className="fixed inset-0 z-[210] bg-black/70 backdrop-blur-md flex items-center justify-center p-6 animate-fadeIn" onClick={() => setMovingProduct(null)}>
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-sm p-8 flex flex-col gap-6 animate-modalZoomIn shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white rounded-[2.5rem] w-full max-sm p-8 flex flex-col gap-6 animate-modalZoomIn shadow-2xl" onClick={e => e.stopPropagation()}>
                         <div className="text-center">
                           <h2 className="text-lg font-black uppercase tracking-tighter italic text-zinc-900">Relocar Item</h2>
                           <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Escolha o novo destino</p>

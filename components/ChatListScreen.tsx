@@ -38,10 +38,12 @@ const ChatListScreen: React.FC<ChatListScreenProps> = ({ conversations, onBack, 
                 onClick={() => onSelectConversation(convo)}
                 className="w-full flex items-center gap-4 p-4 text-left hover:bg-[var(--accent-primary)]/5 transition-colors"
               >
-                <img src={convo.participant.avatar} alt={convo.participant.name} className="w-14 h-14 rounded-full object-cover" />
+                {/* FIX: Corrected property name from avatar and name to avatar_url and full_name to match User/Profile type */}
+                <img src={convo.participant.avatar_url || ''} alt={convo.participant.full_name || ''} className="w-14 h-14 rounded-full object-cover" />
                 <div className="flex-grow overflow-hidden">
                   <div className="flex justify-between items-start">
-                    <h3 className="font-bold truncate">{convo.participant.name}</h3>
+                    {/* FIX: Corrected property name from name to full_name to match User/Profile type */}
+                    <h3 className="font-bold truncate">{convo.participant.full_name}</h3>
                     <p className="text-xs text-[var(--text-secondary)] flex-shrink-0 ml-2">{formatTimeAgo(convo.lastMessage.timestamp)}</p>
                   </div>
                   <div className="flex justify-between items-center mt-1">

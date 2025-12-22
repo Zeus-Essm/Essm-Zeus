@@ -58,14 +58,16 @@ const StoryCard: React.FC<{ story: Story }> = ({ story }) => (
     <div className="flex-shrink-0 flex flex-col items-center gap-2 w-20 cursor-pointer group snap-start">
         <div className="relative p-[2px] bg-gradient-to-tr from-amber-400 to-amber-500 rounded-full shadow-sm">
             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white">
+              {/* FIX: Corrected property name from avatar to avatar_url to match User/Profile type */}
               <img 
-                  src={story.user.avatar} 
-                  alt={story.user.name} 
+                  src={story.user.avatar_url || ''} 
+                  alt={story.user.full_name || ''} 
                   className="w-full h-full object-cover" 
               />
             </div>
         </div>
-        <span className="text-[11px] font-medium text-zinc-500 w-full text-center truncate">{story.user.name}</span>
+        {/* FIX: Corrected property name from name to full_name to match User/Profile type */}
+        <span className="text-[11px] font-medium text-zinc-500 w-full text-center truncate">{story.user.full_name}</span>
     </div>
 );
 

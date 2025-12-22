@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import type { Conversation, Message, Profile } from '../types';
 import { ArrowLeftIcon, PaperAirplaneIcon, MicrophoneIcon, StopIcon } from './IconComponents';
@@ -113,8 +114,9 @@ const ChatScreen: React.FC<ChatScreenProps> = ({ conversation, currentUser, onBa
         <button onClick={onBack} className="p-2 mr-2 -ml-2 rounded-full hover:bg-[var(--accent-primary)]/10 transition-colors">
           <ArrowLeftIcon className="w-5 h-5 text-[var(--accent-primary)]" />
         </button>
-        <img src={conversation.participant.avatar} alt={conversation.participant.name} className="w-9 h-9 rounded-full object-cover mr-3"/>
-        <h1 className="text-lg font-bold text-white tracking-wider">{conversation.participant.name}</h1>
+        {/* FIX: Corrected property name from avatar and name to avatar_url and full_name to match User/Profile type */}
+        <img src={conversation.participant.avatar_url || ''} alt={conversation.participant.full_name || ''} className="w-9 h-9 rounded-full object-cover mr-3"/>
+        <h1 className="text-lg font-bold text-white tracking-wider">{conversation.participant.full_name}</h1>
       </header>
 
       {/* Messages Area */}

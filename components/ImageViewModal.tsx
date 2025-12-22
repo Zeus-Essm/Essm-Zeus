@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import type { Post, Item } from '../types';
 import { HeartIcon, ChatBubbleIcon, PlayIcon } from './IconComponents';
@@ -134,8 +135,9 @@ const ImageViewModal: React.FC<ImageViewModalProps> = ({ posts, startIndex, onCl
                         {/* Header */}
                         <div className="p-4 flex-shrink-0">
                             <button onClick={() => onViewProfile(post.user.id)} className="flex items-center gap-3 text-left">
-                                <img src={post.user.avatar} alt={post.user.name} className="w-10 h-10 rounded-full object-cover border-2 border-[var(--text-primary)]/80" />
-                                <span className="font-bold text-sm text-[var(--text-primary)]">{post.user.name}</span>
+                                {/* FIX: Corrected property name from avatar and name to avatar_url and full_name to match User/Profile type */}
+                                <img src={post.user.avatar_url || ''} alt={post.user.full_name || ''} className="w-10 h-10 rounded-full object-cover border-2 border-[var(--text-primary)]/80" />
+                                <span className="font-bold text-sm text-[var(--text-primary)]">{post.user.full_name}</span>
                             </button>
                         </div>
                         
@@ -173,7 +175,7 @@ const ImageViewModal: React.FC<ImageViewModalProps> = ({ posts, startIndex, onCl
                                         </div>
                                     </>
                                 ) : (
-                                    <img src={post.image} alt={`Look by ${post.user.name}`} className="w-full h-full object-contain" />
+                                    <img src={post.image} alt={`Look by ${post.user.full_name}`} className="w-full h-full object-contain" />
                                 )}
                             </div>
                         </div>
@@ -199,7 +201,8 @@ const ImageViewModal: React.FC<ImageViewModalProps> = ({ posts, startIndex, onCl
                             )}
                             <div className="text-sm text-[var(--text-primary)] mt-1">
                                 <p>
-                                    <button onClick={() => onViewProfile(post.user.id)} className="font-bold mr-2 hover:underline text-[var(--text-primary)]">{post.user.name}</button>
+                                    {/* FIX: Corrected property name from name to full_name to match User/Profile type */}
+                                    <button onClick={() => onViewProfile(post.user.id)} className="font-bold mr-2 hover:underline text-[var(--text-primary)]">{post.user.full_name}</button>
                                      {post.items.length > 0 ? (post.video ? 'apresentando ' : 'vestindo ') : 'compartilhou um novo vídeo.'}
                                     {post.items.map((item, index) => (
                                         <React.Fragment key={item.id}>

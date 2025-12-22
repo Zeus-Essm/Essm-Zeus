@@ -71,14 +71,16 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
       {/* Card Header - Matches Screenshot */}
       <button onClick={onViewProfile} className="px-4 py-3 flex items-center gap-3 text-left">
         <div className="w-10 h-10 rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center border border-zinc-100 shadow-sm">
-            {post.user.avatar ? (
-                <img src={post.user.avatar} alt={post.user.name} className="w-full h-full object-cover" />
+            {/* FIX: Corrected property name from avatar to avatar_url to match User/Profile type */}
+            {post.user.avatar_url ? (
+                <img src={post.user.avatar_url} alt={post.user.full_name || ''} className="w-full h-full object-cover" />
             ) : (
                 <UserIcon className="w-6 h-6 text-zinc-300" />
             )}
         </div>
         <div className="flex flex-col">
-            <span className="font-bold text-[14px] text-zinc-900 leading-tight">{post.user.name}</span>
+            {/* FIX: Corrected property name from name to full_name to match User/Profile type */}
+            <span className="font-bold text-[14px] text-zinc-900 leading-tight">{post.user.full_name}</span>
             {post.isSponsored && <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Patrocinado</p>}
         </div>
       </button>
@@ -134,7 +136,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
         
         {post.caption && (
             <div className="mt-1 text-[13px] leading-relaxed">
-                <span className="font-bold mr-2">{post.user.name}</span>
+                {/* FIX: Corrected property name from name to full_name to match User/Profile type */}
+                <span className="font-bold mr-2">{post.user.full_name}</span>
                 <span className="text-zinc-700">{post.caption}</span>
             </div>
         )}

@@ -1,15 +1,15 @@
 
 import React, { useState, useRef } from 'react';
 import Header from './Header';
-import type { Item, BusinessProfile } from '../types';
+import type { BusinessProfile, Product } from '../types';
 import { PlusIcon, PencilIcon, EyeIcon, XCircleIcon, ShoppingBagIcon, CameraIcon } from './IconComponents';
 import GradientButton from './GradientButton';
 
 interface VendorProductsScreenProps {
     onBack: () => void;
     businessProfile: BusinessProfile;
-    products: Item[];
-    onCreateProduct: (data: { title: string, description: string, price: number, file: Blob }) => Promise<void>;
+    products: Product[];
+    onCreateProduct: (data: { title: string, description: string, price: number, file: Blob | null }) => Promise<void>;
 }
 
 const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, products, onCreateProduct }) => {
@@ -33,8 +33,20 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!title || !price || !file) return;
-        await onCreateProduct({ title, description, price: parseFloat(price), file });
+        if (!title) {
+          alert("O nome do produto é obrigatório.");
+          return;
+        }
+
+        const priceValue = price ? parseFloat(price) : 0;
+
+        await onCreateProduct({ 
+          title, 
+          description, 
+          price: priceValue, 
+          file: file || null 
+        });
+
         setIsCreating(false);
         setTitle('');
         setDescription('');
@@ -94,7 +106,6 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
                                 value={price}
                                 onChange={e => setPrice(e.target.value)}
                                 className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:outline-none focus:border-amber-500 font-bold text-sm"
-                                required
                             />
                             <textarea
                                 placeholder="Descrição"
@@ -104,21 +115,21 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
                             />
                         </div>
 
-                        <GradientButton type="submit" disabled={!title || !price || !file}>
+                        <GradientButton type="submit" disabled={!title}>
                             Salvar no Banco de Dados
                         </GradientButton>
                     </form>
                 ) : products.length > 0 ? (
                     <div className="grid grid-cols-1 gap-3">
-                        {products.map(item => (
-                            <div key={item.id} className="bg-[var(--bg-secondary)] border border-[var(--border-secondary)] p-3 rounded-2xl flex items-center gap-4">
+                        {products.map(product => (
+                            <div key={product.id} className="bg-[var(--bg-secondary)] border border-[var(--border-secondary)] p-3 rounded-2xl flex items-center gap-4">
                                 <div className="relative w-16 h-16 bg-zinc-800 rounded-xl overflow-hidden flex-shrink-0">
-                                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                                    <img src={product.image_url || ''} alt={product.title} className="w-full h-full object-cover" />
                                 </div>
                                 <div className="flex-grow">
-                                    <h3 className="font-bold text-sm uppercase truncate max-w-[150px]">{item.name}</h3>
+                                    <h3 className="font-bold text-sm uppercase truncate max-w-[150px]">{product.title}</h3>
                                     <p className="text-xs font-black text-[var(--accent-primary)]">
-                                        {item.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
+                                        {product.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
                                     </p>
                                 </div>
                                 <div className="flex gap-1">
