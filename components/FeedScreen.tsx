@@ -156,7 +156,10 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
           <div className="py-6 border-b border-zinc-50">
             <div className="px-5 flex justify-between items-center mb-5">
                 <h2 className="text-xl font-bold text-amber-600 tracking-tight leading-none">Marcas e produtos</h2>
-                <button onClick={onNavigateToAllHighlights} className="text-[12px] font-bold text-zinc-400 hover:text-zinc-600 transition-colors">
+                <button 
+                  onClick={onNavigateToAllHighlights} 
+                  className="text-[12px] font-bold text-zinc-400 hover:text-zinc-600 transition-colors"
+                >
                   Ver todos
                 </button>
             </div>
