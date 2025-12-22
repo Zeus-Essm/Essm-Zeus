@@ -4,9 +4,10 @@ import { supabase } from '../services/supabaseClient';
 import type { Profile, Category, Post, Item, MarketplaceType } from '../types';
 import { CATEGORIES } from '../constants';
 import { 
-    PlusIcon, CameraIcon, UserIcon, 
+    PlusIcon, UserIcon, 
     ChevronDownIcon, MenuIcon,
-    BellIcon, PencilIcon, ChatBubbleIcon
+    ShoppingBagIcon, BookmarkIcon, LooksIcon,
+    ChatBubbleIcon, BellIcon, PencilIcon
 } from './IconComponents';
 import BioEditModal from './BioEditModal';
 
@@ -44,27 +45,23 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   onUpdateProfile,
   onUpdateProfileImage,
   onSelectCategory,
-  onNavigateToFeed,
-  onNavigateToCart,
-  onNavigateToChat,
-  onNavigateToRewards,
-  onStartTryOn,
   onNavigateToSettings,
+  onNavigateToChat,
+  onOpenNotificationsPanel,
   unreadNotificationCount,
   unreadMessagesCount,
-  onOpenNotificationsPanel,
-  isFollowing,
-  onToggleFollow,
   followersCount,
   followingCount,
   posts
 }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'market' | 'posts'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'market'>('market'); 
+  const [selectedCategory, setSelectedCategory] = useState<MarketplaceType>('fashion');
   
   const isMyProfile = !viewedProfileId || viewedProfileId === loggedInProfile.user_id;
   const profileImageInputRef = useRef<HTMLInputElement>(null);
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
   const [isEditingBio, setIsEditingBio] = useState(false);
 
   useEffect(() => {
@@ -101,102 +98,194 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   };
 
+  const handleCategoryClick = (id: MarketplaceType, event: React.MouseEvent<HTMLButtonElement>) => {
+    setSelectedCategory(id);
+    // Scroll element into view smoothly
+    event.currentTarget.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center'
+    });
+  };
+
   if (loading) return (
-      <div className="h-full w-full bg-white flex flex-col items-center justify-center gap-4">
+      <div className="h-full w-full bg-[var(--bg-main)] flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Carregando Perfil...</span>
       </div>
   );
   
   if (!profile) return null;
 
+  const userPosts = posts.filter(p => p.user.id === profile.user_id);
+
   return (
-    <div className="w-full h-full flex flex-col bg-white text-zinc-900 animate-fadeIn">
-      <header className="px-5 pt-6 pb-2 flex items-center justify-between flex-shrink-0 bg-white z-10 sticky top-0">
-          <div className="flex items-center gap-1.5">
-              <h1 className="text-xl font-black uppercase tracking-tighter italic">{profile.full_name || profile.username}</h1>
-              <ChevronDownIcon className="w-3 h-3 text-zinc-300" />
+    <div className="w-full h-full flex flex-col bg-white text-zinc-900 overflow-hidden font-sans">
+      <header className="px-4 pt-4 pb-2 flex items-center justify-between bg-white shrink-0 z-10">
+          <div className="flex items-center gap-1 cursor-pointer active:opacity-60 transition-opacity">
+              <h1 className="text-lg font-bold tracking-tight text-zinc-900">
+                {profile.username || "Usuário"}
+              </h1>
+              <ChevronDownIcon className="w-3.5 h-3.5 text-zinc-800" strokeWidth={3} />
           </div>
-          <div className="flex items-center gap-6">
-              <button onClick={onNavigateToChat} className="relative active:scale-90 transition-transform">
-                  <ChatBubbleIcon className="w-7 h-7" />
-                  {unreadMessagesCount > 0 && <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-bold text-white border border-white">{unreadMessagesCount}</span>}
+          <div className="flex items-center gap-2">
+              <button onClick={onNavigateToChat} className="relative p-2 active:scale-90 transition-transform">
+                  <ChatBubbleIcon className="w-7 h-7 text-zinc-900" strokeWidth={1.5} />
+                  {unreadMessagesCount > 0 && (
+                      <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white">
+                        {unreadMessagesCount}
+                      </span>
+                  )}
               </button>
-              <button onClick={onNavigateToSettings} className="active:rotate-45 transition-transform"><MenuIcon className="w-7 h-7" /></button>
+              <button onClick={onOpenNotificationsPanel} className="p-2 active:scale-90 transition-transform">
+                  <BellIcon className="w-7 h-7 text-zinc-900" strokeWidth={1.5} />
+                  {unreadNotificationCount > 0 && (
+                      <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-white">
+                        {unreadNotificationCount}
+                      </span>
+                  )}
+              </button>
+              <button onClick={onNavigateToSettings} className="p-2 active:scale-90 transition-transform">
+                  <MenuIcon className="w-7 h-7 text-zinc-900" strokeWidth={2.5} />
+              </button>
           </div>
       </header>
 
       <main className="flex-grow overflow-y-auto pb-24">
-        <div className="px-5 py-12 flex flex-col items-center text-center">
-            <div className="relative mb-8">
-                <div className="w-32 h-32 rounded-[3rem] p-0.5 bg-gradient-to-tr from-amber-500 to-amber-200 flex items-center justify-center overflow-hidden shadow-2xl shadow-amber-500/20">
-                    <div className="w-full h-full rounded-[2.8rem] bg-white flex items-center justify-center overflow-hidden border-2 border-white">
-                        {profile.avatar_url ? (
-                            <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
-                        ) : (
-                            <UserIcon className="w-14 h-14 text-zinc-200" />
-                        )}
-                    </div>
-                </div>
-                {isMyProfile && (
-                    <>
-                        <button 
-                            onClick={() => profileImageInputRef.current?.click()} 
-                            className="absolute -bottom-1 -right-1 p-3 bg-zinc-900 rounded-2xl border-4 border-white text-white shadow-xl active:scale-90 transition-all hover:bg-amber-500"
-                        >
-                            <CameraIcon className="w-5 h-5" />
-                        </button>
-                        <input type="file" accept="image/*" ref={profileImageInputRef} onChange={handleFileChange} className="hidden" />
-                    </>
-                )}
-            </div>
-            
-            <div className="flex flex-col items-center max-w-xs mt-2">
-                <h2 className="font-black text-lg uppercase tracking-[0.15em] mb-1.5">{profile.full_name || profile.username}</h2>
-                <div className="flex items-center gap-2">
-                    {profile.bio ? (
-                        <p className="text-xs text-zinc-500 font-medium leading-relaxed italic">"{profile.bio}"</p>
-                    ) : isMyProfile && (
-                        <button onClick={() => setIsEditingBio(true)} className="text-[10px] font-bold uppercase text-amber-500 tracking-[0.2em] border-b border-amber-500/20 pb-0.5">Adicionar biografia</button>
-                    )}
-                    {isMyProfile && profile.bio && (
-                        <button onClick={() => setIsEditingBio(true)} className="p-1.5 bg-zinc-50 rounded-full border border-zinc-100 text-zinc-400 active:scale-95 transition-all">
-                            <PencilIcon className="w-3 h-3" />
-                        </button>
-                    )}
-                </div>
-            </div>
-        </div>
-        
-        <div className="px-10 grid grid-cols-3 gap-4 text-center py-6 border-y border-zinc-50 bg-zinc-50/30">
-            <div><span className="text-lg font-black tracking-tight">0</span><p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest mt-1">Posts</p></div>
-            <div><span className="text-lg font-black tracking-tight">{followersCount}</span><p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest mt-1">Seguidores</p></div>
-            <div><span className="text-lg font-black tracking-tight">{followingCount}</span><p className="text-[8px] font-black text-zinc-400 uppercase tracking-widest mt-1">Seguindo</p></div>
-        </div>
-        
-        <div className="flex px-5 mt-6">
-          <button onClick={() => setActiveTab('posts')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-[0.3em] transition-all ${activeTab === 'posts' ? 'text-zinc-900 border-b-2 border-zinc-900' : 'text-zinc-300'}`}>Vitrine</button>
-          <button onClick={() => setActiveTab('market')} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-[0.3em] transition-all ${activeTab === 'market' ? 'text-zinc-900 border-b-2 border-zinc-900' : 'text-zinc-300'}`}>Marcas</button>
-        </div>
-
-        <div className="p-1 min-h-[300px]">
-            {activeTab === 'posts' ? (
-                <div className="py-24 text-center flex flex-col items-center opacity-30">
-                    <div className="w-16 h-16 rounded-full bg-zinc-50 border border-dashed border-zinc-300 flex items-center justify-center mb-4">
-                        <PlusIcon className="w-6 h-6 text-zinc-400" />
-                    </div>
-                    <p className="text-[9px] font-black uppercase tracking-[0.3em] text-zinc-500">Comece sua coleção</p>
-                </div>
-            ) : (
-                <div className="grid grid-cols-2 gap-4 p-4">
-                    {CATEGORIES.slice(0, 4).map(category => (
-                        <div key={category.id} onClick={() => onSelectCategory(category)} className="relative h-48 rounded-[2rem] overflow-hidden group shadow-lg shadow-zinc-100/50 transition-all active:scale-[0.98]">
-                            <img src={category.image} alt={category.name} className="w-full h-full object-cover grayscale-[0.2] group-hover:grayscale-0 transition-all duration-1000" />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-5">
-                                <h3 className="text-sm font-black text-white italic uppercase tracking-tight">{category.name}</h3>
+        <div className="px-5 pt-4">
+            <div className="flex items-center gap-4 mb-4">
+                <div className="relative shrink-0">
+                    <div className="w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 to-amber-600">
+                        <div className="w-full h-full rounded-full bg-white p-[2px] overflow-hidden">
+                            <div className="w-full h-full rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center">
+                                {profile.avatar_url ? (
+                                    <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                ) : (
+                                    <UserIcon className="w-10 h-10 text-zinc-300" />
+                                )}
                             </div>
                         </div>
-                    ))}
+                    </div>
+                    {isMyProfile && (
+                        <button 
+                            onClick={() => profileImageInputRef.current?.click()}
+                            className="absolute bottom-0 right-0 w-7 h-7 bg-zinc-800 rounded-full border-2 border-white flex items-center justify-center text-white shadow-md active:scale-90 transition-all"
+                        >
+                            <PlusIcon className="w-3.5 h-3.5" strokeWidth={4} />
+                        </button>
+                    )}
+                    <input type="file" accept="image/*" ref={profileImageInputRef} onChange={handleFileChange} className="hidden" />
+                </div>
+
+                <div className="flex-grow min-w-0">
+                    <div className="flex items-center justify-between">
+                        <h2 className="font-bold text-md text-zinc-900 truncate">
+                            {profile.full_name || profile.username}
+                        </h2>
+                        {isMyProfile && (
+                            <button onClick={() => setIsEditingBio(true)} className="p-1 active:scale-90 transition-transform">
+                                <PencilIcon className="w-4 h-4 text-zinc-400" />
+                            </button>
+                        )}
+                    </div>
+                    <div className="text-xs text-zinc-600 font-medium leading-tight line-clamp-2 mt-0.5 whitespace-pre-line">
+                        {profile.bio || "Seja bem-vindo ao PUMP!"}
+                    </div>
+                    <div className="mt-2">
+                        <img src="https://i.postimg.cc/tJyhN30f/pump-badge.png" alt="Badge" className="h-6 w-6 object-contain" />
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex justify-around py-4 border-t border-b border-zinc-100 mb-2">
+                <div className="flex flex-col items-center">
+                    <span className="text-md font-bold text-zinc-900">{userPosts.length}</span>
+                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-tight">posts</span>
+                </div>
+                <div className="flex flex-col items-center">
+                    <span className="text-md font-bold text-zinc-900">
+                        {followersCount >= 1000 ? `${(followersCount/1000).toFixed(1).replace('.', ',')} mil` : followersCount}
+                    </span>
+                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-tight">seguidores</span>
+                </div>
+                <div className="flex flex-col items-center">
+                    <span className="text-md font-bold text-zinc-900">{followingCount}</span>
+                    <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-tight">seguindo</span>
+                </div>
+            </div>
+        </div>
+
+        <div className="flex bg-white sticky top-0 z-10 shadow-sm">
+          <button 
+            onClick={() => setActiveTab('market')} 
+            className={`flex-1 py-4 flex justify-center items-center relative transition-colors ${activeTab === 'market' ? 'text-amber-600' : 'text-zinc-400'}`}
+          >
+            <span className="text-xs font-bold uppercase tracking-widest">MERCADO</span>
+            {activeTab === 'market' && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-amber-600"></div>}
+          </button>
+          <button 
+            onClick={() => setActiveTab('posts')} 
+            className={`flex-1 py-4 flex justify-center items-center relative transition-colors ${activeTab === 'posts' ? 'text-amber-600' : 'text-zinc-400'}`}
+          >
+            <span className="text-xs font-bold uppercase tracking-widest">PUBLICAÇÕES</span>
+            {activeTab === 'posts' && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-amber-600"></div>}
+          </button>
+        </div>
+
+        <div className="min-h-[400px] bg-white">
+            {activeTab === 'posts' && (
+                <div className="grid grid-cols-3 gap-0.5 animate-fadeIn p-0.5">
+                    {userPosts.length > 0 ? (
+                        userPosts.map(post => (
+                            <div key={post.id} className="aspect-square bg-zinc-100 overflow-hidden active:opacity-80 transition-opacity">
+                                <img src={post.image} alt="" className="w-full h-full object-cover" />
+                            </div>
+                        ))
+                    ) : (
+                        <div className="col-span-3 py-32 text-center flex flex-col items-center opacity-30">
+                            <LooksIcon className="w-12 h-12 text-zinc-400 mb-4" strokeWidth={1} />
+                            <p className="text-[10px] font-bold uppercase tracking-widest">Nenhuma publicação ainda</p>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {activeTab === 'market' && (
+                <div className="animate-fadeIn">
+                    <div 
+                      ref={categoryScrollRef}
+                      className="flex overflow-x-auto gap-3 px-4 py-4 scrollbar-hide"
+                    >
+                        {[
+                            { label: 'Moda', id: 'fashion' },
+                            { label: 'Restaurantes', id: 'restaurant' },
+                            { label: 'Supermercados', id: 'supermarket' },
+                            { label: 'Beleza', id: 'beauty' },
+                            { label: 'Decoração', id: 'decoration' }
+                        ].map((cat) => (
+                            <button 
+                                key={cat.id}
+                                onClick={(e) => handleCategoryClick(cat.id as MarketplaceType, e)}
+                                className={`px-5 py-2 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${selectedCategory === cat.id ? 'bg-amber-600 text-white shadow-md' : 'bg-zinc-50 text-zinc-500 border border-zinc-100'}`}
+                            >
+                                {cat.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 px-4 pb-12">
+                        {CATEGORIES.filter(c => c.type === selectedCategory || (selectedCategory === 'fashion' && c.type === 'fashion')).map(category => (
+                            <div 
+                                key={category.id} 
+                                onClick={() => onSelectCategory(category)} 
+                                className="relative h-56 rounded-xl overflow-hidden group shadow-sm active:scale-[0.98] transition-all border border-zinc-100"
+                            >
+                                <img src={category.image} alt={category.name} className="w-full h-full object-cover" />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">
+                                    <h3 className="text-md font-black text-white uppercase italic tracking-tighter leading-none">{category.name}</h3>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             )}
         </div>

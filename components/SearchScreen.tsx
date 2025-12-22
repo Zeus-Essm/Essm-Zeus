@@ -48,15 +48,14 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
         const profileMap = new Map<string, Profile>();
         posts.forEach(post => {
             if (!profileMap.has(post.user.id)) {
-                // FIX: Use full_name instead of name to match the Profile interface in types.ts
+                // FIX: Map User data from post to Profile interface. 
+                // Removed 'cover_url' as it is not present in the Profile interface in types.ts.
                 profileMap.set(post.user.id, {
                     user_id: post.user.id, 
                     username: post.user.name,
                     full_name: post.user.name,
                     avatar_url: post.user.avatar,
                     bio: null,
-                    // FIX: Renamed cover_image_url to cover_url to match Profile interface in types.ts
-                    cover_url: null,
                     account_type: 'personal',
                 });
             }

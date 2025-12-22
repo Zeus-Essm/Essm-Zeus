@@ -25,7 +25,6 @@ interface VendorDashboardProps {
   onMoveProductToFolder: (productId: string, folderId: string | null) => Promise<void>;
   onUpdateProfile: (updates: { username?: string, bio?: string, name?: string }) => void;
   onUpdateProfileImage: (dataUrl: string) => void;
-  onUpdateCoverImage: (dataUrl: string) => void;
   onNavigateToProducts: () => void;
   onAddToShowcase: (title: string, file: Blob) => Promise<void>;
 }
@@ -33,18 +32,21 @@ interface VendorDashboardProps {
 const FolderCard: React.FC<{ folder: Folder; onClick: () => void }> = ({ folder, onClick }) => (
     <button 
         onClick={onClick}
-        className="flex flex-col items-center gap-3 p-4 bg-zinc-50 rounded-[2rem] border border-zinc-100 group active:scale-95 transition-all w-full"
+        className="flex flex-col items-center gap-4 p-5 bg-[var(--bg-secondary)] rounded-[2.5rem] border border-[var(--border-primary)] group active:scale-95 transition-all w-full shadow-lg shadow-black/5"
     >
-        <div className="w-full aspect-square rounded-[1.5rem] bg-white border border-zinc-200 flex items-center justify-center overflow-hidden shadow-sm group-hover:border-amber-500 transition-colors">
+        <div className="w-full aspect-square rounded-[2rem] bg-[var(--bg-tertiary)] border border-[var(--border-primary)] flex items-center justify-center overflow-hidden shadow-inner group-hover:border-amber-500 transition-all duration-300">
             {folder.cover_image ? (
-                <img src={folder.cover_image} alt="" className="w-full h-full object-cover" />
+                <img src={folder.cover_image} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
             ) : (
-                <ArchiveIcon className="w-10 h-10 text-zinc-300 group-hover:text-amber-500 transition-colors" />
+                <ArchiveIcon className="w-12 h-12 text-zinc-300 group-hover:text-amber-500 transition-colors" strokeWidth={1} />
             )}
         </div>
         <div className="text-center">
-            <p className="text-[11px] font-black uppercase tracking-tight text-zinc-800 truncate max-w-[100px]">{folder.title}</p>
-            <p className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{(folder.item_count || 0)} itens</p>
+            <p className="text-xs font-black uppercase tracking-widest text-[var(--text-primary)] truncate max-w-[120px] mb-1">{folder.title}</p>
+            <div className="flex items-center justify-center gap-2">
+              <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest italic">{(folder.item_count || 0)} itens</p>
+            </div>
         </div>
     </button>
 );
@@ -52,7 +54,6 @@ const FolderCard: React.FC<{ folder: Folder; onClick: () => void }> = ({ folder,
 const VendorDashboard: React.FC<VendorDashboardProps> = ({ 
     profile,
     onOpenMenu, 
-    unreadNotificationCount, 
     onOpenNotificationsPanel, 
     onOpenPromotionModal, 
     followersCount, 
@@ -65,7 +66,6 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     onMoveProductToFolder,
     onUpdateProfile,
     onUpdateProfileImage,
-    onUpdateCoverImage,
 }) => {
     const [activeTab, setActiveTab] = useState<'shop' | 'posts'>('shop');
     const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -80,7 +80,6 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     const [newItemPreview, setNewItemPreview] = useState<string | null>(null);
 
     const avatarInputRef = useRef<HTMLInputElement>(null);
-    const coverInputRef = useRef<HTMLInputElement>(null);
     const itemFileInputRef = useRef<HTMLInputElement>(null);
 
     const currentFolder = folders.find(f => f.id === selectedFolderId);
@@ -90,13 +89,12 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
         return products.filter(p => p.folder_id === selectedFolderId);
     }, [products, selectedFolderId]);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'cover' | 'item') => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'item') => {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
                 if (type === 'avatar') onUpdateProfileImage(reader.result as string);
-                else if (type === 'cover') onUpdateCoverImage(reader.result as string);
                 else if (type === 'item') {
                     setNewItemFile(file);
                     setNewItemPreview(reader.result as string);
@@ -107,13 +105,13 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     };
 
     const handleCreateFolderClick = () => {
-        const title = prompt("Título da Nova Coleção:");
+        const title = prompt("Nome da Nova Coleção:");
         if (title) onCreateFolder(title);
     };
 
     const handleSaveItem = async (keepAdding: boolean = false) => {
         if (!selectedFolderId || !newItemTitle || !newItemPrice || !newItemFile) {
-            alert("Por favor, preencha o Nome, Preço e adicione uma Foto.");
+            alert("Campos obrigatórios: Nome, Preço e Foto.");
             return;
         }
         
@@ -130,150 +128,158 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
         setNewItemFile(null);
         setNewItemPreview(null);
         
-        if (!keepAdding) {
-            setIsAddingItem(false);
-        }
+        if (!keepAdding) setIsAddingItem(false);
     };
 
     return (
-        <div className="w-full h-full flex flex-col bg-white text-zinc-900 relative overflow-hidden">
-            <header className="px-5 pt-6 absolute top-0 left-0 right-0 flex items-center justify-between z-30 pointer-events-none">
-                <div className="flex items-center gap-2 pointer-events-auto">
-                    <button onClick={onOpenNotificationsPanel} className="p-2.5 bg-black/40 backdrop-blur-md rounded-2xl border border-white/20 text-white active:scale-90 transition-transform">
-                        <BellIcon className="w-5 h-5" />
-                    </button>
-                </div>
-                <div className="flex items-center gap-4 pointer-events-auto">
-                    <button onClick={onOpenMenu} className="p-2.5 bg-black/40 backdrop-blur-md rounded-2xl border border-white/20 text-white active:scale-90 transition-transform">
-                        <MenuIcon className="w-5 h-5" />
-                    </button>
-                </div>
+        <div className="w-full h-full flex flex-col bg-[var(--bg-main)] text-[var(--text-primary)] relative overflow-hidden font-sans">
+            <header className="px-6 pt-6 absolute top-0 left-0 right-0 flex items-center justify-between z-40 pointer-events-none">
+                <button onClick={onOpenNotificationsPanel} className="p-3 bg-[var(--bg-tertiary)] glass rounded-2xl text-[var(--text-primary)] pointer-events-auto active:scale-90 transition-all border border-[var(--border-primary)] shadow-lg">
+                    <BellIcon className="w-6 h-6" />
+                </button>
+                <button onClick={onOpenMenu} className="p-3 bg-[var(--bg-tertiary)] glass rounded-2xl text-[var(--text-primary)] pointer-events-auto active:scale-90 transition-all border border-[var(--border-primary)] shadow-lg">
+                    <MenuIcon className="w-6 h-6" strokeWidth={2.5} />
+                </button>
             </header>
 
             <main className="flex-grow overflow-y-auto pb-32">
-                <div className="relative w-full h-48 bg-zinc-900 overflow-hidden group">
-                    {profile.cover_url ? (
-                        <img src={profile.cover_url} alt="Capa" className="w-full h-full object-cover" />
-                    ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-zinc-800 to-zinc-900 flex items-center justify-center">
-                            <span className="text-zinc-600 font-black uppercase text-[10px] tracking-[0.4em]">Banner da Loja</span>
-                        </div>
-                    )}
-                    <button onClick={() => coverInputRef.current?.click()} className="absolute bottom-4 right-4 p-2.5 bg-black/50 backdrop-blur-md border border-white/20 rounded-xl text-white opacity-0 group-hover:opacity-100 transition-opacity active:scale-95">
-                        <CameraIcon className="w-5 h-5" />
-                    </button>
-                    <input type="file" accept="image/*" ref={coverInputRef} onChange={(e) => handleFileChange(e, 'cover')} className="hidden" />
-                </div>
-
-                <div className="relative px-6 -mt-12 flex flex-col">
-                    <div className="flex items-center justify-between w-full">
-                        <div className="relative flex-shrink-0">
-                            <div className="w-24 h-24 rounded-full p-1 bg-white shadow-lg overflow-hidden border border-zinc-100">
+                {/* Profile Section */}
+                <div className="relative px-6 pt-24 flex flex-col z-10">
+                    <div className="flex items-end justify-between w-full">
+                        <div className="relative shrink-0">
+                            <div className="w-32 h-32 rounded-[3.5rem] p-1 bg-white dark:bg-zinc-800 shadow-2xl overflow-hidden border border-zinc-100 dark:border-white/10">
                                 {profile.avatar_url ? (
-                                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover rounded-full" />
+                                    <img src={profile.avatar_url} alt="Logo" className="w-full h-full object-cover rounded-[3.3rem]" />
                                 ) : (
-                                    <div className="w-full h-full bg-zinc-50 flex items-center justify-center rounded-full">
-                                        <UserIcon className="w-10 h-10 text-zinc-300" />
+                                    <div className="w-full h-full bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center rounded-[3.3rem]">
+                                        <UserIcon className="w-12 h-12 text-zinc-300" />
                                     </div>
                                 )}
                             </div>
-                            <button onClick={() => avatarInputRef.current?.click()} className="absolute bottom-0 right-0 p-1.5 bg-amber-500 text-white rounded-full border-2 border-white shadow-md active:scale-90">
-                                <CameraIcon className="w-3 h-3" />
+                            <button onClick={() => avatarInputRef.current?.click()} className="absolute bottom-0 right-0 p-2.5 bg-amber-500 text-white rounded-2xl border-4 border-[var(--bg-main)] shadow-xl active:scale-90 transition-transform">
+                                <CameraIcon className="w-4 h-4" />
                             </button>
                             <input type="file" accept="image/*" ref={avatarInputRef} onChange={(e) => handleFileChange(e, 'avatar')} className="hidden" />
                         </div>
 
-                        <div className="flex-1 flex justify-around pl-4">
+                        {/* Stats Summary */}
+                        <div className="flex-1 flex justify-around pl-4 pb-2">
                             <div className="text-center">
-                                <span className="block text-sm font-black text-zinc-900 leading-none">{products.length || 0}</span>
-                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tight">Produtos</span>
+                                <span className="block text-xl font-black text-[var(--text-primary)] leading-none italic">{products.length || 0}</span>
+                                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-2">Itens</span>
                             </div>
                             <div className="text-center">
-                                <span className="block text-sm font-black text-zinc-900 leading-none">{followersCount || 0}</span>
-                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tight">Seguidores</span>
+                                <span className="block text-xl font-black text-[var(--text-primary)] leading-none italic">{followersCount || 0}</span>
+                                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-2">Fãs</span>
                             </div>
                             <div className="text-center">
-                                <span className="block text-sm font-black text-zinc-900 leading-none">{followingCount || 0}</span>
-                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-tight">Seguindo</span>
+                                <span className="block text-xl font-black text-[var(--text-primary)] leading-none italic">{followingCount || 0}</span>
+                                <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest mt-2">Ícones</span>
                             </div>
                         </div>
                     </div>
 
-                    <button onClick={() => setIsEditingBio(true)} className="mt-6 w-full py-2.5 bg-zinc-100 hover:bg-zinc-200 rounded-xl text-[11px] font-black uppercase tracking-widest text-zinc-800 transition-colors active:scale-[0.99]">
-                        Editar Perfil
-                    </button>
-
-                    <div className="mt-5 flex flex-col items-start relative group">
-                        <button onClick={() => setIsEditingBio(true)} className="absolute top-0 right-0 p-2 text-zinc-300 hover:text-amber-500 transition-colors active:scale-90">
-                            <PencilIcon className="w-4 h-4" />
-                        </button>
-                        <h2 className="font-black text-xl uppercase tracking-tighter italic text-zinc-900 leading-none mb-0.5">{profile.full_name || profile.username}</h2>
-                        <p className="text-[11px] font-bold text-zinc-400 tracking-tight mb-3 opacity-60">{profile.username}</p>
-                        <div className="w-full">
-                            {profile.bio ? <p className="text-xs text-zinc-600 font-medium leading-relaxed italic pr-8">"{profile.bio}"</p> : <button onClick={() => setIsEditingBio(true)} className="text-[10px] font-bold text-zinc-300 italic uppercase tracking-widest hover:text-amber-500 transition-colors">Toque no lápis para adicionar sua bio...</button>}
+                    <div className="mt-8 flex flex-col items-start relative animate-fadeIn">
+                        <div className="flex items-center gap-3 mb-6">
+                          <h2 className="font-black text-2xl uppercase tracking-tighter italic text-[var(--text-primary)] leading-none">
+                              {profile.full_name || profile.username}
+                          </h2>
                         </div>
+                        
+                        <div className="w-full bg-[var(--bg-secondary)]/50 p-5 rounded-[2.5rem] border border-[var(--border-primary)] relative group">
+                            {profile.bio ? (
+                              <p className="text-sm text-[var(--text-secondary)] font-medium leading-relaxed italic pr-6">"{profile.bio}"</p>
+                            ) : (
+                              <p className="text-xs text-zinc-400 font-bold uppercase tracking-widest italic">Apresente sua visão de moda aqui...</p>
+                            )}
+                            <button onClick={() => setIsEditingBio(true)} className="absolute top-4 right-4 p-2 text-zinc-300 hover:text-amber-500 transition-all opacity-0 group-hover:opacity-100">
+                                <PencilIcon className="w-4 h-4" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 mt-6">
+                      <button onClick={() => setIsEditingBio(true)} className="py-4 bg-[var(--bg-tertiary)] hover:bg-zinc-200 dark:hover:bg-zinc-700 rounded-2xl text-[10px] font-black uppercase tracking-widest text-[var(--text-primary)] transition-all active:scale-[0.98] border border-[var(--border-primary)] shadow-sm">
+                          Editar Perfil
+                      </button>
+                      <button onClick={onOpenPromotionModal} className="py-4 bg-zinc-900 dark:bg-zinc-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white dark:text-zinc-900 transition-all active:scale-[0.98] shadow-lg flex items-center justify-center gap-2">
+                          <StarIcon className="w-4 h-4" />
+                          Promover Loja
+                      </button>
                     </div>
                 </div>
 
-                <div className="flex mt-10 px-6 border-b border-zinc-100">
-                    <button onClick={() => { setActiveTab('shop'); setSelectedFolderId(null); }} className={`flex-1 py-4 text-[11px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === 'shop' && !selectedFolderId ? 'text-zinc-900' : 'text-zinc-300'}`}>
+                {/* Tabs */}
+                <div className="flex mt-12 px-6 border-b border-[var(--border-primary)] bg-[var(--bg-main)] sticky top-0 z-20">
+                    <button onClick={() => { setActiveTab('shop'); setSelectedFolderId(null); }} className={`flex-1 py-5 text-[11px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === 'shop' && !selectedFolderId ? 'text-[var(--text-primary)]' : 'text-zinc-300'}`}>
                         Coleções
-                        {activeTab === 'shop' && !selectedFolderId && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-amber-500 rounded-t-full"></div>}
+                        {activeTab === 'shop' && !selectedFolderId && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-1 bg-amber-500 rounded-t-full"></div>}
                     </button>
-                    <button onClick={() => setActiveTab('posts')} className={`flex-1 py-4 text-[11px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === 'posts' ? 'text-zinc-900' : 'text-zinc-300'}`}>
+                    <button onClick={() => setActiveTab('posts')} className={`flex-1 py-5 text-[11px] font-black uppercase tracking-[0.2em] transition-all relative ${activeTab === 'posts' ? 'text-[var(--text-primary)]' : 'text-zinc-300'}`}>
                         Vitrine
-                        {activeTab === 'posts' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-amber-500 rounded-t-full"></div>}
+                        {activeTab === 'posts' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-10 h-1 bg-amber-500 rounded-t-full"></div>}
                     </button>
                 </div>
 
-                <div className="p-6 min-h-[400px]">
+                {/* Grid Content */}
+                <div className="p-6 min-h-[500px] bg-[var(--bg-main)]">
                     {activeTab === 'shop' ? (
                         <>
                             {selectedFolderId ? (
-                                <div className="space-y-6 animate-fadeIn">
-                                    <div className="flex items-center justify-between mb-4">
-                                        <button onClick={() => setSelectedFolderId(null)} className="flex items-center gap-2 text-[10px] font-black text-zinc-400 uppercase tracking-widest bg-zinc-50 hover:bg-zinc-100 px-4 py-2 rounded-full transition-colors">
-                                            <ChevronDownIcon className="w-3 h-3 rotate-90" />
+                                <div className="space-y-8 animate-fadeIn">
+                                    <div className="flex items-center justify-between">
+                                        <button onClick={() => setSelectedFolderId(null)} className="flex items-center gap-2 text-[10px] font-black text-zinc-400 uppercase tracking-widest bg-[var(--bg-tertiary)] hover:bg-zinc-200 px-5 py-2.5 rounded-2xl transition-all border border-[var(--border-primary)]">
+                                            <ChevronDownIcon className="w-3.5 h-3.5 rotate-90" />
                                             Voltar
                                         </button>
-                                        <h3 className="text-xs font-black uppercase tracking-widest text-amber-600 italic">Coleção: {currentFolder?.title}</h3>
+                                        <div className="text-right">
+                                          <h3 className="text-xs font-black uppercase tracking-widest text-amber-600 italic leading-none">{currentFolder?.title}</h3>
+                                          <span className="text-[9px] font-black text-zinc-300 uppercase tracking-widest">{folderProducts.length} Itens</span>
+                                        </div>
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         {folderProducts.map(item => (
-                                            <div key={item.id} className="bg-zinc-50 p-3 rounded-[2rem] border border-zinc-100 relative group active:scale-95 transition-all">
-                                                <img src={item.image} alt="" className="w-full aspect-[4/5] object-cover rounded-[1.5rem] mb-3 shadow-sm" />
-                                                <p className="text-[11px] font-bold uppercase truncate px-1">{item.name}</p>
-                                                <p className="text-[10px] font-black text-amber-500 mt-0.5 px-1">{item.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
+                                            <div key={item.id} className="bg-[var(--bg-secondary)] p-3 rounded-[2.5rem] border border-[var(--border-primary)] relative group active:scale-95 transition-all shadow-lg shadow-black/5">
+                                                <div className="aspect-[4/5] rounded-[2rem] overflow-hidden mb-4 shadow-sm border border-[var(--border-primary)]">
+                                                  <img src={item.image} alt="" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                                </div>
+                                                <div className="px-2 pb-1">
+                                                  <p className="text-[11px] font-black uppercase truncate tracking-tighter italic">{item.name}</p>
+                                                  <p className="text-[10px] font-black text-amber-500 mt-1 uppercase tracking-widest">{item.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
+                                                </div>
                                                 <button 
                                                     onClick={() => setMovingProduct(item)}
-                                                    className="absolute top-4 right-4 p-2 bg-black/40 backdrop-blur-md rounded-xl text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    className="absolute top-5 right-5 p-2.5 bg-black/40 glass rounded-2xl text-white opacity-0 group-hover:opacity-100 transition-all shadow-xl"
                                                 >
                                                     <RepositionIcon className="w-4 h-4" />
                                                 </button>
                                             </div>
                                         ))}
                                         
-                                        <button onClick={() => setIsAddingItem(true)} className="flex flex-col items-center justify-center gap-3 p-4 border-2 border-dashed border-zinc-200 rounded-[2rem] group active:scale-95 transition-all w-full min-h-[160px] hover:border-amber-500 hover:bg-amber-50/30">
-                                            <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center group-hover:bg-amber-500 transition-colors">
-                                                <PlusIcon className="w-6 h-6 text-zinc-400 group-hover:text-white transition-colors" />
+                                        <button onClick={() => setIsAddingItem(true)} className="flex flex-col items-center justify-center gap-4 p-5 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-[2.5rem] group active:scale-95 transition-all w-full min-h-[200px] hover:border-amber-500 hover:bg-amber-50/20 shadow-inner">
+                                            <div className="w-14 h-14 rounded-2xl bg-[var(--bg-tertiary)] flex items-center justify-center group-hover:bg-amber-500 transition-all duration-300 shadow-md">
+                                                <PlusIcon className="w-7 h-7 text-zinc-400 group-hover:text-white transition-colors" strokeWidth={3} />
                                             </div>
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-amber-600 transition-colors">Novo Item</p>
+                                            <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 group-hover:text-amber-600 transition-colors">Novo Item</p>
                                         </button>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-2 gap-4 animate-fadeIn">
+                                <div className="grid grid-cols-2 gap-5 animate-fadeIn">
                                     {folders.map(folder => (
                                         <FolderCard key={folder.id} folder={folder} onClick={() => setSelectedFolderId(folder.id)} />
                                     ))}
                                     <button 
                                         onClick={handleCreateFolderClick}
-                                        className="flex flex-col items-center justify-center gap-3 p-4 border-2 border-dashed border-amber-500/30 rounded-[2rem] bg-amber-50/20 group active:scale-95 transition-all w-full min-h-[160px] hover:border-amber-500"
+                                        className="flex flex-col items-center justify-center gap-4 p-5 border-2 border-dashed border-amber-500/20 rounded-[2.5rem] bg-amber-50/10 group active:scale-95 transition-all w-full min-h-[220px] hover:border-amber-500 hover:bg-amber-50/20 shadow-inner"
                                     >
-                                        <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center group-hover:bg-amber-500 transition-colors">
-                                            <PlusIcon className="w-6 h-6 text-amber-600 group-hover:text-white transition-colors" />
+                                        <div className="w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center group-hover:bg-amber-500 transition-all duration-300 shadow-lg">
+                                            <PlusIcon className="w-7 h-7 text-amber-600 group-hover:text-white transition-colors" strokeWidth={3} />
                                         </div>
-                                        <p className="text-[11px] font-black uppercase tracking-widest text-amber-600">CRIAR COLEÇÃO</p>
+                                        <div className="text-center">
+                                          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-amber-600">Coleção</p>
+                                          <p className="text-[9px] font-bold text-amber-400/60 uppercase tracking-widest mt-1">Organizar Catálogo</p>
+                                        </div>
                                     </button>
                                 </div>
                             )}
@@ -283,16 +289,18 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                             {showcase.length > 0 ? (
                                 <div className="grid grid-cols-2 gap-4">
                                     {showcase.map(item => (
-                                        <div key={item.id} className="bg-zinc-50 p-3 rounded-[2rem] border border-zinc-100 relative group active:scale-95 transition-all overflow-hidden">
-                                            <img src={item.image_url} alt={item.title} className="w-full aspect-square object-cover rounded-[1.5rem] mb-3 shadow-sm" />
-                                            <p className="text-[11px] font-bold uppercase truncate px-1 text-center">{item.title}</p>
+                                        <div key={item.id} className="bg-[var(--bg-secondary)] p-3 rounded-[2.5rem] border border-[var(--border-primary)] relative group active:scale-95 transition-all overflow-hidden shadow-xl shadow-black/5">
+                                            <div className="aspect-square rounded-[2rem] overflow-hidden mb-3 border border-[var(--border-primary)]">
+                                              <img src={item.image_url} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                            </div>
+                                            <p className="text-[11px] font-black uppercase truncate px-2 text-center italic tracking-tighter">{item.title}</p>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="py-24 text-center flex flex-col items-center opacity-30 grayscale">
-                                     <ShoppingBagIcon className="w-10 h-10 text-zinc-400 mb-4" />
-                                     <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-500">Sua vitrine está vazia</p>
+                                <div className="py-32 text-center flex flex-col items-center opacity-20 grayscale">
+                                     <ShoppingBagIcon className="w-16 h-16 text-zinc-400 mb-6" strokeWidth={1} />
+                                     <p className="text-[10px] font-black uppercase tracking-[0.4em] text-zinc-500">Sua vitrine espera por você</p>
                                 </div>
                             )}
                         </div>
@@ -300,129 +308,14 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                 </div>
             </main>
 
-            {isAddingItem && (
-                <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-end animate-fadeIn" onClick={() => setIsAddingItem(false)}>
-                    <div className="w-full max-h-[95vh] bg-white rounded-t-[3rem] p-8 flex flex-col gap-6 animate-slideUp overflow-y-auto shadow-2xl" onClick={e => e.stopPropagation()}>
-                        <div className="flex justify-between items-center">
-                            <div className="flex flex-col">
-                                <h2 className="text-2xl font-black uppercase italic text-zinc-900 leading-none">Novo Item</h2>
-                                <span className="text-[10px] font-black text-amber-500 uppercase tracking-[0.2em] mt-1.5 italic">Coleção: {currentFolder?.title}</span>
-                            </div>
-                            <button onClick={() => setIsAddingItem(false)} className="p-2.5 bg-zinc-50 rounded-2xl text-zinc-400 hover:text-zinc-900 transition-colors">
-                                <ChevronDownIcon className="w-6 h-6" />
-                            </button>
-                        </div>
-
-                        <div className="flex flex-col gap-5">
-                            <div 
-                                onClick={() => itemFileInputRef.current?.click()} 
-                                className="w-full aspect-[4/5] bg-zinc-50 border-2 border-dashed border-zinc-200 rounded-[2.5rem] flex flex-col items-center justify-center overflow-hidden transition-all hover:border-amber-200 group relative shadow-inner"
-                            >
-                                {newItemPreview ? (
-                                    <>
-                                        <img src={newItemPreview} className="w-full h-full object-cover" alt="Preview" />
-                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                            <CameraIcon className="w-8 h-8 text-white" />
-                                        </div>
-                                    </>
-                                ) : (
-                                    <>
-                                        <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center shadow-sm mb-3">
-                                            <CameraIcon className="w-8 h-8 text-zinc-300" />
-                                        </div>
-                                        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.2em]">Foto do Produto</p>
-                                    </>
-                                )}
-                            </div>
-                            <input type="file" ref={itemFileInputRef} accept="image/*" onChange={e => handleFileChange(e, 'item')} className="hidden" />
-
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-zinc-400 ml-4 tracking-[0.2em]">Nome do Produto</label>
-                                <input 
-                                    type="text" 
-                                    placeholder="Ex: T-shirt Oversized" 
-                                    value={newItemTitle} 
-                                    onChange={e => setNewItemTitle(e.target.value)} 
-                                    className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 font-bold text-sm focus:outline-none focus:border-amber-500/40 focus:bg-white transition-all shadow-sm" 
-                                />
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-zinc-400 ml-4 tracking-[0.2em]">Preço (AOA)</label>
-                                <input 
-                                    type="number" 
-                                    placeholder="0" 
-                                    value={newItemPrice} 
-                                    onChange={e => setNewItemPrice(e.target.value)} 
-                                    className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 font-bold text-sm focus:outline-none focus:border-amber-500/40 focus:bg-white transition-all shadow-sm" 
-                                />
-                            </div>
-
-                            <div className="space-y-1.5">
-                                <label className="text-[10px] font-black uppercase text-zinc-400 ml-4 tracking-[0.2em]">Descrição Curta</label>
-                                <textarea 
-                                    placeholder="Tamanhos, cores, tecido..." 
-                                    value={newItemDesc} 
-                                    onChange={e => setNewItemDesc(e.target.value)} 
-                                    className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 font-bold text-sm h-32 resize-none focus:outline-none focus:border-amber-500/40 focus:bg-white transition-all shadow-sm" 
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col gap-3 pt-2">
-                             <GradientButton 
-                                onClick={() => handleSaveItem(true)} 
-                                disabled={!newItemTitle || !newItemPrice || !newItemFile}
-                                className="!bg-white !text-amber-500 border-2 border-amber-500 shadow-none hover:!bg-amber-50 !py-5"
-                            >
-                                SALVAR E ADICIONAR OUTRO
-                            </GradientButton>
-                            <GradientButton 
-                                onClick={() => handleSaveItem(false)} 
-                                disabled={!newItemTitle || !newItemPrice || !newItemFile}
-                                className="!py-5"
-                            >
-                                SALVAR E CONCLUIR
-                            </GradientButton>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {movingProduct && (
-                <div className="fixed inset-0 z-[210] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn" onClick={() => setMovingProduct(null)}>
-                    <div className="bg-white rounded-[2.5rem] w-full max-w-sm p-8 flex flex-col gap-6 animate-modalZoomIn" onClick={e => e.stopPropagation()}>
-                        <h2 className="text-xl font-black uppercase tracking-tighter italic text-center">Mover para Coleção</h2>
-                        <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-2">
-                            <button 
-                                onClick={() => { onMoveProductToFolder(movingProduct.id, null); setMovingProduct(null); }}
-                                className="w-full p-4 bg-zinc-50 hover:bg-zinc-100 rounded-2xl border border-zinc-100 text-left font-bold text-xs uppercase tracking-widest transition-colors flex items-center justify-between"
-                            >
-                                <span>Remover da Coleção (Geral)</span>
-                                {!movingProduct.folder_id && <div className="w-2 h-2 bg-amber-500 rounded-full"></div>}
-                            </button>
-                            {folders.map(folder => (
-                                <button 
-                                    key={folder.id}
-                                    onClick={() => { onMoveProductToFolder(movingProduct.id, folder.id); setMovingProduct(null); }}
-                                    className="w-full p-4 bg-zinc-50 hover:bg-zinc-100 rounded-2xl border border-zinc-100 text-left font-bold text-xs uppercase tracking-widest transition-colors flex items-center justify-between"
-                                >
-                                    <span>{folder.title}</span>
-                                    {movingProduct.folder_id === folder.id && <div className="w-2 h-2 bg-amber-500 rounded-full"></div>}
-                                </button>
-                            ))}
-                        </div>
-                        <button onClick={() => setMovingProduct(null)} className="text-[10px] font-black uppercase text-zinc-400 tracking-widest text-center">Cancelar</button>
-                    </div>
-                </div>
-            )}
-
-            <div className="absolute bottom-28 right-6 z-20">
-                <button onClick={onOpenPromotionModal} className="w-16 h-16 bg-gradient-to-tr from-amber-500 to-amber-400 rounded-3xl flex items-center justify-center shadow-[0_15px_30px_rgba(245,158,11,0.3)] active:scale-90 transition-all group">
-                    <StarIcon className="w-7 h-7 text-white group-hover:rotate-12 transition-transform" />
+            {/* Custom Action Button Floating */}
+            <div className="fixed bottom-28 right-6 z-40">
+                <button onClick={onOpenPromotionModal} className="w-16 h-16 bg-gradient-to-tr from-amber-600 to-amber-400 rounded-[1.8rem] flex items-center justify-center shadow-[0_12px_24px_rgba(245,158,11,0.4)] active:scale-90 transition-all group border-2 border-white/20">
+                    <StarIcon className="w-7 h-7 text-white group-hover:rotate-12 transition-transform" strokeWidth={2.5} />
                 </button>
             </div>
 
+            {/* Editing bio modal handled by original component */}
             {isEditingBio && (
                 <BioEditModal 
                     profile={profile}
@@ -432,6 +325,128 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                         setIsEditingBio(false);
                     }} 
                 />
+            )}
+            
+            {/* Adding item modal remains functional as before */}
+            {isAddingItem && (
+                <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-md flex items-end animate-fadeIn" onClick={() => setIsAddingItem(false)}>
+                    <div className="w-full max-h-[95vh] bg-[var(--bg-main)] rounded-t-[3.5rem] p-8 flex flex-col gap-6 animate-slideUp overflow-y-auto shadow-[0_-12px_48px_rgba(0,0,0,0.3)] border-t border-white/10" onClick={e => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-2">
+                            <div className="flex flex-col">
+                                <h2 className="text-3xl font-black uppercase italic text-[var(--text-primary)] tracking-tighter leading-none">Novo Item</h2>
+                                <span className="text-[11px] font-black text-amber-500 uppercase tracking-[0.2em] mt-2 italic">Na coleção: {currentFolder?.title}</span>
+                            </div>
+                            <button onClick={() => setIsAddingItem(false)} className="p-3 bg-[var(--bg-tertiary)] rounded-2xl text-zinc-400 hover:text-[var(--text-primary)] transition-all">
+                                <ChevronDownIcon className="w-6 h-6" />
+                            </button>
+                        </div>
+
+                        <div className="flex flex-col gap-6">
+                            <div 
+                                onClick={() => itemFileInputRef.current?.click()} 
+                                className="w-full aspect-[4/5] bg-[var(--bg-tertiary)] border-4 border-dashed border-[var(--border-primary)] rounded-[3rem] flex flex-col items-center justify-center overflow-hidden transition-all hover:border-amber-400/50 group relative shadow-inner"
+                            >
+                                {newItemPreview ? (
+                                    <>
+                                        <img src={newItemPreview} className="w-full h-full object-cover" alt="Preview" />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity glass">
+                                            <CameraIcon className="w-10 h-10 text-white" />
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="w-20 h-20 rounded-3xl bg-[var(--bg-main)] flex items-center justify-center shadow-lg mb-4 rotate-3 group-hover:rotate-0 transition-transform">
+                                            <CameraIcon className="w-10 h-10 text-zinc-300" />
+                                        </div>
+                                        <p className="text-[11px] font-black text-zinc-400 uppercase tracking-[0.3em] italic">Capturar Estilo</p>
+                                    </>
+                                )}
+                            </div>
+                            <input type="file" ref={itemFileInputRef} accept="image/*" onChange={e => handleFileChange(e, 'item')} className="hidden" />
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-zinc-400 ml-5 tracking-[0.3em] italic">Designação</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Ex: Blazer Minimalist Noir" 
+                                    value={newItemTitle} 
+                                    onChange={e => setNewItemTitle(e.target.value)} 
+                                    className="w-full p-5 bg-[var(--bg-tertiary)] rounded-[1.8rem] border border-[var(--border-primary)] font-black text-sm uppercase italic focus:outline-none focus:border-amber-500/50 transition-all shadow-sm" 
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-zinc-400 ml-5 tracking-[0.3em] italic">Preço de Venda (AOA)</label>
+                                <input 
+                                    type="number" 
+                                    placeholder="0" 
+                                    value={newItemPrice} 
+                                    onChange={e => setNewItemPrice(e.target.value)} 
+                                    className="w-full p-5 bg-[var(--bg-tertiary)] rounded-[1.8rem] border border-[var(--border-primary)] font-black text-sm italic focus:outline-none focus:border-amber-500/50 transition-all shadow-sm" 
+                                />
+                            </div>
+
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-zinc-400 ml-5 tracking-[0.3em] italic">Especificações</label>
+                                <textarea 
+                                    placeholder="Detalhes que apaixonam..." 
+                                    value={newItemDesc} 
+                                    onChange={e => setNewItemDesc(e.target.value)} 
+                                    className="w-full p-6 bg-[var(--bg-tertiary)] rounded-[1.8rem] border border-[var(--border-primary)] font-medium text-sm h-32 resize-none focus:outline-none focus:border-amber-500/50 transition-all shadow-sm" 
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex flex-col gap-4 pt-4 pb-8">
+                             <button 
+                                onClick={() => handleSaveItem(true)} 
+                                disabled={!newItemTitle || !newItemPrice || !newItemFile}
+                                className="w-full py-5 bg-transparent text-amber-500 border-2 border-amber-500 rounded-[2rem] font-black uppercase text-xs tracking-[0.2em] italic transition-all hover:bg-amber-50 dark:hover:bg-amber-500/10 active:scale-[0.98] disabled:opacity-50"
+                            >
+                                Salvar e Continuar
+                            </button>
+                            <GradientButton 
+                                onClick={() => handleSaveItem(false)} 
+                                disabled={!newItemTitle || !newItemPrice || !newItemFile}
+                                className="!py-5 !rounded-[2rem] !text-sm"
+                            >
+                                CONCLUIR CADASTRO
+                            </GradientButton>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Move product modal remains same functionality */}
+            {movingProduct && (
+                <div className="fixed inset-0 z-[210] bg-black/70 backdrop-blur-md flex items-center justify-center p-6 animate-fadeIn" onClick={() => setMovingProduct(null)}>
+                    <div className="bg-[var(--bg-main)] rounded-[3.5rem] w-full max-w-sm p-10 flex flex-col gap-8 animate-modalZoomIn shadow-2xl border border-white/10" onClick={e => e.stopPropagation()}>
+                        <div className="text-center">
+                          <h2 className="text-2xl font-black uppercase tracking-tighter italic leading-none mb-2">Relocar Item</h2>
+                          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest italic">Escolha o novo destino</p>
+                        </div>
+                        <div className="flex flex-col gap-3 max-h-72 overflow-y-auto pr-2 scrollbar-hide">
+                            <button 
+                                onClick={() => { onMoveProductToFolder(movingProduct.id, null); setMovingProduct(null); }}
+                                className={`w-full p-5 rounded-[1.8rem] border font-black text-[11px] uppercase tracking-widest transition-all flex items-center justify-between ${!movingProduct.folder_id ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20' : 'bg-[var(--bg-tertiary)] text-[var(--text-primary)] border-[var(--border-primary)] hover:border-amber-500'}`}
+                            >
+                                <span>Geral / Vitrine</span>
+                                {!movingProduct.folder_id && <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>}
+                            </button>
+                            {folders.map(folder => (
+                                <button 
+                                    key={folder.id}
+                                    onClick={() => { onMoveProductToFolder(movingProduct.id, folder.id); setMovingProduct(null); }}
+                                    className={`w-full p-5 rounded-[1.8rem] border font-black text-[11px] uppercase tracking-widest transition-all flex items-center justify-between ${movingProduct.folder_id === folder.id ? 'bg-amber-500 text-white border-amber-500 shadow-lg shadow-amber-500/20' : 'bg-[var(--bg-tertiary)] text-[var(--text-primary)] border-[var(--border-primary)] hover:border-amber-500'}`}
+                                >
+                                    <span className="truncate pr-4">{folder.title}</span>
+                                    {movingProduct.folder_id === folder.id && <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>}
+                                </button>
+                            ))}
+                        </div>
+                        <button onClick={() => setMovingProduct(null)} className="text-[11px] font-black uppercase text-zinc-400 tracking-[0.3em] hover:text-[var(--text-primary)] transition-colors">Fechar</button>
+                    </div>
+                </div>
             )}
         </div>
     );

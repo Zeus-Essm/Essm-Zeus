@@ -3,7 +3,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
     <title>PUMP</title>
     <link rel="icon" type="image/png" href="https://i.postimg.cc/XJf6gckX/Pump_STARTAP.png" />
     
@@ -11,48 +11,55 @@
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
       
-      :root { /* Light Mode Defaults (Reference Image Aesthetic) */
+      :root {
         --bg-main: #FFFFFF;
-        --bg-secondary: #f9fafb;
-        --bg-tertiary: #f3f4f6;
-        --bg-header: rgba(255, 255, 255, 0.8);
-        --bg-modal-overlay: rgba(255, 255, 255, 0.7);
+        --bg-secondary: #fdfdfd;
+        --bg-tertiary: #f1f5f9;
+        --bg-header: rgba(255, 255, 255, 0.85);
+        --bg-modal-overlay: rgba(255, 255, 255, 0.8);
 
-        --text-primary: #111827; /* Gray-900 */
-        --text-secondary: #4b5563; /* Gray-600 */
-        --text-tertiary: #6b7280; /* Gray-500 */
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --text-tertiary: #64748b;
         --text-inverted: #ffffff;
 
-        --accent-primary: #F59E0B; /* Match Reference Orange */
-        --accent-primary-glow: rgba(245, 158, 11, 0.2);
+        --accent-primary: #F59E0B;
+        --accent-primary-glow: rgba(245, 158, 11, 0.3);
         
-        --border-primary: #e5e7eb; /* Gray-200 */
-        --border-secondary: #f3f4f6;
+        --border-primary: #f1f5f9;
+        --border-secondary: #f8fafc;
+        
+        --glass-bg: rgba(255, 255, 255, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.3);
       }
 
       html.dark {
-        --bg-main: #000000;
-        --bg-secondary: #0a0a0a;
-        --bg-tertiary: #1f2937;
-        --bg-header: rgba(0, 0, 0, 0.5);
-        --bg-modal-overlay: rgba(0, 0, 0, 0.8);
+        --bg-main: #020617;
+        --bg-secondary: #0f172a;
+        --bg-tertiary: #1e293b;
+        --bg-header: rgba(2, 6, 23, 0.85);
+        --bg-modal-overlay: rgba(2, 6, 23, 0.9);
 
-        --text-primary: #f3f4f6;
-        --text-secondary: #a1a1aa;
-        --text-tertiary: #d4d4d8;
-        --text-inverted: #000000;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --text-tertiary: #cbd5e1;
+        --text-inverted: #020617;
 
         --accent-primary: #FBBF24;
         --accent-primary-glow: rgba(251, 191, 36, 0.5);
         
-        --border-primary: rgba(255, 255, 255, 0.1);
-        --border-secondary: rgba(255, 255, 255, 0.05);
+        --border-primary: rgba(255, 255, 255, 0.08);
+        --border-secondary: rgba(255, 255, 255, 0.04);
+
+        --glass-bg: rgba(15, 23, 42, 0.7);
+        --glass-border: rgba(255, 255, 255, 0.1);
       }
       
       html, body, #root {
         height: 100%;
         margin: 0;
         padding: 0;
+        overflow: hidden;
       }
 
       body {
@@ -60,67 +67,77 @@
         background-color: var(--bg-main);
         color: var(--text-primary);
         -webkit-font-smoothing: antialiased;
-        transition: background-color 0.3s ease, color 0.3s ease;
+        transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1), color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        user-select: none;
       }
 
       .text-glow {
-        text-shadow: 0 0 8px var(--accent-primary-glow);
+        text-shadow: 0 0 12px var(--accent-primary-glow);
+      }
+
+      .glass {
+        background: var(--glass-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--glass-border);
       }
 
       @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
+        from { opacity: 0; transform: translateY(12px); }
         to { opacity: 1; transform: translateY(0); }
       }
       .animate-fadeIn {
-        animation: fadeIn 0.7s ease-in-out forwards;
+        animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
       
       @keyframes logo-pulse {
-        0%, 100% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.05); opacity: 0.9; }
+        0%, 100% { transform: scale(1); filter: brightness(1); }
+        50% { transform: scale(1.08); filter: brightness(1.1); }
       }
       .animate-logo-pulse {
-        animation: logo-pulse 2.5s infinite ease-in-out;
+        animation: logo-pulse 3s infinite ease-in-out;
       }
 
       @keyframes slideUp {
-        from { opacity: 0; transform: translateY(20px); }
+        from { opacity: 0; transform: translateY(24px); }
         to { opacity: 1; transform: translateY(0); }
       }
       .animate-slideUp {
-        animation: slideUp 0.5s ease-out forwards;
+        animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
 
       @keyframes modalZoomIn {
-        from { opacity: 0; transform: scale(0.95); }
+        from { opacity: 0; transform: scale(0.92); }
         to { opacity: 1; transform: scale(1); }
       }
       .animate-modalZoomIn {
-        animation: modalZoomIn 0.3s ease-out forwards;
+        animation: modalZoomIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
       }
 
-      /* COIN BURST */
-      @keyframes coin-explosion {
-        0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
-        20% { opacity: 1; }
-        100% { transform: translate(var(--tx), var(--ty)) scale(1); opacity: 0; }
+      /* Better scrollbars */
+      ::-webkit-scrollbar {
+        width: 0px;
+        background: transparent;
       }
-      .coin-burst-item {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        background: radial-gradient(circle at 30% 30%, #fef3c7, #f59e0b);
-        border: 2px solid #fcd34d;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 900;
-        color: #78350f;
-        font-size: 14px;
-        z-index: 9999;
+
+      button {
+        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+      }
+      button:active {
+        transform: scale(0.96);
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+
+      .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+      }
+      .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
       }
     </style>
   <script type="importmap">

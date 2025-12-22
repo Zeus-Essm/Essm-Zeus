@@ -107,14 +107,16 @@ const App: React.FC = () => {
                 }
                 const { data: freshProfile } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
                 
-                const freshFolders = await fetchFolders(user.id);
-                const mappedProducts = await fetchAllProducts(user.id);
-                const { data: freshShowcase } = await supabase.from('showcase').select('*').eq('owner_id', user.id);
+                if (user.id) {
+                    const freshFolders = await fetchFolders(user.id);
+                    const mappedProducts = await fetchAllProducts(user.id);
+                    const { data: freshShowcase } = await supabase.from('showcase').select('*').eq('owner_id', user.id);
+                    setShowcase(freshShowcase || []);
+                    setFolders(freshFolders);
+                    setProducts(mappedProducts);
+                }
                 
                 setProfile(freshProfile);
-                setShowcase(freshShowcase || []);
-                setFolders(freshFolders);
-                setProducts(mappedProducts);
 
                 if (freshProfile) {
                     if (freshProfile.account_type === 'personal') setCurrentScreen(Screen.Feed);
@@ -130,13 +132,21 @@ const App: React.FC = () => {
                     } else setCurrentScreen(Screen.AccountTypeSelection);
                 }
             } else {
-                handleLogoutReset();
+                // SEM LOGIN: Mostra a tela de seleção de tipo de conta diretamente
+                setCurrentScreen(Screen.AccountTypeSelection);
             }
             setAuthLoading(false);
         };
 
         const handleLogoutReset = () => {
-            setProfile(null); setProducts([]); setShowcase([]); setFolders([]); setBusinessProfile(null); setCartItems([]); setSession(null); setCurrentScreen(Screen.Login);
+            setProfile(null);
+            setProducts([]);
+            setShowcase([]);
+            setFolders([]);
+            setBusinessProfile(null);
+            setCartItems([]);
+            setSession(null);
+            setCurrentScreen(Screen.AccountTypeSelection);
         };
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -156,6 +166,7 @@ const App: React.FC = () => {
     };
 
     const handleCreateFolder = async (title: string) => {
+        if (!session?.user) return alert("Por favor, faça login para salvar.");
         setIsLoading(true);
         try {
             const { data: { user } } = await supabase.auth.getUser();
@@ -179,6 +190,7 @@ const App: React.FC = () => {
     };
 
     const handleAddProductToFolder = async (folderId: string, details: { title: string, description: string, price: number, file: Blob }) => {
+        if (!session?.user) return;
         setIsLoading(true);
         try {
             const { data: { user } } = await supabase.auth.getUser();
@@ -228,6 +240,7 @@ const App: React.FC = () => {
     };
 
     const handleCreateDraftProduct = async (details: { title: string, description: string, price: number, file: Blob }) => {
+        if (!session?.user) return;
         setIsLoading(true);
         try {
             const { data: { user } } = await supabase.auth.getUser();
@@ -273,6 +286,7 @@ const App: React.FC = () => {
     };
 
     const handleMoveProductToFolder = async (productId: string, folderId: string | null) => {
+        if (!session?.user) return;
         setIsLoading(true);
         try {
             const { error } = await supabase
@@ -301,8 +315,49 @@ const App: React.FC = () => {
         if (authLoading || currentScreen === Screen.Splash) return <SplashScreen />;
         switch (currentScreen) {
             case Screen.Login: return <LoginScreen />;
-            case Screen.AccountTypeSelection: return <AccountTypeSelectionScreen onSelect={async (type) => { const uid = session?.user.id; if (uid) { await supabase.from('profiles').update({ account_type: type }).eq('user_id', uid); const { data } = await supabase.from('profiles').select('*').eq('user_id', uid).single(); setProfile(data); if (type === 'business') setCurrentScreen(Screen.BusinessOnboarding); else setCurrentScreen(Screen.Feed); } }} />;
-            case Screen.BusinessOnboarding: return <BusinessOnboardingScreen onComplete={async (details) => { if (session?.user) { await supabase.from('profiles').update({ full_name: details.business_name, bio: details.description }).eq('user_id', session.user.id); setBusinessProfile({ id: session.user.id, ...details }); setCurrentScreen(Screen.VendorDashboard); } }} />;
+            case Screen.AccountTypeSelection: return <AccountTypeSelectionScreen onSelect={async (type) => { 
+                const uid = session?.user.id; 
+                if (uid) { 
+                    await supabase.from('profiles').update({ account_type: type }).eq('user_id', uid); 
+                    const { data } = await supabase.from('profiles').select('*').eq('user_id', uid).single(); 
+                    setProfile(data); 
+                    if (type === 'business') setCurrentScreen(Screen.BusinessOnboarding); 
+                    else setCurrentScreen(Screen.Feed); 
+                } else {
+                    // Sem sessão: Criar perfil temporário local (Simulação de Login Bypass)
+                    const tempProfile: Profile = {
+                        user_id: `temp_${type}_${Date.now()}`,
+                        username: type === 'personal' ? 'cliente' : 'vendedor',
+                        full_name: type === 'personal' ? 'Usuário Pessoal' : 'Marca Local',
+                        bio: 'Perfil ativo para navegação.',
+                        avatar_url: 'https://i.postimg.cc/XJf6gckX/Pump_STARTAP.png',
+                        account_type: type,
+                        reward_points: 0
+                    };
+                    setProfile(tempProfile);
+                    if (type === 'business') {
+                        setBusinessProfile({
+                            id: tempProfile.user_id,
+                            business_name: tempProfile.full_name || '',
+                            business_category: 'fashion',
+                            description: '',
+                            logo_url: tempProfile.avatar_url || ''
+                        });
+                        setCurrentScreen(Screen.VendorDashboard);
+                    } else {
+                        setCurrentScreen(Screen.Feed);
+                    }
+                }
+            }} />;
+            case Screen.BusinessOnboarding: return <BusinessOnboardingScreen onComplete={async (details) => { 
+                if (session?.user) { 
+                    await supabase.from('profiles').update({ full_name: details.business_name, bio: details.description }).eq('user_id', session.user.id); 
+                    setBusinessProfile({ id: session.user.id, ...details }); 
+                } else if (profile) {
+                    setBusinessProfile({ id: profile.user_id, ...details });
+                }
+                setCurrentScreen(Screen.VendorDashboard); 
+            }} />;
             case Screen.VendorDashboard: return businessProfile && profile && (
                 <VendorDashboard 
                     businessProfile={businessProfile} 
@@ -319,9 +374,15 @@ const App: React.FC = () => {
                     onCreateFolder={handleCreateFolder} 
                     onCreateProductInFolder={handleAddProductToFolder}
                     onMoveProductToFolder={handleMoveProductToFolder} 
-                    onUpdateProfile={async (u) => { const { data } = await supabase.from('profiles').update({ full_name: u.name, bio: u.bio }).eq('user_id', profile.user_id).select().single(); if (data) setProfile(data); }} 
+                    onUpdateProfile={async (u) => { 
+                        if (session?.user) {
+                            const { data } = await supabase.from('profiles').update({ full_name: u.name, bio: u.bio }).eq('user_id', profile.user_id).select().single(); 
+                            if (data) setProfile(data); 
+                        } else {
+                            setProfile(prev => prev ? { ...prev, full_name: u.name ?? prev.full_name, bio: u.bio ?? prev.bio } : null);
+                        }
+                    }} 
                     onUpdateProfileImage={async (url) => {}} 
-                    onUpdateCoverImage={async (url) => {}} 
                     onNavigateToProducts={() => setCurrentScreen(Screen.VendorProducts)} 
                     onAddToShowcase={async () => {}} 
                 />
@@ -335,7 +396,14 @@ const App: React.FC = () => {
                 />
             );
             case Screen.Feed: return profile && <FeedScreen posts={posts} stories={INITIAL_STORIES} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={setRecommendationItem} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={() => {}} onLikePost={id => setPosts(ps => ps.map(p => p.id === id ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 } : p))} onAddComment={() => {}} onNavigateToAllHighlights={() => setCurrentScreen(Screen.AllHighlights)} onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)} unreadNotificationCount={0} onNotificationsClick={() => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
-            case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} onUpdateProfile={async (u) => { const { data } = await supabase.from('profiles').update({ full_name: u.name, bio: u.bio }).eq('user_id', profile?.user_id).select().single(); if (data) setProfile(data); }} onUpdateProfileImage={async (url) => {}} onSelectCategory={() => {}} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={(id) => setViewedProfileId(id)} onNavigateToSettings={() => setCurrentScreen(Screen.Settings)} onSignOut={() => supabase.auth.signOut()} unreadNotificationCount={0} unreadMessagesCount={0} onOpenNotificationsPanel={() => {}} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} />;
+            case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} onUpdateProfile={async (u) => { 
+                if (session?.user) {
+                    const { data } = await supabase.from('profiles').update({ full_name: u.name, bio: u.bio }).eq('user_id', profile?.user_id).select().single(); 
+                    if (data) setProfile(data); 
+                } else {
+                    setProfile(prev => prev ? { ...prev, full_name: u.name ?? prev.full_name, bio: u.bio ?? prev.bio } : null);
+                }
+            }} onUpdateProfileImage={async (url) => {}} onSelectCategory={() => {}} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={(id) => setViewedProfileId(id)} onNavigateToSettings={() => setCurrentScreen(Screen.Settings)} onSignOut={() => supabase.auth.signOut()} unreadNotificationCount={0} unreadMessagesCount={0} onOpenNotificationsPanel={() => {}} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} />;
             default: return <SplashScreen />;
         }
     };

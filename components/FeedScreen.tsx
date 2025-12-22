@@ -1,10 +1,11 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import type { Post, Item, Story, MarketplaceType, Category, Profile, Comment, BusinessProfile } from '../types';
+/* Import BusinessProfile from types */
+import type { Post, Item, Story, MarketplaceType, Category, Profile, BusinessProfile } from '../types';
 import { CATEGORIES } from '../constants';
 import Header from './Header';
 import PostCard from './PostCard';
-import { PlusIcon, UserIcon } from './IconComponents';
+import { PlusIcon, UserIcon, ChevronRightIcon } from './IconComponents';
 import ImageViewModal from './ImageViewModal';
 import ShopTheLookModal from './ShopTheLookModal';
 import CommentsModal from './CommentsModal';
@@ -26,52 +27,50 @@ interface FeedScreenProps {
   onLikePost: (postId: string) => void;
   onAddComment: (postId: string, text: string) => void;
   onNavigateToAllHighlights: () => void;
-  onStartCreate: () => void; // Nova ação para o estado vazio
+  onStartCreate: () => void;
   unreadNotificationCount: number;
   onNotificationsClick: () => void;
   onSearchClick: () => void;
 }
 
 const YourStoryCard: React.FC<{ profileImage: string | null }> = ({ profileImage }) => (
-    <div className="flex-shrink-0 flex flex-col items-center gap-1.5 w-24 cursor-pointer group snap-start">
-        <div className="relative w-20 h-20">
-             <div className="w-full h-full rounded-full overflow-hidden border-2 border-[var(--border-primary)] bg-[var(--bg-tertiary)] flex items-center justify-center">
-                {profileImage ? (
-                    <img 
-                        src={profileImage} 
-                        alt="Seu story"
-                        className="w-full h-full object-cover"
-                    />
-                ) : (
-                    <UserIcon className="w-10 h-10 text-[var(--text-secondary)] opacity-50" />
-                )}
+    <div className="flex-shrink-0 flex flex-col items-center gap-2 w-20 cursor-pointer group snap-start">
+        <div className="relative w-16 h-16">
+             <div className="w-full h-full rounded-2xl overflow-hidden border-2 border-[var(--border-primary)] bg-[var(--bg-tertiary)] flex items-center justify-center rotate-3 group-hover:rotate-0 transition-transform shadow-lg">
+                <div className="-rotate-3 group-hover:rotate-0 transition-transform w-full h-full">
+                  {profileImage ? (
+                      <img 
+                          src={profileImage} 
+                          alt="Seu story"
+                          className="w-full h-full object-cover"
+                      />
+                  ) : (
+                      <UserIcon className="w-8 h-8 text-[var(--text-secondary)] opacity-50 mx-auto mt-4" />
+                  )}
+                </div>
              </div>
-            <div className="absolute bottom-0 right-0 w-7 h-7 bg-[var(--accent-primary)] rounded-full flex items-center justify-center border-2 border-[var(--bg-main)] group-hover:bg-amber-600 transition-colors">
-              <PlusIcon className="w-4 h-4 text-[var(--accent-primary-text)]" />
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-amber-500 rounded-lg flex items-center justify-center border-2 border-[var(--bg-main)] shadow-lg z-10 group-active:scale-90 transition-transform">
+              <PlusIcon className="w-3.5 h-3.5 text-white" strokeWidth={4} />
             </div>
         </div>
-        <span className="text-xs text-[var(--text-secondary)] w-full text-center truncate">Seu story</span>
+        <span className="text-[10px] font-black uppercase tracking-tighter text-zinc-400 group-hover:text-amber-500 transition-colors">Story</span>
     </div>
 );
 
 const StoryCard: React.FC<{ story: Story }> = ({ story }) => (
-    <div className="flex-shrink-0 flex flex-col items-center gap-1.5 w-24 cursor-pointer group snap-start">
-        <div className="relative p-1 bg-gradient-to-tr from-yellow-300 via-amber-500 to-orange-500 rounded-full">
-            <img 
-                src={story.user.avatar} 
-                alt={story.user.name} 
-                className="w-18 h-18 rounded-full object-cover border-2 border-[var(--bg-main)] transform group-hover:scale-110 transition-transform" 
-            />
+    <div className="flex-shrink-0 flex flex-col items-center gap-2 w-20 cursor-pointer group snap-start">
+        <div className="relative p-0.5 bg-gradient-to-tr from-amber-400 via-amber-200 to-amber-500 rounded-2xl rotate-3 group-hover:rotate-0 transition-transform shadow-lg">
+            <div className="w-16 h-16 rounded-[1.1rem] overflow-hidden border-2 border-[var(--bg-main)] -rotate-3 group-hover:rotate-0 transition-transform">
+              <img 
+                  src={story.user.avatar} 
+                  alt={story.user.name} 
+                  className="w-full h-full object-cover" 
+              />
+            </div>
         </div>
-        <span className="text-xs text-[var(--text-tertiary)] w-full text-center truncate">{story.user.name}</span>
+        <span className="text-[10px] font-black uppercase tracking-tighter text-[var(--text-tertiary)] w-full text-center truncate">{story.user.name}</span>
     </div>
 );
-
-const getCategoryTypeFromItem = (item: Item): MarketplaceType => {
-    const rootCategoryId = item.category.split('_')[0];
-    const category = CATEGORIES.find(c => c.id === rootCategoryId);
-    return category?.type || 'fashion';
-};
 
 const FeedScreen: React.FC<FeedScreenProps> = ({ 
     posts, 
@@ -80,7 +79,6 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
     businessProfile,
     isProfilePromoted,
     promotedItems,
-    onBack, 
     onItemClick, 
     onAddToCartMultiple, 
     onBuyMultiple, 
@@ -100,15 +98,29 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
-  const featuredCategories: Category[] = [
-      CATEGORIES.find(c => c.id === 'lv')!,
-      CATEGORIES.find(c => c.id === 'new_feeling')!,
-      CATEGORIES.find(c => c.id === 'mdc')!,
-  ].filter(Boolean);
+  const featuredCategories = CATEGORIES.slice(0, 4);
   
+  /* Handler to open the "Shop the Look" modal */
+  const handleShopTheLook = (post: Post) => {
+    setShoppingPost({ post, type: 'fashion' });
+  };
+
+  /* Handler to open the post detail view (ImageViewModal) */
+  const handleViewPost = (index: number) => {
+    setViewingPostIndex(index);
+  };
+
+  /* Handler to open the comments modal for a specific post */
+  const handleOpenComments = (postId: string) => {
+    const post = posts.find(p => p.id === postId);
+    if (post) {
+      setCommentingPost(post);
+    }
+  };
+
   useEffect(() => {
     const container = scrollContainerRef.current;
-    if (!container || featuredCategories.length === 0) return;
+    if (!container) return;
 
     const observer = new IntersectionObserver(
         (entries) => {
@@ -131,65 +143,22 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
             if (child instanceof Element) observer.unobserve(child);
         });
     };
-  }, [featuredCategories.length]);
+  }, []);
   
-  useEffect(() => {
-    if (commentingPost) {
-        const updatedPost = posts.find(p => p.id === commentingPost.id);
-        if (updatedPost) setCommentingPost(updatedPost);
-        else setCommentingPost(null);
-    }
-  }, [posts, commentingPost]);
-
-  const handlePrev = () => {
-    if (scrollContainerRef.current) {
-        const container = scrollContainerRef.current;
-        const newIndex = Math.max(0, currentIndex - 1);
-        const item = container.children[newIndex] as HTMLElement;
-        if (item) {
-            const scrollLeft = item.offsetLeft - container.offsetLeft - (container.offsetWidth - item.offsetWidth) / 2;
-            container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
-        }
-    }
-  };
-
-  const handleNext = () => {
-      if (scrollContainerRef.current) {
-          const container = scrollContainerRef.current;
-          const newIndex = Math.min(featuredCategories.length - 1, currentIndex + 1);
-          const item = container.children[newIndex] as HTMLElement;
-          if (item) {
-              const scrollLeft = item.offsetLeft - container.offsetLeft - (container.offsetWidth - item.offsetWidth) / 2;
-              container.scrollTo({ left: scrollLeft, behavior: 'smooth' });
-          }
-      }
-  };
-
-  const handleViewPost = (index: number) => setViewingPostIndex(index);
-  const handleClosePostView = () => setViewingPostIndex(null);
-  const handleShopTheLook = (post: Post) => {
-    const type = post.items.length > 0 ? getCategoryTypeFromItem(post.items[0]) : 'fashion';
-    setShoppingPost({ post, type });
-  };
-  const handleOpenComments = (postId: string) => {
-    const postToComment = posts.find(p => p.id === postId);
-    if (postToComment) setCommentingPost(postToComment);
-  };
-
   return (
     <>
       <div className="w-full h-full flex flex-col text-[var(--text-primary)] bg-[var(--bg-main)] animate-fadeIn">
         <Header 
-            title="Feed" 
+            title="FEED" 
             showLogo={true}
             unreadNotificationCount={unreadNotificationCount}
             onNotificationsClick={onNotificationsClick}
             onSearchClick={onSearchClick}
         />
-        <div className="flex-grow pt-16 overflow-y-auto scroll-smooth pb-20">
-          <div className="py-4 border-b border-[var(--border-primary)]">
-            <div className="flex items-start space-x-4 px-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden snap-x snap-mandatory scroll-smooth">
-              {/* Fix: Property 'profile_image_url' does not exist on type 'Profile', using 'avatar_url' instead */}
+        <div className="flex-grow pt-16 overflow-y-auto scroll-smooth pb-24">
+          {/* Stories Bar */}
+          <div className="py-6 border-b border-[var(--border-primary)] bg-[var(--bg-secondary)]/30">
+            <div className="flex items-start space-x-6 px-5 overflow-x-auto scrollbar-hide snap-x snap-mandatory">
               <YourStoryCard profileImage={profile?.avatar_url || null} />
               {stories.map(story => (
                 <StoryCard key={story.id} story={story} />
@@ -197,49 +166,46 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
             </div>
           </div>
           
-          <div className="relative border-b border-[var(--border-primary)] py-4">
-            <div className="px-4 flex justify-between items-center mb-3">
-                <button onClick={onNavigateToAllHighlights} className="text-left hover:opacity-80 transition-opacity">
-                    <h2 className="text-xl font-bold text-[var(--accent-primary)] text-glow tracking-wide">Marcas e produtos</h2>
+          {/* Featured Collections Slider */}
+          <div className="relative py-8 bg-gradient-to-b from-[var(--bg-main)] to-[var(--bg-secondary)]/20">
+            <div className="px-5 flex justify-between items-end mb-6">
+                <div>
+                    <h2 className="text-2xl font-black text-[var(--text-primary)] tracking-tighter uppercase italic leading-none">Explorar</h2>
+                    <p className="text-[10px] font-black text-amber-500 uppercase tracking-[0.3em] mt-2 italic">Marcas em Destaque</p>
+                </div>
+                <button onClick={onNavigateToAllHighlights} className="flex items-center gap-1 text-[11px] font-black text-zinc-400 uppercase tracking-widest hover:text-amber-500 transition-colors">
+                  Ver Tudo
+                  <ChevronRightIcon className="w-3.5 h-3.5" />
                 </button>
-                <button onClick={onNavigateToAllHighlights} className="text-sm font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">Ver todos</button>
             </div>
             <div
                 ref={scrollContainerRef}
-                className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth pb-4 space-x-4 pl-4 pr-16 [&::-webkit-scrollbar]:hidden"
+                className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth pb-6 space-x-5 pl-5 pr-12 scrollbar-hide"
             >
                 {featuredCategories.map((category, index) => (
-                    <div key={category.id} onClick={() => onSelectCategory(category)} className="relative flex-shrink-0 w-[85%] h-80 snap-center" data-index={index}>
-                        <div className="relative w-full h-full rounded-2xl overflow-hidden cursor-pointer group transform hover:scale-[1.02] transition-transform duration-300 shadow-lg shadow-black/30">
+                    <div key={category.id} onClick={() => onSelectCategory(category)} className="relative flex-shrink-0 w-[82%] aspect-[4/5] snap-center" data-index={index}>
+                        <div className="relative w-full h-full rounded-[2.5rem] overflow-hidden cursor-pointer group shadow-2xl transition-all duration-500 hover:scale-[1.02] border-4 border-white dark:border-zinc-800">
                             {category.video ? (
                                 <video src={category.video} autoPlay loop muted playsInline className="w-full h-full object-cover" />
                             ) : (
-                                <img src={category.image} alt={category.name} className="w-full h-full object-cover" />
+                                <img src={category.image} alt={category.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-[2s]" />
                             )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent flex items-end p-5">
-                                <h3 className="text-4xl font-black tracking-tighter uppercase leading-tight text-glow text-white">{category.name}</h3>
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8">
+                                <h3 className="text-4xl font-black tracking-tighter uppercase leading-[0.9] text-white italic drop-shadow-2xl mb-2">{category.name}</h3>
+                                <div className="w-12 h-1 bg-amber-500 rounded-full"></div>
                             </div>
                         </div>
                     </div>
                 ))}
             </div>
-            {currentIndex > 0 && (
-                <button onClick={handlePrev} className="absolute left-1 top-1/2 -translate-y-1/2 mt-2 p-2 bg-black/40 rounded-full hover:bg-black/70 backdrop-blur-sm transition-all z-10">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6 text-[var(--accent-primary)]"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" /></svg>
-                </button>
-            )}
-            {currentIndex < featuredCategories.length - 1 && (
-                <button onClick={handleNext} className="absolute right-1 top-1/2 -translate-y-1/2 mt-2 p-2 bg-black/40 rounded-full hover:bg-black/70 backdrop-blur-sm transition-all z-10">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6 text-[var(--accent-primary)]"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" /></svg>
-                </button>
-            )}
           </div>
           
-          <div className="px-4 pt-4">
-              <h2 className="text-xl font-bold text-[var(--accent-primary)] text-glow tracking-wide">Para você</h2>
+          {/* For You Section */}
+          <div className="px-5 pt-4 pb-2">
+              <h2 className="text-xl font-black text-[var(--text-primary)] tracking-tighter uppercase italic">Para Você</h2>
           </div>
 
-          <div className="space-y-2 pt-2">
+          <div className="space-y-4 pt-2">
             {posts.length > 0 ? (
                 posts.map((post, index) => (
                     <React.Fragment key={post.id}>
@@ -258,21 +224,18 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
                     </React.Fragment>
                 ))
             ) : (
-                <div className="p-10 text-center flex flex-col items-center">
-                    <button 
-                        onClick={onStartCreate}
-                        className="w-20 h-20 bg-[var(--bg-tertiary)] rounded-full flex items-center justify-center mb-4 border-2 border-dashed border-[var(--accent-primary)]/50 hover:bg-[var(--accent-primary)]/10 hover:border-[var(--accent-primary)] transition-all active:scale-95 shadow-lg group"
-                    >
-                        <PlusIcon className="w-10 h-10 text-[var(--accent-primary)] group-hover:scale-110 transition-transform" />
-                    </button>
-                    <p className="text-[var(--text-primary)] font-bold text-lg">Nenhuma publicação ainda.</p>
-                    <p className="text-sm text-[var(--text-secondary)] opacity-70 mt-1 max-w-[200px]">Crie e publique seus looks para que outros vejam!</p>
+                <div className="p-16 text-center flex flex-col items-center opacity-30 grayscale">
+                    <PlusIcon className="w-16 h-16 text-zinc-400 mb-6" strokeWidth={1} />
+                    <p className="text-[10px] font-black uppercase tracking-[0.4em]">Seu Feed está pronto para brilhar</p>
+                    <button onClick={onStartCreate} className="mt-6 text-[11px] font-black uppercase tracking-widest text-amber-500 underline">Criar agora</button>
                 </div>
             )}
           </div>
         </div>
       </div>
-      {viewingPostIndex !== null && <ImageViewModal posts={posts} startIndex={viewingPostIndex} onClose={handleClosePostView} onLike={onLikePost} onItemClick={onItemClick} onViewProfile={onViewProfile} onComment={handleOpenComments} />}
+      
+      {/* Modals remain same functionality, assuming styling is handled in their respective files or global CSS */}
+      {viewingPostIndex !== null && <ImageViewModal posts={posts} startIndex={viewingPostIndex} onClose={() => setViewingPostIndex(null)} onLike={onLikePost} onItemClick={onItemClick} onViewProfile={onViewProfile} onComment={handleOpenComments} />}
       {shoppingPost && <ShopTheLookModal post={shoppingPost.post} postType={shoppingPost.type} onClose={() => setShoppingPost(null)} onAddToCart={(items) => { onAddToCartMultiple(items); setShoppingPost(null); }} onBuyNow={(items) => onBuyMultiple(items)} />}
       {commentingPost && <CommentsModal post={commentingPost} currentUser={profile} onClose={() => setCommentingPost(null)} onAddComment={onAddComment} />}
     </>
