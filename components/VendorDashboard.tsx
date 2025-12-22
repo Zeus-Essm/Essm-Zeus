@@ -4,7 +4,7 @@ import type { BusinessProfile, Item, Profile, Folder, Post, Product } from '../t
 import { 
     MenuIcon, CameraIcon, PlusIcon, StarIcon, 
     BellIcon, ChevronDownIcon, ArchiveIcon, ShoppingBagIcon, RepositionIcon,
-    PencilIcon, UserIcon
+    PencilIcon, UserIcon, ArrowLeftIcon
 } from './IconComponents';
 import GradientButton from './GradientButton';
 import ImageViewModal from './ImageViewModal';
@@ -41,6 +41,8 @@ interface VendorDashboardProps {
   onAddComment: (postId: string, text: string) => void;
   onItemClick: (item: Item) => void;
   onViewProfile: (profileId: string) => void;
+  isVisitor?: boolean;
+  onBack?: () => void;
 }
 
 const FolderCard: React.FC<{ folder: Folder; onClick: () => void }> = ({ folder, onClick }) => (
@@ -81,7 +83,9 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     onLikePost,
     onAddComment,
     onItemClick,
-    onViewProfile
+    onViewProfile,
+    isVisitor = false,
+    onBack
 }) => {
     const [activeTab, setActiveTab] = useState<'shop' | 'posts'>('shop');
     const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
@@ -206,23 +210,32 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     return (
         <div className="w-full h-full flex flex-col bg-white text-zinc-900 overflow-hidden font-sans">
             <header className="px-4 pt-4 pb-2 flex items-center justify-between bg-white shrink-0 z-10 border-b border-zinc-50">
-                <div className="flex items-center gap-1 cursor-pointer active:opacity-60 transition-opacity">
-                    <h1 className="text-lg font-bold tracking-tight text-zinc-900 uppercase italic">
-                        @{profile.username || "loja"}
-                    </h1>
-                    <ChevronDownIcon className="w-3.5 h-3.5 text-zinc-800" strokeWidth={3} />
+                <div className="flex items-center gap-3">
+                    {isVisitor && onBack && (
+                        <button onClick={onBack} className="p-2 -ml-2 rounded-xl bg-zinc-50 text-zinc-400 active:scale-90 transition-all">
+                            <ArrowLeftIcon className="w-5 h-5" />
+                        </button>
+                    )}
+                    <div className="flex items-center gap-1 cursor-pointer active:opacity-60 transition-opacity">
+                        <h1 className="text-lg font-bold tracking-tight text-zinc-900 uppercase italic">
+                            @{profile.username || "loja"}
+                        </h1>
+                        {!isVisitor && <ChevronDownIcon className="w-3.5 h-3.5 text-zinc-800" strokeWidth={3} />}
+                    </div>
                 </div>
-                <div className="flex items-center gap-2">
-                    <button onClick={onOpenPromotionModal} className="p-2 bg-amber-50 rounded-xl text-amber-600 active:scale-90 transition-transform">
-                        <StarIcon className="w-5 h-5" />
-                    </button>
-                    <button onClick={onOpenNotificationsPanel} className="p-2 active:scale-90 transition-transform">
-                        <BellIcon className="w-7 h-7 text-zinc-900" strokeWidth={1.5} />
-                    </button>
-                    <button onClick={onOpenMenu} className="p-2 active:scale-90 transition-transform">
-                        <MenuIcon className="w-7 h-7 text-zinc-900" strokeWidth={2.5} />
-                    </button>
-                </div>
+                {!isVisitor && (
+                    <div className="flex items-center gap-2">
+                        <button onClick={onOpenPromotionModal} className="p-2 bg-amber-50 rounded-xl text-amber-600 active:scale-90 transition-transform">
+                            <StarIcon className="w-5 h-5" />
+                        </button>
+                        <button onClick={onOpenNotificationsPanel} className="p-2 active:scale-90 transition-transform">
+                            <BellIcon className="w-7 h-7 text-zinc-900" strokeWidth={1.5} />
+                        </button>
+                        <button onClick={onOpenMenu} className="p-2 active:scale-90 transition-transform">
+                            <MenuIcon className="w-7 h-7 text-zinc-900" strokeWidth={2.5} />
+                        </button>
+                    </div>
+                )}
             </header>
 
             <main className="flex-grow overflow-y-auto pb-24">
@@ -230,8 +243,8 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                     <div className="flex items-center gap-4 mb-4">
                         <div className="relative shrink-0">
                             <div 
-                                onClick={() => logoInputRef.current?.click()}
-                                className="w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 to-amber-600 shadow-sm cursor-pointer"
+                                onClick={() => !isVisitor && logoInputRef.current?.click()}
+                                className={`w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 to-amber-600 shadow-sm ${!isVisitor ? 'cursor-pointer' : ''}`}
                             >
                                 <div className="w-full h-full rounded-full bg-white p-[2px] overflow-hidden">
                                     <div className="w-full h-full rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center">
@@ -243,12 +256,14 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                     </div>
                                 </div>
                             </div>
-                            <button 
-                                onClick={() => logoInputRef.current?.click()}
-                                className="absolute bottom-0 right-0 w-7 h-7 bg-zinc-800 rounded-full border-2 border-white flex items-center justify-center text-white shadow-md active:scale-90 transition-all"
-                            >
-                                <PlusIcon className="w-3.5 h-3.5" strokeWidth={4} />
-                            </button>
+                            {!isVisitor && (
+                                <button 
+                                    onClick={() => logoInputRef.current?.click()}
+                                    className="absolute bottom-0 right-0 w-7 h-7 bg-zinc-800 rounded-full border-2 border-white flex items-center justify-center text-white shadow-md active:scale-90 transition-all"
+                                >
+                                    <PlusIcon className="w-3.5 h-3.5" strokeWidth={4} />
+                                </button>
+                            )}
                             <input type="file" ref={logoInputRef} onChange={handleLogoChange} className="hidden" accept="image/*" />
                         </div>
 
@@ -257,13 +272,20 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                 <h2 className="font-bold text-md text-zinc-900 truncate uppercase tracking-tighter italic leading-none">
                                     {profile.full_name || profile.username}
                                 </h2>
-                                <button onClick={() => setIsEditingProfile(true)} className="p-1 active:scale-90 transition-transform">
-                                    <PencilIcon className="w-4 h-4 text-zinc-400" />
-                                </button>
+                                {!isVisitor && (
+                                    <button onClick={() => setIsEditingProfile(true)} className="p-1 active:scale-90 transition-transform">
+                                        <PencilIcon className="w-4 h-4 text-zinc-400" />
+                                    </button>
+                                )}
                             </div>
                             <div className="text-[11px] text-zinc-600 font-medium leading-tight line-clamp-3 mt-1 whitespace-pre-line">
                                 {profile.bio || "Bio da loja não definida."}
                             </div>
+                            {isVisitor && (
+                                <button className="mt-3 px-6 py-1.5 bg-zinc-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg active:scale-95 transition-transform">
+                                    Seguir Loja
+                                </button>
+                            )}
                         </div>
                     </div>
 
@@ -323,18 +345,22 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                                     <p className="text-xs font-bold text-white uppercase italic truncate">{product.title}</p>
                                                     <p className="text-[10px] font-bold text-amber-400 mt-0.5">{product.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
                                                 </div>
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); setMovingProduct(product); }}
-                                                    className="absolute top-2 right-2 p-1.5 bg-black/40 backdrop-blur-sm rounded-lg text-white opacity-0 group-hover:opacity-100 transition-all"
-                                                >
-                                                    <RepositionIcon className="w-3.5 h-3.5" />
-                                                </button>
+                                                {!isVisitor && (
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); setMovingProduct(product); }}
+                                                        className="absolute top-2 right-2 p-1.5 bg-black/40 backdrop-blur-sm rounded-lg text-white opacity-0 group-hover:opacity-100 transition-all"
+                                                    >
+                                                        <RepositionIcon className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
                                             </div>
                                         ))}
-                                        <button onClick={() => setIsAddingItem(true)} className="aspect-[4/5] border-2 border-dashed border-zinc-100 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-zinc-50 transition-colors">
-                                            <PlusIcon className="w-6 h-6 text-zinc-300" strokeWidth={3} />
-                                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Novo Item</span>
-                                        </button>
+                                        {!isVisitor && (
+                                            <button onClick={() => setIsAddingItem(true)} className="aspect-[4/5] border-2 border-dashed border-zinc-100 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-zinc-50 transition-colors">
+                                                <PlusIcon className="w-6 h-6 text-zinc-300" strokeWidth={3} />
+                                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Novo Item</span>
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ) : (
@@ -342,13 +368,15 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                     {folders.map(folder => (
                                         <FolderCard key={folder.id} folder={folder} onClick={() => setSelectedFolderId(folder.id)} />
                                     ))}
-                                    <button 
-                                        onClick={() => setIsCreatingFolder(true)}
-                                        className="h-56 border-2 border-dashed border-zinc-100 rounded-xl flex flex-col items-center justify-center gap-2 bg-zinc-50/50 hover:bg-zinc-50 transition-colors"
-                                    >
-                                        <PlusIcon className="w-6 h-6 text-zinc-300" strokeWidth={3} />
-                                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Nova Coleção</span>
-                                    </button>
+                                    {!isVisitor && (
+                                        <button 
+                                            onClick={() => setIsCreatingFolder(true)}
+                                            className="h-56 border-2 border-dashed border-zinc-100 rounded-xl flex flex-col items-center justify-center gap-2 bg-zinc-50/50 hover:bg-zinc-50 transition-colors"
+                                        >
+                                            <PlusIcon className="w-6 h-6 text-zinc-300" strokeWidth={3} />
+                                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Nova Coleção</span>
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -399,7 +427,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                 />
             )}
 
-            {isEditingProfile && (
+            {isEditingProfile && !isVisitor && (
                 <BioEditModal 
                     profile={profile}
                     onClose={() => setIsEditingProfile(false)}
@@ -410,7 +438,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                 />
             )}
 
-            {isCreatingFolder && (
+            {isCreatingFolder && !isVisitor && (
                 <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-md flex items-center justify-center p-6 animate-fadeIn" onClick={() => setIsCreatingFolder(false)}>
                     <div className="w-full max-w-sm bg-white rounded-[2.5rem] p-8 flex flex-col gap-6 animate-modalZoomIn shadow-2xl" onClick={e => e.stopPropagation()}>
                         <div className="text-center">
@@ -438,7 +466,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                 </div>
             )}
 
-            {isAddingItem && (
+            {isAddingItem && !isVisitor && (
                 <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-md flex items-end animate-fadeIn" onClick={() => setIsAddingItem(false)}>
                     <div className="w-full max-h-[95vh] bg-white rounded-t-[2.5rem] p-8 flex flex-col gap-6 animate-slideUp overflow-y-auto" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center">
@@ -550,7 +578,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                 </div>
             )}
 
-            {movingProduct && (
+            {movingProduct && !isVisitor && (
                 <div className="fixed inset-0 z-[210] bg-black/70 backdrop-blur-md flex items-center justify-center p-6 animate-fadeIn" onClick={() => setMovingProduct(null)}>
                     <div className="bg-white rounded-[2.5rem] w-full max-sm p-8 flex flex-col gap-6 animate-modalZoomIn shadow-2xl" onClick={e => e.stopPropagation()}>
                         <div className="text-center">

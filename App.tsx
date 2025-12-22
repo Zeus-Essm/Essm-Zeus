@@ -43,6 +43,9 @@ const App: React.FC = () => {
     const [authLoading, setAuthLoading] = useState(true);
     const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Splash);
     const [viewedProfileId, setViewedProfileId] = useState<string | null>(null);
+    const [viewedProfileData, setViewedProfileData] = useState<Profile | null>(null);
+    const [viewedFolders, setViewedFolders] = useState<Folder[]>([]);
+    const [viewedProducts, setViewedProducts] = useState<Product[]>([]);
     const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
     const [cartItems, setCartItems] = useState<Item[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -163,7 +166,7 @@ const App: React.FC = () => {
             setFolders([]);
             setBusinessProfile(null);
             setCartItems([]);
-            setCurrentScreen(Screen.Login); // Inicia sempre no Login se deslogado
+            setCurrentScreen(Screen.Login);
         }
         setAuthLoading(false);
     };
@@ -181,6 +184,32 @@ const App: React.FC = () => {
 
         return () => listener.subscription.unsubscribe();
     }, []);
+
+    // Monitoramento de troca de perfil visualizado
+    useEffect(() => {
+        const loadViewedProfileData = async () => {
+            if (!viewedProfileId) {
+                setViewedProfileData(null);
+                return;
+            }
+            
+            setIsLoading(true);
+            try {
+                const { data: profileData } = await supabase.from('profiles').select('*').eq('user_id', viewedProfileId).single();
+                if (profileData) {
+                    setViewedProfileData(profileData);
+                    const [f, p] = await Promise.all([fetchFolders(viewedProfileId), fetchAllProducts(viewedProfileId)]);
+                    setViewedFolders(f);
+                    setViewedProducts(p);
+                }
+            } catch (e) {
+                console.error("Erro ao carregar perfil externo");
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        loadViewedProfileData();
+    }, [viewedProfileId]);
 
     const handleCreateFolder = async (title: string) => {
         if (!profile) return;
@@ -275,6 +304,31 @@ const App: React.FC = () => {
 
     const renderScreen = () => {
         if (authLoading || currentScreen === Screen.Splash) return <SplashScreen />;
+        
+        // INTERCEPTOR DE PERFIL: Lógica de troca total de UI
+        if (viewedProfileId && viewedProfileData) {
+            if (viewedProfileData.account_type === 'business') {
+                return (
+                    <VendorDashboard 
+                        businessProfile={{ id: viewedProfileData.user_id, business_name: viewedProfileData.full_name || viewedProfileData.username, business_category: 'fashion', description: viewedProfileData.bio || '', logo_url: viewedProfileData.avatar_url || '' }}
+                        profile={viewedProfileData} 
+                        onOpenMenu={() => {}} 
+                        unreadNotificationCount={0} onOpenNotificationsPanel={() => {}} 
+                        onOpenPromotionModal={() => {}} followersCount={0} followingCount={0} 
+                        folders={viewedFolders} products={viewedProducts} posts={posts} 
+                        onCreateFolder={() => {}} onCreateProductInFolder={async () => {}}
+                        onMoveProductToFolder={async () => {}} 
+                        onUpdateProfile={() => {}} onUpdateProfileImage={() => {}} 
+                        onNavigateToProducts={() => {}} 
+                        onLikePost={handleLikePost} onAddComment={() => {}} onItemClick={setRecommendationItem} onViewProfile={setViewedProfileId}
+                        isVisitor={true} onBack={() => setViewedProfileId(null)}
+                    />
+                );
+            } else {
+                return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} realBusinesses={realBusinesses} onUpdateProfile={() => {}} onUpdateProfileImage={() => {}} onSelectCategory={(cat) => setViewedProfileId(cat.id)} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => {}} onStartTryOn={() => {}} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={setViewedProfileId} onNavigateToSettings={handleOpenSettings} onSignOut={() => supabase.auth.signOut()} unreadNotificationCount={0} unreadMessagesCount={0} onOpenNotificationsPanel={() => {}} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} onLikePost={handleLikePost} onAddComment={() => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
+            }
+        }
+
         switch (currentScreen) {
             case Screen.Login: return <LoginScreen />;
             case Screen.AccountTypeSelection: return <AccountTypeSelectionScreen onSelect={async (type) => { 
@@ -310,9 +364,9 @@ const App: React.FC = () => {
                     onLikePost={handleLikePost} onAddComment={() => {}} onItemClick={setRecommendationItem} onViewProfile={setViewedProfileId}
                 />
             );
-            case Screen.Feed: return profile && <FeedScreen posts={posts} stories={[]} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={setRecommendationItem} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={(cat) => { setViewedProfileId(cat.id); setCurrentScreen(Screen.Home); }} onLikePost={handleLikePost} onAddComment={() => {}} onNavigateToAllHighlights={() => {}} onStartCreate={() => {}} unreadNotificationCount={unreadCount} onNotificationsClick={handleOpenNotifications} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
+            case Screen.Feed: return profile && <FeedScreen posts={posts} stories={[]} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={setRecommendationItem} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={(cat) => { setViewedProfileId(cat.id); }} onLikePost={handleLikePost} onAddComment={() => {}} onNavigateToAllHighlights={() => {}} onStartCreate={() => {}} unreadNotificationCount={unreadCount} onNotificationsClick={handleOpenNotifications} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
             case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} realBusinesses={realBusinesses} onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={handleUpdateProfileImage} onSelectCategory={(cat) => setViewedProfileId(cat.id)} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => {}} onStartTryOn={() => {}} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={setViewedProfileId} onNavigateToSettings={handleOpenSettings} onSignOut={() => supabase.auth.signOut()} unreadNotificationCount={unreadCount} unreadMessagesCount={0} onOpenNotificationsPanel={handleOpenNotifications} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} onLikePost={handleLikePost} onAddComment={() => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
-            case Screen.Search: return <SearchScreen onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} posts={posts} items={[]} onViewProfile={(id) => { setViewedProfileId(id); setCurrentScreen(Screen.Home); }} onLikePost={handleLikePost} onItemClick={setRecommendationItem} onItemAction={setRecommendationItem} onOpenSplitCamera={() => {}} onOpenComments={handleLikePost} onAddToCart={(i) => setCartItems(p => [...p, i])} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
+            case Screen.Search: return <SearchScreen onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} posts={posts} items={[]} onViewProfile={(id) => { setViewedProfileId(id); }} onLikePost={handleLikePost} onItemClick={setRecommendationItem} onItemAction={setRecommendationItem} onOpenSplitCamera={() => {}} onOpenComments={handleLikePost} onAddToCart={(i) => setCartItems(p => [...p, i])} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
             default: return <SplashScreen />;
         }
     };
@@ -324,10 +378,10 @@ const App: React.FC = () => {
             {isNotificationsOpen && <NotificationsPanel notifications={notifications} onClose={handleCloseNotifications} onNotificationClick={() => {}} />}
             {isSettingsOpen && profile && <SettingsPanel profile={profile} theme={theme} onToggleTheme={toggleTheme} onClose={handleCloseSettings} onSignOut={() => supabase.auth.signOut()} onNavigateToVerification={() => {}} />}
             {profile && [Screen.Feed, Screen.Home, Screen.Cart, Screen.Search, Screen.VendorDashboard, Screen.VendorAnalytics, Screen.VendorProducts].includes(currentScreen) && (
-                <BottomNavBar activeScreen={currentScreen} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToPromotion={() => {}} onNavigateToProfile={() => { 
+                <BottomNavBar activeScreen={currentScreen} onNavigateToFeed={() => { setViewedProfileId(null); setCurrentScreen(Screen.Feed); }} onNavigateToCart={() => { setViewedProfileId(null); setCurrentScreen(Screen.Cart); }} onNavigateToPromotion={() => {}} onNavigateToProfile={() => { 
+                        setViewedProfileId(null);
                         if (profile.account_type === 'business') setCurrentScreen(Screen.VendorDashboard);
                         else setCurrentScreen(Screen.Home);
-                        setViewedProfileId(null); 
                     }} onStartTryOn={() => {}} isCartAnimating={false} accountType={profile.account_type} onNavigateToVendorAnalytics={() => {}} />
             )}
             {isLoading && <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center"><div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div></div>}
