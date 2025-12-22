@@ -18,7 +18,6 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
   const cardRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [showAllComments, setShowAllComments] = useState(false);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -27,13 +26,10 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          // Attempt to play with sound. This may be blocked by the browser.
           video.muted = false;
           const playPromise = video.play();
           if (playPromise !== undefined) {
-            playPromise.catch(error => {
-              // Autoplay with sound failed. Play muted instead.
-              console.log("Autoplay with sound was prevented. Playing muted.", error);
+            playPromise.catch(() => {
               video.muted = true;
               video.play();
             });
@@ -42,68 +38,53 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
           video.pause();
         }
       },
-      { threshold: 0.5 } // Trigger when 50% of the video is visible/hidden
+      { threshold: 0.5 }
     );
 
     const currentCardRef = cardRef.current;
-    if (currentCardRef) {
-      observer.observe(currentCardRef);
-    }
-
+    if (currentCardRef) observer.observe(currentCardRef);
     return () => {
-      if (currentCardRef) {
-        observer.unobserve(currentCardRef);
-      }
+      if (currentCardRef) observer.unobserve(currentCardRef);
     };
   }, []);
 
   const handleVideoClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent triggering other click handlers
+    e.stopPropagation();
     if (videoRef.current) {
-      const video = videoRef.current;
-      if (video.paused) {
-        video.muted = false; // Always try to play with sound on user interaction
-        video.play();
+      if (videoRef.current.paused) {
+        videoRef.current.muted = false;
+        videoRef.current.play();
       } else {
-        video.pause();
+        videoRef.current.pause();
       }
     }
   };
 
   const handleProgress = () => {
     if (videoRef.current?.duration) {
-      const value = (videoRef.current.currentTime / videoRef.current.duration) * 100;
-      setProgress(value);
+      setProgress((videoRef.current.currentTime / videoRef.current.duration) * 100);
     }
   };
 
-  const positionClasses: Record<string, string> = {
-    'top-left': 'top-4 left-4',
-    'top-right': 'top-4 right-4',
-    'bottom-left': 'bottom-4 left-4',
-    'bottom-right': 'bottom-4 right-4',
-  };
-
-
   return (
-    <div ref={cardRef} className="bg-[var(--bg-main)] flex flex-col animate-fadeIn border-b border-[var(--border-primary)]">
-      {/* Card Header */}
-      <button onClick={onViewProfile} className="p-3 flex items-center gap-3 text-left hover:bg-[var(--accent-primary)]/10 transition-colors">
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center border-2 border-zinc-700">
+    <div ref={cardRef} className="bg-white flex flex-col animate-fadeIn">
+      {/* Card Header - Matches Screenshot */}
+      <button onClick={onViewProfile} className="px-4 py-3 flex items-center gap-3 text-left">
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center border border-zinc-100 shadow-sm">
             {post.user.avatar ? (
                 <img src={post.user.avatar} alt={post.user.name} className="w-full h-full object-cover" />
             ) : (
-                <UserIcon className="w-6 h-6 text-[var(--text-secondary)] opacity-50" />
+                <UserIcon className="w-6 h-6 text-zinc-300" />
             )}
         </div>
-        <div>
-            <span className="font-bold text-sm text-black">{post.user.name}</span>
-            {post.isSponsored && <p className="text-xs text-zinc-900 font-medium">Patrocinado</p>}
+        <div className="flex flex-col">
+            <span className="font-bold text-[14px] text-zinc-900 leading-tight">{post.user.name}</span>
+            {post.isSponsored && <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Patrocinado</p>}
         </div>
       </button>
 
-      {/* Post Image or Video */}
-      <div className={`relative bg-black overflow-hidden w-full ${post.video ? 'aspect-[9/16]' : ''}`}>
+      {/* Post Content */}
+      <div className={`relative bg-zinc-50 overflow-hidden w-full ${post.video ? 'aspect-[9/16]' : 'min-h-[400px]'}`}>
         {post.video ? (
             <>
                 <video
@@ -118,101 +99,48 @@ const PostCard: React.FC<PostCardProps> = ({ post, onLike, onItemClick, onShopTh
                     poster={post.image}
                     className="w-full h-full object-cover cursor-pointer"
                 />
-                
-                {/* Product Overlay for specific layout */}
-                {post.layout === 'product-overlay' && post.items.length > 0 && (
-                    <div 
-                        className={`absolute z-20 w-40 h-40 p-1 bg-black/40 backdrop-blur-md rounded-xl border border-white/20 shadow-lg cursor-pointer transition-transform hover:scale-105 active:scale-95 ${positionClasses[post.overlayPosition || 'bottom-right']}`}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onItemClick(post.items[0]);
-                        }}
-                    >
-                        <img 
-                            src={post.items[0].image} 
-                            alt={post.items[0].name} 
-                            className="w-full h-full object-cover rounded-lg"
-                        />
-                        <div className="absolute bottom-0 right-0 bg-[var(--accent-primary)] text-black text-[10px] font-bold px-1.5 py-0.5 rounded-tl-lg rounded-br-lg">
-                            Ver
-                        </div>
-                    </div>
-                )}
-
-                <div 
-                  onClick={handleVideoClick}
-                  className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${!isPlaying ? 'opacity-100 bg-black/20' : 'opacity-0'}`}
-                >
-                  {!isPlaying && <PlayIcon className="w-16 h-16 text-white/80 drop-shadow-lg" />}
+                <div onClick={handleVideoClick} className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 ${!isPlaying ? 'opacity-100 bg-black/20' : 'opacity-0'}`}>
+                  {!isPlaying && <PlayIcon className="w-12 h-12 text-white/90 drop-shadow-md" />}
                 </div>
-                {/* Progress bar */}
-                <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/30">
-                    <div className="h-full bg-white transition-all duration-100 ease-linear" style={{ width: `${progress}%` }}></div>
+                <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
+                    <div className="h-full bg-amber-500 transition-all duration-100 ease-linear" style={{ width: `${progress}%` }}></div>
                 </div>
             </>
         ) : (
             <div onClick={onImageClick} className="w-full cursor-pointer">
-                <img src={post.image} alt={`Look by ${post.user.name}`} className="w-full h-auto object-contain max-h-[600px] bg-[var(--bg-secondary)]" />
+                <img src={post.image} alt="" className="w-full h-auto block" />
             </div>
         )}
       </div>
 
-      {/* Action Buttons & Likes */}
-      <div className="p-3">
-        <div className="flex items-center gap-4">
-          <button onClick={onLike} className="transform hover:scale-110 transition-transform" aria-label="Curtir">
+      {/* Action Buttons */}
+      <div className="p-4 border-b border-zinc-50">
+        <div className="flex items-center gap-5">
+          <button onClick={onLike} className="active:scale-90 transition-transform">
             <HeartIcon 
-              className={`w-7 h-7 ${post.isLiked ? 'text-[var(--accent-primary)]' : 'text-black'}`} 
+              className={`w-7 h-7 ${post.isLiked ? 'text-amber-500' : 'text-zinc-800'}`} 
               fill={post.isLiked ? 'currentColor' : 'none'}
+              strokeWidth={1.8}
             />
           </button>
-           <button onClick={onComment} className="transform hover:scale-110 transition-transform" aria-label="Comentar">
-            <ChatBubbleIcon className="w-7 h-7 text-black" />
+           <button onClick={onComment} className="active:scale-90 transition-transform">
+            <ChatBubbleIcon className="w-7 h-7 text-zinc-800" strokeWidth={1.8} />
           </button>
-          <button onClick={onShopTheLook} className="transform hover:scale-110 transition-transform" aria-label="Comprar o look">
-            <ShoppingBagIcon className="w-7 h-7 text-black" />
+          <button onClick={onShopTheLook} className="active:scale-90 transition-transform">
+            <ShoppingBagIcon className="w-7 h-7 text-zinc-800" strokeWidth={1.8} />
           </button>
         </div>
-        <p className="text-sm font-bold mt-2 text-black">{post.likes.toLocaleString()} curtidas</p>
-      </div>
-
-      {/* Caption & Comments Section */}
-      <div className="px-3 pb-4 text-sm space-y-1.5 text-black">
-        {post.items.length > 0 && (
-          <p>
-            <span className="mr-1 text-black font-medium">
-                {post.video ? 'Apresentando ' : 'Vestindo '}
-            </span>
-            {post.items.map((item, index) => (
-            <React.Fragment key={item.id}>
-                <button
-                    onClick={() => onItemClick(item)}
-                    className="font-bold text-black hover:underline focus:outline-none"
-                >
-                {item.name}
-                </button>
-                {index < post.items.length - 1 ? ', ' : ''}
-            </React.Fragment>
-            ))}
-          </p>
-        )}
-        <p>
-            <button onClick={onViewProfile} className="font-bold mr-2 hover:underline text-black">{post.user.name}</button>
-            {post.caption && <span className="font-normal text-black">{post.caption}</span>}
-        </p>
-
-        {/* Comments */}
-        <div className="space-y-1">
-            {(showAllComments ? post.comments : post.comments.slice(0, 2)).map(comment => (
-                <p key={comment.id} className="text-black">
-                    <span className="font-bold text-black mr-2">{comment.user.name}</span>
-                    {comment.text}
-                </p>
-            ))}
-        </div>
+        <p className="text-[13px] font-bold mt-2.5 text-zinc-900">{post.likes.toLocaleString()} curtidas</p>
         
-        {post.commentCount > 2 && !showAllComments && (
-            <button onClick={() => setShowAllComments(true)} className="text-black font-medium hover:underline opacity-80">
+        {post.caption && (
+            <div className="mt-1 text-[13px] leading-relaxed">
+                <span className="font-bold mr-2">{post.user.name}</span>
+                <span className="text-zinc-700">{post.caption}</span>
+            </div>
+        )}
+        
+        {post.commentCount > 0 && (
+            <button onClick={onComment} className="mt-1 text-[13px] font-medium text-zinc-400 hover:text-zinc-600 transition-colors">
                 Ver todos os {post.commentCount} comentários
             </button>
         )}
