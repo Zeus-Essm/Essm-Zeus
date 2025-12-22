@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
-// Added Comment and User to imports from types
 import { Screen, Category, Item, Post, Profile, BusinessProfile, Folder, ShowcaseItem, AppNotification, Comment, User } from './types';
 import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, MALE_CLOTHING_SUBCATEGORIES } from './constants';
 
@@ -196,11 +195,14 @@ const App: React.FC = () => {
     const handleCreateFolder = async (title: string) => {
         if (!profile) return;
         if (profile.user_id.startsWith('temp_')) {
+            // Updated mockFolder properties to match updated Folder interface
             const mockFolder: Folder = {
                 id: `temp_${Date.now()}`,
                 title,
                 owner_id: profile.user_id,
-                item_count: 0
+                item_count: 0,
+                created_at: new Date().toISOString(),
+                cover_image: null
             };
             setFolders(p => [mockFolder, ...p]);
             return;
@@ -214,80 +216,84 @@ const App: React.FC = () => {
                 .select().single();
             if (error) throw error;
             setFolders(p => [data, ...p]);
+            setShowUpdateBadge(true);
+            setTimeout(() => setShowUpdateBadge(false), 3000);
         } catch (err: any) {
-            alert(`Erro: ${err.message}`);
+            console.error(err.message);
+            alert("Erro ao criar pasta no Supabase.");
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleAddProductToFolder = async (folderId: string, details: { title: string, description: string, price: number, file: Blob }) => {
-        if (!profile) return;
+        if (!profile || !session?.user) return;
         setIsLoading(true);
         try {
-            let imageUrl = '';
-            if (!profile.user_id.startsWith('temp_')) {
-                const fileName = `${profile.user_id}/${Date.now()}_${details.title.replace(/\s/g, '_')}.jpg`;
-                const { error: uploadError } = await supabase.storage.from('products').upload(fileName, details.file);
-                if (uploadError) throw uploadError;
-                const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
-                imageUrl = publicUrl;
+            // 1. Upload da imagem para o bucket 'products'
+            const fileExt = details.file.type.split('/')[1] || 'jpg';
+            const fileName = `${profile.user_id}/${Date.now()}_${details.title.replace(/\s/g, '_')}.${fileExt}`;
+            
+            const { error: uploadError } = await supabase.storage
+                .from('products')
+                .upload(fileName, details.file);
 
-                const { data: product, error: dbError } = await supabase.from('products').insert({
+            if (uploadError) throw uploadError;
+
+            // 2. Pegar URL Pública
+            const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
+
+            // 3. Salvar metadados no Database
+            const { data: productData, error: dbError } = await supabase
+                .from('products')
+                .insert({
                     title: details.title,
                     description: details.description,
                     price: details.price,
-                    image_url: imageUrl,
+                    image_url: publicUrl,
                     folder_id: folderId,
                     owner_id: profile.user_id
-                }).select().single();
-                if (dbError) throw dbError;
+                })
+                .select()
+                .single();
 
-                // Atualiza contagem na pasta
-                await supabase.rpc('increment_folder_count', { row_id: folderId });
+            if (dbError) throw dbError;
 
-                const newItem: Item = {
-                    id: product.id,
-                    name: product.title,
-                    description: product.description,
-                    price: product.price,
-                    image: product.image_url,
-                    category: 'general',
-                    owner_id: profile.user_id,
-                    folder_id: folderId
-                };
-                setProducts(p => [newItem, ...p]);
-                setFolders(f => f.map(fold => fold.id === folderId ? { ...fold, item_count: fold.item_count + 1, cover_image: fold.cover_image || imageUrl } : fold));
-            } else {
-                // Mock para usuários não logados
-                imageUrl = URL.createObjectURL(details.file);
-                const mockItem: Item = {
-                    id: `temp_p_${Date.now()}`,
-                    name: details.title,
-                    description: details.description,
-                    price: details.price,
-                    image: imageUrl,
-                    category: 'general',
-                    owner_id: profile.user_id,
-                    folder_id: folderId
-                };
-                setProducts(p => [mockItem, ...p]);
-                setFolders(f => f.map(fold => fold.id === folderId ? { ...fold, item_count: fold.item_count + 1, cover_image: fold.cover_image || imageUrl } : fold));
-            }
+            // 4. Opcional: Incrementar contagem da pasta via RPC
+            await supabase.rpc('increment_folder_count', { row_id: folderId }).catch(() => {});
+
+            // 5. Atualizar UI
+            const newItem: Item = {
+                id: productData.id,
+                name: productData.title,
+                description: productData.description || '',
+                price: productData.price,
+                image: productData.image_url,
+                category: 'general',
+                owner_id: profile.user_id,
+                folder_id: folderId
+            };
+
+            setProducts(p => [newItem, ...p]);
+            setFolders(f => f.map(fold => fold.id === folderId ? { 
+                ...fold, 
+                item_count: (fold.item_count || 0) + 1,
+                cover_image: fold.cover_image || newItem.image
+            } : fold));
+            
+            setShowUpdateBadge(true);
+            setTimeout(() => setShowUpdateBadge(false), 3000);
+            return productData;
         } catch (err: any) {
-            alert(`Erro ao adicionar produto: ${err.message}`);
+            console.error(err.message);
+            alert("Erro ao salvar produto no Supabase.");
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleUpdateProfile = async (updates: { username?: string, bio?: string, name?: string }) => {
-        if (!profile) return;
-        if (profile.user_id.startsWith('temp_')) {
-            setProfile(p => p ? { ...p, ...updates } : null);
-            return;
-        }
-
+        if (!profile || !session?.user) return;
         setIsLoading(true);
         try {
             const { data, error } = await supabase
@@ -302,22 +308,24 @@ const App: React.FC = () => {
 
             if (error) throw error;
             setProfile(data);
+            if (profile.account_type === 'business') {
+                setBusinessProfile(prev => prev ? {
+                    ...prev,
+                    business_name: data.full_name || data.username,
+                    description: data.bio || ''
+                } : null);
+            }
             setShowUpdateBadge(true);
             setTimeout(() => setShowUpdateBadge(false), 3000);
         } catch (err: any) {
-            alert(`Erro ao atualizar: ${err.message}`);
+            alert(`Erro: ${err.message}`);
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleUpdateProfileImage = async (dataUrl: string) => {
-        if (!profile) return;
-        if (profile.user_id.startsWith('temp_')) {
-            setProfile(p => p ? { ...p, avatar_url: dataUrl } : null);
-            return;
-        }
-
+        if (!profile || !session?.user) return;
         setIsLoading(true);
         try {
             const blob = await dataUrlToBlob(dataUrl);
@@ -330,13 +338,12 @@ const App: React.FC = () => {
             if (dbError) throw dbError;
             setProfile(data);
         } catch (err: any) {
-            alert(`Erro no upload: ${err.message}`);
+            alert(`Erro: ${err.message}`);
         } finally {
             setIsLoading(false);
         }
     };
 
-    // Implemented handleLikePost and handleAddComment to fix missing reference errors
     const handleLikePost = (postId: string) => {
         setPosts(prev => prev.map(p => {
             if (p.id === postId) {

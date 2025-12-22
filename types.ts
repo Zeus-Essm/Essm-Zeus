@@ -9,11 +9,22 @@ export interface User {
 
 export interface Folder {
   id: string;
-  title: string;
   owner_id: string;
-  cover_image?: string;
+  title: string;
+  cover_image: string | null;
   item_count: number;
-  created_at?: string;
+  created_at: string;
+}
+
+export interface Product {
+  id: string;
+  owner_id: string;
+  folder_id: string | null;
+  title: string;
+  description: string | null;
+  price: number;
+  image_url: string;
+  created_at: string;
 }
 
 export interface ShowcaseItem {
