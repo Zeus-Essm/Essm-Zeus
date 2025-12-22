@@ -1,7 +1,5 @@
-
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
-import GradientButton from './GradientButton';
 import { GoogleIcon } from './IconComponents';
 import { toast } from '../utils/toast';
 
@@ -9,143 +7,118 @@ const LoginScreen: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState<string | null>(null);
     const [isSignUp, setIsSignUp] = useState(false);
 
     const handleAuth = async (event: React.FormEvent) => {
         event.preventDefault();
         setLoading(true);
-        setError(null);
 
         try {
             if (isSignUp) {
                 const { error } = await supabase.auth.signUp({ email, password });
                 if (error) throw error;
-                toast('Verifique seu e-mail para o link de confirmação!');
+                toast('Verifique seu e-mail para confirmar o cadastro!');
             } else {
                 const { error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
             }
         } catch (err: any) {
-            setError(err.message || 'Ocorreu um erro inesperado.');
+            toast.error(err.message || 'Erro na autenticação');
         } finally {
             setLoading(false);
         }
     };
     
-    const handleSocialLogin = async (provider: 'google') => {
+    const handleSocialLogin = async () => {
         setLoading(true);
-        setError(null);
         try {
             const { error } = await supabase.auth.signInWithOAuth({
-                provider: provider,
-                options: {
-                    redirectTo: window.location.origin, 
-                },
+                provider: 'google',
+                options: { redirectTo: window.location.origin }
             });
             if (error) throw error;
         } catch (err: any) {
-            setError(err.message || 'Ocorreu um erro inesperado.');
+            toast.error(err.message || 'Erro ao entrar com Google');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="relative flex flex-col items-center justify-center min-h-full w-full bg-[#FFFFFF] overflow-hidden p-8 animate-fadeIn font-sans">
-            <div className="w-full max-sm z-10">
-                <div className="text-center mb-10 flex flex-col items-center">
-                    <img 
-                      src="https://i.postimg.cc/L4190LN2/PUMP_startup_2.png" 
-                      alt="PUMP Logo" 
-                      className="h-16 w-auto mb-6 animate-logo-pulse" 
-                    />
-                    {isSignUp && (
-                      <div className="animate-slideUp">
-                        <h1 className="text-4xl font-bold text-[#F59E0B] leading-tight mb-2">
-                            Criar Conta
-                        </h1>
-                        <p className="text-lg text-zinc-500">
-                            Preencha os dados para começar.
-                        </p>
-                      </div>
-                    )}
-                </div>
+        <div className="relative flex flex-col items-center justify-between min-h-full w-full bg-[#FFFFFF] p-8 animate-fadeIn font-sans">
+            {/* Top Section: Logo */}
+            <div className="flex-grow flex flex-col items-center justify-center w-full max-w-sm">
+                <img 
+                    src="https://i.postimg.cc/L4190LN2/PUMP_startup_2.png" 
+                    alt="PUMP Logo" 
+                    className="h-16 w-auto mb-16 animate-logo-pulse" 
+                />
 
-                {error && (
-                    <div className="bg-red-500/5 border border-red-500/10 text-red-500 p-4 rounded-2xl mb-6 text-xs font-bold animate-slideUp flex items-center gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></div>
-                        {error}
-                    </div>
-                )}
-
-                <form onSubmit={handleAuth} className="space-y-5">
-                    <div className="space-y-1.5">
-                        <label className="text-[11px] font-black uppercase text-zinc-400 ml-4 tracking-[0.15em]">E-mail</label>
+                {/* Form Section */}
+                <form onSubmit={handleAuth} className="w-full space-y-6">
+                    <div className="space-y-2">
+                        <label className="text-[11px] font-black uppercase text-[#94a3b8] ml-4 tracking-[0.2em]">E-mail</label>
                         <input
                             type="email"
                             placeholder="exemplo@email.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:border-[#F59E0B]/40 focus:bg-white focus:outline-none transition-all text-sm font-semibold text-zinc-900 placeholder:text-zinc-300 shadow-sm"
-                            disabled={loading}
+                            className="w-full p-5 bg-[#f8fafc] rounded-[1.2rem] border border-transparent focus:bg-white focus:border-[#F59E0B]/30 focus:outline-none transition-all text-sm font-semibold text-zinc-900 placeholder:text-[#cbd5e1]"
                             required
                         />
                     </div>
                     
-                    <div className="space-y-1.5">
-                         <div className="flex justify-between items-center px-4">
-                            <label className="text-[11px] font-black uppercase text-zinc-400 tracking-[0.15em]">Senha</label>
-                            {!isSignUp && <button type="button" className="text-[10px] font-black uppercase text-[#F59E0B] hover:text-amber-700 transition-colors">Esqueci</button>}
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-center px-4">
+                            <label className="text-[11px] font-black uppercase text-[#94a3b8] tracking-[0.2em]">Senha</label>
+                            <button type="button" className="text-[10px] font-black uppercase text-[#F59E0B] tracking-[0.1em]">Esqueci</button>
                         </div>
                         <input
                             type="password"
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:border-[#F59E0B]/40 focus:bg-white focus:outline-none transition-all text-sm font-semibold text-zinc-900 placeholder:text-zinc-300 shadow-sm"
-                            disabled={loading}
+                            className="w-full p-5 bg-[#f8fafc] rounded-[1.2rem] border border-transparent focus:bg-white focus:border-[#F59E0B]/30 focus:outline-none transition-all text-sm font-semibold text-zinc-900 placeholder:text-[#cbd5e1]"
                             required
                         />
                     </div>
 
-                    <div className="pt-4">
-                        <button 
-                            type="submit" 
-                            disabled={loading}
-                            className="w-full py-4 bg-[#F59E0B] hover:bg-amber-400 text-white font-black uppercase text-xs tracking-[0.2em] rounded-2xl shadow-[0_10px_20px_rgba(245,158,11,0.2)] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            {loading ? 'Processando...' : (isSignUp ? 'Finalizar Cadastro' : 'Entrar agora')}
-                        </button>
-                    </div>
+                    <button 
+                        type="submit" 
+                        disabled={loading}
+                        className="w-full py-5 mt-4 bg-[#F59E0B] hover:bg-[#D97706] text-white font-black uppercase text-[11px] tracking-[0.3em] rounded-[1.2rem] shadow-[0_12px_24px_rgba(245,158,11,0.25)] active:scale-[0.97] transition-all disabled:opacity-50"
+                    >
+                        {loading ? 'CARREGANDO...' : (isSignUp ? 'CRIAR MINHA CONTA' : 'ENTRAR AGORA')}
+                    </button>
                 </form>
 
-                <div className="mt-8 flex flex-col items-center gap-6">
+                <div className="w-full mt-10 text-center space-y-8">
                     <button
                         onClick={() => setIsSignUp(!isSignUp)}
-                        className="text-[11px] font-black uppercase tracking-[0.1em] text-zinc-400 hover:text-zinc-800 transition-colors"
+                        className="text-[10px] font-black uppercase tracking-[0.15em] text-[#94a3b8] hover:text-zinc-800 transition-colors"
                     >
-                        {isSignUp ? 'Já possui conta? Entrar agora' : 'Não tem conta? Cadastre-se grátis'}
+                        {isSignUp ? 'JÁ TEM CONTA? ENTRAR AGORA' : 'NÃO TEM CONTA? CADASTRE-SE GRÁTIS'}
                     </button>
 
-                    <div className="w-full flex items-center gap-4">
+                    <div className="flex items-center gap-4">
                         <div className="flex-grow h-[1px] bg-zinc-100"></div>
-                        <span className="text-[10px] font-black text-zinc-300 uppercase tracking-[0.2em]">ou</span>
+                        <span className="text-[9px] font-black text-[#cbd5e1] uppercase tracking-[0.3em]">ou</span>
                         <div className="flex-grow h-[1px] bg-zinc-100"></div>
                     </div>
                     
                     <button
-                        onClick={() => handleSocialLogin('google')}
-                        className="w-full flex items-center justify-center gap-3 p-4 bg-white text-zinc-700 rounded-2xl border border-zinc-200 hover:bg-zinc-50 transition-all active:scale-[0.98] shadow-sm"
+                        onClick={handleSocialLogin}
+                        className="w-full flex items-center justify-center gap-3 p-5 bg-white text-zinc-700 rounded-[1.2rem] border border-zinc-100 hover:bg-zinc-50 transition-all active:scale-[0.98] shadow-sm group"
                         disabled={loading}
                     >
-                        <GoogleIcon className="w-5 h-5" />
-                        <span className="font-bold text-xs uppercase tracking-widest text-zinc-600">Continuar com Google</span>
+                        <GoogleIcon className="w-5 h-5 transition-transform group-hover:scale-110" />
+                        <span className="font-black text-[10px] uppercase tracking-[0.2em] text-zinc-600">Continuar com Google</span>
                     </button>
                 </div>
             </div>
 
-            <div className="absolute bottom-8 left-0 right-0 flex justify-center gap-8 text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em]">
+            {/* Footer Section */}
+            <div className="w-full py-8 flex justify-center gap-10 text-[9px] font-black uppercase text-[#cbd5e1] tracking-[0.3em]">
                 <a href="/terms.html" className="hover:text-[#F59E0B] transition-colors">Termos</a>
                 <a href="/privacy.html" className="hover:text-[#F59E0B] transition-colors">Privacidade</a>
             </div>
