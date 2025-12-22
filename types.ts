@@ -34,6 +34,7 @@ export interface SubCategory {
 export interface Category extends SubCategory {
   video?: string;
   type: MarketplaceType;
+  isAd?: boolean;
 }
 
 export interface Item {

@@ -4,7 +4,7 @@ import type { Post, Item, Story, MarketplaceType, Category, Profile, BusinessPro
 import { CATEGORIES } from '../constants';
 import Header from './Header';
 import PostCard from './PostCard';
-import { PlusIcon, UserIcon, ChevronRightIcon } from './IconComponents';
+import { PlusIcon, UserIcon, ChevronRightIcon, ChevronLeftIcon } from './IconComponents';
 import ImageViewModal from './ImageViewModal';
 import ShopTheLookModal from './ShopTheLookModal';
 import CommentsModal from './CommentsModal';
@@ -93,6 +93,27 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
   const [shoppingPost, setShoppingPost] = useState<{post: Post, type: MarketplaceType} | null>(null);
   const [commentingPost, setCommentingPost] = useState<Post | null>(null);
   
+  // Carousel logic for featured categories
+  const carouselRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
+
+  const handleCarouselScroll = () => {
+      if (!carouselRef.current) return;
+      const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+      setShowLeftArrow(scrollLeft > 20);
+      setShowRightArrow(scrollLeft + clientWidth < scrollWidth - 20);
+  };
+
+  const scrollCarousel = (direction: 'left' | 'right') => {
+      if (!carouselRef.current) return;
+      const scrollAmount = carouselRef.current.clientWidth * 0.72; // Tries to align with card width
+      carouselRef.current.scrollBy({
+          left: direction === 'left' ? -scrollAmount : scrollAmount,
+          behavior: 'smooth'
+      });
+  };
+
   const featuredCategories = CATEGORIES.slice(0, 5);
   
   const handleShopTheLook = (post: Post) => {
@@ -139,28 +160,54 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
                   Ver todos
                 </button>
             </div>
-            <div className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 space-x-3 scrollbar-hide pb-2">
-                {featuredCategories.map((category) => (
-                    <div key={category.id} onClick={() => onSelectCategory(category)} className="relative flex-shrink-0 w-[72%] aspect-[4/3] snap-center">
-                        <div className="relative w-full h-full rounded-[2rem] overflow-hidden cursor-pointer group shadow-lg border border-zinc-100 bg-zinc-900">
-                            {category.video ? (
-                                <video 
-                                    src={category.video} 
-                                    autoPlay 
-                                    loop 
-                                    muted 
-                                    playsInline 
-                                    className="w-full h-full object-cover transition-transform duration-[1.5s]" 
-                                />
-                            ) : (
-                                <img src={category.image} alt={category.name} className="w-full h-full object-cover transition-transform duration-[1.5s]" />
-                            )}
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">
-                                <h3 className="text-2xl font-black tracking-tighter uppercase italic text-white drop-shadow-lg">{category.name}</h3>
+            
+            <div className="relative px-1 group">
+                {/* Botões de Navegação Bidirecional Inteligente */}
+                {showLeftArrow && (
+                    <button 
+                        onClick={() => scrollCarousel('left')}
+                        className="absolute left-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/70 backdrop-blur-md border border-zinc-100 shadow-xl flex items-center justify-center text-zinc-800 transition-all hover:bg-white hover:scale-110 active:scale-90"
+                    >
+                        <ChevronLeftIcon className="w-5 h-5" />
+                    </button>
+                )}
+                
+                {showRightArrow && (
+                    <button 
+                        onClick={() => scrollCarousel('right')}
+                        className="absolute right-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/70 backdrop-blur-md border border-zinc-100 shadow-xl flex items-center justify-center text-zinc-800 transition-all hover:bg-white hover:scale-110 active:scale-90"
+                    >
+                        <ChevronRightIcon className="w-5 h-5" />
+                    </button>
+                )}
+
+                <div 
+                    ref={carouselRef}
+                    onScroll={handleCarouselScroll}
+                    className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 space-x-3 scrollbar-hide pb-2"
+                >
+                    {featuredCategories.map((category) => (
+                        <div key={category.id} onClick={() => onSelectCategory(category)} className="relative flex-shrink-0 w-[72%] aspect-[4/3] snap-center">
+                            <div className="relative w-full h-full rounded-[2rem] overflow-hidden cursor-pointer group shadow-lg border border-zinc-100 bg-zinc-900">
+                                {category.video ? (
+                                    <video 
+                                        src={category.video} 
+                                        autoPlay 
+                                        loop 
+                                        muted 
+                                        playsInline 
+                                        className="w-full h-full object-cover transition-transform duration-[1.5s]" 
+                                    />
+                                ) : (
+                                    <img src={category.image} alt={category.name} className="w-full h-full object-cover transition-transform duration-[1.5s]" />
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">
+                                    <h3 className="text-2xl font-black tracking-tighter uppercase italic text-white drop-shadow-lg">{category.name}</h3>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
+                </div>
             </div>
           </div>
           

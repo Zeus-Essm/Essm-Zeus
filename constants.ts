@@ -34,7 +34,8 @@ export const CATEGORIES: Category[] = [
         image: 'https://i.postimg.cc/xCknv8vV/pexels-rdne-6224633.jpg',
         video: 'https://files.catbox.moe/ctk28a.mp4',
         type: 'fashion',
-        subCategories: FEMALE_CLOTHING_SUBCATEGORIES
+        subCategories: FEMALE_CLOTHING_SUBCATEGORIES,
+        isAd: true
     },
     {
         id: 'new_feeling',
@@ -42,28 +43,32 @@ export const CATEGORIES: Category[] = [
         image: 'https://i.postimg.cc/pTbvCjjp/NEW-FEELING.png',
         video: 'https://files.catbox.moe/joiet2.mp4',
         type: 'fashion',
-        subCategories: MALE_CLOTHING_SUBCATEGORIES
+        subCategories: MALE_CLOTHING_SUBCATEGORIES,
+        isAd: true
     },
     {
         id: 'noivas',
         name: 'NOIVAS',
         image: 'https://i.postimg.cc/vTfR0Rxy/wedding-dress.jpg',
         type: 'fashion',
-        subCategories: []
+        subCategories: [],
+        isAd: true
     },
     {
         id: 'adidas',
         name: 'ADIDAS',
         image: 'https://i.postimg.cc/LXmdq4H2/D.jpg',
         type: 'fashion',
-        subCategories: MALE_CLOTHING_SUBCATEGORIES
+        subCategories: MALE_CLOTHING_SUBCATEGORIES,
+        isAd: true
     },
     {
         id: 'lilas',
         name: 'LILÁS',
         image: 'https://i.postimg.cc/85zX6F8F/lilas-brand.jpg',
         type: 'fashion',
-        subCategories: []
+        subCategories: [],
+        isAd: true
     }
 ];
 

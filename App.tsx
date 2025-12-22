@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
 import { Screen, Category, Item, Post, SubCategory, SavedLook, Story, Profile, MarketplaceType, AppNotification, Conversation, Comment, BusinessProfile, CollaborationPost, Folder, ShowcaseItem } from './types';
-import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, ITEMS, INITIAL_CONVERSATIONS, INITIAL_COLLABORATION_REQUESTS } from './constants';
+import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, ITEMS, INITIAL_CONVERSATIONS, INITIAL_COLLABORATION_REQUESTS, MALE_CLOTHING_SUBCATEGORIES } from './constants';
 
 // Screen Components
 import SplashScreen from './components/SplashScreen';
@@ -51,6 +51,7 @@ const App: React.FC = () => {
     const [showVendorMenu, setShowVendorMenu] = useState(false);
     const [recommendationItem, setRecommendationItem] = useState<Item | null>(null);
     const [showUpdateBadge, setShowUpdateBadge] = useState(false);
+    const [realBusinesses, setRealBusinesses] = useState<Category[]>([]);
     
     // UI Panels State
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -80,6 +81,25 @@ const App: React.FC = () => {
 
     const handleNotificationClick = (notif: AppNotification) => {
         setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+    };
+
+    const fetchRealBusinesses = async () => {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('account_type', 'business');
+        
+        if (error) return;
+
+        const mapped: Category[] = (data || []).map(p => ({
+            id: p.user_id,
+            name: p.full_name || p.username,
+            image: p.avatar_url || 'https://i.postimg.cc/XJf6gckX/Pump_STARTAP.png',
+            type: 'fashion',
+            subCategories: MALE_CLOTHING_SUBCATEGORIES, // Fallback subcats
+            isAd: false
+        }));
+        setRealBusinesses(mapped);
     };
 
     const fetchFolders = async (userId: string) => {
@@ -116,6 +136,7 @@ const App: React.FC = () => {
     useEffect(() => {
         const handleAuthState = async (currentSession: Session | null) => {
             setSession(currentSession);
+            fetchRealBusinesses();
             if (currentSession?.user) {
                 const user = currentSession.user;
                 const { data: existingProfile } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
@@ -398,7 +419,7 @@ const App: React.FC = () => {
                 <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile} products={products} onCreateProduct={handleCreateDraftProduct} />
             );
             case Screen.Feed: return profile && <FeedScreen posts={posts} stories={INITIAL_STORIES} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={setRecommendationItem} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={() => {}} onLikePost={handleLikePost} onAddComment={handleAddComment} onNavigateToAllHighlights={() => setCurrentScreen(Screen.AllHighlights)} onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)} unreadNotificationCount={unreadCount} onNotificationsClick={handleOpenNotifications} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
-            case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} onUpdateProfile={async (u) => { 
+            case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={viewedProfileId} realBusinesses={realBusinesses} onUpdateProfile={async (u) => { 
                 if (session?.user) {
                     const { data } = await supabase.from('profiles').update({ full_name: u.name, bio: u.bio }).eq('user_id', profile?.user_id).select().single(); 
                     if (data) setProfile(data); 

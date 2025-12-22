@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '../services/supabaseClient';
 import type { Profile, Category, Post, Item, MarketplaceType } from '../types';
 import { CATEGORIES } from '../constants';
@@ -16,6 +16,7 @@ import CommentsModal from './CommentsModal';
 interface HomeScreenProps {
   loggedInProfile: Profile;
   viewedProfileId: string | null;
+  realBusinesses?: Category[];
   onUpdateProfile: (updates: { username?: string, bio?: string, name?: string }) => void;
   onUpdateProfileImage: (imageDataUrl: string) => void;
   onSelectCategory: (category: Category) => void;
@@ -41,12 +42,13 @@ interface HomeScreenProps {
   followingCount: number;
   onLikePost: (postId: string) => void;
   onAddComment: (postId: string, text: string) => void;
-  onSearchClick?: () => void; // Added for consistency
+  onSearchClick?: () => void;
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({
   loggedInProfile,
   viewedProfileId,
+  realBusinesses = [],
   onUpdateProfile,
   onUpdateProfileImage,
   onSelectCategory,
@@ -118,6 +120,15 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
       inline: 'center'
     });
   };
+
+  const marketplaceItems = useMemo(() => {
+    if (selectedCategory === 'fashion') {
+        // Para Moda, mostramos empresas REAIS cadastradas
+        return realBusinesses;
+    }
+    // Para as outras categorias, mostramos as estáticas que NÃO são anúncios
+    return CATEGORIES.filter(c => c.type === selectedCategory && !c.isAd);
+  }, [selectedCategory, realBusinesses]);
 
   if (loading) return (
       <div className="h-full w-full bg-[var(--bg-main)] flex items-center justify-center">
@@ -290,7 +301,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 px-4 pb-12">
-                        {CATEGORIES.filter(c => c.type === selectedCategory || (selectedCategory === 'fashion' && c.type === 'fashion')).map(category => (
+                        {marketplaceItems.length > 0 ? marketplaceItems.map(category => (
                             <div 
                                 key={category.id} 
                                 onClick={() => onSelectCategory(category)} 
@@ -301,7 +312,11 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                                     <h3 className="text-md font-black text-white uppercase italic tracking-tighter leading-none">{category.name}</h3>
                                 </div>
                             </div>
-                        ))}
+                        )) : (
+                            <div className="col-span-2 py-20 text-center opacity-30">
+                                <p className="text-[10px] font-bold uppercase tracking-widest italic">Aguardando novas lojas reais...</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
