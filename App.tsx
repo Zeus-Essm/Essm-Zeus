@@ -77,7 +77,6 @@ const App: React.FC = () => {
         setIsLoading(true);
         try {
             await supabase.auth.signOut();
-            // Resetar estados de UI explicitamente
             setIsSettingsOpen(false);
             setShowVendorMenu(false);
             setViewedProfileId(null);
@@ -147,7 +146,8 @@ const App: React.FC = () => {
                     ]);
                     setFolders(f.data || []);
                     setProducts(p.data || []);
-                    setCurrentScreen(Screen.VendorDashboard);
+                    // LAND ON FEED EVEN FOR BUSINESS (User Request)
+                    setCurrentScreen(Screen.Feed);
                 } else {
                     setCurrentScreen(Screen.AccountTypeSelection);
                 }
@@ -268,7 +268,7 @@ const App: React.FC = () => {
                     await supabase.from('profiles').update({ full_name: details.business_name, bio: details.description }).eq('user_id', session.user.id); 
                     setBusinessProfile({ id: session.user.id, ...details }); 
                 }
-                setCurrentScreen(Screen.VendorDashboard); 
+                setCurrentScreen(Screen.Feed); 
             }} />;
             case Screen.VendorDashboard: return businessProfile && profile && (
                 <VendorDashboard 
