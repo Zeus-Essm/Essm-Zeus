@@ -18,7 +18,7 @@ function safeGetEnv(key: string): string | undefined {
   try {
     const meta = (import.meta as any);
     return meta?.env?.[key];
-  } catch {
+  } catch (err) {
     return undefined;
   }
 }
@@ -27,14 +27,15 @@ const SUPABASE_URL = safeGetEnv('VITE_SUPABASE_URL');
 const SUPABASE_ANON_KEY = safeGetEnv('VITE_SUPABASE_ANON_KEY');
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.error('[Supabase] Variáveis de ambiente não encontradas', {
-    SUPABASE_URL: SUPABASE_URL ? 'OK' : 'MISSING',
-    SUPABASE_ANON_KEY: SUPABASE_ANON_KEY ? 'OK' : 'MISSING'
+  console.error('[SUPABASE INIT FAILED]', {
+    url: SUPABASE_URL ? 'OK' : 'MISSING',
+    anonKey: SUPABASE_ANON_KEY ? 'OK' : 'MISSING',
+    runtime: typeof window !== 'undefined' ? 'browser/webview' : 'server'
   });
+  throw new Error('Supabase ENV ausente');
 }
 
-// Inicializa o cliente com os valores encontrados ou strings vazias para evitar erros fatais imediatos
 export const supabase = createClient(
-  (SUPABASE_URL || 'https://placeholder.supabase.co') as string,
-  (SUPABASE_ANON_KEY || 'placeholder-key') as string
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY
 );

@@ -180,27 +180,18 @@ const App: React.FC = () => {
     };
 
     useEffect(() => {
-        let mounted = true;
-
-        const init = async () => {
-            const { data } = await supabase.auth.getSession();
-            if (!mounted) return;
-            handleAuthState(data.session);
-        };
-
-        init();
-
         const { data: listener } = supabase.auth.onAuthStateChange(
-            (_, session) => {
-                if (!mounted) return;
-                handleAuthState(session);
-            }
+          (_event, session) => {
+            console.log('[AUTH STATE]', _event);
+            handleAuthState(session);
+          }
         );
 
-        return () => {
-            mounted = false;
-            listener.subscription.unsubscribe();
-        };
+        supabase.auth.getSession().then(({ data }) => {
+          handleAuthState(data.session);
+        });
+
+        return () => listener.subscription.unsubscribe();
     }, []);
 
     const handleCreateFolder = async (title: string) => {
@@ -238,8 +229,9 @@ const App: React.FC = () => {
 
     const handleAddProductToFolder = async (folderId: string, details: { title: string, description: string, price: number, file: Blob | null }) => {
         if (!profile || !session?.user) return;
-        setIsLoading(true);
+        
         try {
+            setIsLoading(true);
             let publicUrl: string | null = null;
             
             if (details.file) {
@@ -248,12 +240,13 @@ const App: React.FC = () => {
                 
                 const { error: uploadError } = await supabase.storage
                     .from('products')
-                    .upload(fileName, details.file);
+                    .upload(fileName, details.file, { upsert: false });
 
                 if (uploadError) throw uploadError;
 
                 const { data: urlData } = supabase.storage.from('products').getPublicUrl(fileName);
                 publicUrl = urlData.publicUrl;
+                toast.success('Upload concluído com sucesso ✅');
             }
 
             const { data: productData, error: dbError } = await supabase
@@ -284,8 +277,8 @@ const App: React.FC = () => {
             setTimeout(() => setShowUpdateBadge(false), 3000);
             return productData;
         } catch (err: any) {
-            console.error(err.message);
-            toast("Erro ao salvar produto no Supabase.");
+            console.error('[UPLOAD ERROR]', err);
+            toast.error(err.message || 'Erro ao enviar arquivo');
         } finally {
             setIsLoading(false);
         }
