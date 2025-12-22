@@ -1,7 +1,7 @@
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { ArrowLeftIcon, SearchIcon, UserIcon } from './IconComponents';
-import type { Post, Profile, Item, MarketplaceType } from '../types';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { ArrowLeftIcon, SearchIcon, UserIcon, VerifiedIcon, ShoppingBagIcon, StarIcon, ClockIcon, XCircleIcon, ChevronRightIcon, ChevronLeftIcon } from './IconComponents';
+import type { Post, Profile, Item, MarketplaceType, Category } from '../types';
 import ImageViewModal from './ImageViewModal';
 import QuickViewModal from './QuickViewModal';
 import { CATEGORIES } from '../constants';
@@ -34,11 +34,20 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
     onBuy,
 }) => {
     const [query, setQuery] = useState('');
-    const [activeTab, setActiveTab] = useState<'accounts' | 'products'>('accounts');
+    const [activeTab, setActiveTab] = useState<'accounts' | 'products' | 'explore'>('explore');
+    const [recentSearches, setRecentSearches] = useState<string[]>(() => {
+        const saved = localStorage.getItem('pump_recent_searches');
+        return saved ? JSON.parse(saved) : [];
+    });
     const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([]);
     const [filteredItems, setFilteredItems] = useState<Item[]>([]);
     const [viewingPostDetails, setViewingPostDetails] = useState<{ posts: Post[]; startIndex: number } | null>(null);
     const [quickViewItem, setQuickViewItem] = useState<Item | null>(null);
+    
+    // Carousel State
+    const carouselRef = useRef<HTMLDivElement>(null);
+    const [showLeftArrow, setShowLeftArrow] = useState(false);
+    const [showRightArrow, setShowRightArrow] = useState(true);
 
     const popularPosts = useMemo(() => {
         return [...posts].sort((a, b) => b.likes - a.likes);
@@ -48,15 +57,13 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
         const profileMap = new Map<string, Profile>();
         posts.forEach(post => {
             if (!profileMap.has(post.user.id)) {
-                // FIX: Map User data from post to Profile interface. 
-                // Removed 'cover_url' as it is not present in the Profile interface in types.ts.
                 profileMap.set(post.user.id, {
                     user_id: post.user.id, 
                     username: post.user.name,
                     full_name: post.user.name,
                     avatar_url: post.user.avatar,
                     bio: null,
-                    account_type: 'personal',
+                    account_type: post.isSponsored ? 'business' : 'personal',
                 });
             }
         });
@@ -71,14 +78,15 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
 
     useEffect(() => {
         if (query.trim() === '') {
+            setActiveTab('explore');
             setFilteredProfiles([]);
             setFilteredItems([]);
             return;
         }
 
+        if (activeTab === 'explore') setActiveTab('accounts');
+
         const lowercasedQuery = query.toLowerCase();
-        
-        // FIX: Include full_name in the search filter if available.
         const profileResults = allProfiles.filter(profile =>
             profile.username.toLowerCase().includes(lowercasedQuery) ||
             (profile.full_name && profile.full_name.toLowerCase().includes(lowercasedQuery))
@@ -91,98 +99,264 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
         );
         setFilteredItems(itemResults);
 
-    }, [query, allProfiles, items]);
+    }, [query, allProfiles, items, activeTab]);
+
+    const handleSearchSubmit = (searchTerm: string) => {
+        if (!searchTerm.trim()) return;
+        const term = searchTerm.trim();
+        const updated = [term, ...recentSearches.filter(s => s !== term)].slice(0, 5);
+        setRecentSearches(updated);
+        localStorage.setItem('pump_recent_searches', JSON.stringify(updated));
+        setQuery(term);
+    };
+
+    const handleCategoryClick = (category: Category) => {
+        setQuery(category.name);
+        handleSearchSubmit(category.name);
+    };
+
+    const clearRecentSearches = () => {
+        setRecentSearches([]);
+        localStorage.removeItem('pump_recent_searches');
+    };
 
     const handleViewPost = (postIndex: number) => {
         setViewingPostDetails({ posts: popularPosts, startIndex: postIndex });
     };
 
+    // Carousel Navigation Logic
+    const scrollCarousel = (direction: 'left' | 'right') => {
+        if (!carouselRef.current) return;
+        const scrollAmount = carouselRef.current.clientWidth * 0.8;
+        carouselRef.current.scrollBy({
+            left: direction === 'left' ? -scrollAmount : scrollAmount,
+            behavior: 'smooth'
+        });
+    };
+
+    const handleCarouselScroll = () => {
+        if (!carouselRef.current) return;
+        const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+        setShowLeftArrow(scrollLeft > 10);
+        setShowRightArrow(scrollLeft + clientWidth < scrollWidth - 10);
+    };
+
     return (
         <>
-            <div className="w-full h-full flex flex-col bg-[var(--bg-main)] text-[var(--text-primary)]">
-                <header className="p-4 flex items-center gap-4 border-b border-[var(--border-primary)]">
-                    <button onClick={onBack} className="p-2 -ml-2 rounded-full hover:bg-[var(--accent-primary)]/10 transition-colors">
-                        <ArrowLeftIcon className="w-6 h-6 text-[var(--accent-primary)]" />
-                    </button>
-                    <div className="relative flex-grow">
-                        <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--text-secondary)]" />
-                        <input
-                            type="text"
-                            placeholder="Pesquisar..."
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            className="w-full bg-[var(--bg-secondary)] rounded-lg pl-10 pr-4 py-2 border border-[var(--border-secondary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-[var(--accent-primary)]"
-                            autoFocus
-                        />
+            <div className="w-full h-full flex flex-col bg-white text-zinc-900 font-sans overflow-hidden">
+                {/* Header de Busca Profissional */}
+                <header className="px-4 pt-4 pb-2 flex flex-col gap-4 border-b border-zinc-50 shrink-0 sticky top-0 bg-white/95 backdrop-blur-md z-20">
+                    <div className="flex items-center gap-3">
+                        <button onClick={onBack} className="p-2 -ml-2 rounded-xl bg-zinc-50 text-zinc-400 active:scale-90 transition-all">
+                            <ArrowLeftIcon className="w-5 h-5" />
+                        </button>
+                        <div className="relative flex-grow">
+                            <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                            <form onSubmit={(e) => { e.preventDefault(); handleSearchSubmit(query); }}>
+                                <input
+                                    type="text"
+                                    placeholder="Marcas, pessoas ou peças..."
+                                    value={query}
+                                    onChange={(e) => setQuery(e.target.value)}
+                                    className="w-full bg-zinc-50 rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:bg-white border border-transparent focus:border-amber-500/40 transition-all placeholder:text-zinc-300 shadow-sm"
+                                    autoFocus
+                                />
+                            </form>
+                        </div>
                     </div>
+
+                    {query.trim() !== '' && (
+                        <div className="flex gap-1 animate-fadeIn">
+                            <button 
+                                onClick={() => setActiveTab('accounts')} 
+                                className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'accounts' ? 'bg-zinc-900 text-white shadow-lg' : 'text-zinc-400 hover:bg-zinc-50'}`}
+                            >
+                                Contas
+                            </button>
+                            <button 
+                                onClick={() => setActiveTab('products')} 
+                                className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'products' ? 'bg-zinc-900 text-white shadow-lg' : 'text-zinc-400 hover:bg-zinc-50'}`}
+                            >
+                                Produtos
+                            </button>
+                        </div>
+                    )}
                 </header>
-                <main className="flex-grow overflow-y-auto">
+
+                <main className="flex-grow overflow-y-auto scrollbar-hide">
                     {query.trim() === '' ? (
-                        <div className="grid grid-cols-3 gap-px bg-[var(--border-primary)]">
-                            {popularPosts.map((post, index) => (
-                                <div 
-                                    key={post.id} 
-                                    onClick={() => handleViewPost(index)}
-                                    className="aspect-square bg-[var(--bg-secondary)] cursor-pointer"
-                                >
-                                    <img src={post.image} alt="Post popular" className="w-full h-full object-cover"/>
+                        <div className="animate-fadeIn">
+                            {/* Histórico Recente */}
+                            {recentSearches.length > 0 && (
+                                <div className="p-5 pb-0">
+                                    <div className="flex justify-between items-center mb-4">
+                                        <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 italic">Pesquisas Recentes</h2>
+                                        <button onClick={clearRecentSearches} className="text-[9px] font-black uppercase text-amber-600 hover:text-amber-700 transition-colors">Limpar Tudo</button>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {recentSearches.map((term, i) => (
+                                            <button 
+                                                key={i} 
+                                                onClick={() => handleSearchSubmit(term)}
+                                                className="flex items-center gap-2 px-4 py-2 bg-zinc-50 rounded-full border border-zinc-100 text-[11px] font-bold text-zinc-600 hover:border-amber-500/30 transition-all active:scale-95"
+                                            >
+                                                <ClockIcon className="w-3 h-3 text-zinc-300" />
+                                                {term}
+                                            </button>
+                                        ))}
+                                    </div>
                                 </div>
-                            ))}
+                            )}
+
+                            {/* Explore Hub Carousel Sistema Profissional */}
+                            <div className="py-6 relative group">
+                                <div className="px-5 flex justify-between items-center mb-4">
+                                    <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 italic">Explorar Categorias</h2>
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest">Deslize</span>
+                                        <ChevronRightIcon className="w-4 h-4 text-zinc-200" />
+                                    </div>
+                                </div>
+                                
+                                {/* Carousel Navigation Buttons */}
+                                {showLeftArrow && (
+                                    <button 
+                                        onClick={() => scrollCarousel('left')}
+                                        className="absolute left-6 top-[55%] -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/70 backdrop-blur-md border border-zinc-100 shadow-xl flex items-center justify-center text-zinc-800 transition-all hover:bg-white hover:scale-110 active:scale-90"
+                                    >
+                                        <ChevronLeftIcon className="w-5 h-5" />
+                                    </button>
+                                )}
+                                {showRightArrow && (
+                                    <button 
+                                        onClick={() => scrollCarousel('right')}
+                                        className="absolute right-6 top-[55%] -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/70 backdrop-blur-md border border-zinc-100 shadow-xl flex items-center justify-center text-zinc-800 transition-all hover:bg-white hover:scale-110 active:scale-90"
+                                    >
+                                        <ChevronRightIcon className="w-5 h-5" />
+                                    </button>
+                                )}
+
+                                <div 
+                                    ref={carouselRef}
+                                    onScroll={handleCarouselScroll}
+                                    className="flex overflow-x-auto snap-x snap-mandatory gap-3 px-5 scrollbar-hide pb-2 scroll-smooth"
+                                >
+                                    {CATEGORIES.map(cat => (
+                                        <button 
+                                            key={cat.id} 
+                                            onClick={() => handleCategoryClick(cat)}
+                                            className="relative flex-shrink-0 w-44 h-28 rounded-[1.8rem] overflow-hidden snap-start shadow-md border border-zinc-100 group active:scale-95 transition-all"
+                                        >
+                                            <img src={cat.image} alt={cat.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-4">
+                                                <span className="text-[11px] font-black uppercase tracking-tighter italic text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                                                    {cat.name}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Popular Content Mosaic */}
+                            <div className="px-5 mb-4">
+                                <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 italic">Tendências do Mercado</h2>
+                            </div>
+                            <div className="grid grid-cols-3 gap-0.5 px-0.5">
+                                {popularPosts.length > 0 ? popularPosts.map((post, index) => (
+                                    <div 
+                                        key={post.id} 
+                                        onClick={() => handleViewPost(index)}
+                                        className={`relative bg-zinc-100 cursor-pointer overflow-hidden group ${index % 7 === 0 ? 'col-span-2 row-span-2' : 'aspect-square'}`}
+                                    >
+                                        <img src={post.image} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"/>
+                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <StarIcon className="w-5 h-5 text-white" />
+                                        </div>
+                                    </div>
+                                )) : (
+                                    <div className="col-span-3 py-24 text-center opacity-30">
+                                        <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                                            <ShoppingBagIcon className="w-8 h-8 text-zinc-300" />
+                                        </div>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 italic animate-pulse">Tendências em carregamento...</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     ) : (
-                        <div>
-                            <div className="border-b border-[var(--border-primary)] flex">
-                                <button onClick={() => setActiveTab('accounts')} className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${activeTab === 'accounts' ? 'text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}>
-                                    Contas
-                                </button>
-                                <button onClick={() => setActiveTab('products')} className={`flex-1 py-3 text-sm font-bold uppercase tracking-wider transition-colors ${activeTab === 'products' ? 'text-[var(--accent-primary)] border-b-2 border-[var(--accent-primary)]' : 'text-[var(--text-secondary)]'}`}>
-                                    Produtos
-                                </button>
-                            </div>
+                        <div className="p-2 animate-fadeIn">
                             {activeTab === 'accounts' ? (
-                                <div>
+                                <div className="space-y-1">
                                     {filteredProfiles.length > 0 ? (
                                         filteredProfiles.map(profile => (
                                             <button 
                                                 key={profile.user_id}
                                                 onClick={() => onViewProfile(profile.user_id)}
-                                                className="w-full flex items-center gap-4 p-3 text-left hover:bg-[var(--bg-tertiary)] transition-colors"
+                                                className="w-full flex items-center gap-4 p-4 text-left hover:bg-zinc-50 rounded-[2.2rem] transition-all group active:scale-[0.98]"
                                             >
-                                                <div className="w-12 h-12 rounded-full overflow-hidden bg-[var(--bg-secondary)] flex items-center justify-center">
-                                                    {/* Fix: Property 'profile_image_url' does not exist on type 'Profile', using 'avatar_url' instead */}
-                                                    {profile.avatar_url ? (
-                                                        <img src={profile.avatar_url} alt={profile.username} className="w-full h-full object-cover"/>
-                                                    ) : (
-                                                        <UserIcon className="w-6 h-6 text-[var(--text-secondary)] opacity-50" />
-                                                    )}
+                                                <div className="relative">
+                                                    <div className="w-14 h-14 rounded-full overflow-hidden bg-zinc-100 border-2 border-zinc-100 p-0.5 group-hover:border-amber-500/50 transition-colors shadow-sm">
+                                                        {profile.avatar_url ? (
+                                                            <img src={profile.avatar_url} alt="" className="w-full h-full object-cover rounded-full"/>
+                                                        ) : (
+                                                            <UserIcon className="w-full h-full text-zinc-300 p-3" />
+                                                        )}
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="font-semibold">{profile.username}</p>
+                                                <div className="flex-grow min-w-0">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <p className="font-black text-sm text-zinc-900 truncate uppercase tracking-tighter italic leading-none">
+                                                            {profile.username}
+                                                        </p>
+                                                        {profile.account_type === 'business' && (
+                                                            <VerifiedIcon className="w-4 h-4 text-amber-500" />
+                                                        )}
+                                                    </div>
+                                                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">
+                                                        {profile.account_type === 'business' ? 'Marca Verificada' : 'Perfil Pessoal'}
+                                                    </p>
+                                                </div>
+                                                <div className="px-5 py-2.5 rounded-2xl bg-zinc-900 text-white text-[9px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100">
+                                                    Visitar
                                                 </div>
                                             </button>
                                         ))
                                     ) : (
-                                        <p className="text-[var(--text-secondary)] text-center p-8">Nenhum perfil encontrado.</p>
+                                        <div className="py-24 text-center opacity-30">
+                                            <UserIcon className="w-14 h-14 mx-auto mb-4 text-zinc-300" strokeWidth={1} />
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Nenhum perfil correspondente</p>
+                                        </div>
                                     )}
                                 </div>
                             ) : (
-                                 <div>
+                                 <div className="grid grid-cols-2 gap-4 p-3 animate-fadeIn">
                                     {filteredItems.length > 0 ? (
                                         filteredItems.map(item => (
                                             <button 
                                                 key={item.id}
                                                 onClick={() => setQuickViewItem(item)}
-                                                className="w-full flex items-center gap-4 p-3 text-left hover:bg-[var(--bg-tertiary)] transition-colors"
+                                                className="flex flex-col bg-white rounded-[2.2rem] border border-zinc-100 overflow-hidden hover:shadow-xl hover:shadow-black/5 transition-all group active:scale-[0.98]"
                                             >
-                                                <img src={item.image} alt={item.name} className="w-12 h-16 object-cover rounded-md"/>
-                                                <div className="flex-grow">
-                                                    <p className="font-semibold">{item.name}</p>
-                                                    <p className="text-sm text-[var(--accent-primary)]">{item.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
+                                                <div className="relative aspect-[3/4] overflow-hidden bg-zinc-50">
+                                                    <img src={item.image} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"/>
+                                                    <div className="absolute top-4 left-4 px-2.5 py-1.5 bg-white/95 backdrop-blur-md rounded-xl text-[8px] font-black uppercase tracking-widest text-zinc-900 shadow-sm border border-zinc-100/50">
+                                                        IA Ready
+                                                    </div>
+                                                </div>
+                                                <div className="p-5 text-left">
+                                                    <p className="font-bold text-[12px] text-zinc-900 uppercase truncate mb-1 italic leading-none">{item.name}</p>
+                                                    <p className="text-[11px] font-black text-amber-600 tracking-tighter mt-1">
+                                                        {item.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
+                                                    </p>
                                                 </div>
                                             </button>
                                         ))
                                     ) : (
-                                        <p className="text-[var(--text-secondary)] text-center p-8">Nenhum produto encontrado.</p>
+                                        <div className="col-span-2 py-24 text-center opacity-30">
+                                            <ShoppingBagIcon className="w-14 h-14 mx-auto mb-4 text-zinc-300" strokeWidth={1} />
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Produto não localizado</p>
+                                        </div>
                                     )}
                                 </div>
                             )}

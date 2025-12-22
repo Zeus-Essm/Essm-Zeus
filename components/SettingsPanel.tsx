@@ -1,6 +1,7 @@
 
-import React, { useEffect } from 'react';
-import { ChartBarIcon, ShoppingBagIcon, UsersIcon, ChevronRightIcon, StarIcon, LogoutIcon } from './IconComponents';
+import React from 'react';
+import { SunIcon, MoonIcon, ChevronRightIcon, LogoutIcon, UserIcon, ShieldCheckIcon, BellIcon } from './IconComponents';
+import type { Profile } from '../types';
 
 const XIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" {...props}>
@@ -8,13 +9,13 @@ const XIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   </svg>
 );
 
-interface VendorMenuModalProps {
+interface SettingsPanelProps {
+  profile: Profile;
+  theme: 'light' | 'dark';
+  onToggleTheme: () => void;
   onClose: () => void;
-  onNavigateToAnalytics: () => void;
-  onNavigateToProducts: () => void;
-  onNavigateToAffiliates: () => void;
-  onNavigateToCollaborations: () => void;
   onSignOut: () => void;
+  onNavigateToVerification: () => void;
 }
 
 const MenuItem: React.FC<{ 
@@ -39,16 +40,8 @@ const MenuItem: React.FC<{
   </button>
 );
 
-
-const VendorMenuModal: React.FC<VendorMenuModalProps> = ({ 
-    onClose, 
-    onNavigateToAnalytics, 
-    onNavigateToProducts,
-    onNavigateToAffiliates,
-    onNavigateToCollaborations,
-    onSignOut 
-}) => {
-    useEffect(() => {
+const SettingsPanel: React.FC<SettingsPanelProps> = ({ profile, theme, onToggleTheme, onClose, onSignOut, onNavigateToVerification }) => {
+    React.useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
           if (event.key === 'Escape') onClose();
         };
@@ -62,13 +55,13 @@ const VendorMenuModal: React.FC<VendorMenuModalProps> = ({
             role="dialog"
             aria-modal="true"
         >
-            {/* Backdrop com desfoque igual ao pessoal */}
+            {/* Backdrop */}
             <div 
                 className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fadeIn"
                 onClick={onClose}
             />
 
-            {/* Painel da Mini Janela */}
+            {/* Mini Window Panel */}
             <div 
                 className="relative w-[85%] max-w-sm h-full bg-white shadow-2xl flex flex-col border-l border-zinc-100"
                 style={{ 
@@ -78,8 +71,8 @@ const VendorMenuModal: React.FC<VendorMenuModalProps> = ({
             >
                 <header className="p-6 flex items-center justify-between border-b border-zinc-50 flex-shrink-0">
                     <div>
-                        <h2 className="text-xl font-black text-zinc-900 tracking-tighter uppercase italic">Painel Loja</h2>
-                        <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-0.5">Gestão Empresarial</p>
+                        <h2 className="text-xl font-black text-zinc-900 tracking-tighter uppercase italic">Ajustes</h2>
+                        <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-0.5">Gestão de conta e app</p>
                     </div>
                     <button 
                         onClick={onClose} 
@@ -90,50 +83,46 @@ const VendorMenuModal: React.FC<VendorMenuModalProps> = ({
                 </header>
 
                 <main className="flex-grow overflow-y-auto scrollbar-hide py-4 px-4 space-y-6">
-                    {/* Operação Section */}
+                    {/* Perfil Section */}
+                    <div className="bg-white rounded-[2rem] border border-zinc-100 overflow-hidden shadow-sm">
+                        <MenuItem 
+                            icon={<UserIcon className="w-5 h-5" />} 
+                            text="Editar Dados" 
+                            description="Nome, bio e foto"
+                            onClick={onClose} 
+                        />
+                        <MenuItem 
+                            icon={<ShieldCheckIcon className="w-5 h-5" />} 
+                            text="Verificação" 
+                            description="Status do selo preto"
+                            onClick={onNavigateToVerification} 
+                        />
+                    </div>
+
+                    {/* Preferências Section */}
                     <div>
-                        <h3 className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] ml-5 mb-3 italic">Operação</h3>
+                        <h3 className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] ml-5 mb-3 italic">Preferências</h3>
                         <div className="bg-white rounded-[2rem] border border-zinc-100 overflow-hidden shadow-sm">
                             <MenuItem 
-                                icon={<ChartBarIcon className="w-5 h-5" />} 
-                                text="Visualizar Analytics" 
-                                description="Dados de vendas e visitas"
-                                onClick={() => { onNavigateToAnalytics(); onClose(); }} 
+                                icon={theme === 'dark' ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />} 
+                                text={theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'} 
+                                description="Alternar aparência"
+                                onClick={onToggleTheme} 
                             />
                             <MenuItem 
-                                icon={<ShoppingBagIcon className="w-5 h-5" />} 
-                                text="Estoque & Catálogo" 
-                                description="Gerenciar seus produtos"
-                                onClick={() => { onNavigateToProducts(); onClose(); }} 
+                                icon={<BellIcon className="w-5 h-5" />} 
+                                text="Notificações" 
+                                description="Avisos e alertas"
+                                onClick={onClose} 
                                 isLast={true}
                             />
                         </div>
                     </div>
 
-                    {/* Marketing Section */}
-                    <div>
-                        <h3 className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] ml-5 mb-3 italic">Marketing</h3>
-                        <div className="bg-white rounded-[2rem] border border-zinc-100 overflow-hidden shadow-sm">
-                            <MenuItem 
-                                icon={<UsersIcon className="w-5 h-5" />} 
-                                text="Gestão de Afiliados" 
-                                description="Parcerias e comissões"
-                                onClick={() => { onNavigateToAffiliates(); onClose(); }} 
-                            />
-                            <MenuItem 
-                                icon={<StarIcon className="w-5 h-5" />} 
-                                text="Colaborações de IA" 
-                                description="Campanhas com influenciadores"
-                                onClick={() => { onNavigateToCollaborations(); onClose(); }} 
-                                isLast={true}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Footer Info */}
+                    {/* Sobre Section */}
                     <div className="px-5 pt-2">
                         <p className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest text-center">
-                            BUSINESS CORE V2.1 • PUMP HUB
+                            PUMP V1.0.4 • Angola Edition
                         </p>
                     </div>
                 </main>
@@ -165,4 +154,4 @@ const VendorMenuModal: React.FC<VendorMenuModalProps> = ({
     );
 };
 
-export default VendorMenuModal;
+export default SettingsPanel;

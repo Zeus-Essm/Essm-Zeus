@@ -32,6 +32,7 @@ export const CATEGORIES: Category[] = [
         id: 'lv',
         name: 'LOUIS VUITTON',
         image: 'https://i.postimg.cc/xCknv8vV/pexels-rdne-6224633.jpg',
+        video: 'https://files.catbox.moe/ctk28a.mp4',
         type: 'fashion',
         subCategories: FEMALE_CLOTHING_SUBCATEGORIES
     },
@@ -39,6 +40,7 @@ export const CATEGORIES: Category[] = [
         id: 'new_feeling',
         name: 'NEW FEELING',
         image: 'https://i.postimg.cc/pTbvCjjp/NEW-FEELING.png',
+        video: 'https://files.catbox.moe/joiet2.mp4',
         type: 'fashion',
         subCategories: MALE_CLOTHING_SUBCATEGORIES
     },

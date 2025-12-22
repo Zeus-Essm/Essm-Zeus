@@ -7,7 +7,7 @@ import {
     PlusIcon, UserIcon, 
     ChevronDownIcon, MenuIcon,
     ShoppingBagIcon, BookmarkIcon, LooksIcon,
-    ChatBubbleIcon, BellIcon, PencilIcon
+    ChatBubbleIcon, BellIcon, PencilIcon, SearchIcon
 } from './IconComponents';
 import BioEditModal from './BioEditModal';
 import ImageViewModal from './ImageViewModal';
@@ -41,9 +41,9 @@ interface HomeScreenProps {
   followingCount: number;
   onLikePost: (postId: string) => void;
   onAddComment: (postId: string, text: string) => void;
+  onSearchClick?: () => void; // Added for consistency
 }
 
-// Added missing onViewProfile prop to destructuring
 const HomeScreen: React.FC<HomeScreenProps> = ({
   loggedInProfile,
   viewedProfileId,
@@ -61,7 +61,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   onLikePost,
   onAddComment,
   onItemClick,
-  onViewProfile
+  onViewProfile,
+  onSearchClick
 }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -137,7 +138,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
               </h1>
               <ChevronDownIcon className="w-3.5 h-3.5 text-zinc-800" strokeWidth={3} />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+              {onSearchClick && (
+                  <button onClick={onSearchClick} className="p-2 active:scale-90 transition-transform">
+                      <SearchIcon className="w-7 h-7 text-zinc-900" strokeWidth={1.5} />
+                  </button>
+              )}
               <button onClick={onNavigateToChat} className="relative p-2 active:scale-90 transition-transform">
                   <ChatBubbleIcon className="w-7 h-7 text-zinc-900" strokeWidth={1.5} />
                   {unreadMessagesCount > 0 && (
@@ -164,7 +170,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         <div className="px-5 pt-4">
             <div className="flex items-center gap-4 mb-4">
                 <div className="relative shrink-0">
-                    <div className="w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 to-amber-600">
+                    <div className="w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 to-amber-600 shadow-sm">
                         <div className="w-full h-full rounded-full bg-white p-[2px] overflow-hidden">
                             <div className="w-full h-full rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center">
                                 {profile.avatar_url ? (
@@ -188,7 +194,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
                 <div className="flex-grow min-w-0">
                     <div className="flex items-center justify-between">
-                        <h2 className="font-bold text-md text-zinc-900 truncate">
+                        <h2 className="font-bold text-md text-zinc-900 truncate uppercase tracking-tighter italic">
                             {profile.full_name || profile.username}
                         </h2>
                         {isMyProfile && (
@@ -197,7 +203,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                             </button>
                         )}
                     </div>
-                    <div className="text-xs text-zinc-600 font-medium leading-tight line-clamp-3 mt-0.5 whitespace-pre-line">
+                    <div className="text-[11px] text-zinc-600 font-medium leading-tight line-clamp-3 mt-1 whitespace-pre-line">
                         {profile.bio || "Seja bem-vindo ao PUMP!"}
                     </div>
                 </div>
@@ -288,7 +294,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                             <div 
                                 key={category.id} 
                                 onClick={() => onSelectCategory(category)} 
-                                className="relative h-56 rounded-xl overflow-hidden group shadow-sm active:scale-[0.98] transition-all border border-zinc-100"
+                                className="relative h-56 rounded-2xl overflow-hidden group shadow-sm active:scale-[0.98] transition-all border border-zinc-100"
                             >
                                 <img src={category.image} alt={category.name} className="w-full h-full object-cover" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">

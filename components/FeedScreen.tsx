@@ -142,8 +142,19 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
             <div className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 space-x-3 scrollbar-hide pb-2">
                 {featuredCategories.map((category) => (
                     <div key={category.id} onClick={() => onSelectCategory(category)} className="relative flex-shrink-0 w-[72%] aspect-[4/3] snap-center">
-                        <div className="relative w-full h-full rounded-[2rem] overflow-hidden cursor-pointer group shadow-lg border border-zinc-100">
-                            <img src={category.image} alt={category.name} className="w-full h-full object-cover transition-transform duration-[1.5s]" />
+                        <div className="relative w-full h-full rounded-[2rem] overflow-hidden cursor-pointer group shadow-lg border border-zinc-100 bg-zinc-900">
+                            {category.video ? (
+                                <video 
+                                    src={category.video} 
+                                    autoPlay 
+                                    loop 
+                                    muted 
+                                    playsInline 
+                                    className="w-full h-full object-cover transition-transform duration-[1.5s]" 
+                                />
+                            ) : (
+                                <img src={category.image} alt={category.name} className="w-full h-full object-cover transition-transform duration-[1.5s]" />
+                            )}
                             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">
                                 <h3 className="text-2xl font-black tracking-tighter uppercase italic text-white drop-shadow-lg">{category.name}</h3>
                             </div>

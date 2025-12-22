@@ -11,7 +11,6 @@ import LoginScreen from './components/LoginScreen';
 import AccountTypeSelectionScreen from './components/AccountTypeSelectionScreen';
 import BusinessOnboardingScreen from './components/BusinessOnboardingScreen';
 import HomeScreen from './components/HomeScreen';
-import SettingsScreen from './components/SettingsScreen';
 import FeedScreen from './components/FeedScreen';
 import CartScreen from './components/CartScreen';
 import BottomNavBar from './components/BottomNavBar';
@@ -25,6 +24,11 @@ import AllHighlightsScreen from './components/AllHighlightsScreen';
 import SearchScreen from './components/SearchScreen';
 import RecommendationModal from './components/RecommendationModal';
 import NotificationsPanel from './components/NotificationsPanel';
+import SettingsPanel from './components/SettingsPanel';
+import VerificationIntroScreen from './components/VerificationIntroScreen';
+import IdUploadScreen from './components/IdUploadScreen';
+import FaceScanScreen from './components/FaceScanScreen';
+import VerificationPendingScreen from './components/VerificationPendingScreen';
 
 const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
     const res = await fetch(dataUrl);
@@ -48,8 +52,10 @@ const App: React.FC = () => {
     const [recommendationItem, setRecommendationItem] = useState<Item | null>(null);
     const [showUpdateBadge, setShowUpdateBadge] = useState(false);
     
-    // Notification State - Initialized empty for real users
+    // UI Panels State
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [theme, setTheme] = useState<'light' | 'dark'>('light');
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
     const unreadCount = notifications.filter(n => !n.read).length;
@@ -62,12 +68,18 @@ const App: React.FC = () => {
 
     const handleOpenNotifications = () => setIsNotificationsOpen(true);
     const handleCloseNotifications = () => setIsNotificationsOpen(false);
+    const handleOpenSettings = () => setIsSettingsOpen(true);
+    const handleCloseSettings = () => setIsSettingsOpen(false);
+
+    const toggleTheme = () => {
+        const next = theme === 'light' ? 'dark' : 'light';
+        setTheme(next);
+        if (next === 'dark') document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
+    };
 
     const handleNotificationClick = (notif: AppNotification) => {
         setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
-        if (notif.relatedCategoryId) {
-            // Logic to navigate if needed
-        }
     };
 
     const fetchFolders = async (userId: string) => {
@@ -77,10 +89,7 @@ const App: React.FC = () => {
             .eq('owner_id', userId)
             .order("created_at", { ascending: false });
 
-        if (error) {
-            console.error("Erro ao buscar pastas:", error);
-            return [];
-        }
+        if (error) return [];
         return data || [];
     };
 
@@ -91,10 +100,7 @@ const App: React.FC = () => {
             .eq('owner_id', userId)
             .order("created_at", { ascending: false });
 
-        if (error) {
-            console.error("Erro ao buscar produtos:", error);
-            return [];
-        }
+        if (error) return [];
         return (data || []).map(p => ({
             id: p.id,
             name: p.title,
@@ -164,6 +170,7 @@ const App: React.FC = () => {
             setSession(null);
             setCurrentScreen(Screen.AccountTypeSelection);
             setNotifications([]);
+            setIsSettingsOpen(false);
         };
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -174,101 +181,6 @@ const App: React.FC = () => {
         supabase.auth.getSession().then(({ data: { session } }) => handleAuthState(session));
         return () => subscription.unsubscribe();
     }, []);
-
-    const uploadImage = async ({ bucket, file, path }: { bucket: string, file: Blob, path: string }) => {
-        const { error } = await supabase.storage.from(bucket).upload(path, file, { upsert: true });
-        if (error) throw error;
-        const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-        return data.publicUrl;
-    };
-
-    const handleCreateFolder = async (title: string) => {
-        if (!session?.user) return alert("Por favor, faça login para salvar.");
-        setIsLoading(true);
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user || !title) return;
-            const { data, error } = await supabase.from("folders").insert({ owner_id: user.id, title }).select().single();
-            if (error) throw error;
-            setFolders(prev => [data, ...prev]);
-            showSuccess("Coleção criada com sucesso");
-        } catch (err: any) {
-            console.error(err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleAddProductToFolder = async (folderId: string, details: { title: string, description: string, price: number, file: Blob }) => {
-        if (!session?.user) return;
-        setIsLoading(true);
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return;
-            const imagePath = `${user.id}/products/${Date.now()}.jpg`;
-            const imageUrl = await uploadImage({ bucket: "products", file: details.file, path: imagePath });
-            const { data: responseData, error } = await supabase.from("products").insert({
-                owner_id: user.id, folder_id: folderId, title: details.title, price: details.price, description: details.description, image_url: imageUrl,
-            }).select().single();
-            if (error) throw error;
-            const newProduct: Item = {
-                id: responseData.id, name: responseData.title, description: responseData.description, price: responseData.price, image: responseData.image_url, category: 'general', owner_id: responseData.owner_id, folder_id: responseData.folder_id
-            };
-            setProducts(prev => [newProduct, ...prev]);
-            const updatedFolders = await fetchFolders(user.id);
-            setFolders(updatedFolders);
-            showSuccess("Produto adicionado com sucesso");
-            return newProduct;
-        } catch (err: any) {
-            console.error(err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleCreateDraftProduct = async (details: { title: string, description: string, price: number, file: Blob }) => {
-        if (!session?.user) return;
-        setIsLoading(true);
-        try {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user || !details.title) return;
-            const imagePath = `${user.id}/drafts/${Date.now()}.jpg`;
-            const imageUrl = await uploadImage({ bucket: "products", file: details.file, path: imagePath });
-            const { data: responseData, error } = await supabase.from("products").insert({
-                owner_id: user.id, folder_id: null, title: details.title, price: details.price, description: details.description, image_url: imageUrl,
-            }).select().single();
-            if (error) throw error;
-            const newProduct: Item = {
-                id: responseData.id, name: responseData.title, description: responseData.description, price: responseData.price, image: responseData.image_url, category: 'general', owner_id: responseData.owner_id, folder_id: null
-            };
-            setProducts(prev => [newProduct, ...prev]);
-            showSuccess("Produto adicionado com sucesso");
-            return newProduct;
-        } catch (err: any) {
-            console.error(err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleMoveProductToFolder = async (productId: string, folderId: string | null) => {
-        if (!session?.user) return;
-        setIsLoading(true);
-        try {
-            const { error } = await supabase.from("products").update({ folder_id: folderId }).eq("id", productId);
-            if (error) throw error;
-            setProducts(prev => prev.map(p => p.id === productId ? { ...p, folder_id: folderId } : p));
-            if (session?.user.id) {
-                const updatedFolders = await fetchFolders(session.user.id);
-                setFolders(updatedFolders);
-            }
-            showSuccess("Produto movido com sucesso");
-        } catch (err: any) {
-            console.error(err);
-        } finally {
-            setIsLoading(false);
-        }
-    };
 
     const handleLikePost = (postId: string) => {
         setPosts(prev => prev.map(p => p.id === postId ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 } : p));
@@ -283,6 +195,132 @@ const App: React.FC = () => {
             timestamp: new Date().toISOString()
         };
         setPosts(prev => prev.map(p => p.id === postId ? { ...p, comments: [...p.comments, newComment], commentCount: p.commentCount + 1 } : p));
+    };
+
+    // Handler to create a folder in Supabase
+    const handleCreateFolder = async (title: string) => {
+        if (!profile) return;
+        try {
+            const { data, error } = await supabase
+                .from('folders')
+                .insert({
+                    title,
+                    owner_id: profile.user_id,
+                    item_count: 0
+                })
+                .select()
+                .single();
+            if (error) throw error;
+            if (data) setFolders(prev => [data, ...prev]);
+        } catch (error) {
+            console.error("Erro ao criar pasta:", error);
+        }
+    };
+
+    // Handler to add a product to a folder, including image upload
+    const handleAddProductToFolder = async (folderId: string, details: { title: string, description: string, price: number, file: Blob }) => {
+        if (!profile) return;
+        try {
+            const fileName = `${profile.user_id}/${Date.now()}_${details.title.replace(/\s/g, '_')}`;
+            const { error: uploadError } = await supabase.storage
+                .from('products')
+                .upload(fileName, details.file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
+
+            const { data: productData, error: productError } = await supabase
+                .from('products')
+                .insert({
+                    title: details.title,
+                    description: details.description,
+                    price: details.price,
+                    image_url: publicUrl,
+                    folder_id: folderId,
+                    owner_id: profile.user_id
+                })
+                .select()
+                .single();
+
+            if (productError) throw productError;
+
+            const newItem: Item = {
+                id: productData.id,
+                name: productData.title,
+                description: productData.description,
+                price: productData.price,
+                image: productData.image_url,
+                category: 'general',
+                owner_id: productData.owner_id,
+                folder_id: productData.folder_id
+            };
+
+            setProducts(prev => [newItem, ...prev]);
+            setFolders(prev => prev.map(f => f.id === folderId ? { ...f, item_count: (f.item_count || 0) + 1, cover_image: f.cover_image || newItem.image } : f));
+            return productData;
+        } catch (error) {
+            console.error("Erro ao adicionar produto:", error);
+        }
+    };
+
+    // Handler to move a product between folders
+    const handleMoveProductToFolder = async (productId: string, folderId: string | null) => {
+        try {
+            const { error } = await supabase
+                .from('products')
+                .update({ folder_id: folderId })
+                .eq('id', productId);
+            if (error) throw error;
+
+            setProducts(prev => prev.map(p => p.id === productId ? { ...p, folder_id: folderId } : p));
+        } catch (error) {
+            console.error("Erro ao mover produto:", error);
+        }
+    };
+
+    // Handler to create a draft product (without folder)
+    const handleCreateDraftProduct = async (details: { title: string, description: string, price: number, file: Blob }) => {
+        if (!profile) return;
+        try {
+            const fileName = `${profile.user_id}/${Date.now()}_draft_${details.title.replace(/\s/g, '_')}`;
+            const { error: uploadError } = await supabase.storage
+                .from('products')
+                .upload(fileName, details.file);
+
+            if (uploadError) throw uploadError;
+
+            const { data: { publicUrl } } = supabase.storage.from('products').getPublicUrl(fileName);
+
+            const { data: productData, error: productError } = await supabase
+                .from('products')
+                .insert({
+                    title: details.title,
+                    description: details.description,
+                    price: details.price,
+                    image_url: publicUrl,
+                    owner_id: profile.user_id
+                })
+                .select()
+                .single();
+
+            if (productError) throw productError;
+
+            const newItem: Item = {
+                id: productData.id,
+                name: productData.title,
+                description: productData.description,
+                price: productData.price,
+                image: productData.image_url,
+                category: 'general',
+                owner_id: productData.owner_id,
+                folder_id: productData.folder_id
+            };
+
+            setProducts(prev => [newItem, ...prev]);
+        } catch (error) {
+            console.error("Erro ao criar rascunho:", error);
+        }
     };
 
     const renderScreen = () => {
@@ -365,7 +403,24 @@ const App: React.FC = () => {
                     const { data } = await supabase.from('profiles').update({ full_name: u.name, bio: u.bio }).eq('user_id', profile?.user_id).select().single(); 
                     if (data) setProfile(data); 
                 } else setProfile(prev => prev ? { ...prev, full_name: u.name ?? prev.full_name, bio: u.bio ?? prev.bio } : null);
-            }} onUpdateProfileImage={async (url) => {}} onSelectCategory={() => {}} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={(id) => setViewedProfileId(id)} onNavigateToSettings={() => setCurrentScreen(Screen.Settings)} onSignOut={() => supabase.auth.signOut()} unreadNotificationCount={unreadCount} unreadMessagesCount={0} onOpenNotificationsPanel={handleOpenNotifications} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} onLikePost={handleLikePost} onAddComment={handleAddComment} />;
+            }} onUpdateProfileImage={async (url) => {}} onSelectCategory={() => {}} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => setCurrentScreen(Screen.Rewards)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} onBack={() => setViewedProfileId(null)} posts={posts} onItemClick={setRecommendationItem} onViewProfile={(id) => setViewedProfileId(id)} onNavigateToSettings={handleOpenSettings} onSignOut={() => supabase.auth.signOut()} unreadNotificationCount={unreadCount} unreadMessagesCount={0} onOpenNotificationsPanel={handleOpenNotifications} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} onLikePost={handleLikePost} onAddComment={handleAddComment} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
+            case Screen.Search: return <SearchScreen onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} posts={posts} items={products} onViewProfile={(id) => { setViewedProfileId(id); setCurrentScreen(Screen.Home); }} onLikePost={handleLikePost} onItemClick={setRecommendationItem} onItemAction={setRecommendationItem} onOpenSplitCamera={() => {}} onOpenComments={handleLikePost} onAddToCart={(i) => setCartItems(p => [...p, i])} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
+            
+            // Verification Flow Screens
+            case Screen.VerificationIntro:
+                return <VerificationIntroScreen onBack={() => setCurrentScreen(Screen.Home)} onStart={() => setCurrentScreen(Screen.IdUpload)} />;
+            case Screen.IdUpload:
+                return <IdUploadScreen onBack={() => setCurrentScreen(Screen.VerificationIntro)} onComplete={(f, b) => setCurrentScreen(Screen.FaceScan)} />;
+            case Screen.FaceScan:
+                return <FaceScanScreen onBack={() => setCurrentScreen(Screen.IdUpload)} onComplete={() => setCurrentScreen(Screen.VerificationPending)} />;
+            case Screen.VerificationPending:
+                return <VerificationPendingScreen onComplete={() => {
+                    if (profile) {
+                        setProfile({ ...profile, verification_status: 'pending' });
+                    }
+                    setCurrentScreen(Screen.Home);
+                }} />;
+                
             default: return <SplashScreen />;
         }
     };
@@ -375,12 +430,26 @@ const App: React.FC = () => {
             <div className="flex-grow relative overflow-hidden">{renderScreen()}</div>
             {showUpdateBadge && <div className="fixed top-20 left-1/2 -translate-x-1/2 z-[250] bg-zinc-900 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-2xl animate-slideUp flex items-center gap-2 border border-white/10"><div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>Banco de Dados Atualizado!</div>}
             
-            {/* Notifications Mini Window Overlay */}
+            {/* UI Overlays */}
             {isNotificationsOpen && (
                 <NotificationsPanel 
                     notifications={notifications} 
                     onClose={handleCloseNotifications} 
                     onNotificationClick={handleNotificationClick} 
+                />
+            )}
+            
+            {isSettingsOpen && profile && (
+                <SettingsPanel 
+                    profile={profile}
+                    theme={theme}
+                    onToggleTheme={toggleTheme}
+                    onClose={handleCloseSettings}
+                    onSignOut={() => supabase.auth.signOut()}
+                    onNavigateToVerification={() => {
+                        setIsSettingsOpen(false);
+                        setCurrentScreen(Screen.VerificationIntro);
+                    }}
                 />
             )}
 
