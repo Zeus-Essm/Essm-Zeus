@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 import GradientButton from './GradientButton';
 import { GoogleIcon } from './IconComponents';
+import { toast } from '../utils/toast';
 
 const LoginScreen: React.FC = () => {
     const [loading, setLoading] = useState(false);
@@ -20,7 +21,7 @@ const LoginScreen: React.FC = () => {
             if (isSignUp) {
                 const { error } = await supabase.auth.signUp({ email, password });
                 if (error) throw error;
-                alert('Verifique seu e-mail para o link de confirmação!');
+                toast('Verifique seu e-mail para o link de confirmação!');
             } else {
                 const { error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
@@ -52,7 +53,7 @@ const LoginScreen: React.FC = () => {
 
     return (
         <div className="relative flex flex-col items-center justify-center min-h-full w-full bg-[#FFFFFF] overflow-hidden p-8 animate-fadeIn font-sans">
-            <div className="w-full max-w-sm z-10">
+            <div className="w-full max-sm z-10">
                 <div className="text-center mb-10 flex flex-col items-center">
                     <img 
                       src="https://i.postimg.cc/L4190LN2/PUMP_startup_2.png" 

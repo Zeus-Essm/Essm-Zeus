@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import GradientButton from './GradientButton';
 import type { Profile } from '../types';
+import { toast } from '../utils/toast';
 
 interface BioEditModalProps {
   profile: Profile;
@@ -42,10 +43,9 @@ const BioEditModal: React.FC<BioEditModalProps> = ({ profile, onClose, onSave })
 
   const handleSave = () => {
     if (!name.trim() || !username.trim()) {
-        alert("Nome e Username são obrigatórios.");
+        toast("Nome e Username são obrigatórios.");
         return;
     }
-    // Remove espaços e caracteres especiais do username para uso real
     const sanitizedUsername = username.trim().toLowerCase().replace(/[^a-z0-9_.]/g, '');
     onSave({ name: name.trim(), bio: bio.trim(), username: sanitizedUsername });
   };

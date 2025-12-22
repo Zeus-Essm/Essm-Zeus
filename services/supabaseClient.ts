@@ -1,16 +1,40 @@
-
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl =
-  (import.meta as any).env?.VITE_SUPABASE_URL ||
-  (window as any).__SUPABASE_URL__;
+/**
+ * Lê variáveis de ambiente de forma segura
+ * Compatível com:
+ * - WEB (Vite / Vercel)
+ * - WEB → APP (WebView, wrapper, PWA)
+ */
+function safeGetEnv(key: string): string | undefined {
+  // 1️⃣ Web → App (index.html)
+  if (typeof window !== 'undefined') {
+    const w = window as any;
+    if (w[`__${key}__`]) return w[`__${key}__`];
+    if (w[`__${key.replace('VITE_', '')}__`]) return w[`__${key.replace('VITE_', '')}__`];
+  }
 
-const supabaseAnonKey =
-  (import.meta as any).env?.VITE_SUPABASE_ANON_KEY ||
-  (window as any).__SUPABASE_ANON_KEY__;
-
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error("Supabase ENV não encontrada. Verifique se as variáveis VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY estão configuradas ou se o objeto window.__SUPABASE_URL__ está definido.");
+  // 2️⃣ Web (Vite)
+  try {
+    const meta = (import.meta as any);
+    return meta?.env?.[key];
+  } catch {
+    return undefined;
+  }
 }
 
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
+const SUPABASE_URL = safeGetEnv('VITE_SUPABASE_URL');
+const SUPABASE_ANON_KEY = safeGetEnv('VITE_SUPABASE_ANON_KEY');
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.error('[Supabase] Variáveis de ambiente não encontradas', {
+    SUPABASE_URL: SUPABASE_URL ? 'OK' : 'MISSING',
+    SUPABASE_ANON_KEY: SUPABASE_ANON_KEY ? 'OK' : 'MISSING'
+  });
+}
+
+// Inicializa o cliente com os valores encontrados ou strings vazias para evitar erros fatais imediatos
+export const supabase = createClient(
+  (SUPABASE_URL || 'https://placeholder.supabase.co') as string,
+  (SUPABASE_ANON_KEY || 'placeholder-key') as string
+);

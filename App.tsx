@@ -3,6 +3,9 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
 import { Screen, Category, Item, Post, Profile, BusinessProfile, Folder, ShowcaseItem, AppNotification, Comment, User, Product } from './types';
 import { INITIAL_POSTS, CATEGORIES, INITIAL_STORIES, MALE_CLOTHING_SUBCATEGORIES } from './constants';
+import { toast } from './utils/toast';
+
+const isNative = !!(window as any).Capacitor;
 
 // Screen Components
 import SplashScreen from './components/SplashScreen';
@@ -28,8 +31,6 @@ import VerificationIntroScreen from './components/VerificationIntroScreen';
 import IdUploadScreen from './components/IdUploadScreen';
 import FaceScanScreen from './components/FaceScanScreen';
 import VerificationPendingScreen from './components/VerificationPendingScreen';
-
-const isNative = !!(window as any).Capacitor;
 
 const dataUrlToBlob = async (dataUrl: string): Promise<Blob> => {
     const res = await fetch(dataUrl);
@@ -120,25 +121,14 @@ const App: React.FC = () => {
         return data || [];
     };
 
-    const handleAuthState = async (currentSession: Session | null, mounted: boolean) => {
-        if (!mounted) return;
-        
+    const handleAuthState = async (currentSession: Session | null) => {
         setSession(currentSession);
         fetchRealBusinesses();
 
         if (currentSession?.user) {
             const user = currentSession.user;
+            const { data: existingProfile } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
             
-            // Buscar perfil existente
-            const { data: existingProfile } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('user_id', user.id)
-                .single();
-            
-            if (!mounted) return;
-
-            // Se não existir, criar um novo perfil básico
             if (!existingProfile) {
                 await supabase.from('profiles').insert({
                     user_id: user.id,
@@ -149,24 +139,13 @@ const App: React.FC = () => {
                 });
             }
             
-            if (!mounted) return;
+            const { data: freshProfile } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
             
-            // Buscar perfil atualizado
-            const { data: freshProfile } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('user_id', user.id)
-                .single();
-            
-            if (!mounted) return;
-
-            // Buscar dados da loja/inventário
             if (user.id) {
                 const [freshFolders, fetchedProducts] = await Promise.all([
                     fetchFolders(user.id),
                     fetchAllProducts(user.id)
                 ]);
-                if (!mounted) return;
                 setFolders(freshFolders);
                 setProducts(fetchedProducts);
             }
@@ -190,7 +169,6 @@ const App: React.FC = () => {
                 }
             }
         } else {
-            // Lógica de Sign Out / Sessão Expirada
             setProfile(null);
             setProducts([]);
             setFolders([]);
@@ -198,8 +176,7 @@ const App: React.FC = () => {
             setCartItems([]);
             setCurrentScreen(Screen.AccountTypeSelection);
         }
-        
-        if (mounted) setAuthLoading(false);
+        setAuthLoading(false);
     };
 
     useEffect(() => {
@@ -208,15 +185,15 @@ const App: React.FC = () => {
         const init = async () => {
             const { data } = await supabase.auth.getSession();
             if (!mounted) return;
-            handleAuthState(data.session, mounted);
+            handleAuthState(data.session);
         };
 
         init();
 
         const { data: listener } = supabase.auth.onAuthStateChange(
-            (event, session) => {
+            (_, session) => {
                 if (!mounted) return;
-                handleAuthState(session, mounted);
+                handleAuthState(session);
             }
         );
 
@@ -253,7 +230,7 @@ const App: React.FC = () => {
             setTimeout(() => setShowUpdateBadge(false), 3000);
         } catch (err: any) {
             console.error(err.message);
-            alert("Erro ao criar pasta no Supabase.");
+            toast("Erro ao criar pasta no Supabase.");
         } finally {
             setIsLoading(false);
         }
@@ -266,8 +243,8 @@ const App: React.FC = () => {
             let publicUrl: string | null = null;
             
             if (details.file) {
-                const fileExt = details.file.type.split('/')[1] || 'jpg';
-                const fileName = `${profile.user_id}/${Date.now()}_${details.title.replace(/\s/g, '_')}.${fileExt}`;
+                const safeTitle = details.title.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                const fileName = `${profile.user_id}/${Date.now()}_${safeTitle}.jpg`;
                 
                 const { error: uploadError } = await supabase.storage
                     .from('products')
@@ -294,7 +271,6 @@ const App: React.FC = () => {
 
             if (dbError) throw dbError;
 
-            // Incremento via RPC (deve estar configurado no seu Supabase SQL)
             await supabase.rpc('increment_folder_count', { row_id: folderId });
 
             setProducts(p => [productData, ...p]);
@@ -309,7 +285,7 @@ const App: React.FC = () => {
             return productData;
         } catch (err: any) {
             console.error(err.message);
-            alert("Erro ao salvar produto no Supabase.");
+            toast("Erro ao salvar produto no Supabase.");
         } finally {
             setIsLoading(false);
         }
@@ -341,7 +317,7 @@ const App: React.FC = () => {
             setShowUpdateBadge(true);
             setTimeout(() => setShowUpdateBadge(false), 3000);
         } catch (err: any) {
-            alert(`Erro: ${err.message}`);
+            toast(`Erro: ${err.message}`);
         } finally {
             setIsLoading(false);
         }
@@ -361,7 +337,7 @@ const App: React.FC = () => {
             if (dbError) throw dbError;
             setProfile(data);
         } catch (err: any) {
-            alert(`Erro: ${err.message}`);
+            toast(`Erro: ${err.message}`);
         } finally {
             setIsLoading(false);
         }

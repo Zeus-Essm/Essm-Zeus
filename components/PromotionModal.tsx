@@ -4,6 +4,7 @@ import type { BusinessProfile, Item, Post, Profile } from '../types';
 import GradientButton from './GradientButton';
 import { INITIAL_VENDOR_ITEMS, VENDOR_POSTS } from '../constants';
 import { CheckCircleIconFilled, UserIcon } from './IconComponents';
+import { toast } from '../utils/toast';
 
 const XIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
@@ -41,7 +42,7 @@ const PromotionModal: React.FC<PromotionModalProps> = ({ accountType, profile, u
                 return prev.filter(i => i.id !== item.id);
             } else {
                 if (prev.length >= MAX_SELECTION) {
-                    alert(`Você pode selecionar no máximo ${MAX_SELECTION} itens.`);
+                    toast(`Você pode selecionar no máximo ${MAX_SELECTION} itens.`);
                     return prev;
                 }
                 return [...prev, item];
@@ -50,7 +51,6 @@ const PromotionModal: React.FC<PromotionModalProps> = ({ accountType, profile, u
     };
 
     const profileName = accountType === 'business' ? (profile as BusinessProfile).business_name : (profile as Profile).username;
-    // Fix: Property 'profile_image_url' does not exist on type 'Profile', using 'avatar_url' instead
     const profileAvatar = accountType === 'business' ? (profile as BusinessProfile).logo_url : (profile as Profile).avatar_url;
     
     const renderSelectionStep = () => (

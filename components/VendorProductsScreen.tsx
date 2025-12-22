@@ -4,6 +4,14 @@ import Header from './Header';
 import type { BusinessProfile, Product } from '../types';
 import { PlusIcon, PencilIcon, EyeIcon, XCircleIcon, ShoppingBagIcon, CameraIcon } from './IconComponents';
 import GradientButton from './GradientButton';
+import { toast } from '../utils/toast';
+import { removeImageBackground, generateProductImage } from '../services/geminiService';
+
+const SparklesIconUI = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.25 15L17.5 17.625l-.75-2.625a2.25 2.25 0 00-1.545-1.545L12.583 12.688l2.625-.75a2.25 2.25 0 001.545-1.545l.75-2.625.75 2.625a2.25 2.25 0 001.545 1.545l2.625.75-2.625.75a2.25 2.25 0 00-1.545 1.545L18.25 15z" />
+    </svg>
+);
 
 interface VendorProductsScreenProps {
     onBack: () => void;
@@ -19,6 +27,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
     const [price, setPrice] = useState('');
     const [file, setFile] = useState<Blob | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,10 +40,40 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
         }
     };
 
+    const handleRemoveBg = async () => {
+        if (!preview) return;
+        setIsProcessing(true);
+        try {
+            const result = await removeImageBackground(preview);
+            setPreview(result);
+            const res = await fetch(result);
+            setFile(await res.blob());
+        } catch (e) {
+            toast("Erro ao remover fundo pela IA.");
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+    const handleAiGenerate = async () => {
+        if (!title) return toast("Digite o título para a IA gerar o produto.");
+        setIsProcessing(true);
+        try {
+            const result = await generateProductImage(title, description);
+            setPreview(result);
+            const res = await fetch(result);
+            setFile(await res.blob());
+        } catch (e) {
+            toast("Erro ao gerar imagem pela IA.");
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!title) {
-          alert("O nome do produto é obrigatório.");
+          toast("O nome do produto é obrigatório.");
           return;
         }
 
@@ -76,19 +115,48 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
 
                 {isCreating ? (
                     <form onSubmit={handleSubmit} className="space-y-6 animate-slideUp">
-                        <div 
-                            onClick={() => fileInputRef.current?.click()}
-                            className="w-full h-64 border-2 border-dashed border-zinc-200 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer bg-zinc-50 overflow-hidden"
-                        >
-                            {preview ? (
-                                <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                            ) : (
-                                <>
-                                    <CameraIcon className="w-10 h-10 text-zinc-300 mb-2" />
-                                    <span className="text-[10px] font-black uppercase text-zinc-400">Foto do Produto</span>
-                                </>
-                            )}
-                            <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+                        <div className="space-y-3">
+                            <div 
+                                onClick={() => !isProcessing && fileInputRef.current?.click()}
+                                className="w-full h-64 border-2 border-dashed border-zinc-200 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer bg-zinc-50 overflow-hidden relative"
+                            >
+                                {isProcessing && (
+                                    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center gap-2">
+                                        <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">Sincronizando IA...</span>
+                                    </div>
+                                )}
+                                {preview ? (
+                                    <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                                ) : (
+                                    <>
+                                        <CameraIcon className="w-10 h-10 text-zinc-300 mb-2" />
+                                        <span className="text-[10px] font-black uppercase text-zinc-400">Foto do Produto</span>
+                                    </>
+                                )}
+                                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-2">
+                                <button 
+                                    type="button"
+                                    onClick={handleRemoveBg}
+                                    disabled={!preview || isProcessing}
+                                    className="flex items-center justify-center gap-2 py-3 bg-zinc-900 text-white rounded-xl text-[10px] font-black uppercase disabled:opacity-50"
+                                >
+                                    <SparklesIconUI />
+                                    Isolar Produto
+                                </button>
+                                <button 
+                                    type="button"
+                                    onClick={handleAiGenerate}
+                                    disabled={!title || isProcessing}
+                                    className="flex items-center justify-center gap-2 py-3 border-2 border-amber-500 text-amber-600 rounded-xl text-[10px] font-black uppercase disabled:opacity-50"
+                                >
+                                    <SparklesIconUI />
+                                    Criar pela IA
+                                </button>
+                            </div>
                         </div>
 
                         <div className="space-y-4">
@@ -115,7 +183,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
                             />
                         </div>
 
-                        <GradientButton type="submit" disabled={!title}>
+                        <GradientButton type="submit" disabled={!title || isProcessing}>
                             Salvar no Banco de Dados
                         </GradientButton>
                     </form>

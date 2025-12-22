@@ -1,9 +1,9 @@
 
-
 import React from 'react';
 import Header from './Header';
 import { BookmarkIcon, ShareIcon, ShoppingBagIcon, UploadIcon } from './IconComponents';
 import type { SavedLook, Item } from '../types';
+import { toast } from '../utils/toast';
 
 interface MyLooksScreenProps {
   looks: SavedLook[];
@@ -17,9 +17,6 @@ const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClic
   const handleShare = async (look: SavedLook) => {
     const text = `Confira meu novo look criado com o app PUMP! Itens: ${look.items.map(i => i.name).join(', ')}.`;
 
-    // The Web Share API is the preferred method, but it requires HTTPS and user interaction.
-    // It also has limitations on sharing files directly from data URLs.
-    // We'll convert the data URL to a blob to share it as a file.
     if (navigator.share) {
       try {
         const response = await fetch(look.image);
@@ -33,20 +30,18 @@ const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClic
             files: [file],
           });
         } else {
-          // Fallback if files cannot be shared
           await navigator.share({
             title: 'Meu Look PUMP',
             text: text,
-            url: window.location.href, // Share the app's URL instead
+            url: window.location.href,
           });
         }
       } catch (error) {
         console.error('Error sharing look:', error);
-        alert('Ocorreu um erro ao tentar compartilhar.');
+        toast('Ocorreu um erro ao tentar compartilhar.');
       }
     } else {
-      // Fallback for browsers that do not support the Web Share API
-      alert('Seu navegador não suporta a função de compartilhamento. Tente salvar a imagem e compartilhar manually.');
+      toast('Seu navegador não suporta a função de compartilhamento. Tente salvar a imagem e compartilhar manualmente.');
     }
   };
 
@@ -59,12 +54,10 @@ const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClic
           <div className="space-y-4 p-2">
             {looks.map(look => (
               <div key={look.id} className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-lg overflow-hidden flex flex-col">
-                {/* Image */}
                 <div className="w-full bg-black">
                     <img src={look.image} alt="Look salvo" className="w-full h-auto" />
                 </div>
 
-                {/* Items List */}
                 <div className="p-4 text-sm">
                     <h3 className="font-bold mb-2 text-[var(--accent-primary)] opacity-90">Itens neste look:</h3>
                     <ul className="list-disc list-inside space-y-1">
@@ -81,7 +74,6 @@ const MyLooksScreen: React.FC<MyLooksScreenProps> = ({ looks, onBack, onItemClic
                     </ul>
                 </div>
 
-                 {/* Actions */}
                 <div className="p-3 flex gap-2 border-t border-[var(--border-primary)] bg-black/50">
                     <button
                         onClick={() => onBuyLook(look.items)}

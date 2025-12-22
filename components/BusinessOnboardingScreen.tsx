@@ -1,7 +1,9 @@
+
 import React, { useState, useRef } from 'react';
 import GradientButton from './GradientButton';
 import { UploadIcon } from './IconComponents';
 import type { BusinessProfile } from '../types';
+import { toast } from '../utils/toast';
 
 interface BusinessOnboardingScreenProps {
     onComplete: (details: Omit<BusinessProfile, 'id'>) => void;
@@ -28,14 +30,14 @@ const BusinessOnboardingScreen: React.FC<BusinessOnboardingScreenProps> = ({ onC
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (!businessName || !logoPreview) {
-            alert('Por favor, preencha o nome da empresa e adicione um logo.');
+            toast('Por favor, preencha o nome da empresa e adicione um logo.');
             return;
         }
         onComplete({
             business_name: businessName,
             business_category: businessCategory,
             description: description,
-            logo_url: logoPreview, // In a real app, this would be uploaded and replaced with a URL
+            logo_url: logoPreview,
         });
     };
 

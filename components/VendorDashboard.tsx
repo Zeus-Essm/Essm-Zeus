@@ -10,6 +10,14 @@ import GradientButton from './GradientButton';
 import ImageViewModal from './ImageViewModal';
 import CommentsModal from './CommentsModal';
 import BioEditModal from './BioEditModal';
+import { toast } from '../utils/toast';
+import { removeImageBackground, generateProductImage } from '../services/geminiService';
+
+const SparklesIconUI = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.25 15L17.5 17.625l-.75-2.625a2.25 2.25 0 00-1.545-1.545L12.583 12.688l2.625-.75a2.25 2.25 0 001.545-1.545l.75-2.625.75 2.625a2.25 2.25 0 001.545 1.545l2.625.75-2.625.75a2.25 2.25 0 00-1.545 1.545L18.25 15z" />
+    </svg>
+);
 
 interface VendorDashboardProps {
   businessProfile: BusinessProfile;
@@ -89,6 +97,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     const [newItemDesc, setNewItemDesc] = useState('');
     const [newItemFile, setNewItemFile] = useState<Blob | null>(null);
     const [newItemPreview, setNewItemPreview] = useState<string | null>(null);
+    const [isAiProcessing, setIsAiProcessing] = useState(false);
     const [newFolderTitle, setNewFolderTitle] = useState('');
 
     const itemFileInputRef = useRef<HTMLInputElement>(null);
@@ -114,6 +123,36 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
         }
     };
 
+    const handleRemoveBackground = async () => {
+        if (!newItemPreview) return;
+        setIsAiProcessing(true);
+        try {
+            const result = await removeImageBackground(newItemPreview);
+            setNewItemPreview(result);
+            const res = await fetch(result);
+            setNewItemFile(await res.blob());
+        } catch (e) {
+            toast("Falha ao remover fundo.");
+        } finally {
+            setIsAiProcessing(false);
+        }
+    };
+
+    const handleGenerateImage = async () => {
+        if (!newItemTitle) return toast("Dê um nome ao produto para a IA saber o que criar.");
+        setIsAiProcessing(true);
+        try {
+            const result = await generateProductImage(newItemTitle, newItemDesc);
+            setNewItemPreview(result);
+            const res = await fetch(result);
+            setNewItemFile(await res.blob());
+        } catch (e) {
+            toast("Falha ao gerar imagem.");
+        } finally {
+            setIsAiProcessing(false);
+        }
+    };
+
     const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
@@ -132,7 +171,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
 
     const handleSaveItem = async (keepAdding: boolean = false) => {
         if (!selectedFolderId || !newItemTitle) {
-          alert("O nome do produto é obrigatório.");
+          toast("O nome do produto é obrigatório.");
           return;
         }
 
@@ -417,6 +456,12 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                 onClick={() => itemFileInputRef.current?.click()} 
                                 className="w-full aspect-[4/5] bg-zinc-50 border-2 border-dashed border-zinc-100 rounded-[2rem] flex flex-col items-center justify-center overflow-hidden transition-all hover:border-amber-400/50 group relative"
                             >
+                                {isAiProcessing && (
+                                    <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
+                                        <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                                        <p className="text-[10px] font-black uppercase text-amber-600 tracking-widest animate-pulse">Processamento IA...</p>
+                                    </div>
+                                )}
                                 {newItemPreview ? (
                                     <>
                                         <img src={newItemPreview} className="w-full h-full object-cover" alt="Preview" />
@@ -432,6 +477,25 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                 )}
                             </div>
                             <input type="file" ref={itemFileInputRef} accept="image/*" onChange={handleFileChange} className="hidden" />
+
+                            <div className="grid grid-cols-2 gap-2">
+                                <button 
+                                    onClick={handleRemoveBackground}
+                                    disabled={!newItemPreview || isAiProcessing}
+                                    className="flex items-center justify-center gap-2 py-3 px-2 bg-zinc-900 text-white rounded-xl text-[10px] font-black uppercase tracking-tighter disabled:opacity-50 active:scale-95 transition-all"
+                                >
+                                    <SparklesIconUI />
+                                    Remover Fundo
+                                </button>
+                                <button 
+                                    onClick={handleGenerateImage}
+                                    disabled={!newItemTitle || isAiProcessing}
+                                    className="flex items-center justify-center gap-2 py-3 px-2 border-2 border-amber-500 text-amber-600 rounded-xl text-[10px] font-black uppercase tracking-tighter disabled:opacity-50 active:scale-95 transition-all"
+                                >
+                                    <SparklesIconUI />
+                                    Gerar pela IA
+                                </button>
+                            </div>
 
                             <div className="space-y-4">
                                 <div>
@@ -469,14 +533,14 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                         <div className="flex flex-col gap-3 pb-8">
                              <button 
                                 onClick={() => handleSaveItem(true)} 
-                                disabled={!newItemTitle}
+                                disabled={!newItemTitle || isAiProcessing}
                                 className="w-full py-4 bg-transparent text-amber-600 border border-amber-600 rounded-2xl font-bold uppercase text-[11px] tracking-widest transition-all active:scale-[0.98] disabled:opacity-50"
                             >
                                 Salvar e Continuar
                             </button>
                             <GradientButton 
                                 onClick={() => handleSaveItem(false)} 
-                                disabled={!newItemTitle}
+                                disabled={!newItemTitle || isAiProcessing}
                                 className="!py-4 !rounded-2xl !text-[11px]"
                             >
                                 CONCLUIR CADASTRO

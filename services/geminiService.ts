@@ -309,3 +309,62 @@ export const generateDecorationImage = async (compositeImage: string): Promise<s
         throw new Error(`Falha ao decorar o ambiente. Detalhes: ${error.message}`);
     }
 };
+
+/**
+ * Removes the background of an image using AI.
+ */
+export const removeImageBackground = async (imageDataUrl: string): Promise<string> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+        const { base64, mimeType } = getBase64Parts(imageDataUrl);
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: {
+                parts: [
+                    { inlineData: { mimeType, data: base64 } },
+                    { text: "Remove the background of this image. The subject should remain exactly as it is, but on a clean, solid pure white background. No other changes." },
+                ]
+            },
+        });
+
+        return extractImageFromResponse(response);
+    } catch (error: any) {
+        console.error("Error in removeImageBackground:", error);
+        throw new Error(`Falha ao remover fundo: ${error.message}`);
+    }
+};
+
+/**
+ * Generates a high-quality product image from a title and description.
+ */
+export const generateProductImage = async (title: string, description: string): Promise<string> => {
+    try {
+        const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
+        const prompt = `
+            Generate a high-end, professional commercial product photograph.
+            Product: ${title}
+            Description: ${description}
+            Style: Minimalist, soft professional studio lighting, clean white background, 8k resolution.
+            The product should be perfectly focused and look premium.
+        `;
+
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: {
+                parts: [{ text: prompt }]
+            },
+            config: {
+                imageConfig: {
+                    aspectRatio: "1:1"
+                }
+            }
+        });
+
+        return extractImageFromResponse(response);
+    } catch (error: any) {
+        console.error("Error in generateProductImage:", error);
+        throw new Error(`Falha ao gerar imagem do produto: ${error.message}`);
+    }
+};
