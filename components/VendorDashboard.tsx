@@ -1,14 +1,15 @@
 
 import React, { useState, useMemo, useRef } from 'react';
-import type { BusinessProfile, Item, Profile, Folder, ShowcaseItem, Post } from '../types';
+import type { BusinessProfile, Item, Profile, Folder, Post } from '../types';
 import { 
-    MenuIcon, CameraIcon, PencilIcon, PlusIcon, StarIcon, 
-    BellIcon, UserIcon, ChevronDownIcon, ArchiveIcon, ShoppingBagIcon, RepositionIcon
+    MenuIcon, CameraIcon, PlusIcon, StarIcon, 
+    BellIcon, ChevronDownIcon, ArchiveIcon, ShoppingBagIcon, RepositionIcon,
+    PencilIcon, UserIcon
 } from './IconComponents';
-import BioEditModal from './BioEditModal';
 import GradientButton from './GradientButton';
 import ImageViewModal from './ImageViewModal';
 import CommentsModal from './CommentsModal';
+import BioEditModal from './BioEditModal';
 
 interface VendorDashboardProps {
   businessProfile: BusinessProfile;
@@ -54,11 +55,12 @@ const FolderCard: React.FC<{ folder: Folder; onClick: () => void }> = ({ folder,
 );
 
 const VendorDashboard: React.FC<VendorDashboardProps> = ({ 
+    businessProfile,
     profile,
     onOpenMenu, 
     onOpenNotificationsPanel, 
     onOpenPromotionModal, 
-    followersCount, 
+    followersCount,
     followingCount,
     folders,
     products,
@@ -75,8 +77,9 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
 }) => {
     const [activeTab, setActiveTab] = useState<'shop' | 'posts'>('shop');
     const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-    const [isEditingBio, setIsEditingBio] = useState(false);
     const [isAddingItem, setIsAddingItem] = useState(false);
+    const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+    const [isEditingProfile, setIsEditingProfile] = useState(false);
     const [movingProduct, setMovingProduct] = useState<Item | null>(null);
     const [viewingPostIndex, setViewingPostIndex] = useState<number | null>(null);
     const [commentingPost, setCommentingPost] = useState<Post | null>(null);
@@ -86,9 +89,10 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     const [newItemDesc, setNewItemDesc] = useState('');
     const [newItemFile, setNewItemFile] = useState<Blob | null>(null);
     const [newItemPreview, setNewItemPreview] = useState<string | null>(null);
+    const [newFolderTitle, setNewFolderTitle] = useState('');
 
-    const avatarInputRef = useRef<HTMLInputElement>(null);
     const itemFileInputRef = useRef<HTMLInputElement>(null);
+    const logoInputRef = useRef<HTMLInputElement>(null);
 
     const currentFolder = folders.find(f => f.id === selectedFolderId);
     const userPosts = posts.filter(p => p.user.id === profile.user_id);
@@ -98,24 +102,32 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
         return products.filter(p => p.folder_id === selectedFolderId);
     }, [products, selectedFolderId]);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'avatar' | 'item') => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             const reader = new FileReader();
             reader.onloadend = () => {
-                if (type === 'avatar') onUpdateProfileImage(reader.result as string);
-                else if (type === 'item') {
-                    setNewItemFile(file);
-                    setNewItemPreview(reader.result as string);
-                }
+                setNewItemFile(file);
+                setNewItemPreview(reader.result as string);
             };
             reader.readAsDataURL(file);
         }
     };
 
-    const handleCreateFolderClick = () => {
-        const title = prompt("Nome da Nova Coleção:");
-        if (title) onCreateFolder(title);
+    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => onUpdateProfileImage(reader.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleCreateFolderSubmit = () => {
+        if (!newFolderTitle.trim()) return;
+        onCreateFolder(newFolderTitle.trim());
+        setNewFolderTitle('');
+        setIsCreatingFolder(false);
     };
 
     const handleSaveItem = async (keepAdding: boolean = false) => {
@@ -139,14 +151,17 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
 
     return (
         <div className="w-full h-full flex flex-col bg-white text-zinc-900 overflow-hidden font-sans">
-            <header className="px-4 pt-4 pb-2 flex items-center justify-between bg-white shrink-0 z-10">
+            <header className="px-4 pt-4 pb-2 flex items-center justify-between bg-white shrink-0 z-10 border-b border-zinc-50">
                 <div className="flex items-center gap-1 cursor-pointer active:opacity-60 transition-opacity">
-                    <h1 className="text-lg font-bold tracking-tight text-zinc-900">
-                        {profile.username || "Vendedor"}
+                    <h1 className="text-lg font-bold tracking-tight text-zinc-900 uppercase italic">
+                        @{profile.username || "loja"}
                     </h1>
                     <ChevronDownIcon className="w-3.5 h-3.5 text-zinc-800" strokeWidth={3} />
                 </div>
                 <div className="flex items-center gap-2">
+                    <button onClick={onOpenPromotionModal} className="p-2 bg-amber-50 rounded-xl text-amber-600 active:scale-90 transition-transform">
+                        <StarIcon className="w-5 h-5" />
+                    </button>
                     <button onClick={onOpenNotificationsPanel} className="p-2 active:scale-90 transition-transform">
                         <BellIcon className="w-7 h-7 text-zinc-900" strokeWidth={1.5} />
                     </button>
@@ -160,11 +175,14 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                 <div className="px-5 pt-4">
                     <div className="flex items-center gap-4 mb-4">
                         <div className="relative shrink-0">
-                            <div className="w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 to-amber-600">
+                            <div 
+                                onClick={() => logoInputRef.current?.click()}
+                                className="w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 to-amber-600 shadow-sm cursor-pointer"
+                            >
                                 <div className="w-full h-full rounded-full bg-white p-[2px] overflow-hidden">
                                     <div className="w-full h-full rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center">
                                         {profile.avatar_url ? (
-                                            <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                            <img src={profile.avatar_url} alt="Logo" className="w-full h-full object-cover" />
                                         ) : (
                                             <UserIcon className="w-10 h-10 text-zinc-300" />
                                         )}
@@ -172,33 +190,33 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                 </div>
                             </div>
                             <button 
-                                onClick={() => avatarInputRef.current?.click()}
+                                onClick={() => logoInputRef.current?.click()}
                                 className="absolute bottom-0 right-0 w-7 h-7 bg-zinc-800 rounded-full border-2 border-white flex items-center justify-center text-white shadow-md active:scale-90 transition-all"
                             >
-                                <CameraIcon className="w-3.5 h-3.5" />
+                                <PlusIcon className="w-3.5 h-3.5" strokeWidth={4} />
                             </button>
-                            <input type="file" accept="image/*" ref={avatarInputRef} onChange={(e) => handleFileChange(e, 'avatar')} className="hidden" />
+                            <input type="file" ref={logoInputRef} onChange={handleLogoChange} className="hidden" accept="image/*" />
                         </div>
 
                         <div className="flex-grow min-w-0">
                             <div className="flex items-center justify-between">
-                                <h2 className="font-bold text-md text-zinc-900 truncate">
+                                <h2 className="font-bold text-md text-zinc-900 truncate uppercase tracking-tighter italic leading-none">
                                     {profile.full_name || profile.username}
                                 </h2>
-                                <button onClick={() => setIsEditingBio(true)} className="p-1 active:scale-90 transition-transform">
+                                <button onClick={() => setIsEditingProfile(true)} className="p-1 active:scale-90 transition-transform">
                                     <PencilIcon className="w-4 h-4 text-zinc-400" />
                                 </button>
                             </div>
-                            <div className="text-xs text-zinc-600 font-medium leading-tight line-clamp-3 mt-0.5 whitespace-pre-line">
-                                {profile.bio || "Seja bem-vindo ao seu painel de vendas!"}
+                            <div className="text-[11px] text-zinc-600 font-medium leading-tight line-clamp-3 mt-1 whitespace-pre-line">
+                                {profile.bio || "Bio da loja não definida."}
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex justify-around py-4 border-t border-b border-zinc-100 mb-4">
+                    <div className="flex justify-around py-4 border-t border-b border-zinc-100 mb-2">
                         <div className="flex flex-col items-center">
-                            <span className="text-md font-bold text-zinc-900">{userPosts.length}</span>
-                            <span className="text-[10px] text-zinc-400 font-black uppercase tracking-tight">posts</span>
+                            <span className="text-md font-bold text-zinc-900">{products.length}</span>
+                            <span className="text-[10px] text-zinc-400 font-black uppercase tracking-tight">produtos</span>
                         </div>
                         <div className="flex flex-col items-center">
                             <span className="text-md font-bold text-zinc-900">{followersCount}</span>
@@ -209,24 +227,14 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                             <span className="text-[10px] text-zinc-400 font-black uppercase tracking-tight">seguindo</span>
                         </div>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-3 mb-6">
-                        <button onClick={() => setIsEditingBio(true)} className="py-2.5 bg-zinc-50 rounded-lg text-[11px] font-bold uppercase tracking-tight text-zinc-600 border border-zinc-100 transition-all active:scale-[0.98]">
-                            Editar Perfil
-                        </button>
-                        <button onClick={onOpenPromotionModal} className="py-2.5 bg-amber-600 rounded-lg text-[11px] font-bold uppercase tracking-tight text-white shadow-sm flex items-center justify-center gap-2 active:scale-[0.98]">
-                            <StarIcon className="w-3.5 h-3.5" />
-                            Promover Loja
-                        </button>
-                    </div>
                 </div>
 
-                <div className="flex bg-white sticky top-0 z-10 shadow-sm">
+                <div className="flex bg-white sticky top-0 z-10 shadow-sm border-b border-zinc-50">
                     <button 
                         onClick={() => { setActiveTab('shop'); setSelectedFolderId(null); }} 
                         className={`flex-1 py-4 flex justify-center items-center relative transition-colors ${activeTab === 'shop' ? 'text-amber-600' : 'text-zinc-400'}`}
                     >
-                        <span className="text-xs font-bold uppercase tracking-widest">LOJA</span>
+                        <span className="text-xs font-bold uppercase tracking-widest">CATÁLOGO</span>
                         {activeTab === 'shop' && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-amber-600"></div>}
                     </button>
                     <button 
@@ -281,7 +289,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                         <FolderCard key={folder.id} folder={folder} onClick={() => setSelectedFolderId(folder.id)} />
                                     ))}
                                     <button 
-                                        onClick={handleCreateFolderClick}
+                                        onClick={() => setIsCreatingFolder(true)}
                                         className="h-56 border-2 border-dashed border-zinc-100 rounded-xl flex flex-col items-center justify-center gap-2 bg-zinc-50/50 hover:bg-zinc-50 transition-colors"
                                     >
                                         <PlusIcon className="w-6 h-6 text-zinc-300" strokeWidth={3} />
@@ -337,17 +345,45 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                 />
             )}
 
-            {isEditingBio && (
+            {isEditingProfile && (
                 <BioEditModal 
                     profile={profile}
-                    onClose={() => setIsEditingBio(false)} 
-                    onSave={(name, bio) => {
-                        onUpdateProfile({ name: name, bio: bio });
-                        setIsEditingBio(false);
-                    }} 
+                    onClose={() => setIsEditingProfile(false)}
+                    onSave={(updates) => {
+                        onUpdateProfile({ name: updates.name, bio: updates.bio, username: updates.username });
+                        setIsEditingProfile(false);
+                    }}
                 />
             )}
-            
+
+            {isCreatingFolder && (
+                <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-md flex items-center justify-center p-6 animate-fadeIn" onClick={() => setIsCreatingFolder(false)}>
+                    <div className="w-full max-w-sm bg-white rounded-[2.5rem] p-8 flex flex-col gap-6 animate-modalZoomIn shadow-2xl" onClick={e => e.stopPropagation()}>
+                        <div className="text-center">
+                            <h2 className="text-xl font-black uppercase italic text-zinc-900 tracking-tighter leading-none">Nova Coleção</h2>
+                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Organize seu catálogo</p>
+                        </div>
+                        <div>
+                            <label className="text-[10px] font-black uppercase text-zinc-400 ml-4 tracking-widest">Nome da Pasta</label>
+                            <input 
+                                type="text" 
+                                placeholder="Ex: Verão 2025" 
+                                value={newFolderTitle} 
+                                onChange={e => setNewFolderTitle(e.target.value)} 
+                                className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 font-bold text-sm text-zinc-900 focus:outline-none focus:border-amber-500/40" 
+                                autoFocus
+                            />
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <GradientButton onClick={handleCreateFolderSubmit} disabled={!newFolderTitle.trim()}>
+                                CRIAR PASTA
+                            </GradientButton>
+                            <button onClick={() => setIsCreatingFolder(false)} className="py-4 text-[11px] font-bold uppercase text-zinc-400 tracking-widest hover:text-zinc-900">Cancelar</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {isAddingItem && (
                 <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-md flex items-end animate-fadeIn" onClick={() => setIsAddingItem(false)}>
                     <div className="w-full max-h-[95vh] bg-white rounded-t-[2.5rem] p-8 flex flex-col gap-6 animate-slideUp overflow-y-auto" onClick={e => e.stopPropagation()}>
@@ -380,7 +416,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                     </>
                                 )}
                             </div>
-                            <input type="file" ref={itemFileInputRef} accept="image/*" onChange={e => handleFileChange(e, 'item')} className="hidden" />
+                            <input type="file" ref={itemFileInputRef} accept="image/*" onChange={handleFileChange} className="hidden" />
 
                             <div className="space-y-4">
                                 <div>
@@ -401,6 +437,15 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                         value={newItemPrice} 
                                         onChange={e => setNewItemPrice(e.target.value)} 
                                         className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 font-bold text-sm text-zinc-900 focus:outline-none focus:border-amber-500/40" 
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black uppercase text-zinc-400 ml-4 tracking-widest">Descrição</label>
+                                    <textarea 
+                                        placeholder="Descreve os detalhes da peça..." 
+                                        value={newItemDesc} 
+                                        onChange={e => setNewItemDesc(e.target.value)} 
+                                        className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 font-bold text-sm text-zinc-900 focus:outline-none focus:border-amber-500/40 h-32 resize-none" 
                                     />
                                 </div>
                             </div>

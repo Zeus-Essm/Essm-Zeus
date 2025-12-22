@@ -6,7 +6,7 @@ import { CATEGORIES } from '../constants';
 import { 
     PlusIcon, UserIcon, 
     ChevronDownIcon, MenuIcon,
-    ShoppingBagIcon, BookmarkIcon, LooksIcon,
+    LooksIcon,
     ChatBubbleIcon, BellIcon, PencilIcon, SearchIcon
 } from './IconComponents';
 import BioEditModal from './BioEditModal';
@@ -123,10 +123,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
   const marketplaceItems = useMemo(() => {
     if (selectedCategory === 'fashion') {
-        // Para Moda, mostramos empresas REAIS cadastradas
         return realBusinesses;
     }
-    // Para as outras categorias, mostramos as estáticas que NÃO são anúncios
     return CATEGORIES.filter(c => c.type === selectedCategory && !c.isAd);
   }, [selectedCategory, realBusinesses]);
 
@@ -144,8 +142,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     <div className="w-full h-full flex flex-col bg-white text-zinc-900 overflow-hidden font-sans">
       <header className="px-4 pt-4 pb-2 flex items-center justify-between bg-white shrink-0 z-10">
           <div className="flex items-center gap-1 cursor-pointer active:opacity-60 transition-opacity">
-              <h1 className="text-lg font-bold tracking-tight text-zinc-900">
-                {profile.username || "Usuário"}
+              <h1 className="text-lg font-bold tracking-tight text-zinc-900 uppercase italic">
+                {profile.username || "perfil"}
               </h1>
               <ChevronDownIcon className="w-3.5 h-3.5 text-zinc-800" strokeWidth={3} />
           </div>
@@ -181,7 +179,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
         <div className="px-5 pt-4">
             <div className="flex items-center gap-4 mb-4">
                 <div className="relative shrink-0">
-                    <div className="w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 to-amber-600 shadow-sm">
+                    <div 
+                        onClick={() => isMyProfile && profileImageInputRef.current?.click()}
+                        className={`w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 to-amber-600 shadow-sm ${isMyProfile ? 'cursor-pointer' : ''}`}
+                    >
                         <div className="w-full h-full rounded-full bg-white p-[2px] overflow-hidden">
                             <div className="w-full h-full rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center">
                                 {profile.avatar_url ? (
@@ -215,7 +216,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                         )}
                     </div>
                     <div className="text-[11px] text-zinc-600 font-medium leading-tight line-clamp-3 mt-1 whitespace-pre-line">
-                        {profile.bio || "Seja bem-vindo ao PUMP!"}
+                        {profile.bio || "Bio não definida."}
                     </div>
                 </div>
             </div>
@@ -238,7 +239,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             </div>
         </div>
 
-        <div className="flex bg-white sticky top-0 z-10 shadow-sm">
+        <div className="flex bg-white sticky top-0 z-10 shadow-sm border-b border-zinc-50">
           <button 
             onClick={() => setActiveTab('market')} 
             className={`flex-1 py-4 flex justify-center items-center relative transition-colors ${activeTab === 'market' ? 'text-amber-600' : 'text-zinc-400'}`}
@@ -351,8 +352,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
           <BioEditModal 
             profile={profile}
             onClose={() => setIsEditingBio(false)} 
-            onSave={(newName, newBio) => {
-                onUpdateProfile({ name: newName, bio: newBio });
+            onSave={(updates) => {
+                onUpdateProfile({ name: updates.name, bio: updates.bio, username: updates.username });
                 setIsEditingBio(false);
             }} 
           />

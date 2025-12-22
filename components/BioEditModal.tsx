@@ -6,7 +6,7 @@ import type { Profile } from '../types';
 interface BioEditModalProps {
   profile: Profile;
   onClose: () => void;
-  onSave: (name: string, bio: string) => void;
+  onSave: (updates: { name: string, bio: string, username: string }) => void;
 }
 
 const XIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -17,15 +17,17 @@ const XIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 
 const MAX_BIO_LENGTH = 150;
 const MAX_NAME_LENGTH = 30;
+const MAX_USERNAME_LENGTH = 20;
 
 const BioEditModal: React.FC<BioEditModalProps> = ({ profile, onClose, onSave }) => {
   const [name, setName] = useState(profile.full_name || "");
+  const [username, setUsername] = useState(profile.username || "");
   const [bio, setBio] = useState(profile.bio || "");
 
-  // Lógica de sincronização inicial
   useEffect(() => {
     if (profile) {
       setName(profile.full_name || ""); 
+      setUsername(profile.username || "");
       setBio(profile.bio || "");
     }
   }, [profile]);
@@ -39,25 +41,27 @@ const BioEditModal: React.FC<BioEditModalProps> = ({ profile, onClose, onSave })
   }, [onClose]);
 
   const handleSave = () => {
-    if (!name.trim()) {
-        alert("O nome não pode estar vazio.");
+    if (!name.trim() || !username.trim()) {
+        alert("Nome e Username são obrigatórios.");
         return;
     }
-    onSave(name, bio);
+    // Remove espaços e caracteres especiais do username para uso real
+    const sanitizedUsername = username.trim().toLowerCase().replace(/[^a-z0-9_.]/g, '');
+    onSave({ name: name.trim(), bio: bio.trim(), username: sanitizedUsername });
   };
   
   const charactersLeft = MAX_BIO_LENGTH - bio.length;
 
   return (
     <div
-      className="fixed inset-0 bg-[var(--bg-modal-overlay)] backdrop-blur-sm flex items-center justify-center z-50 animate-modalFadeIn"
+      className="fixed inset-0 bg-[var(--bg-modal-overlay)] backdrop-blur-sm flex items-center justify-center z-[150] animate-modalFadeIn"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="edit-profile-title"
     >
       <div
-        className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-[2.5rem] w-11/12 max-w-sm p-8 text-[var(--text-primary)] animate-modalZoomIn relative flex flex-col shadow-2xl"
+        className="bg-white border border-zinc-100 rounded-[2.5rem] w-11/12 max-w-sm p-8 text-zinc-900 animate-modalZoomIn relative flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center mb-8">
@@ -71,26 +75,37 @@ const BioEditModal: React.FC<BioEditModalProps> = ({ profile, onClose, onSave })
             </button>
         </div>
         
-        <div className="space-y-6">
+        <div className="space-y-5">
             <div>
-                <label className="block text-[10px] font-black text-zinc-400 mb-2 uppercase tracking-[0.2em] ml-4">Nome</label>
+                <label className="block text-[10px] font-black text-zinc-400 mb-2 uppercase tracking-[0.2em] ml-4">Nome de Exibição</label>
                 <input
                     type="text"
                     value={name}
                     onChange={(e) => setName(e.target.value.slice(0, MAX_NAME_LENGTH))}
-                    placeholder="Nome"
+                    placeholder="Seu Nome Real ou Marca"
                     className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:border-amber-500/40 focus:bg-white focus:outline-none transition-all text-sm font-bold text-zinc-900 shadow-sm"
                 />
             </div>
 
             <div>
-                <label className="block text-[10px] font-black text-zinc-400 mb-2 uppercase tracking-[0.2em] ml-4">Bio</label>
+                <label className="block text-[10px] font-black text-zinc-400 mb-2 uppercase tracking-[0.2em] ml-4">Username (@)</label>
+                <input
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value.slice(0, MAX_USERNAME_LENGTH))}
+                    placeholder="identificador"
+                    className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:border-amber-500/40 focus:bg-white focus:outline-none transition-all text-sm font-bold text-zinc-900 shadow-sm"
+                />
+            </div>
+
+            <div>
+                <label className="block text-[10px] font-black text-zinc-400 mb-2 uppercase tracking-[0.2em] ml-4">Biografia</label>
                 <textarea
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   maxLength={MAX_BIO_LENGTH}
-                  className="w-full h-64 p-5 bg-zinc-50 rounded-2xl border border-zinc-100 focus:border-amber-500/40 focus:bg-white focus:outline-none transition-all text-sm font-bold text-zinc-900 shadow-sm resize-none"
-                  placeholder="Escreva algo sobre você ou sua loja..."
+                  className="w-full h-32 p-5 bg-zinc-50 rounded-2xl border border-zinc-100 focus:border-amber-500/40 focus:bg-white focus:outline-none transition-all text-sm font-bold text-zinc-900 shadow-sm resize-none"
+                  placeholder="Conte um pouco sobre você..."
                 />
                 <p className={`text-right text-[10px] font-black mt-2 uppercase tracking-widest ${charactersLeft < 10 ? 'text-red-400' : 'text-zinc-300'}`}>
                   {charactersLeft} restantes

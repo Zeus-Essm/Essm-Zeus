@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { SunIcon, MoonIcon, ChevronRightIcon, LogoutIcon, UserIcon, ShieldCheckIcon, BellIcon } from './IconComponents';
+import { SunIcon, MoonIcon, ChevronRightIcon, LogoutIcon, ShieldCheckIcon, BellIcon } from './IconComponents';
 import type { Profile } from '../types';
 
 const XIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
@@ -40,7 +40,7 @@ const MenuItem: React.FC<{
   </button>
 );
 
-const SettingsPanel: React.FC<SettingsPanelProps> = ({ profile, theme, onToggleTheme, onClose, onSignOut, onNavigateToVerification }) => {
+const SettingsPanel: React.FC<SettingsPanelProps> = ({ theme, onToggleTheme, onClose, onSignOut, onNavigateToVerification }) => {
     React.useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
           if (event.key === 'Escape') onClose();
@@ -55,13 +55,11 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ profile, theme, onToggleT
             role="dialog"
             aria-modal="true"
         >
-            {/* Backdrop */}
             <div 
                 className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-fadeIn"
                 onClick={onClose}
             />
 
-            {/* Mini Window Panel */}
             <div 
                 className="relative w-[85%] max-w-sm h-full bg-white shadow-2xl flex flex-col border-l border-zinc-100"
                 style={{ 
@@ -83,23 +81,16 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ profile, theme, onToggleT
                 </header>
 
                 <main className="flex-grow overflow-y-auto scrollbar-hide py-4 px-4 space-y-6">
-                    {/* Perfil Section */}
                     <div className="bg-white rounded-[2rem] border border-zinc-100 overflow-hidden shadow-sm">
-                        <MenuItem 
-                            icon={<UserIcon className="w-5 h-5" />} 
-                            text="Editar Dados" 
-                            description="Nome, bio e foto"
-                            onClick={onClose} 
-                        />
                         <MenuItem 
                             icon={<ShieldCheckIcon className="w-5 h-5" />} 
                             text="Verificação" 
                             description="Status do selo preto"
                             onClick={onNavigateToVerification} 
+                            isLast={true}
                         />
                     </div>
 
-                    {/* Preferências Section */}
                     <div>
                         <h3 className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] ml-5 mb-3 italic">Preferências</h3>
                         <div className="bg-white rounded-[2rem] border border-zinc-100 overflow-hidden shadow-sm">
@@ -119,7 +110,6 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ profile, theme, onToggleT
                         </div>
                     </div>
 
-                    {/* Sobre Section */}
                     <div className="px-5 pt-2">
                         <p className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest text-center">
                             PUMP V1.0.4 • Angola Edition
