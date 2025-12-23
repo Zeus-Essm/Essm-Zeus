@@ -332,37 +332,46 @@ const App: React.FC = () => {
     };
 
     const handleCreateFolder = async (title: string) => {
-      setIsLoading(true);
-      try {
-        const { data: authData } = await supabase.auth.getUser();
-        const user = authData.user;
+        // 🔍 DEBUG DEFINITIVO DE AUTH
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
 
-        if (!user) {
-          toast.error('Usuário não autenticado');
-          return;
+        console.log('[DEBUG] sessionError:', sessionError);
+        console.log('[DEBUG] session:', sessionData?.session);
+        console.log('[DEBUG] user:', sessionData?.session?.user);
+        console.log('[DEBUG] user.id:', sessionData?.session?.user?.id);
+
+        if (!sessionData?.session?.user?.id) {
+            toast.error('SEM SESSÃO ATIVA ❌');
+            return;
         }
 
-        const { data, error } = await supabase
-          .from('folders')
-          .insert({
-            title,
-            owner_id: user.id
-          })
-          .select()
-          .single();
+        setIsLoading(true);
+        try {
+            const user = sessionData.session.user;
+            const { error } = await supabase
+                .from('folders')
+                .insert({
+                    title,
+                    owner_id: user.id
+                });
 
-        if (error) {
-          toast.error(error.message);
-          return;
+            if (error) {
+                toast.error(error.message);
+                return;
+            }
+
+            // 🔄 FORÇA RELOAD REAL DO BACKEND
+            const freshFolders = await fetchFolders(user.id);
+            console.log('[FOLDERS AFTER INSERT]', freshFolders);
+            setFolders(freshFolders);
+
+            toast.success('Coleção criada com sucesso ✅');
+        } catch (err) {
+            console.error('[CREATE FOLDER ERROR]', err);
+            toast.error('Erro inesperado');
+        } finally {
+            setIsLoading(false);
         }
-
-        setFolders(prev => [data, ...prev]);
-        toast.success('Coleção criada com sucesso');
-      } catch (err) {
-        toast.error('Erro inesperado');
-      } finally {
-        setIsLoading(false);
-      }
     };
 
     const handleAddProductToFolder = async (folderId: string | null, details: { title: string, description: string, price: number, file: Blob | null }) => {
@@ -527,7 +536,7 @@ const App: React.FC = () => {
                 if (user) { 
                     setIsLoading(true);
                     try {
-                        const { data: updated, error } = await supabase.from('profiles').update({ 
+                        const { data: updated, error = null } = await supabase.from('profiles').update({ 
                           full_name: details.business_name, 
                           bio: details.description, 
                           avatar_url: details.logo_url 
