@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import Header from './Header';
-import type { BusinessProfile, Product } from '../types';
+import type { BusinessProfile, Product, Folder } from '../types';
 import { PlusIcon, PencilIcon, EyeIcon, XCircleIcon, ShoppingBagIcon, CameraIcon } from './IconComponents';
 import GradientButton from './GradientButton';
 import { toast } from '../utils/toast';
@@ -16,14 +16,16 @@ interface VendorProductsScreenProps {
     onBack: () => void;
     businessProfile: BusinessProfile;
     products: Product[];
-    onCreateProduct: (data: { title: string, description: string, price: number, file: Blob | null }) => Promise<void>;
+    folders: Folder[];
+    onCreateProduct: (folderId: string, data: { title: string, description: string, price: number, file: Blob | null }) => Promise<void>;
 }
 
-const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, products, onCreateProduct }) => {
+const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, products, folders, onCreateProduct }) => {
     const [isCreating, setIsCreating] = useState(false);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState('');
+    const [selectedFolderId, setSelectedFolderId] = useState('');
     const [file, setFile] = useState<Blob | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -37,6 +39,15 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
             reader.onloadend = () => setPreview(reader.result as string);
             reader.readAsDataURL(selected);
         }
+    };
+
+    const handleStartCreating = () => {
+        if (folders.length === 0) {
+            toast("Escolha uma coleção para o produto aparecer no catálogo.");
+            onBack(); // Redireciona para o dashboard para criar pasta
+            return;
+        }
+        setIsCreating(true);
     };
 
     const handleRemoveBg = async () => {
@@ -76,15 +87,21 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
           return;
         }
 
+        if (!selectedFolderId) {
+            toast("Escolha uma coleção para o produto aparecer no catálogo.");
+            return;
+        }
+
         const priceValue = price ? parseFloat(price) : 0;
         
         console.log('🟢 SUBMIT PRODUTO DISPARADO', {
             title,
             description,
-            price: priceValue
+            price: priceValue,
+            folderId: selectedFolderId
         });
 
-        await onCreateProduct({ 
+        await onCreateProduct(selectedFolderId, { 
           title, 
           description, 
           price: priceValue, 
@@ -95,6 +112,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
         setTitle('');
         setDescription('');
         setPrice('');
+        setSelectedFolderId('');
         setFile(null);
         setPreview(null);
     };
@@ -106,7 +124,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
                 
                 {!isCreating && (
                     <div className="flex gap-2">
-                        <GradientButton onClick={() => setIsCreating(true)} className="flex-1 !py-3 !text-sm">
+                        <GradientButton onClick={handleStartCreating} className="flex-1 !py-3 !text-sm">
                             <div className="flex items-center justify-center gap-2">
                                 <PlusIcon className="w-5 h-5" />
                                 Cadastrar Produto
@@ -165,6 +183,21 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
                         </div>
 
                         <div className="space-y-4">
+                            <div>
+                                <label className="text-[10px] font-black uppercase text-zinc-400 ml-4 mb-1 block tracking-widest">Coleção Destino</label>
+                                <select
+                                    value={selectedFolderId}
+                                    onChange={e => setSelectedFolderId(e.target.value)}
+                                    className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:outline-none focus:border-amber-500 font-bold text-sm appearance-none"
+                                    required
+                                >
+                                    <option value="" disabled>Escolha uma coleção...</option>
+                                    {folders.map(f => (
+                                        <option key={f.id} value={f.id}>{f.title}</option>
+                                    ))}
+                                </select>
+                            </div>
+
                             <input
                                 type="text"
                                 placeholder="Título do Produto"
@@ -188,7 +221,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
                             />
                         </div>
 
-                        <GradientButton type="submit" disabled={!title || isProcessing}>
+                        <GradientButton type="submit" disabled={!title || isProcessing || !selectedFolderId}>
                             Salvar no Banco de Dados
                         </GradientButton>
                     </form>
@@ -225,7 +258,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
                             <h3 className="font-black uppercase text-sm">Catálogo Vazio</h3>
                             <p className="text-xs text-zinc-500 max-w-[200px] mx-auto mt-1">O seu estoque está vazio. Adicione produtos para começar a vender.</p>
                         </div>
-                        <button onClick={() => setIsCreating(true)} className="text-[10px] font-black text-[var(--accent-primary)] uppercase underline tracking-widest">
+                        <button onClick={handleStartCreating} className="text-[10px] font-black text-[var(--accent-primary)] uppercase underline tracking-widest">
                             Cadastrar meu primeiro produto
                         </button>
                     </div>

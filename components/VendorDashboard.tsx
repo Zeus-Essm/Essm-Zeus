@@ -14,7 +14,7 @@ import { removeImageBackground, generateProductImage } from '../services/geminiS
 
 const SparklesIconUI = () => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.25 15L17.5 17.625l-.75-2.625a2.25 2.25 0 00-1.545-1.545L12.583 12.688l2.625-.75a2.25 2.25 0 001.545-1.545l.75-2.625.75 2.625a2.25 2.25 0 001.545 1.545l2.625.75-2.625.75a2.25 2.25 0 00-1.545 1.545L18.25 15z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.25 15L17.5 17.625l-.75-2.625a2.25 2.25 0 00-1.545-1.545L12.583 12.688l2.625-.75a2.25 2.25 0 001.545-1.545l.75-2.625.75 2.625a2.25 2.25 0 001.545-1.545l2.625.75-2.625.75a2.25 2.25 0 00-1.545 1.545L18.25 15z" />
     </svg>
 );
 
@@ -31,7 +31,7 @@ interface VendorDashboardProps {
   products: Product[];
   posts: Post[];
   onCreateFolder: (title: string) => void;
-  onCreateProductInFolder: (folderId: string, details: { title: string, description: string, price: number, file: Blob | null }) => Promise<any>;
+  onCreateProductInFolder: (folderId: string | null, details: { title: string, description: string, price: number, file: Blob | null }) => Promise<any>;
   onMoveProductToFolder: (productId: string, folderId: string | null) => Promise<void>;
   onUpdateProfile: (updates: { username?: string, bio?: string, name?: string }) => void;
   onUpdateProfileImage: (dataUrl: string) => void;
@@ -110,7 +110,9 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     const userPosts = posts.filter(p => p.user.id === profile.user_id);
     
     const folderProducts = useMemo(() => {
-        if (!selectedFolderId) return [];
+        if (!selectedFolderId) {
+            return products.filter(p => p.folder_id === null);
+        }
         return products.filter(p => p.folder_id === selectedFolderId);
     }, [products, selectedFolderId]);
 
@@ -173,7 +175,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     };
 
     const handleSaveItem = async (keepAdding: boolean = false) => {
-        if (!selectedFolderId || !newItemTitle) {
+        if (!newItemTitle) {
           toast("O nome do produto é obrigatório.");
           return;
         }
@@ -383,14 +385,41 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                     {folders.map(folder => (
                                         <FolderCard key={folder.id} folder={folder} onClick={() => setSelectedFolderId(folder.id)} />
                                     ))}
+                                    {/* Exibir itens da Vitrine Geral */}
+                                    {folderProducts.map(product => (
+                                        <div key={product.id} className="relative aspect-[3/4] rounded-[1.8rem] overflow-hidden shadow-md border border-zinc-100 group cursor-pointer active:scale-95 transition-all" onClick={() => onItemClick(mapProductToItem(product))}>
+                                            <img src={product.image_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg'} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent flex flex-col justify-end p-4">
+                                                <p className="text-[11px] font-black text-white uppercase italic truncate drop-shadow-md">{product.title}</p>
+                                                <p className="text-[10px] font-black text-amber-400 mt-1 drop-shadow-md">{product.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
+                                            </div>
+                                            {!isVisitor && (
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); setMovingProduct(product); }}
+                                                    className="absolute top-3 right-3 p-2 bg-black/60 backdrop-blur-md rounded-xl text-white opacity-0 group-hover:opacity-100 transition-all active:scale-90"
+                                                >
+                                                    <RepositionIcon className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    ))}
                                     {!isVisitor && (
-                                        <button 
-                                            onClick={() => setIsCreatingFolder(true)}
-                                            className="h-56 border-2 border-dashed border-zinc-100 rounded-[1.8rem] flex flex-col items-center justify-center gap-2 bg-zinc-50/50 hover:bg-zinc-50 transition-all group"
-                                        >
-                                            <PlusIcon className="w-8 h-8 text-zinc-300 group-hover:text-amber-500 transition-colors" strokeWidth={3} />
-                                            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Nova Coleção</span>
-                                        </button>
+                                        <>
+                                            <button 
+                                                onClick={() => setIsAddingItem(true)}
+                                                className="h-56 border-2 border-dashed border-zinc-100 rounded-[1.8rem] flex flex-col items-center justify-center gap-2 bg-zinc-50/30 hover:bg-zinc-50 transition-all group"
+                                            >
+                                                <PlusIcon className="w-8 h-8 text-zinc-300 group-hover:text-amber-500 transition-colors" strokeWidth={3} />
+                                                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Novo Item</span>
+                                            </button>
+                                            <button 
+                                                onClick={() => setIsCreatingFolder(true)}
+                                                className="h-56 border-2 border-dashed border-zinc-100 rounded-[1.8rem] flex flex-col items-center justify-center gap-2 bg-zinc-50/50 hover:bg-zinc-50 transition-all group"
+                                            >
+                                                <PlusIcon className="w-8 h-8 text-zinc-300 group-hover:text-amber-500 transition-colors" strokeWidth={3} />
+                                                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Nova Coleção</span>
+                                            </button>
+                                        </>
                                     )}
                                 </div>
                             )}
@@ -487,7 +516,9 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                         <div className="flex justify-between items-center">
                             <div className="flex flex-col">
                                 <h2 className="text-2xl font-black uppercase italic text-zinc-900 tracking-tighter italic leading-none">Novo Item</h2>
-                                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-2 italic">Na coleção: {currentFolder?.title}</span>
+                                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-2 italic">
+                                    {selectedFolderId ? `Na coleção: ${currentFolder?.title}` : "Na Vitrine Geral"}
+                                </span>
                             </div>
                             <button onClick={() => setIsAddingItem(false)} className="p-3 bg-zinc-50 rounded-2xl text-zinc-300 hover:text-zinc-900 transition-colors">
                                 <ChevronDownIcon className="w-6 h-6" />
