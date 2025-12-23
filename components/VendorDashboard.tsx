@@ -179,6 +179,13 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
         }
 
         const priceValue = newItemPrice ? parseFloat(newItemPrice) : 0;
+        
+        console.log('🟢 SUBMIT PRODUTO DISPARADO', {
+            title: newItemTitle,
+            description: newItemDesc,
+            price: priceValue,
+            folderId: selectedFolderId
+        });
 
         await onCreateProductInFolder(selectedFolderId, {
             title: newItemTitle,
@@ -186,6 +193,13 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
             price: priceValue,
             file: newItemFile
         });
+
+        // 🔥 FORÇA RE-RENDER DA PASTA
+        const currentId = selectedFolderId;
+        setSelectedFolderId(null);
+        setTimeout(() => {
+            setSelectedFolderId(currentId);
+        }, 0);
         
         setNewItemTitle('');
         setNewItemPrice('');

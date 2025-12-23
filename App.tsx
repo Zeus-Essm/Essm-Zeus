@@ -375,11 +375,28 @@ const App: React.FC = () => {
     };
 
     const handleAddProductToFolder = async (folderId: string | null, details: { title: string, description: string, price: number, file: Blob | null }) => {
+        console.log('🔥 HANDLE ADD PRODUCT CHAMADO', {
+          folderId,
+          details
+        });
         try {
             setIsLoading(true);
             const { data: userData } = await supabase.auth.getUser();
             const user = userData.user;
             if (!user) throw new Error('Usuário não autenticado');
+
+            if (folderId) {
+                const { data: folder, error } = await supabase
+                    .from('folders')
+                    .select('id')
+                    .eq('id', folderId)
+                    .single();
+
+                if (error || !folder) {
+                    toast.error('Pasta inválida ou não encontrada');
+                    return;
+                }
+            }
 
             let image_url: string | null = null;
             
@@ -403,22 +420,28 @@ const App: React.FC = () => {
                 image_url = urlData.publicUrl;
             }
 
+            const payload: any = {
+                owner_id: user.id,
+                title: details.title,
+                description: details.description,
+                price: details.price,
+                image_url
+            };
+
+            if (folderId) {
+                payload.folder_id = folderId;
+            }
+
             const { data: productData, error: dbError } = await supabase
                 .from('products')
-                .insert({ 
-                    owner_id: user.id,
-                    folder_id: folderId,
-                    title: details.title, 
-                    description: details.description, 
-                    price: details.price, 
-                    image_url
-                })
+                .insert(payload)
                 .select()
                 .single();
             
             if (dbError) {
-                toast.error(dbError.message);
-                return;
+              console.error('❌ PRODUCT INSERT ERROR:', dbError);
+              toast.error(dbError.message || 'Erro ao criar produto');
+              return;
             }
 
             // 🔄 FORÇA RELOAD REAL DO BACKEND

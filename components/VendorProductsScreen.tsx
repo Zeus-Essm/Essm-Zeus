@@ -1,4 +1,3 @@
-
 import React, { useState, useRef } from 'react';
 import Header from './Header';
 import type { BusinessProfile, Product } from '../types';
@@ -78,6 +77,12 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
         }
 
         const priceValue = price ? parseFloat(price) : 0;
+        
+        console.log('🟢 SUBMIT PRODUTO DISPARADO', {
+            title,
+            description,
+            price: priceValue
+        });
 
         await onCreateProduct({ 
           title, 
