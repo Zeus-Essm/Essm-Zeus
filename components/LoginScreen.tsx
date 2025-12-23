@@ -51,7 +51,7 @@ const LoginScreen: React.FC = () => {
         <div className="relative flex flex-col items-center justify-center min-h-screen w-full bg-white p-8 animate-fadeIn font-sans select-none">
             <div className="w-full max-w-sm flex flex-col items-center">
                 
-                {/* Logo PUMP estilizado do Print */}
+                {/* Logo PUMP estilizado conforme o Print */}
                 <div className="flex text-7xl font-black lowercase tracking-tighter mb-16">
                   <span className="text-[#FFC107]">p</span>
                   <span className="text-[#9C27B0]">u</span>

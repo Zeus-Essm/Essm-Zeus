@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useRef } from 'react';
 import type { BusinessProfile, Item, Profile, Folder, Post, Product } from '../types';
 import { 
@@ -48,7 +47,7 @@ interface VendorDashboardProps {
 const FolderCard: React.FC<{ folder: Folder; onClick: () => void }> = ({ folder, onClick }) => (
     <div 
         onClick={onClick}
-        className="relative h-56 rounded-xl overflow-hidden group shadow-sm active:scale-[0.98] transition-all border border-zinc-100 cursor-pointer"
+        className="relative h-56 rounded-2xl overflow-hidden group shadow-sm active:scale-[0.98] transition-all border border-zinc-100 cursor-pointer"
     >
         {folder.cover_image ? (
             <img src={folder.cover_image} alt="" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
@@ -57,7 +56,7 @@ const FolderCard: React.FC<{ folder: Folder; onClick: () => void }> = ({ folder,
                 <ArchiveIcon className="w-12 h-12 text-zinc-200" strokeWidth={1} />
             </div>
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5">
             <h3 className="text-md font-black text-white uppercase italic tracking-tighter leading-none">{folder.title}</h3>
             <p className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest mt-1">{folder.item_count || 0} itens</p>
         </div>
@@ -136,7 +135,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
             const res = await fetch(result);
             setNewItemFile(await res.blob());
         } catch (e) {
-            toast("Falha ao remover fundo.");
+            toast.error("Falha ao remover fundo.");
         } finally {
             setIsAiProcessing(false);
         }
@@ -151,7 +150,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
             const res = await fetch(result);
             setNewItemFile(await res.blob());
         } catch (e) {
-            toast("Falha ao gerar imagem.");
+            toast.error("Falha ao gerar imagem.");
         } finally {
             setIsAiProcessing(false);
         }
@@ -196,15 +195,17 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
         if (!keepAdding) setIsAddingItem(false);
     };
 
+    // 🔄 MAPEAMENTO SUPABASE -> UI (Provador/Carrinho)
     const mapProductToItem = (p: Product): Item => ({
         id: p.id,
         name: p.title,
         description: p.description || '',
-        image: p.image_url || '',
+        image: p.image_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg',
         price: p.price,
         category: 'catalog',
         owner_id: p.owner_id,
-        folder_id: p.folder_id
+        folder_id: p.folder_id,
+        isTryOn: true 
     });
 
     return (
@@ -279,10 +280,10 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                 )}
                             </div>
                             <div className="text-[11px] text-zinc-600 font-medium leading-tight line-clamp-3 mt-1 whitespace-pre-line">
-                                {profile.bio || "Bio da loja não definida."}
+                                {profile.bio || "Loja do ecossistema PUMP."}
                             </div>
                             {isVisitor && (
-                                <button className="mt-3 px-6 py-1.5 bg-zinc-900 text-white text-[10px] font-black uppercase tracking-widest rounded-lg active:scale-95 transition-transform">
+                                <button className="mt-3 px-6 py-1.5 bg-zinc-900 text-white text-[10px] font-black uppercase tracking-widest rounded-xl active:scale-95 transition-transform shadow-md">
                                     Seguir Loja
                                 </button>
                             )}
@@ -311,14 +312,14 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                         className={`flex-1 py-4 flex justify-center items-center relative transition-colors ${activeTab === 'shop' ? 'text-amber-600' : 'text-zinc-400'}`}
                     >
                         <span className="text-xs font-bold uppercase tracking-widest">CATÁLOGO</span>
-                        {activeTab === 'shop' && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-amber-600"></div>}
+                        {activeTab === 'shop' && <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-amber-600 rounded-t-full"></div>}
                     </button>
                     <button 
                         onClick={() => setActiveTab('posts')} 
                         className={`flex-1 py-4 flex justify-center items-center relative transition-colors ${activeTab === 'posts' ? 'text-amber-600' : 'text-zinc-400'}`}
                     >
                         <span className="text-xs font-bold uppercase tracking-widest">PUBLICAÇÕES</span>
-                        {activeTab === 'posts' && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-amber-600"></div>}
+                        {activeTab === 'posts' && <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-amber-600 rounded-t-full"></div>}
                     </button>
                 </div>
 
@@ -328,53 +329,53 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                             {selectedFolderId ? (
                                 <div className="space-y-6">
                                     <div className="flex items-center justify-between">
-                                        <button onClick={() => setSelectedFolderId(null)} className="flex items-center gap-2 text-[11px] font-bold text-zinc-500 uppercase bg-zinc-50 px-4 py-2 rounded-lg border border-zinc-100">
+                                        <button onClick={() => setSelectedFolderId(null)} className="flex items-center gap-2 text-[11px] font-black text-zinc-400 uppercase bg-zinc-50 px-4 py-2 rounded-2xl border border-zinc-100 active:scale-95 transition-all">
                                             <ChevronDownIcon className="w-3.5 h-3.5 rotate-90" />
                                             Voltar
                                         </button>
                                         <div className="text-right">
-                                            <h3 className="text-sm font-bold text-amber-600 uppercase tracking-tight">{currentFolder?.title}</h3>
-                                            <span className="text-[10px] font-medium text-zinc-400">{folderProducts.length} itens</span>
+                                            <h3 className="text-sm font-black text-zinc-900 uppercase tracking-tighter italic">{currentFolder?.title}</h3>
+                                            <span className="text-[10px] font-bold text-amber-500 uppercase">{folderProducts.length} itens</span>
                                         </div>
                                     </div>
-                                    <div className="grid grid-cols-2 gap-3 pb-12">
+                                    <div className="grid grid-cols-2 gap-4 pb-12">
                                         {folderProducts.map(product => (
-                                            <div key={product.id} className="relative aspect-[4/5] rounded-xl overflow-hidden shadow-sm border border-zinc-100 group cursor-pointer" onClick={() => onItemClick(mapProductToItem(product))}>
-                                                <img src={product.image_url || ''} alt="" className="w-full h-full object-cover" />
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent flex flex-col justify-end p-3">
-                                                    <p className="text-xs font-bold text-white uppercase italic truncate">{product.title}</p>
-                                                    <p className="text-[10px] font-bold text-amber-400 mt-0.5">{product.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
+                                            <div key={product.id} className="relative aspect-[3/4] rounded-[1.8rem] overflow-hidden shadow-md border border-zinc-100 group cursor-pointer active:scale-95 transition-all" onClick={() => onItemClick(mapProductToItem(product))}>
+                                                <img src={product.image_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg'} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent flex flex-col justify-end p-4">
+                                                    <p className="text-[11px] font-black text-white uppercase italic truncate drop-shadow-md">{product.title}</p>
+                                                    <p className="text-[10px] font-black text-amber-400 mt-1 drop-shadow-md">{product.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
                                                 </div>
                                                 {!isVisitor && (
                                                     <button 
                                                         onClick={(e) => { e.stopPropagation(); setMovingProduct(product); }}
-                                                        className="absolute top-2 right-2 p-1.5 bg-black/40 backdrop-blur-sm rounded-lg text-white opacity-0 group-hover:opacity-100 transition-all"
+                                                        className="absolute top-3 right-3 p-2 bg-black/60 backdrop-blur-md rounded-xl text-white opacity-0 group-hover:opacity-100 transition-all active:scale-90"
                                                     >
-                                                        <RepositionIcon className="w-3.5 h-3.5" />
+                                                        <RepositionIcon className="w-4 h-4" />
                                                     </button>
                                                 )}
                                             </div>
                                         ))}
                                         {!isVisitor && (
-                                            <button onClick={() => setIsAddingItem(true)} className="aspect-[4/5] border-2 border-dashed border-zinc-100 rounded-xl flex flex-col items-center justify-center gap-2 hover:bg-zinc-50 transition-colors">
-                                                <PlusIcon className="w-6 h-6 text-zinc-300" strokeWidth={3} />
-                                                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Novo Item</span>
+                                            <button onClick={() => setIsAddingItem(true)} className="aspect-[3/4] border-2 border-dashed border-zinc-100 rounded-[1.8rem] flex flex-col items-center justify-center gap-2 bg-zinc-50/30 hover:bg-zinc-50 transition-all group">
+                                                <PlusIcon className="w-8 h-8 text-zinc-300 group-hover:text-amber-500 transition-colors" strokeWidth={3} />
+                                                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Novo Item</span>
                                             </button>
                                         )}
                                     </div>
                                 </div>
                             ) : (
-                                <div className="grid grid-cols-2 gap-3 pb-12">
+                                <div className="grid grid-cols-2 gap-4 pb-12">
                                     {folders.map(folder => (
                                         <FolderCard key={folder.id} folder={folder} onClick={() => setSelectedFolderId(folder.id)} />
                                     ))}
                                     {!isVisitor && (
                                         <button 
                                             onClick={() => setIsCreatingFolder(true)}
-                                            className="h-56 border-2 border-dashed border-zinc-100 rounded-xl flex flex-col items-center justify-center gap-2 bg-zinc-50/50 hover:bg-zinc-50 transition-colors"
+                                            className="h-56 border-2 border-dashed border-zinc-100 rounded-[1.8rem] flex flex-col items-center justify-center gap-2 bg-zinc-50/50 hover:bg-zinc-50 transition-all group"
                                         >
-                                            <PlusIcon className="w-6 h-6 text-zinc-300" strokeWidth={3} />
-                                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Nova Coleção</span>
+                                            <PlusIcon className="w-8 h-8 text-zinc-300 group-hover:text-amber-500 transition-colors" strokeWidth={3} />
+                                            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Nova Coleção</span>
                                         </button>
                                     )}
                                 </div>
@@ -394,8 +395,8 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                 ))
                             ) : (
                                 <div className="col-span-3 py-32 text-center flex flex-col items-center opacity-30">
-                                    <ShoppingBagIcon className="w-12 h-12 text-zinc-400 mb-4" strokeWidth={1} />
-                                    <p className="text-[10px] font-bold uppercase tracking-widest">Nenhuma publicação ainda</p>
+                                    <ShoppingBagIcon className="w-16 h-16 text-zinc-400 mb-4" strokeWidth={1} />
+                                    <p className="text-[10px] font-black uppercase tracking-widest">Nenhuma publicação ainda</p>
                                 </div>
                             )}
                         </div>
@@ -440,27 +441,27 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
 
             {isCreatingFolder && !isVisitor && (
                 <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-md flex items-center justify-center p-6 animate-fadeIn" onClick={() => setIsCreatingFolder(false)}>
-                    <div className="w-full max-w-sm bg-white rounded-[2.5rem] p-8 flex flex-col gap-6 animate-modalZoomIn shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <div className="w-full max-w-sm bg-white rounded-[2.5rem] p-10 flex flex-col gap-8 animate-modalZoomIn shadow-2xl" onClick={e => e.stopPropagation()}>
                         <div className="text-center">
-                            <h2 className="text-xl font-black uppercase italic text-zinc-900 tracking-tighter leading-none">Nova Coleção</h2>
-                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">Organize seu catálogo</p>
+                            <h2 className="text-2xl font-black uppercase italic text-zinc-900 tracking-tighter leading-none">Nova Coleção</h2>
+                            <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-2">Organize o seu mercado</p>
                         </div>
                         <div>
-                            <label className="text-[10px] font-black uppercase text-zinc-400 ml-4 tracking-widest">Nome da Pasta</label>
+                            <label className="text-[10px] font-black uppercase text-zinc-400 ml-5 tracking-widest">Nome da Pasta</label>
                             <input 
                                 type="text" 
                                 placeholder="Ex: Verão 2025" 
                                 value={newFolderTitle} 
                                 onChange={e => setNewFolderTitle(e.target.value)} 
-                                className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 font-bold text-sm text-zinc-900 focus:outline-none focus:border-amber-500/40" 
+                                className="w-full p-5 bg-zinc-50 rounded-[1.5rem] border border-zinc-100 font-bold text-sm text-zinc-900 focus:outline-none focus:border-amber-500/40 mt-2" 
                                 autoFocus
                             />
                         </div>
-                        <div className="flex flex-col gap-2">
+                        <div className="flex flex-col gap-3">
                             <GradientButton onClick={handleCreateFolderSubmit} disabled={!newFolderTitle.trim()}>
                                 CRIAR PASTA
                             </GradientButton>
-                            <button onClick={() => setIsCreatingFolder(false)} className="py-4 text-[11px] font-bold uppercase text-zinc-400 tracking-widest hover:text-zinc-900">Cancelar</button>
+                            <button onClick={() => setIsCreatingFolder(false)} className="py-4 text-[10px] font-black uppercase text-zinc-300 tracking-widest hover:text-zinc-900 transition-colors">Cancelar</button>
                         </div>
                     </div>
                 </div>
@@ -468,49 +469,49 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
 
             {isAddingItem && !isVisitor && (
                 <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-md flex items-end animate-fadeIn" onClick={() => setIsAddingItem(false)}>
-                    <div className="w-full max-h-[95vh] bg-white rounded-t-[2.5rem] p-8 flex flex-col gap-6 animate-slideUp overflow-y-auto" onClick={e => e.stopPropagation()}>
+                    <div className="w-full max-h-[95vh] bg-white rounded-t-[3rem] p-10 flex flex-col gap-8 animate-slideUp overflow-y-auto scrollbar-hide" onClick={e => e.stopPropagation()}>
                         <div className="flex justify-between items-center">
                             <div className="flex flex-col">
-                                <h2 className="text-xl font-black uppercase italic text-zinc-900 tracking-tighter italic leading-none">Novo Item</h2>
-                                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-1 italic">Na coleção: {currentFolder?.title}</span>
+                                <h2 className="text-2xl font-black uppercase italic text-zinc-900 tracking-tighter italic leading-none">Novo Item</h2>
+                                <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-2 italic">Na coleção: {currentFolder?.title}</span>
                             </div>
-                            <button onClick={() => setIsAddingItem(false)} className="p-2 bg-zinc-50 rounded-xl text-zinc-400">
+                            <button onClick={() => setIsAddingItem(false)} className="p-3 bg-zinc-50 rounded-2xl text-zinc-300 hover:text-zinc-900 transition-colors">
                                 <ChevronDownIcon className="w-6 h-6" />
                             </button>
                         </div>
 
-                        <div className="space-y-6">
+                        <div className="space-y-8">
                             <div 
                                 onClick={() => itemFileInputRef.current?.click()} 
-                                className="w-full aspect-[4/5] bg-zinc-50 border-2 border-dashed border-zinc-100 rounded-[2rem] flex flex-col items-center justify-center overflow-hidden transition-all hover:border-amber-400/50 group relative"
+                                className="w-full aspect-[3/4] bg-zinc-50 border-2 border-dashed border-zinc-100 rounded-[2.5rem] flex flex-col items-center justify-center overflow-hidden transition-all hover:border-amber-400/50 group relative"
                             >
                                 {isAiProcessing && (
                                     <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-sm flex flex-col items-center justify-center gap-3">
                                         <div className="w-10 h-10 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-                                        <p className="text-[10px] font-black uppercase text-amber-600 tracking-widest animate-pulse">Processamento IA...</p>
+                                        <p className="text-[10px] font-black uppercase text-amber-600 tracking-widest animate-pulse">Sincronizando com a IA...</p>
                                     </div>
                                 )}
                                 {newItemPreview ? (
                                     <>
                                         <img src={newItemPreview} className="w-full h-full object-cover" alt="Preview" />
                                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                                            <CameraIcon className="w-10 h-10 text-white" />
+                                            <CameraIcon className="w-12 h-12 text-white" />
                                         </div>
                                     </>
                                 ) : (
                                     <>
-                                        <CameraIcon className="w-10 h-10 text-zinc-200 mb-2" />
+                                        <CameraIcon className="w-12 h-12 text-zinc-200 mb-3" />
                                         <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest italic">Capturar Estilo</p>
                                     </>
                                 )}
                             </div>
                             <input type="file" ref={itemFileInputRef} accept="image/*" onChange={handleFileChange} className="hidden" />
 
-                            <div className="grid grid-cols-2 gap-2">
+                            <div className="grid grid-cols-2 gap-3">
                                 <button 
                                     onClick={handleRemoveBackground}
                                     disabled={!newItemPreview || isAiProcessing}
-                                    className="flex items-center justify-center gap-2 py-3 px-2 bg-zinc-900 text-white rounded-xl text-[10px] font-black uppercase tracking-tighter disabled:opacity-50 active:scale-95 transition-all"
+                                    className="flex items-center justify-center gap-3 py-4 px-2 bg-zinc-900 text-white rounded-[1.2rem] text-[10px] font-black uppercase tracking-tighter disabled:opacity-50 active:scale-95 transition-all shadow-lg"
                                 >
                                     <SparklesIconUI />
                                     Remover Fundo
@@ -518,58 +519,58 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                 <button 
                                     onClick={handleGenerateImage}
                                     disabled={!newItemTitle || isAiProcessing}
-                                    className="flex items-center justify-center gap-2 py-3 px-2 border-2 border-amber-500 text-amber-600 rounded-xl text-[10px] font-black uppercase tracking-tighter disabled:opacity-50 active:scale-95 transition-all"
+                                    className="flex items-center justify-center gap-3 py-4 px-2 border-2 border-amber-500 text-amber-600 rounded-[1.2rem] text-[10px] font-black uppercase tracking-tighter disabled:opacity-50 active:scale-95 transition-all"
                                 >
                                     <SparklesIconUI />
                                     Gerar pela IA
                                 </button>
                             </div>
 
-                            <div className="space-y-4">
+                            <div className="space-y-5">
                                 <div>
-                                    <label className="text-[10px] font-black uppercase text-zinc-400 ml-4 tracking-widest">Designação</label>
+                                    <label className="text-[10px] font-black uppercase text-zinc-400 ml-5 tracking-widest">Designação</label>
                                     <input 
                                         type="text" 
                                         placeholder="Ex: Blazer Minimalist" 
                                         value={newItemTitle} 
                                         onChange={e => setNewItemTitle(e.target.value)} 
-                                        className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 font-bold text-sm text-zinc-900 focus:outline-none focus:border-amber-500/40" 
+                                        className="w-full p-5 bg-zinc-50 rounded-[1.5rem] border border-zinc-100 font-bold text-sm text-zinc-900 focus:outline-none focus:border-amber-500/40 mt-2" 
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black uppercase text-zinc-400 ml-4 tracking-widest">Preço (AOA)</label>
+                                    <label className="text-[10px] font-black uppercase text-zinc-400 ml-5 tracking-widest">Preço (AOA)</label>
                                     <input 
                                         type="number" 
                                         placeholder="0" 
                                         value={newItemPrice} 
                                         onChange={e => setNewItemPrice(e.target.value)} 
-                                        className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 font-bold text-sm text-zinc-900 focus:outline-none focus:border-amber-500/40" 
+                                        className="w-full p-5 bg-zinc-50 rounded-[1.5rem] border border-zinc-100 font-bold text-sm text-zinc-900 focus:outline-none focus:border-amber-500/40 mt-2" 
                                     />
                                 </div>
                                 <div>
-                                    <label className="text-[10px] font-black uppercase text-zinc-400 ml-4 tracking-widest">Descrição</label>
+                                    <label className="text-[10px] font-black uppercase text-zinc-400 ml-5 tracking-widest">Descrição</label>
                                     <textarea 
-                                        placeholder="Descreve os detalhes da peça..." 
+                                        placeholder="Descreva os diferenciais da peça..." 
                                         value={newItemDesc} 
                                         onChange={e => setNewItemDesc(e.target.value)} 
-                                        className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 font-bold text-sm text-zinc-900 focus:outline-none focus:border-amber-500/40 h-32 resize-none" 
+                                        className="w-full p-5 bg-zinc-50 rounded-[1.5rem] border border-zinc-100 font-bold text-sm text-zinc-900 focus:outline-none focus:border-amber-500/40 h-32 resize-none mt-2" 
                                     />
                                 </div>
                             </div>
                         </div>
 
-                        <div className="flex flex-col gap-3 pb-8">
+                        <div className="flex flex-col gap-3 pb-12">
                              <button 
                                 onClick={() => handleSaveItem(true)} 
                                 disabled={!newItemTitle || isAiProcessing}
-                                className="w-full py-4 bg-transparent text-amber-600 border border-amber-600 rounded-2xl font-bold uppercase text-[11px] tracking-widest transition-all active:scale-[0.98] disabled:opacity-50"
+                                className="w-full py-5 bg-transparent text-amber-600 border-2 border-amber-600 rounded-[1.5rem] font-black uppercase text-[11px] tracking-widest transition-all active:scale-[0.98] disabled:opacity-50"
                             >
                                 Salvar e Continuar
                             </button>
                             <GradientButton 
                                 onClick={() => handleSaveItem(false)} 
                                 disabled={!newItemTitle || isAiProcessing}
-                                className="!py-4 !rounded-2xl !text-[11px]"
+                                className="!py-5 !rounded-[1.5rem] !text-[11px] shadow-xl"
                             >
                                 CONCLUIR CADASTRO
                             </GradientButton>
@@ -580,15 +581,15 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
 
             {movingProduct && !isVisitor && (
                 <div className="fixed inset-0 z-[210] bg-black/70 backdrop-blur-md flex items-center justify-center p-6 animate-fadeIn" onClick={() => setMovingProduct(null)}>
-                    <div className="bg-white rounded-[2.5rem] w-full max-sm p-8 flex flex-col gap-6 animate-modalZoomIn shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <div className="bg-white rounded-[3rem] w-full max-sm p-10 flex flex-col gap-8 animate-modalZoomIn shadow-2xl" onClick={e => e.stopPropagation()}>
                         <div className="text-center">
-                          <h2 className="text-lg font-black uppercase tracking-tighter italic text-zinc-900">Relocar Item</h2>
-                          <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Escolha o novo destino</p>
+                          <h2 className="text-xl font-black uppercase tracking-tighter italic text-zinc-900">Mover Item</h2>
+                          <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-2">Escolha o novo destino</p>
                         </div>
-                        <div className="flex flex-col gap-2 max-h-72 overflow-y-auto pr-1 scrollbar-hide">
+                        <div className="flex flex-col gap-3 max-h-80 overflow-y-auto pr-1 scrollbar-hide">
                             <button 
                                 onClick={() => { onMoveProductToFolder(movingProduct.id, null); setMovingProduct(null); }}
-                                className={`w-full p-4 rounded-xl border font-bold text-[11px] uppercase tracking-tight transition-all flex items-center justify-between ${!movingProduct.folder_id ? 'bg-amber-600 text-white border-amber-600' : 'bg-zinc-50 text-zinc-500 border-zinc-100 hover:border-amber-600'}`}
+                                className={`w-full p-5 rounded-[1.2rem] border-2 font-black text-[11px] uppercase tracking-tight transition-all flex items-center justify-between ${!movingProduct.folder_id ? 'bg-amber-600 text-white border-amber-600 shadow-lg' : 'bg-zinc-50 text-zinc-400 border-zinc-100 hover:border-amber-500/30'}`}
                             >
                                 <span>Geral / Vitrine</span>
                             </button>
@@ -596,13 +597,13 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                 <button 
                                     key={folder.id}
                                     onClick={() => { onMoveProductToFolder(movingProduct.id, folder.id); setMovingProduct(null); }}
-                                    className={`w-full p-4 rounded-xl border font-bold text-[11px] uppercase tracking-tight transition-all flex items-center justify-between ${movingProduct.folder_id === folder.id ? 'bg-amber-600 text-white border-amber-600' : 'bg-zinc-50 text-zinc-500 border-zinc-100 hover:border-amber-600'}`}
+                                    className={`w-full p-5 rounded-[1.2rem] border-2 font-black text-[11px] uppercase tracking-tight transition-all flex items-center justify-between ${movingProduct.folder_id === folder.id ? 'bg-amber-600 text-white border-amber-600 shadow-lg' : 'bg-zinc-50 text-zinc-400 border-zinc-100 hover:border-amber-500/30'}`}
                                 >
                                     <span className="truncate pr-4">{folder.title}</span>
                                 </button>
                             ))}
                         </div>
-                        <button onClick={() => setMovingProduct(null)} className="text-[11px] font-bold uppercase text-zinc-400 tracking-widest hover:text-zinc-900 transition-colors">Cancelar</button>
+                        <button onClick={() => setMovingProduct(null)} className="text-[10px] font-black uppercase text-zinc-300 tracking-widest hover:text-zinc-900 transition-colors">Cancelar</button>
                     </div>
                 </div>
             )}

@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -70,17 +71,6 @@
         user-select: none;
       }
 
-      .text-glow {
-        text-shadow: 0 0 12px var(--accent-primary-glow);
-      }
-
-      .glass {
-        background: var(--glass-bg);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid var(--glass-border);
-      }
-
       @keyframes fadeIn {
         from { opacity: 0; transform: translateY(12px); }
         to { opacity: 1; transform: translateY(0); }
@@ -89,14 +79,6 @@
         animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
       }
       
-      @keyframes logo-pulse {
-        0%, 100% { transform: scale(1); filter: brightness(1); }
-        50% { transform: scale(1.08); filter: brightness(1.1); }
-      }
-      .animate-logo-pulse {
-        animation: logo-pulse 3s infinite ease-in-out;
-      }
-
       @keyframes slideUp {
         from { opacity: 0; transform: translateY(24px); }
         to { opacity: 1; transform: translateY(0); }
@@ -113,22 +95,13 @@
         animation: modalZoomIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
       }
 
-      /* Better scrollbars */
       ::-webkit-scrollbar {
         width: 0px;
         background: transparent;
       }
 
-      button {
-        transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
-      }
       button:active {
         transform: scale(0.96);
-      }
-      button:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-        transform: none !important;
       }
 
       .scrollbar-hide::-webkit-scrollbar {
@@ -140,7 +113,7 @@
       }
     </style>
     <script>
-      // 🔐 Injeção segura para WebView / App Wrapper
+      // 🔐 Injeção segura para WebView / App Wrapper (PUMP Angola Project)
       window.__VITE_SUPABASE_URL__ = "https://ogyzxyomlrhqlvmqexew.supabase.co";
       window.__VITE_SUPABASE_ANON_KEY__ = "sb_publishable_TgSz6YeUi6AG8ROK8VFOCQ_JfiFrlKj";
     </script>
