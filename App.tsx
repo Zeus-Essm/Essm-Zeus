@@ -421,7 +421,9 @@ const App: React.FC = () => {
                 return;
             }
 
-            setProducts(p => [productData, ...p]);
+            // 🔄 FORÇA RELOAD REAL DO BACKEND
+            const freshProducts = await fetchAllProducts(user.id);
+            setProducts(freshProducts);
             
             if (folderId) {
                 setFolders(f => f.map(fold => fold.id === folderId ? { 
