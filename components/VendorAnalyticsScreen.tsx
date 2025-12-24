@@ -1,84 +1,91 @@
 
 import React from 'react';
 import Header from './Header';
-import { ChartBarIcon, EyeIcon, ShoppingBagIcon, UsersIcon, StarIcon } from './IconComponents';
+import { ShoppingBagIcon, EyeIcon, UsersIcon, StarIcon } from './IconComponents';
 
 interface VendorAnalyticsScreenProps {
     onBack: () => void;
 }
 
-const StatCard: React.FC<{ title: string; value: string | number; trend: string; isPositive: boolean; icon: React.ReactNode }> = ({ title, value, trend, isPositive, icon }) => (
-    <div className="bg-[var(--bg-secondary)] p-4 rounded-2xl border border-[var(--border-primary)] shadow-sm">
-        <div className="flex justify-between items-start mb-2">
-            <div className="p-2 rounded-lg bg-[var(--accent-primary)]/10 text-[var(--accent-primary)]">
+const StatCard: React.FC<{ title: string; value: string | number; trend: string; icon: React.ReactNode }> = ({ title, value, trend, icon }) => (
+    <div className="bg-white p-5 rounded-2xl border border-zinc-50 shadow-sm relative overflow-hidden group active:scale-95 transition-all">
+        <div className="flex justify-between items-start mb-4">
+            <div className="p-2.5 rounded-xl bg-amber-50 text-amber-500 transition-colors group-hover:bg-amber-100">
                 {icon}
             </div>
-            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isPositive ? 'bg-green-500/10 text-green-400' : 'bg-zinc-500/10 text-zinc-400'}`}>
+            <div className="bg-green-50 text-green-500 text-[9px] font-black px-2 py-1 rounded-full uppercase tracking-widest border border-green-100/50">
                 {trend}
-            </span>
+            </div>
         </div>
-        <h3 className="text-[11px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">{title}</h3>
-        <p className="text-2xl font-black text-[var(--text-primary)] mt-1">{value}</p>
+        <h3 className="text-[10px] font-black text-zinc-400 uppercase tracking-[0.15em] leading-tight mb-1">{title}</h3>
+        <p className="text-3xl font-black text-zinc-900 tracking-tighter leading-none">{value}</p>
+    </div>
+);
+
+const FunnelRow: React.FC<{ label: string; value: number; progress: number; color?: string }> = ({ label, value, progress, color = "bg-amber-500" }) => (
+    <div className="space-y-2">
+        <div className="flex justify-between items-end">
+            <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">{label}</span>
+            <span className="text-sm font-black text-zinc-900">{value}</span>
+        </div>
+        <div className="w-full h-2 bg-zinc-50 rounded-full overflow-hidden border border-zinc-100">
+            <div 
+                className={`h-full ${color} transition-all duration-1000 ease-out`} 
+                style={{ width: `${progress}%` }} 
+            />
+        </div>
     </div>
 );
 
 const VendorAnalyticsScreen: React.FC<VendorAnalyticsScreenProps> = ({ onBack }) => {
     return (
-        <div className="w-full h-full flex flex-col bg-[var(--bg-main)] text-[var(--text-primary)]">
-            <Header title="Visão Geral" onBack={onBack} />
-            <main className="flex-grow overflow-y-auto pt-16 p-4 space-y-6 animate-fadeIn pb-24">
+        <div className="w-full h-full flex flex-col bg-white text-zinc-900 animate-fadeIn font-sans">
+            <header className="px-4 pt-4 pb-2 flex items-center gap-4 shrink-0 z-10 border-b border-zinc-50">
+                <button onClick={onBack} className="p-2 -ml-2 rounded-xl bg-zinc-50 text-zinc-400 active:scale-90 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" className="w-5 h-5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+                    </svg>
+                </button>
+                <h1 className="text-lg font-black tracking-tight text-zinc-900 uppercase italic">
+                    VISÃO GERAL
+                </h1>
+            </header>
+
+            <main className="flex-grow overflow-y-auto px-5 py-6 space-y-8 scrollbar-hide pb-32">
                 
-                {/* Métricas Zeradas para Novo Usuário */}
+                {/* Grid de Métricas 2x2 */}
                 <div className="grid grid-cols-2 gap-4">
-                    <StatCard title="Vendas Totais" value="0" trend="0%" isPositive={true} icon={<ShoppingBagIcon className="w-5 h-5" />} />
-                    <StatCard title="Visitas" value="0" trend="0%" isPositive={true} icon={<EyeIcon className="w-5 h-5" />} />
-                    <StatCard title="Novos Seguidores" value="0" trend="0%" isPositive={true} icon={<UsersIcon className="w-5 h-5" />} />
-                    <StatCard title="Engajamento" value="0%" trend="0%" isPositive={true} icon={<StarIcon className="w-5 h-5" />} />
+                    <StatCard title="Vendas Totais" value="0" trend="0%" icon={<ShoppingBagIcon className="w-5 h-5" />} />
+                    <StatCard title="Visitas" value="0" trend="0%" icon={<EyeIcon className="w-5 h-5" />} />
+                    <StatCard title="Novos Seguidores" value="0" trend="0%" icon={<UsersIcon className="w-5 h-5" />} />
+                    <StatCard title="Engajamento" value="0%" trend="0%" icon={<StarIcon className="w-5 h-5" />} />
                 </div>
 
-                {/* Estrutura de Funil Pronta */}
-                <div className="bg-[var(--bg-secondary)] p-5 rounded-2xl border border-[var(--border-primary)]">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-secondary)] mb-4">Funil de Conversão</h3>
-                    <div className="space-y-4 opacity-40">
-                        <div className="relative">
-                            <div className="flex justify-between text-[10px] font-bold mb-1 uppercase">
-                                <span>Visualizações</span>
-                                <span>0</span>
-                            </div>
-                            <div className="w-full h-2 bg-[var(--bg-tertiary)] rounded-full overflow-hidden">
-                                <div className="h-full bg-[var(--accent-primary)] w-0"></div>
-                            </div>
+                {/* Funil de Conversão */}
+                <div className="bg-white p-6 rounded-[2.5rem] border border-zinc-50 shadow-sm space-y-6">
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900 italic border-b border-zinc-50 pb-4">Funil de Conversão</h3>
+                    <div className="space-y-6">
+                        <FunnelRow label="Visualizações" value={0} progress={0} />
+                        <div className="pl-4">
+                            <FunnelRow label="Provador IA" value={0} progress={0} color="bg-amber-500/40" />
                         </div>
-                        <div className="relative pl-4">
-                            <div className="flex justify-between text-[10px] font-bold mb-1 uppercase">
-                                <span>Provador IA</span>
-                                <span>0</span>
-                            </div>
-                            <div className="w-full h-2 bg-[var(--bg-tertiary)] rounded-full overflow-hidden border-l border-[var(--accent-primary)]">
-                                <div className="h-full bg-[var(--accent-primary)]/50 w-0"></div>
-                            </div>
-                        </div>
-                        <div className="relative pl-8">
-                            <div className="flex justify-between text-[10px] font-bold mb-1 uppercase">
-                                <span>Vendas</span>
-                                <span>0</span>
-                            </div>
-                            <div className="w-full h-2 bg-[var(--bg-tertiary)] rounded-full overflow-hidden border-l border-green-500">
-                                <div className="h-full bg-green-500 w-0"></div>
-                            </div>
+                        <div className="pl-8">
+                            <FunnelRow label="Vendas" value={0} progress={0} color="bg-green-500" />
                         </div>
                     </div>
-                    <p className="text-[10px] text-center text-zinc-500 mt-4 font-medium uppercase italic">Aguardando as primeiras interações dos clientes...</p>
+                    <p className="text-[10px] text-center text-zinc-300 mt-6 font-black uppercase tracking-widest italic pt-2">
+                        Aguardando as primeiras interações dos clientes...
+                    </p>
                 </div>
 
-                {/* Gráfico de Desempenho Vazio */}
-                <div className="bg-[var(--bg-secondary)] p-5 rounded-2xl border border-[var(--border-primary)]">
-                    <h3 className="text-sm font-black uppercase tracking-widest text-[var(--text-secondary)] mb-6">Desempenho Semanal</h3>
-                    <div className="flex items-end justify-between h-24 gap-2">
-                        {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-                            <div key={i} className="flex-1 flex flex-col items-center gap-2">
-                                <div className="w-full bg-[var(--bg-tertiary)] rounded-t-sm h-1"></div>
-                                <span className="text-[8px] font-bold text-zinc-600">D{i}</span>
+                {/* Desempenho Semanal */}
+                <div className="bg-white p-6 rounded-[2.5rem] border border-zinc-50 shadow-sm">
+                    <h3 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900 italic mb-8">Desempenho Semanal</h3>
+                    <div className="flex items-end justify-between h-24 gap-3">
+                        {['SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'].map((day) => (
+                            <div key={day} className="flex-1 flex flex-col items-center gap-3">
+                                <div className="w-full bg-zinc-50 rounded-t-lg h-1.5 border border-zinc-100/50 group-hover:bg-amber-100 transition-colors"></div>
+                                <span className="text-[8px] font-black text-zinc-300 uppercase tracking-widest">{day}</span>
                             </div>
                         ))}
                     </div>
