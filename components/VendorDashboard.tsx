@@ -182,13 +182,6 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
 
         const priceValue = newItemPrice ? parseFloat(newItemPrice) : 0;
         
-        console.log('🟢 SUBMIT PRODUTO DISPARADO', {
-            title: newItemTitle,
-            description: newItemDesc,
-            price: priceValue,
-            folderId: selectedFolderId
-        });
-
         await onCreateProductInFolder(selectedFolderId, {
             title: newItemTitle,
             description: newItemDesc,
@@ -196,13 +189,16 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
             file: newItemFile
         });
 
-        // 🔥 FORÇA RE-RENDER DA PASTA
+        toast.success("Produto criado e adicionado à coleção ✅");
+        
+        // 🔥 FORÇA RE-RENDER DA PASTA E SCROLL
         const currentId = selectedFolderId;
         setSelectedFolderId(null);
         setTimeout(() => {
             setSelectedFolderId(currentId);
-        }, 0);
-        
+            document.querySelector('.grid')?.scrollIntoView({ behavior: 'smooth' });
+        }, 150);
+
         setNewItemTitle('');
         setNewItemPrice('');
         setNewItemDesc('');
@@ -382,27 +378,58 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-2 gap-4 pb-12">
-                                    {folders.map(folder => (
-                                        <FolderCard key={folder.id} folder={folder} onClick={() => setSelectedFolderId(folder.id)} />
-                                    ))}
-                                    {/* Exibir itens da Vitrine Geral */}
-                                    {folderProducts.map(product => (
-                                        <div key={product.id} className="relative aspect-[3/4] rounded-[1.8rem] overflow-hidden shadow-md border border-zinc-100 group cursor-pointer active:scale-95 transition-all" onClick={() => onItemClick(mapProductToItem(product))}>
-                                            <img src={product.image_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg'} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent flex flex-col justify-end p-4">
-                                                <p className="text-[11px] font-black text-white uppercase italic truncate drop-shadow-md">{product.title}</p>
-                                                <p className="text-[10px] font-black text-amber-400 mt-1 drop-shadow-md">{product.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
-                                            </div>
-                                            {!isVisitor && (
-                                                <button 
-                                                    onClick={(e) => { e.stopPropagation(); setMovingProduct(product); }}
-                                                    className="absolute top-3 right-3 p-2 bg-black/60 backdrop-blur-md rounded-xl text-white opacity-0 group-hover:opacity-100 transition-all active:scale-90"
-                                                >
-                                                    <RepositionIcon className="w-4 h-4" />
-                                                </button>
+                                    {/* PRIORIDADE 1: PASTAS */}
+                                    {folders.length > 0 ? (
+                                        <>
+                                            {folders.map(folder => (
+                                                <FolderCard key={folder.id} folder={folder} onClick={() => setSelectedFolderId(folder.id)} />
+                                            ))}
+                                            
+                                            {/* PRIORIDADE 2: GERAL / VITRINE (Abaixo das pastas) */}
+                                            {folderProducts.length > 0 && (
+                                                <div className="col-span-2 mt-6 mb-2 border-t border-zinc-50 pt-4">
+                                                    <h3 className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] italic ml-1">Geral / Vitrine</h3>
+                                                </div>
                                             )}
-                                        </div>
-                                    ))}
+                                            {folderProducts.map(product => (
+                                                <div key={product.id} className="relative aspect-[3/4] rounded-[1.8rem] overflow-hidden shadow-md border border-zinc-100 group cursor-pointer active:scale-95 transition-all" onClick={() => onItemClick(mapProductToItem(product))}>
+                                                    <img src={product.image_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg'} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent flex flex-col justify-end p-4">
+                                                        <p className="text-[11px] font-black text-white uppercase italic truncate drop-shadow-md">{product.title}</p>
+                                                        <p className="text-[10px] font-black text-amber-400 mt-1 drop-shadow-md">{product.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
+                                                    </div>
+                                                    {!isVisitor && (
+                                                        <button 
+                                                            onClick={(e) => { e.stopPropagation(); setMovingProduct(product); }}
+                                                            className="absolute top-3 right-3 p-2 bg-black/60 backdrop-blur-md rounded-xl text-white opacity-0 group-hover:opacity-100 transition-all active:scale-90"
+                                                        >
+                                                            <RepositionIcon className="w-4 h-4" />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </>
+                                    ) : (
+                                        /* CASO NÃO HAJA PASTAS: MOSTRA VITRINE DIRETO */
+                                        folderProducts.map(product => (
+                                            <div key={product.id} className="relative aspect-[3/4] rounded-[1.8rem] overflow-hidden shadow-md border border-zinc-100 group cursor-pointer active:scale-95 transition-all" onClick={() => onItemClick(mapProductToItem(product))}>
+                                                <img src={product.image_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg'} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent flex flex-col justify-end p-4">
+                                                    <p className="text-[11px] font-black text-white uppercase italic truncate drop-shadow-md">{product.title}</p>
+                                                    <p className="text-[10px] font-black text-amber-400 mt-1 drop-shadow-md">{product.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
+                                                </div>
+                                                {!isVisitor && (
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); setMovingProduct(product); }}
+                                                        className="absolute top-3 right-3 p-2 bg-black/60 backdrop-blur-md rounded-xl text-white opacity-0 group-hover:opacity-100 transition-all active:scale-90"
+                                                    >
+                                                        <RepositionIcon className="w-4 h-4" />
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ))
+                                    )}
+
                                     {!isVisitor && (
                                         <>
                                             <button 
@@ -484,7 +511,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
 
             {isCreatingFolder && !isVisitor && (
                 <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-md flex items-center justify-center p-6 animate-fadeIn" onClick={() => setIsCreatingFolder(false)}>
-                    <div className="w-full max-w-sm bg-white rounded-[2.5rem] p-10 flex flex-col gap-8 animate-modalZoomIn shadow-2xl" onClick={e => e.stopPropagation()}>
+                    <div className="w-full max-sm bg-white rounded-[2.5rem] p-10 flex flex-col gap-8 animate-modalZoomIn shadow-2xl" onClick={e => e.stopPropagation()}>
                         <div className="text-center">
                             <h2 className="text-2xl font-black uppercase italic text-zinc-900 tracking-tighter leading-none">Nova Coleção</h2>
                             <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-2">Organize o seu mercado</p>
@@ -517,7 +544,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                             <div className="flex flex-col">
                                 <h2 className="text-2xl font-black uppercase italic text-zinc-900 tracking-tighter italic leading-none">Novo Item</h2>
                                 <span className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-2 italic">
-                                    {selectedFolderId ? `Na coleção: ${currentFolder?.title}` : "Na Vitrine Geral"}
+                                    {selectedFolderId ? `Na coleção: ${currentFolder?.title}` : "Geral / Vitrine"}
                                 </span>
                             </div>
                             <button onClick={() => setIsAddingItem(false)} className="p-3 bg-zinc-50 rounded-2xl text-zinc-300 hover:text-zinc-900 transition-colors">

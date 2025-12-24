@@ -17,7 +17,7 @@ interface VendorProductsScreenProps {
     businessProfile: BusinessProfile;
     products: Product[];
     folders: Folder[];
-    onCreateProduct: (folderId: string, data: { title: string, description: string, price: number, file: Blob | null }) => Promise<void>;
+    onCreateProduct: (folderId: string | null, data: { title: string, description: string, price: number, file: Blob | null }) => Promise<void>;
 }
 
 const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, products, folders, onCreateProduct }) => {
@@ -25,7 +25,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [price, setPrice] = useState('');
-    const [selectedFolderId, setSelectedFolderId] = useState('');
+    const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
     const [file, setFile] = useState<Blob | null>(null);
     const [preview, setPreview] = useState<string | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -42,11 +42,6 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
     };
 
     const handleStartCreating = () => {
-        if (folders.length === 0) {
-            toast("Escolha uma coleção para o produto aparecer no catálogo.");
-            onBack(); // Redireciona para o dashboard para criar pasta
-            return;
-        }
         setIsCreating(true);
     };
 
@@ -87,20 +82,8 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
           return;
         }
 
-        if (!selectedFolderId) {
-            toast("Escolha uma coleção para o produto aparecer no catálogo.");
-            return;
-        }
-
         const priceValue = price ? parseFloat(price) : 0;
         
-        console.log('🟢 SUBMIT PRODUTO DISPARADO', {
-            title,
-            description,
-            price: priceValue,
-            folderId: selectedFolderId
-        });
-
         await onCreateProduct(selectedFolderId, { 
           title, 
           description, 
@@ -108,11 +91,17 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
           file: file || null 
         });
 
+        toast.success("Produto criado e adicionado à coleção ✅");
+        
+        setTimeout(() => {
+            document.querySelector('.grid')?.scrollIntoView({ behavior: 'smooth' });
+        }, 150);
+
         setIsCreating(false);
         setTitle('');
         setDescription('');
         setPrice('');
-        setSelectedFolderId('');
+        setSelectedFolderId(null);
         setFile(null);
         setPreview(null);
     };
@@ -186,12 +175,11 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
                             <div>
                                 <label className="text-[10px] font-black uppercase text-zinc-400 ml-4 mb-1 block tracking-widest">Coleção Destino</label>
                                 <select
-                                    value={selectedFolderId}
-                                    onChange={e => setSelectedFolderId(e.target.value)}
+                                    value={selectedFolderId || ''}
+                                    onChange={e => setSelectedFolderId(e.target.value === '' ? null : e.target.value)}
                                     className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:outline-none focus:border-amber-500 font-bold text-sm appearance-none"
-                                    required
                                 >
-                                    <option value="" disabled>Escolha uma coleção...</option>
+                                    <option value="">Geral / Vitrine</option>
                                     {folders.map(f => (
                                         <option key={f.id} value={f.id}>{f.title}</option>
                                     ))}
@@ -221,7 +209,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
                             />
                         </div>
 
-                        <GradientButton type="submit" disabled={!title || isProcessing || !selectedFolderId}>
+                        <GradientButton type="submit" disabled={!title || isProcessing}>
                             Salvar no Banco de Dados
                         </GradientButton>
                     </form>

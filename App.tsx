@@ -332,16 +332,9 @@ const App: React.FC = () => {
     };
 
     const handleCreateFolder = async (title: string) => {
-        // 🔍 DEBUG DEFINITIVO DE AUTH
-        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-
-        console.log('[DEBUG] sessionError:', sessionError);
-        console.log('[DEBUG] session:', sessionData?.session);
-        console.log('[DEBUG] user:', sessionData?.session?.user);
-        console.log('[DEBUG] user.id:', sessionData?.session?.user?.id);
-
+        const { data: sessionData } = await supabase.auth.getSession();
         if (!sessionData?.session?.user?.id) {
-            toast.error('SEM SESSÃO ATIVA ❌');
+            toast.error('Sessão expirada. Faça login novamente.');
             return;
         }
 
@@ -360,43 +353,22 @@ const App: React.FC = () => {
                 return;
             }
 
-            // 🔄 FORÇA RELOAD REAL DO BACKEND
             const freshFolders = await fetchFolders(user.id);
-            console.log('[FOLDERS AFTER INSERT]', freshFolders);
             setFolders(freshFolders);
-
-            toast.success('Coleção criada com sucesso ✅');
+            toast.success('Coleção criada ✅');
         } catch (err) {
             console.error('[CREATE FOLDER ERROR]', err);
-            toast.error('Erro inesperado');
         } finally {
             setIsLoading(false);
         }
     };
 
     const handleAddProductToFolder = async (folderId: string | null, details: { title: string, description: string, price: number, file: Blob | null }) => {
-        console.log('🔥 HANDLE ADD PRODUCT CHAMADO', {
-          folderId,
-          details
-        });
         try {
             setIsLoading(true);
             const { data: userData } = await supabase.auth.getUser();
             const user = userData.user;
             if (!user) throw new Error('Usuário não autenticado');
-
-            if (folderId) {
-                const { data: folder, error } = await supabase
-                    .from('folders')
-                    .select('id')
-                    .eq('id', folderId)
-                    .single();
-
-                if (error || !folder) {
-                    toast.error('Pasta inválida ou não encontrada');
-                    return;
-                }
-            }
 
             let image_url: string | null = null;
             
@@ -425,12 +397,9 @@ const App: React.FC = () => {
                 title: details.title,
                 description: details.description,
                 price: details.price,
-                image_url
+                image_url,
+                folder_id: folderId || null
             };
-
-            if (folderId) {
-                payload.folder_id = folderId;
-            }
 
             const { data: productData, error: dbError } = await supabase
                 .from('products')
@@ -439,32 +408,19 @@ const App: React.FC = () => {
                 .single();
             
             if (dbError) {
-              console.error('❌ PRODUCT INSERT ERROR:', dbError);
-              toast.error(dbError.message || 'Erro ao criar produto');
+              toast.error(dbError.message);
               return;
             }
 
-            // 🔄 FORÇA RELOAD REAL DO BACKEND
-            const freshProducts = await fetchAllProducts(user.id);
+            // Sync total data from backend (source of truth) to get correct counts
+            const [freshProducts, freshFolders] = await Promise.all([
+                fetchAllProducts(user.id),
+                fetchFolders(user.id)
+            ]);
+            
             setProducts(freshProducts);
+            setFolders(freshFolders);
             
-            if (folderId) {
-                setFolders(f => f.map(fold => fold.id === folderId ? { 
-                    ...fold, 
-                    item_count: (fold.item_count || 0) + 1, 
-                    cover_image: fold.cover_image || productData.image_url 
-                } : fold));
-                
-                if (productData.image_url) {
-                    const currentFold = folders.find(f => f.id === folderId);
-                    await supabase.from('folders').update({ 
-                        item_count: (currentFold?.item_count || 0) + 1,
-                        cover_image: currentFold?.cover_image || productData.image_url
-                    }).eq('id', folderId);
-                }
-            }
-            
-            toast.success("Produto adicionado ✅");
             return productData;
         } catch (err: any) {
             toast.error(err.message || 'Erro no upload');
@@ -475,9 +431,8 @@ const App: React.FC = () => {
 
     const handlePhotoSelection = (dataUrl: string) => {
         setUserImage(dataUrl);
-        // Após carregar a foto, redirecionar para a Home (Perfil) para escolher a seção
         setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home);
-        toast.success("Foto carregada! Escolha uma seção do Mercado para provar.");
+        toast.success("Foto carregada!");
     };
 
     const renderScreen = () => {
@@ -508,7 +463,8 @@ const App: React.FC = () => {
                             try {
                                 const { error } = await supabase.from('products').update({ folder_id: fId }).eq('id', pId);
                                 if (error) throw error;
-                                setProducts(prev => prev.map(p => (p.id === pId ? { ...p, folder_id: fId } : p)));
+                                const [p, f] = await Promise.all([fetchAllProducts(profile!.user_id), fetchFolders(profile!.user_id)]);
+                                setProducts(p); setFolders(f);
                                 toast.success("Item movido!");
                             } catch (e) { toast.error("Erro ao mover."); }
                         }} 
@@ -583,7 +539,8 @@ const App: React.FC = () => {
                         try {
                             const { error } = await supabase.from('products').update({ folder_id: fId }).eq('id', pId);
                             if (error) throw error;
-                            setProducts(prev => prev.map(p => (p.id === pId ? { ...p, folder_id: fId } : p)));
+                            const [p, f] = await Promise.all([fetchAllProducts(profile!.user_id), fetchFolders(profile!.user_id)]);
+                            setProducts(p); setFolders(f);
                             toast.success("Item movido!");
                         } catch (e) { toast.error("Erro ao mover."); }
                     }} 
@@ -597,7 +554,7 @@ const App: React.FC = () => {
             case Screen.Feed: return profile && <FeedScreen posts={posts} stories={[]} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={setRecommendationItem} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={(cat) => setViewedProfileId(cat.id)} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onAddComment={() => {}} onNavigateToAllHighlights={() => {}} onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)} unreadNotificationCount={unreadCount} onNotificationsClick={() => setIsNotificationsOpen(true)} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
             case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={null} realBusinesses={realBusinesses} onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={handleUpdateProfileImage} onSelectCategory={(cat) => setViewedProfileId(cat.id)} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => {}} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} onBack={() => {}} posts={posts} onItemClick={setRecommendationItem} onViewProfile={setViewedProfileId} onNavigateToSettings={() => setIsSettingsOpen(true)} onSignOut={() => supabase.auth.signOut()} unreadNotificationCount={unreadCount} unreadMessagesCount={0} onOpenNotificationsPanel={() => setIsNotificationsOpen(true)} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onAddComment={() => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
             case Screen.Search: return <SearchScreen onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} posts={posts} items={[]} onViewProfile={setViewedProfileId} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onItemClick={setRecommendationItem} onItemAction={setRecommendationItem} onOpenSplitCamera={() => {}} onOpenComments={() => {}} onAddToCart={(i) => setCartItems(p => [...p, i])} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
-            case Screen.VendorProducts: return businessProfile && <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile} products={products} folders={folders} onCreateProduct={async (folderId, d) => { await handleAddProductToFolder(folderId, d); }} />;
+            case Screen.VendorProducts: return businessProfile && <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile} products={products} folders={folders} onCreateProduct={handleAddProductToFolder} />;
             case Screen.Cart: return <CartScreen cartItems={cartItems} onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} onRemoveItem={(i) => setCartItems(prev => prev.filter((_, idx) => idx !== i))} onBuyItem={() => {}} onTryOnItem={(it) => { setRecommendationItem(it); }} onCheckout={() => { toast.success("Pedido finalizado!"); setCartItems([]); }} />;
             case Screen.ImageSourceSelection: return <ImageSourceSelectionScreen onImageUpload={handlePhotoSelection} onUseCamera={() => setCurrentScreen(Screen.Camera)} onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} />;
             case Screen.Camera: return <CameraScreen onPhotoTaken={handlePhotoSelection} onBack={() => setCurrentScreen(Screen.ImageSourceSelection)} />;
