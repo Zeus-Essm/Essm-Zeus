@@ -1,8 +1,8 @@
 
-import React, { useRef, useEffect, useState } from 'react';
+import React from 'react';
 import type { Item } from '../types';
 import GradientButton from './GradientButton';
-import { ShoppingBagIcon, PlayIcon, PauseIcon } from './IconComponents';
+import { ShoppingBagIcon } from './IconComponents';
 
 interface RecommendationModalProps {
   item: Item;
@@ -12,116 +12,73 @@ interface RecommendationModalProps {
 }
 
 const XIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" {...props}>
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" {...props}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
   </svg>
 );
 
 const RecommendationModal: React.FC<RecommendationModalProps> = ({ item, onClose, onAddToCart, onStartTryOn }) => {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(true);
-
-  useEffect(() => {
-    // Attempt to play on mount
-    if (videoRef.current) {
-        videoRef.current.play().catch(e => {
-            console.log("Autoplay failed", e);
-            setIsPlaying(false);
-        });
-    }
-  }, []);
-
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-      }
-      setIsPlaying(!isPlaying);
-    }
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-black animate-fadeIn">
-      {/* Top Half: Product Details */}
-      <div className="h-1/2 relative bg-[var(--bg-secondary)] flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/40 backdrop-blur-md animate-fadeIn">
+      {/* Backdrop Close Area */}
+      <div className="absolute inset-0" onClick={onClose} />
+
+      <div 
+        className="relative bg-white rounded-[2.5rem] w-full max-w-sm overflow-hidden animate-modalZoomIn shadow-2xl border border-zinc-100 flex flex-col"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+          className="absolute top-5 right-5 z-20 p-2.5 rounded-2xl bg-zinc-50 text-zinc-400 hover:text-zinc-900 transition-all active:scale-90 shadow-sm"
         >
-          <XIcon className="w-6 h-6" />
+          <XIcon className="w-5 h-5" />
         </button>
 
-        <div className="flex-grow flex items-center justify-center p-6 relative">
-             {/* Background blur effect */}
-             <div 
-                className="absolute inset-0 bg-cover bg-center opacity-20 blur-md"
-                style={{ backgroundImage: `url(${item.image})` }}
-             />
-             
-             <div className="relative z-10 w-full max-w-sm flex flex-col items-center text-center">
+        <div className="p-8 pt-10 flex flex-col items-center text-center">
+             <div className="relative w-full aspect-square mb-6 rounded-[2rem] overflow-hidden bg-zinc-50 border border-zinc-100 p-4">
                 <img 
                     src={item.image} 
                     alt={item.name} 
-                    className="h-40 w-auto object-contain rounded-xl shadow-lg mb-4 bg-white"
+                    className="w-full h-full object-contain drop-shadow-xl"
                 />
-                <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-1">{item.name}</h2>
-                <p className="text-lg font-semibold text-[var(--accent-primary)] mb-2">
-                    {item.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
+             </div>
+
+             <div className="w-full space-y-2">
+                <h2 className="text-2xl font-black text-zinc-900 uppercase italic tracking-tighter leading-none">
+                    {item.name}
+                </h2>
+                <p className="text-[10px] font-bold text-amber-500 uppercase tracking-[0.2em] italic">
+                    Referência Premium
                 </p>
-                <p className="text-sm text-[var(--text-secondary)] line-clamp-2 mb-4">{item.description}</p>
                 
-                <div className="flex w-full gap-3">
-                    <button
-                        onClick={() => onAddToCart(item)}
-                        className="flex-1 flex items-center justify-center py-3 bg-[var(--bg-tertiary)] text-[var(--text-primary)] font-bold rounded-lg hover:brightness-110 active:scale-95 transition-all"
-                    >
-                        <ShoppingBagIcon className="w-5 h-5 mr-2" />
-                        Carrinho
-                    </button>
+                <p className="text-sm text-zinc-500 font-medium leading-relaxed px-2 mt-4 line-clamp-3">
+                    {item.description || "Este item faz parte da coleção exclusiva PUMP. Design minimalista com acabamento de alta qualidade."}
+                </p>
+
+                <div className="pt-4 pb-6">
+                    <p className="text-3xl font-black text-zinc-900 tracking-tighter">
+                        {item.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
+                    </p>
+                </div>
+                
+                <div className="flex flex-col w-full gap-3 mt-4">
                     <GradientButton 
                         onClick={() => onStartTryOn(item)}
-                        className="flex-1 !py-3 text-sm"
+                        className="!py-5 !rounded-[1.5rem] !text-[11px] shadow-xl"
                     >
-                        Provar Agora
+                        PROVAR AGORA
                     </GradientButton>
+                    <button
+                        onClick={() => onAddToCart(item)}
+                        className="w-full flex items-center justify-center py-4 bg-zinc-50 text-zinc-400 font-black uppercase text-[10px] tracking-widest rounded-[1.5rem] border border-zinc-100 hover:bg-zinc-100 hover:text-zinc-900 transition-all active:scale-95"
+                    >
+                        <ShoppingBagIcon className="w-4 h-4 mr-2" />
+                        ADICIONAR AO CARRINHO
+                    </button>
                 </div>
              </div>
         </div>
-      </div>
-
-      {/* Bottom Half: Video */}
-      <div className="h-1/2 relative bg-black">
-        {item.recommendationVideo ? (
-            <>
-                <video
-                    ref={videoRef}
-                    src={item.recommendationVideo}
-                    className="w-full h-full object-cover"
-                    loop
-                    playsInline
-                    onClick={togglePlay}
-                />
-                {!isPlaying && (
-                    <div 
-                        className="absolute inset-0 flex items-center justify-center bg-black/40 pointer-events-none"
-                    >
-                        <PlayIcon className="w-16 h-16 text-white/80" />
-                    </div>
-                )}
-                {/* Play/Pause overlay interaction */}
-                <div 
-                    className="absolute inset-0 z-10" 
-                    onClick={togglePlay}
-                />
-            </>
-        ) : (
-            <div className="w-full h-full flex items-center justify-center text-white/50">
-                <p>Vídeo não disponível</p>
-            </div>
-        )}
       </div>
     </div>
   );

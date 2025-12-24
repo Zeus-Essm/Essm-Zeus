@@ -1,3 +1,4 @@
+
 import React, { useState, useRef } from 'react';
 import Header from './Header';
 import type { BusinessProfile, Product, Folder } from '../types';
@@ -18,9 +19,10 @@ interface VendorProductsScreenProps {
     products: Product[];
     folders: Folder[];
     onCreateProduct: (folderId: string | null, data: { title: string, description: string, price: number, file: Blob | null }) => Promise<void>;
+    onDeleteProduct?: (productId: string) => void;
 }
 
-const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, products, folders, onCreateProduct }) => {
+const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, products, folders, onCreateProduct, onDeleteProduct }) => {
     const [isCreating, setIsCreating] = useState(false);
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -230,7 +232,10 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, pro
                                     <button className="p-2 bg-[var(--bg-tertiary)] rounded-lg hover:bg-zinc-200 transition-colors">
                                         <PencilIcon className="w-4 h-4" />
                                     </button>
-                                    <button className="p-2 bg-[var(--bg-tertiary)] text-red-400 rounded-lg hover:bg-red-50 transition-colors">
+                                    <button 
+                                        onClick={() => onDeleteProduct?.(product.id)}
+                                        className="p-2 bg-[var(--bg-tertiary)] text-red-400 rounded-lg hover:bg-red-50 transition-colors"
+                                    >
                                         <XCircleIcon className="w-4 h-4" />
                                     </button>
                                 </div>
