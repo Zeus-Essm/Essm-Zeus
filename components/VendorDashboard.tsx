@@ -233,7 +233,16 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                             </div>
                         </div>
                         <div className="flex-grow min-w-0">
-                            <h2 className="font-bold text-md text-zinc-900 truncate uppercase tracking-tighter italic leading-none">{profile.full_name || profile.username}</h2>
+                            <div className="flex items-center justify-between">
+                                <h2 className="font-bold text-md text-zinc-900 truncate uppercase tracking-tighter italic leading-none">
+                                    {profile.full_name || profile.username}
+                                </h2>
+                                {!isVisitor && (
+                                    <button onClick={() => setIsEditingProfile(true)} className="p-1 active:scale-90 transition-transform">
+                                        <PencilIcon className="w-4 h-4 text-zinc-400" />
+                                    </button>
+                                )}
+                            </div>
                             <div className="text-[11px] text-zinc-600 font-medium leading-tight line-clamp-3 mt-1">{profile.bio || "Loja do ecossistema PUMP."}</div>
                         </div>
                     </div>
@@ -353,6 +362,17 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                         <GradientButton onClick={() => handleSaveItem(false)} disabled={!newItemTitle}>CONCLUIR CADASTRO</GradientButton>
                     </div>
                 </div>
+            )}
+
+            {isEditingProfile && (
+                <BioEditModal 
+                    profile={profile}
+                    onClose={() => setIsEditingProfile(false)} 
+                    onSave={(updates) => {
+                        onUpdateProfile(updates);
+                        setIsEditingProfile(false);
+                    }} 
+                />
             )}
 
             {viewingPostIndex !== null && (
