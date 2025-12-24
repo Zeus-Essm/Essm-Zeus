@@ -29,6 +29,7 @@ import ItemSelectionScreen from './components/ItemSelectionScreen';
 import LoadingIndicator from './components/LoadingIndicator';
 import ResultScreen from './components/ResultScreen';
 import ConfirmationScreen from './components/ConfirmationScreen';
+import CaptionModal from './components/CaptionModal';
 
 const GUEST_PERSONAL_PROFILE: Profile = {
     user_id: 'guest_user',
@@ -78,6 +79,8 @@ const App: React.FC = () => {
     
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [showCaptionModal, setShowCaptionModal] = useState(false);
+    const [isPublishing, setIsPublishing] = useState(false);
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
 
@@ -95,11 +98,13 @@ const App: React.FC = () => {
 
     const handlePhotoObtained = (url: string) => {
         setUserImage(url);
-        if (vtoItem) {
-            handleGenerateLook(url, vtoItem, vtoItems);
+        // FIX: Após escolher a foto, conecta com o perfil conforme solicitado
+        if (profile?.account_type === 'business') {
+            setCurrentScreen(Screen.VendorDashboard);
         } else {
-            setCurrentScreen(Screen.Feed);
+            setCurrentScreen(Screen.Home);
         }
+        toast.success("Foto pronta! Escolha um item para provar.");
     };
 
     const handleGenerateLook = async (image: string, item: Item, existing: Item[]) => {
@@ -111,7 +116,50 @@ const App: React.FC = () => {
             setCurrentScreen(Screen.Result);
         } catch (err: any) {
             toast.error(err.message);
-            setCurrentScreen(Screen.Feed);
+            // Fallback para onde o usuário estava
+            if (profile?.account_type === 'business') setCurrentScreen(Screen.VendorDashboard);
+            else setCurrentScreen(Screen.Home);
+        }
+    };
+
+    const handleSaveImage = () => {
+        if (!generatedImage) return;
+        const link = document.createElement('a');
+        link.href = generatedImage;
+        link.download = `PUMP_Look_${Date.now()}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("Imagem salva na galeria!");
+    };
+
+    const handlePublishLook = async (caption: string) => {
+        if (!generatedImage || !profile) return;
+        setIsPublishing(true);
+        try {
+            const newPost: Post = {
+                id: Math.random().toString(36).substr(2, 9),
+                user: {
+                    id: profile.user_id,
+                    full_name: profile.full_name || profile.username,
+                    avatar_url: profile.avatar_url
+                },
+                image: generatedImage,
+                items: vtoItems,
+                likes: 0,
+                isLiked: false,
+                comments: [],
+                commentCount: 0,
+                caption: caption
+            };
+            setPosts(prev => [newPost, ...prev]);
+            toast.success("Look publicado no perfil!");
+            setShowCaptionModal(false);
+            setCurrentScreen(Screen.Confirmation);
+        } catch (err) {
+            toast.error("Erro ao publicar.");
+        } finally {
+            setIsPublishing(false);
         }
     };
 
@@ -243,7 +291,7 @@ const App: React.FC = () => {
                     onUpdateProfile={() => {}} onUpdateProfileImage={() => {}} 
                     onNavigateToProducts={() => setCurrentScreen(Screen.VendorProducts)} 
                     onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} 
-                    onAddComment={() => {}} onItemClick={setRecommendationItem} onViewProfile={setViewedProfileId}
+                    onAddComment={() => {}} onItemClick={startTryOn} onViewProfile={setViewedProfileId}
                     isVisitor={!isSelf} onBack={() => setViewedProfileId(null)}
                 />
             );
@@ -254,20 +302,26 @@ const App: React.FC = () => {
                 if (type === 'personal') { setProfile(GUEST_PERSONAL_PROFILE); setCurrentScreen(Screen.Feed); } 
                 else { setProfile(GUEST_BUSINESS_PROFILE); setBusinessProfile({ id: 'guest_business', business_name: 'Loja de Exemplo', business_category: 'fashion', description: 'Preview do painel.', logo_url: 'https://i.postimg.cc/XJf6gckX/Pump_STARTAP.png' }); setCurrentScreen(Screen.VendorDashboard); }
             }} />;
-            case Screen.VendorDashboard: return businessProfile && profile && <VendorDashboard businessProfile={businessProfile} profile={profile} onOpenMenu={() => setShowVendorMenu(true)} unreadNotificationCount={unreadCount} onOpenNotificationsPanel={() => setIsNotificationsOpen(true)} onOpenPromotionModal={() => {}} followersCount={0} followingCount={0} folders={folders} products={products} posts={posts} onCreateFolder={handleCreateFolder} onCreateProductInFolder={handleAddProductToFolder} onMoveProductToFolder={async () => {}} onUpdateProfile={() => {}} onUpdateProfileImage={() => {}} onNavigateToProducts={() => setCurrentScreen(Screen.VendorProducts)} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onAddComment={() => {}} onItemClick={setRecommendationItem} onViewProfile={setViewedProfileId} />;
-            case Screen.Feed: return profile && <FeedScreen posts={posts} stories={[]} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={setRecommendationItem} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={(cat) => setViewedProfileId(cat.id)} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onAddComment={() => {}} onNavigateToAllHighlights={() => {}} onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)} unreadNotificationCount={unreadCount} onNotificationsClick={() => setIsNotificationsOpen(true)} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
-            case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={null} realBusinesses={realBusinesses} onUpdateProfile={() => {}} onUpdateProfileImage={() => {}} onSelectCategory={(cat) => setViewedProfileId(cat.id)} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => {}} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} onBack={() => {}} posts={posts} onItemClick={setRecommendationItem} onViewProfile={setViewedProfileId} onNavigateToSettings={() => setIsSettingsOpen(true)} onSignOut={() => handleAuthState(null)} unreadNotificationCount={unreadCount} unreadMessagesCount={0} onOpenNotificationsPanel={() => setIsNotificationsOpen(true)} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onAddComment={() => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
-            case Screen.Search: return <SearchScreen onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} posts={posts} items={[]} onViewProfile={setViewedProfileId} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onItemClick={setRecommendationItem} onItemAction={setRecommendationItem} onOpenSplitCamera={() => {}} onOpenComments={() => {}} onAddToCart={(i) => setCartItems(p => [...p, i])} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
+            case Screen.VendorDashboard: return businessProfile && profile && <VendorDashboard businessProfile={businessProfile} profile={profile} onOpenMenu={() => setShowVendorMenu(true)} unreadNotificationCount={unreadCount} onOpenNotificationsPanel={() => setIsNotificationsOpen(true)} onOpenPromotionModal={() => {}} followersCount={0} followingCount={0} folders={folders} products={products} posts={posts} onCreateFolder={handleCreateFolder} onCreateProductInFolder={handleAddProductToFolder} onMoveProductToFolder={async () => {}} onUpdateProfile={() => {}} onUpdateProfileImage={() => {}} onNavigateToProducts={() => setCurrentScreen(Screen.VendorProducts)} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onAddComment={() => {}} onItemClick={startTryOn} onViewProfile={setViewedProfileId} />;
+            case Screen.Feed: return profile && <FeedScreen posts={posts} stories={[]} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={startTryOn} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={(cat) => setViewedProfileId(cat.id)} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onAddComment={() => {}} onNavigateToAllHighlights={() => {}} onStartCreate={() => { setVtoItems([]); setUserImage(null); setGeneratedImage(null); setCurrentScreen(Screen.ImageSourceSelection); }} unreadNotificationCount={unreadCount} onNotificationsClick={() => setIsNotificationsOpen(true)} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
+            case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={null} realBusinesses={realBusinesses} onUpdateProfile={() => {}} onUpdateProfileImage={() => {}} onSelectCategory={(cat) => setViewedProfileId(cat.id)} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => {}} onStartTryOn={() => { setVtoItems([]); setUserImage(null); setGeneratedImage(null); setCurrentScreen(Screen.ImageSourceSelection); }} isCartAnimating={false} onBack={() => {}} posts={posts} onItemClick={startTryOn} onViewProfile={setViewedProfileId} onNavigateToSettings={() => setIsSettingsOpen(true)} onSignOut={() => handleAuthState(null)} unreadNotificationCount={unreadCount} unreadMessagesCount={0} onOpenNotificationsPanel={() => setIsNotificationsOpen(true)} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onAddComment={() => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
+            case Screen.Search: return <SearchScreen onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} posts={posts} items={[]} onViewProfile={setViewedProfileId} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onItemClick={startTryOn} onItemAction={startTryOn} onOpenSplitCamera={() => {}} onOpenComments={() => {}} onAddToCart={(i) => setCartItems(p => [...p, i])} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
             case Screen.Cart: return <CartScreen cartItems={cartItems} onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} onRemoveItem={(i) => setCartItems(prev => prev.filter((_, idx) => idx !== i))} onBuyItem={() => {}} onTryOnItem={startTryOn} onCheckout={() => { toast.success("Pedido finalizado!"); setCartItems([]); }} />;
             
             // --- VTO FLOW SCREENS ---
             case Screen.ImageSourceSelection: return <ImageSourceSelectionScreen onImageUpload={handlePhotoObtained} onUseCamera={() => setCurrentScreen(Screen.Camera)} onBack={() => setCurrentScreen(Screen.Feed)} />;
             case Screen.Camera: return <CameraScreen onPhotoTaken={handlePhotoObtained} onBack={() => setCurrentScreen(Screen.ImageSourceSelection)} />;
-            case Screen.SubCategorySelection: return profile && <SubCategorySelectionScreen node={{ id: 'root', name: 'Explorar', image: '', subCategories: MALE_CLOTHING_SUBCATEGORIES }} onSelectSubCategory={(sub) => { setCurrentSubCategory(sub); setCurrentScreen(Screen.ItemSelection); }} onBack={() => setCurrentScreen(Screen.Feed)} />;
+            case Screen.SubCategorySelection: return profile && <SubCategorySelectionScreen node={{ id: 'root', name: 'Explorar', image: '', subCategories: MALE_CLOTHING_SUBCATEGORIES }} onSelectSubCategory={(sub) => { setCurrentSubCategory(sub); setCurrentScreen(Screen.ItemSelection); }} onBack={() => {
+                if (generatedImage) setCurrentScreen(Screen.Result);
+                else setCurrentScreen(Screen.Feed);
+            }} />;
             case Screen.ItemSelection: return userImage && currentSubCategory && <ItemSelectionScreen userImage={userImage} collectionId={currentSubCategory.id} collectionName={currentSubCategory.name} collectionType="fashion" onItemSelect={startTryOn} onOpenSplitCamera={() => {}} onBack={() => setCurrentScreen(Screen.SubCategorySelection)} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} onAddToCart={(i) => setCartItems(p => [...p, i])} />;
-            case Screen.Generating: return userImage && <LoadingIndicator userImage={userImage} />;
-            case Screen.Result: return generatedImage && <ResultScreen generatedImage={generatedImage} items={vtoItems} categoryItems={[]} onBuy={() => { setCartItems(p => [...p, ...vtoItems]); setCurrentScreen(Screen.Cart); }} onUndo={() => { setVtoItems(v => v.slice(0, -1)); setCurrentScreen(Screen.Feed); }} onStartPublishing={() => {}} onSaveImage={() => {}} onItemSelect={startTryOn} onAddMoreItems={() => setCurrentScreen(Screen.SubCategorySelection)} onGenerateVideo={() => {}} />;
-            case Screen.Confirmation: return <ConfirmationScreen message="Look finalizado com sucesso!" onHome={() => setCurrentScreen(Screen.Feed)} />;
+            case Screen.Generating: return userImage && <LoadingIndicator userImage={generatedImage || userImage} />;
+            case Screen.Result: return generatedImage && <ResultScreen generatedImage={generatedImage} items={vtoItems} categoryItems={[]} onBuy={() => { setCartItems(p => [...p, ...vtoItems]); setCurrentScreen(Screen.Cart); }} onUndo={() => { setVtoItems(v => v.slice(0, -1)); setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home); }} onStartPublishing={() => setShowCaptionModal(true)} onSaveImage={handleSaveImage} onItemSelect={startTryOn} onAddMoreItems={() => {
+                // Ao clicar em adicionar, vai para o catálogo explorável
+                setCurrentScreen(Screen.SubCategorySelection);
+            }} onGenerateVideo={() => {}} />;
+            case Screen.Confirmation: return <ConfirmationScreen message="Look finalizado com sucesso!" onHome={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home)} />;
             
             default: return <SplashScreen />;
         }
@@ -278,14 +332,18 @@ const App: React.FC = () => {
             <div className="flex-grow relative overflow-hidden">{renderScreen()}</div>
             {isNotificationsOpen && <NotificationsPanel notifications={notifications} onClose={() => setIsNotificationsOpen(false)} onNotificationClick={() => {}} />}
             {isSettingsOpen && profile && <SettingsPanel profile={profile} theme={theme} onToggleTheme={() => setTheme(t => t === 'light' ? 'dark' : 'light')} onClose={() => setIsSettingsOpen(false)} onSignOut={() => handleAuthState(null)} onNavigateToVerification={() => {}} />}
+            {showCaptionModal && generatedImage && <CaptionModal image={generatedImage} onClose={() => setShowCaptionModal(false)} onPublish={handlePublishLook} isPublishing={isPublishing} />}
             {profile && [Screen.Feed, Screen.Home, Screen.Cart, Screen.Search, Screen.VendorDashboard, Screen.VendorProducts, Screen.SubCategorySelection, Screen.ItemSelection].includes(currentScreen) && !viewedProfileId && (
                 <BottomNavBar activeScreen={currentScreen} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToPromotion={() => {}} onNavigateToProfile={() => { 
                         setViewedProfileId(null);
                         if (profile.account_type === 'business') setCurrentScreen(Screen.VendorDashboard);
                         else setCurrentScreen(Screen.Home);
                     }} onStartTryOn={() => {
-                        if (!userImage) setCurrentScreen(Screen.ImageSourceSelection);
-                        else setCurrentScreen(Screen.SubCategorySelection);
+                        // FIX: Sempre reinicia o estado ao clicar no botão central de +
+                        setVtoItems([]);
+                        setGeneratedImage(null);
+                        setVtoItem(null); // Limpa item pendente
+                        setCurrentScreen(Screen.ImageSourceSelection);
                     }} isCartAnimating={false} accountType={profile.account_type} onNavigateToVendorAnalytics={() => {}} />
             )}
             {isLoading && <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center"><div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div></div>}
