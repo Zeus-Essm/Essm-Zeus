@@ -15,7 +15,7 @@ import { removeImageBackground, generateProductImage } from '../services/geminiS
 
 const SparklesIconUI = () => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.25 15L17.5 17.625l-.75-2.625a2.25 2.25 0 00-1.545-1.545L12.583 12.688l2.625-.75a2.25 2.25 0 001.545-1.545l.75-2.625.75 2.625a2.25 2.25 0 001.545 1.545l2.625.75-2.625.75a2.25 2.25 0 00-1.545 1.545L18.25 15z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09-3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.25 15L17.5 17.625l-.75-2.625a2.25 2.25 0 00-1.545-1.545L12.583 12.688l2.625-.75a2.25 2.25 0 001.545-1.545l.75-2.625.75 2.625a2.25 2.25 0 001.545 1.545l2.625.75-2.625.75a2.25 2.25 0 00-1.545 1.545L18.25 15z" />
     </svg>
 );
 
@@ -78,6 +78,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     businessProfile,
     profile,
     onOpenMenu, 
+    unreadNotificationCount,
     onOpenNotificationsPanel, 
     onOpenPromotionModal, 
     followersCount,
@@ -200,8 +201,13 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                         <button onClick={onOpenPromotionModal} className="p-2 bg-amber-50 rounded-xl text-amber-600 active:scale-90 transition-transform">
                             <StarIcon className="w-5 h-5" />
                         </button>
-                        <button onClick={onOpenNotificationsPanel} className="p-2 active:scale-90 transition-transform">
+                        <button onClick={onOpenNotificationsPanel} className="relative p-2 active:scale-90 transition-transform">
                             <BellIcon className="w-7 h-7 text-zinc-900" strokeWidth={1.5} />
+                            {unreadNotificationCount > 0 && (
+                                <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-black text-white shadow-sm ring-2 ring-white">
+                                    {unreadNotificationCount > 9 ? '9+' : unreadNotificationCount}
+                                </span>
+                            )}
                         </button>
                         <button onClick={onOpenMenu} className="p-2 active:scale-90 transition-transform">
                             <MenuIcon className="w-7 h-7 text-zinc-900" strokeWidth={2.5} />
