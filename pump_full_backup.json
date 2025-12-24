@@ -1,0 +1,31 @@
+
+{
+  "project": "PUMP Angola",
+  "version": "1.0.6",
+  "config": {
+    "framework": "React + Vite",
+    "styling": "Tailwind CSS",
+    "database": "Supabase",
+    "ai": "Google Gemini API"
+  },
+  "files": {
+    "App.tsx": "import React, { useState, useEffect } from 'react'; ... (Lógica de Navegação e Estados Globais)",
+    "types.ts": "export interface Profile { ... } ... (Definições de Tipos)",
+    "constants.ts": "export const CATEGORIES = [ ... ] ... (Dados de Lojas e Itens)",
+    "services/geminiService.ts": "export const generateTryOnImage = ... (Integração IA)",
+    "services/supabaseClient.ts": "export const supabase = createClient(...) (Conexão Banco)",
+    "index.html": "<!DOCTYPE html> ... (Root e Estilos Globais)",
+    "components/": {
+      "AccountTypeSelectionScreen.tsx": "Tela de escolha entre Pessoal e Business",
+      "FeedScreen.tsx": "Feed principal com Stories e Marcas",
+      "VendorDashboard.tsx": "Painel de gestão para lojistas",
+      "HomeScreen.tsx": "Perfil do usuário com abas de Mercado e Posts",
+      "ResultScreen.tsx": "Visualização do look gerado por IA",
+      "BottomNavBar.tsx": "Navegação inferior dinâmica por tipo de conta",
+      "ImageViewModal.tsx": "Visualizador de posts com scroll vertical",
+      "SearchScreen.tsx": "Busca avançada de contas e produtos",
+      "LiveVoiceChat.tsx": "Assistente de voz via Gemini Live API"
+    }
+  },
+  "status": "Stable - Reverted to Profile Visitation Version"
+}
