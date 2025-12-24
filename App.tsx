@@ -100,9 +100,16 @@ const App: React.FC = () => {
         fetchRealBusinesses();
 
         if (!currentSession?.user) {
-            setProfile(null);
-            setBusinessProfile(null);
-            setCurrentScreen(Screen.Login);
+            // Se não houver login, exibe a escolha de conta antes de entrar no feed
+            setProfile({
+                user_id: 'guest',
+                username: 'visitante',
+                full_name: 'Visitante PUMP',
+                bio: 'Explorando o futuro da moda.',
+                avatar_url: null,
+                account_type: null
+            });
+            setCurrentScreen(Screen.AccountTypeSelection);
             setAuthLoading(false);
             return;
         }
@@ -133,15 +140,14 @@ const App: React.FC = () => {
             }
         } catch (err) {
             console.error('[PROFILE ERROR]', err);
-            toast.error("Houve um problema ao carregar seu perfil.");
-            setCurrentScreen(Screen.Login);
+            setCurrentScreen(Screen.AccountTypeSelection);
         } finally {
             setAuthLoading(false);
         }
     };
 
     const handleUpdateProfile = async (updates: { username?: string, bio?: string, name?: string }) => {
-        if (!session?.user) return;
+        if (!session?.user) return toast.error("Faça login para editar seu perfil.");
         setIsLoading(true);
         try {
             const { data, error } = await supabase
@@ -174,7 +180,24 @@ const App: React.FC = () => {
     };
 
     const handleSelectAccountType = async (type: 'personal' | 'business') => {
-        if (!session?.user) return;
+        // Se for visitante, apenas muda o estado local
+        if (!session?.user) {
+            setProfile(prev => prev ? { ...prev, account_type: type } : null);
+            if (type === 'business') {
+                setBusinessProfile({
+                    id: 'guest_business',
+                    business_name: 'Sua Loja (Demo)',
+                    business_category: 'fashion',
+                    description: 'Faça login para gerenciar produtos reais.',
+                    logo_url: ''
+                });
+                setCurrentScreen(Screen.VendorDashboard);
+            } else {
+                setCurrentScreen(Screen.Feed);
+            }
+            return;
+        }
+
         setIsLoading(true);
         try {
             const { data, error } = await supabase
@@ -248,7 +271,7 @@ const App: React.FC = () => {
     };
 
     const handleCreateFolder = async (title: string) => {
-        if (!session?.user) return;
+        if (!session?.user) return toast.error("Faça login para gerenciar sua loja.");
         setIsLoading(true);
         try {
             await supabase.from('folders').insert({ title, owner_id: session.user.id });
@@ -316,6 +339,8 @@ const App: React.FC = () => {
 
     const handlePublishLook = async (caption: string) => {
         if (!generatedImage || !profile) return;
+        if (profile.user_id === 'guest') return setCurrentScreen(Screen.Login); // Força login apenas para publicar
+
         setIsPublishing(true);
         try {
             const newPost: Post = {
@@ -386,7 +411,7 @@ const App: React.FC = () => {
             {isNotificationsOpen && <NotificationsPanel notifications={notifications} onClose={() => setIsNotificationsOpen(false)} onNotificationClick={() => {}} />}
             {isSettingsOpen && profile && <SettingsPanel profile={profile} theme={theme} onToggleTheme={() => setTheme(t => t === 'light' ? 'dark' : 'light')} onClose={() => setIsSettingsOpen(false)} onSignOut={handleSignOut} onNavigateToVerification={() => {}} />}
             {showCaptionModal && generatedImage && <CaptionModal image={generatedImage} onClose={() => setShowCaptionModal(false)} onPublish={handlePublishLook} isPublishing={isPublishing} />}
-            {profile && [Screen.Feed, Screen.Home, Screen.Cart, Screen.Search, Screen.VendorDashboard, Screen.VendorProducts, Screen.SubCategorySelection, Screen.ItemSelection].includes(currentScreen) && !viewedProfileId && (
+            {profile && [Screen.Feed, Screen.Home, Screen.Cart, Screen.Search, Screen.VendorDashboard, Screen.VendorProducts, Screen.SubCategorySelection, Screen.ItemSelection].includes(currentScreen) && (profile.account_type || currentScreen === Screen.AccountTypeSelection) && !viewedProfileId && (
                 <BottomNavBar activeScreen={currentScreen} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToPromotion={() => {}} onNavigateToProfile={() => { 
                         setViewedProfileId(null);
                         if (profile.account_type === 'business') setCurrentScreen(Screen.VendorDashboard);
