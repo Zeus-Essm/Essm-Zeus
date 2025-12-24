@@ -64,7 +64,10 @@ const RecommendationModal: React.FC<RecommendationModalProps> = ({ item, onClose
                 
                 <div className="flex flex-col w-full gap-3 mt-4">
                     <GradientButton 
-                        onClick={() => onStartTryOn(item)}
+                        onClick={() => {
+                            onStartTryOn(item);
+                            onClose(); // Fecha o modal após iniciar o provador
+                        }}
                         className="!py-5 !rounded-[1.5rem] !text-[11px] shadow-xl"
                     >
                         PROVAR AGORA
