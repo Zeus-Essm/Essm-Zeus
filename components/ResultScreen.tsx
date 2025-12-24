@@ -1,15 +1,20 @@
-
-
 import React from 'react';
 import type { Item } from '../types';
 import GradientButton from './GradientButton';
-import Header from './Header';
-import { ShoppingBagIcon, PlusIcon, UndoIcon, UploadIcon, DownloadIcon, VideoCameraIcon } from './IconComponents';
+import { 
+    ShoppingBagIcon, 
+    PlusIcon, 
+    UndoIcon, 
+    UploadIcon, 
+    DownloadIcon, 
+    VideoCameraIcon,
+    ArrowLeftIcon
+} from './IconComponents';
 
 interface ResultScreenProps {
   generatedImage: string;
-  items: Item[]; // A lista de itens vestidos
-  categoryItems: Item[]; // A lista de todos os itens na categoria atual
+  items: Item[];
+  categoryItems: Item[];
   onBuy: (items: Item[]) => void;
   onUndo: () => void;
   onStartPublishing: () => void;
@@ -19,99 +24,122 @@ interface ResultScreenProps {
   onGenerateVideo: () => void;
 }
 
+const ActionButton: React.FC<{ icon: React.ReactNode; label: string; onClick: () => void; highlight?: boolean }> = ({ icon, label, onClick, highlight }) => (
+    <button 
+        onClick={onClick}
+        className="flex flex-col items-center justify-center gap-1.5 flex-1 transition-all active:scale-90 group"
+    >
+        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${highlight ? 'bg-amber-500 text-white shadow-[0_8px_16px_rgba(245,158,11,0.2)]' : 'bg-zinc-50 text-zinc-400 group-hover:bg-zinc-100 group-hover:text-zinc-900'}`}>
+            {/* FIX: Cast icon to React.ReactElement<any> to avoid typing errors when cloning with custom props like strokeWidth and className. */}
+            {React.cloneElement(icon as React.ReactElement<any>, { className: "w-6 h-6", strokeWidth: 2.5 })}
+        </div>
+        <span className={`text-[9px] font-black uppercase tracking-widest ${highlight ? 'text-amber-600' : 'text-zinc-400'}`}>{label}</span>
+    </button>
+);
+
 const ResultScreen: React.FC<ResultScreenProps> = ({ 
     generatedImage, 
     items, 
-    categoryItems, 
     onBuy, 
     onUndo, 
     onStartPublishing, 
     onSaveImage,
-    onItemSelect,
     onAddMoreItems,
     onGenerateVideo
 }) => {
   const totalPrice = items.reduce((sum, item) => sum + item.price, 0);
   
   return (
-    <div className="w-full h-full flex flex-col text-[var(--text-primary)] animate-fadeIn bg-[var(--bg-main)]">
-      <Header title="Seu Look" />
-      <div className="flex-grow pt-16 flex flex-col items-center p-4 overflow-y-auto">
-        <div className="w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl shadow-black/30 mb-6 bg-[var(--bg-secondary)] border border-[var(--border-primary)] flex-shrink-0">
-            <img src={generatedImage} alt={`Você vestindo ${items[items.length - 1]?.name}`} className="w-full h-auto animate-imageAppear" />
+    <div className="w-full h-full flex flex-col bg-white text-zinc-900 animate-fadeIn font-sans overflow-hidden">
+      {/* Header Clean */}
+      <header className="px-4 pt-4 pb-2 flex items-center justify-between shrink-0 z-10 border-b border-zinc-50">
+        <div className="flex items-center gap-3">
+            <button onClick={onUndo} className="p-2 -ml-2 rounded-xl bg-zinc-50 text-zinc-400 active:scale-90 transition-all">
+                <ArrowLeftIcon className="w-5 h-5" />
+            </button>
+            <h1 className="text-lg font-black tracking-tight text-zinc-900 uppercase italic">
+                SEU LOOK
+            </h1>
+        </div>
+      </header>
+
+      <main className="flex-grow overflow-y-auto px-5 pt-6 pb-32">
+        {/* Imagem do Resultado Principal */}
+        <div className="relative w-full aspect-[3/4] rounded-[2.5rem] overflow-hidden shadow-2xl shadow-black/10 border border-zinc-100 bg-zinc-50 mb-8">
+            <img 
+                src={generatedImage} 
+                alt="Resultado da IA" 
+                className="w-full h-full object-cover animate-imageAppear" 
+            />
+            <div className="absolute top-6 left-6 px-4 py-2 bg-black/60 backdrop-blur-md rounded-2xl border border-white/20">
+                <span className="text-[10px] font-black text-white uppercase tracking-widest">PUMP AI VISION</span>
+            </div>
         </div>
         
-        <div className="w-full max-w-sm bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-xl p-4 mb-4">
-            <h2 className="text-xl font-bold mb-3 text-[var(--accent-primary)] opacity-90">Itens no seu look:</h2>
-            <div className="space-y-2">
+        {/* Lista de Itens Estilizada */}
+        <div className="bg-white rounded-[2rem] border border-zinc-50 p-6 shadow-sm mb-6">
+            <div className="flex justify-between items-end mb-6">
+                <div>
+                    <h2 className="text-xl font-black text-zinc-900 uppercase italic tracking-tighter leading-none">Itens no look</h2>
+                    <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-1">Sugerido para você</p>
+                </div>
+                <div className="text-right">
+                    <p className="text-[10px] font-black text-zinc-300 uppercase tracking-widest">Total do Look</p>
+                    <p className="text-xl font-black text-zinc-900 tracking-tighter">
+                        {totalPrice.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
+                    </p>
+                </div>
+            </div>
+
+            <div className="space-y-4">
                 {items.map((item, index) => (
-                    <div key={index} className="flex justify-between items-center text-sm">
-                        <span className="flex-1 pr-2">{item.name}</span>
-                        <span className="font-semibold text-[var(--text-tertiary)]">
+                    <div key={index} className="flex items-center gap-4 py-3 border-b border-zinc-50 last:border-0 group">
+                        <div className="w-12 h-14 bg-zinc-100 rounded-xl overflow-hidden shadow-sm">
+                            <img src={item.image} alt="" className="w-full h-full object-cover" />
+                        </div>
+                        <div className="flex-grow min-w-0">
+                            <p className="text-xs font-black text-zinc-800 uppercase italic truncate">{item.name}</p>
+                            <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{item.category}</p>
+                        </div>
+                        <p className="text-sm font-black text-zinc-900 tracking-tighter">
                             {item.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
-                        </span>
+                        </p>
                     </div>
                 ))}
             </div>
-            <div className="border-t border-[var(--border-primary)] my-3"></div>
-            <div className="flex justify-between items-center font-bold text-lg">
-                <span className="uppercase">TOTAL:</span>
-                <span className="text-[var(--accent-primary)] text-glow">
-                    {totalPrice.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
-                </span>
+        </div>
+      </main>
+
+      {/* Barra de Ações Flutuante (Estilo Moderno) */}
+      <footer className="fixed bottom-0 left-0 right-0 p-6 bg-white/80 backdrop-blur-xl border-t border-zinc-100 z-50">
+        <div className="max-w-md mx-auto space-y-6">
+            <GradientButton 
+                onClick={() => onBuy(items)} 
+                className="w-full !py-5 !rounded-3xl !text-[11px] shadow-2xl flex items-center justify-center gap-3 group"
+            >
+                <ShoppingBagIcon className="w-5 h-5 transition-transform group-active:scale-110" />
+                COMPRAR LOOK COMPLETO
+            </GradientButton>
+
+            <div className="flex justify-between items-center px-2">
+                <ActionButton icon={<UndoIcon />} label="Desfazer" onClick={onUndo} />
+                <ActionButton icon={<PlusIcon />} label="Adicionar" onClick={onAddMoreItems} highlight={true} />
+                <ActionButton icon={<VideoCameraIcon />} label="Vídeo" onClick={onGenerateVideo} />
+                <ActionButton icon={<UploadIcon />} label="Publicar" onClick={onStartPublishing} />
+                <ActionButton icon={<DownloadIcon />} label="Salvar" onClick={onSaveImage} />
             </div>
         </div>
+      </footer>
 
-      </div>
-      <div className="p-4 flex-shrink-0 space-y-2 bg-[var(--bg-main)] border-t border-[var(--border-primary)]">
-        <GradientButton onClick={() => onBuy(items)} className="w-full !py-3">
-            <div className="flex items-center justify-center gap-2">
-                 <ShoppingBagIcon className="w-5 h-5" />
-                Comprar Look
-            </div>
-        </GradientButton>
-        <div className="flex gap-1.5">
-             <button
-                onClick={onUndo}
-                className="flex-1 flex flex-col items-center justify-center text-[var(--text-primary)] font-semibold py-2 px-1 rounded-lg bg-[var(--bg-tertiary)] hover:brightness-95 transition-colors"
-                aria-label="Desfazer última peça"
-            >
-               <UndoIcon className="w-5 h-5 mb-0.5" />
-                <span className="text-[9px] tracking-wider uppercase">Desfazer</span>
-            </button>
-            <button
-                onClick={onAddMoreItems}
-                className="flex-1 flex flex-col items-center justify-center text-[var(--accent-primary)] font-semibold py-2 px-1 rounded-lg bg-[var(--bg-tertiary)] hover:brightness-95 transition-colors"
-                aria-label="Adicionar mais peças"
-            >
-               <PlusIcon className="w-5 h-5 mb-0.5" />
-                <span className="text-[9px] tracking-wider uppercase">Adicionar</span>
-            </button>
-            <button
-                onClick={onGenerateVideo}
-                className="flex-1 flex flex-col items-center justify-center text-[var(--text-primary)] font-semibold py-2 px-1 rounded-lg bg-[var(--bg-tertiary)] hover:brightness-95 transition-colors"
-                aria-label="Criar Vídeo do Look"
-            >
-                <VideoCameraIcon className="w-5 h-5 mb-0.5" />
-                <span className="text-[9px] tracking-wider uppercase">Vídeo</span>
-            </button>
-            <button
-                onClick={onStartPublishing}
-                className="flex-1 flex flex-col items-center justify-center text-[var(--text-primary)] font-semibold py-2 px-1 rounded-lg bg-[var(--bg-tertiary)] hover:brightness-95 transition-colors"
-                aria-label="Publicar no Feed"
-            >
-               <UploadIcon className="w-5 h-5 mb-0.5" />
-                <span className="text-[9px] tracking-wider uppercase">Publicar</span>
-            </button>
-            <button
-                onClick={onSaveImage}
-                className="flex-1 flex flex-col items-center justify-center text-[var(--text-primary)] font-semibold py-2 px-1 rounded-lg bg-[var(--bg-tertiary)] hover:brightness-95 transition-colors"
-            >
-               <DownloadIcon className="w-5 h-5 mb-0.5" />
-                <span className="text-[9px] tracking-wider uppercase">Salvar</span>
-            </button>
-         </div>
-      </div>
+      <style>{`
+        @keyframes imageAppear {
+            from { opacity: 0; transform: scale(1.05); filter: blur(10px); }
+            to { opacity: 1; transform: scale(1); filter: blur(0); }
+        }
+        .animate-imageAppear {
+            animation: imageAppear 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+      `}</style>
     </div>
   );
 };
