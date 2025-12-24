@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
 import { Screen, Category, Item, Post, Profile, BusinessProfile, Folder, Product, AppNotification, SubCategory } from './types';
-import { INITIAL_POSTS, MALE_CLOTHING_SUBCATEGORIES } from './constants';
+import { INITIAL_POSTS, MALE_CLOTHING_SUBCATEGORIES, CATEGORIES, ITEMS } from './constants';
 import { toast } from './utils/toast';
 import { generateTryOnImage } from './services/geminiService';
 
@@ -30,6 +30,24 @@ import LoadingIndicator from './components/LoadingIndicator';
 import ResultScreen from './components/ResultScreen';
 import ConfirmationScreen from './components/ConfirmationScreen';
 import CaptionModal from './components/CaptionModal';
+
+const GUEST_PERSONAL_PROFILE: Profile = {
+    user_id: 'guest_user',
+    username: 'convidado',
+    full_name: 'Usuário Convidado',
+    bio: 'Explorando o PUMP sem login.',
+    avatar_url: 'https://i.postimg.cc/XJf6gckX/Pump_STARTAP.png',
+    account_type: 'personal',
+};
+
+const GUEST_BUSINESS_PROFILE: Profile = {
+    user_id: 'guest_business',
+    username: 'loja_convidada',
+    full_name: 'Loja de Exemplo',
+    bio: 'Painel de vendedor (Modo Preview).',
+    avatar_url: 'https://i.postimg.cc/XJf6gckX/Pump_STARTAP.png',
+    account_type: 'business',
+};
 
 const App: React.FC = () => {
     const [session, setSession] = useState<Session | null>(null);
@@ -68,149 +86,45 @@ const App: React.FC = () => {
 
     const unreadCount = notifications.filter(n => !n.read).length;
 
-    // --- AUTH LOGIC ---
-
-    const ensureProfile = async (user: any): Promise<Profile> => {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('user_id', user.id)
-            .single();
-
-        if (data) return data;
-
-        const { data: created, error: insertError } = await supabase
-            .from('profiles')
-            .insert({
-                user_id: user.id,
-                username: user.email?.split('@')[0] ?? `user_${user.id.slice(0, 6)}`,
-                full_name: user.user_metadata?.full_name || null,
-                account_type: null
-            })
-            .select()
-            .single();
-
-        if (insertError) throw insertError;
-        return created;
-    };
-
-    const handleAuthState = async (currentSession: Session | null) => {
-        setAuthLoading(true);
-        setSession(currentSession);
-        fetchRealBusinesses();
-
-        if (!currentSession?.user) {
-            // Se não houver login, exibe a escolha de conta antes de entrar no feed
-            setProfile({
-                user_id: 'guest',
-                username: 'visitante',
-                full_name: 'Visitante PUMP',
-                bio: 'Explorando o futuro da moda.',
-                avatar_url: null,
-                account_type: null
-            });
-            setCurrentScreen(Screen.AccountTypeSelection);
-            setAuthLoading(false);
+    // --- LOGIC: UPDATE PROFILE ---
+    const handleUpdateProfile = async (updates: { name: string, bio: string, username: string }) => {
+        if (!session?.user) {
+            // Se for convidado, atualiza apenas localmente
+            setProfile(prev => prev ? {
+                ...prev,
+                full_name: updates.name,
+                bio: updates.bio,
+                username: updates.username
+            } : null);
+            
+            if (profile?.account_type === 'business') {
+                setBusinessProfile(prev => prev ? {
+                    ...prev,
+                    business_name: updates.name,
+                    description: updates.bio
+                } : null);
+            }
+            toast.success("Perfil atualizado (Preview)");
             return;
         }
 
-        try {
-            const prof = await ensureProfile(currentSession.user);
-            setProfile(prof);
-
-            if (prof.account_type === 'business') {
-                const [f, p] = await Promise.all([
-                    supabase.from('folders').select('*').eq('owner_id', prof.user_id),
-                    supabase.from('products').select('*').eq('owner_id', prof.user_id)
-                ]);
-                setFolders(f.data || []);
-                setProducts(p.data || []);
-                setBusinessProfile({
-                    id: prof.user_id,
-                    business_name: prof.full_name || prof.username,
-                    business_category: 'fashion',
-                    description: prof.bio || '',
-                    logo_url: prof.avatar_url || ''
-                });
-                setCurrentScreen(Screen.VendorDashboard);
-            } else if (prof.account_type === 'personal') {
-                setCurrentScreen(Screen.Feed);
-            } else {
-                setCurrentScreen(Screen.AccountTypeSelection);
-            }
-        } catch (err) {
-            console.error('[PROFILE ERROR]', err);
-            setCurrentScreen(Screen.AccountTypeSelection);
-        } finally {
-            setAuthLoading(false);
-        }
-    };
-
-    const handleUpdateProfile = async (updates: { username?: string, bio?: string, name?: string }) => {
-        if (!session?.user) return toast.error("Faça login para editar seu perfil.");
         setIsLoading(true);
         try {
             const { data, error } = await supabase
                 .from('profiles')
-                .update({ 
-                    username: updates.username, 
-                    bio: updates.bio, 
-                    full_name: updates.name 
+                .update({
+                    full_name: updates.name,
+                    bio: updates.bio,
+                    username: updates.username
                 })
                 .eq('user_id', session.user.id)
                 .select()
                 .single();
 
             if (error) throw error;
-            setProfile(data);
-
-            if (data.account_type === 'business') {
-                setBusinessProfile(prev => prev ? {
-                    ...prev,
-                    business_name: data.full_name || data.username,
-                    description: data.bio || ''
-                } : null);
-            }
-            toast.success("Perfil atualizado!");
-        } catch (err: any) {
-            toast.error("Erro ao atualizar perfil: " + err.message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleSelectAccountType = async (type: 'personal' | 'business') => {
-        // Se for visitante, apenas muda o estado local
-        if (!session?.user) {
-            setProfile(prev => prev ? { ...prev, account_type: type } : null);
-            if (type === 'business') {
-                setBusinessProfile({
-                    id: 'guest_business',
-                    business_name: 'Sua Loja (Demo)',
-                    business_category: 'fashion',
-                    description: 'Faça login para gerenciar produtos reais.',
-                    logo_url: ''
-                });
-                setCurrentScreen(Screen.VendorDashboard);
-            } else {
-                setCurrentScreen(Screen.Feed);
-            }
-            return;
-        }
-
-        setIsLoading(true);
-        try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .update({ account_type: type })
-                .eq('user_id', session.user.id)
-                .select()
-                .single();
-
-            if (error) throw error;
-            setProfile(data);
             
-            if (type === 'business') {
+            setProfile(data);
+            if (data.account_type === 'business') {
                 setBusinessProfile({
                     id: data.user_id,
                     business_name: data.full_name || data.username,
@@ -218,36 +132,89 @@ const App: React.FC = () => {
                     description: data.bio || '',
                     logo_url: data.avatar_url || ''
                 });
-                setCurrentScreen(Screen.VendorDashboard);
-            } else {
-                setCurrentScreen(Screen.Feed);
             }
+            toast.success("Perfil atualizado!");
         } catch (err: any) {
-            toast.error("Falha ao salvar tipo de conta no banco.");
+            toast.error("Erro ao atualizar: " + err.message);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const handleSignOut = async () => {
-        setIsLoading(true);
-        await supabase.auth.signOut();
-        setIsLoading(false);
+    // --- LOGIC: START VTO ---
+    const startTryOn = (item: Item) => {
+        setVtoItem(item);
+        if (!userImage) {
+            setCurrentScreen(Screen.ImageSourceSelection);
+        } else {
+            handleGenerateLook(userImage, item, vtoItems);
+        }
     };
 
-    useEffect(() => {
-        const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-            handleAuthState(session);
-        });
-        
-        supabase.auth.getSession().then(({ data }) => {
-            handleAuthState(data.session);
-        });
+    const handlePhotoObtained = (url: string) => {
+        setUserImage(url);
+        if (profile?.account_type === 'business') {
+            setCurrentScreen(Screen.VendorDashboard);
+        } else {
+            setCurrentScreen(Screen.Home);
+        }
+        toast.success("Foto pronta! Escolha um item para provar.");
+    };
 
-        return () => listener.subscription.unsubscribe();
-    }, []);
+    const handleGenerateLook = async (image: string, item: Item, existing: Item[]) => {
+        setCurrentScreen(Screen.Generating);
+        try {
+            const result = await generateTryOnImage(image, item, existing);
+            setGeneratedImage(result);
+            setVtoItems(prev => [...prev, item]);
+            setCurrentScreen(Screen.Result);
+        } catch (err: any) {
+            toast.error(err.message);
+            if (profile?.account_type === 'business') setCurrentScreen(Screen.VendorDashboard);
+            else setCurrentScreen(Screen.Home);
+        }
+    };
 
-    // --- CATALOG LOGIC ---
+    const handleSaveImage = () => {
+        if (!generatedImage) return;
+        const link = document.createElement('a');
+        link.href = generatedImage;
+        link.download = `PUMP_Look_${Date.now()}.jpg`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success("Imagem salva na galeria!");
+    };
+
+    const handlePublishLook = async (caption: string) => {
+        if (!generatedImage || !profile) return;
+        setIsPublishing(true);
+        try {
+            const newPost: Post = {
+                id: Math.random().toString(36).substr(2, 9),
+                user: {
+                    id: profile.user_id,
+                    full_name: profile.full_name || profile.username,
+                    avatar_url: profile.avatar_url
+                },
+                image: generatedImage,
+                items: vtoItems,
+                likes: 0,
+                isLiked: false,
+                comments: [],
+                commentCount: 0,
+                caption: caption
+            };
+            setPosts(prev => [newPost, ...prev]);
+            toast.success("Look publicado no perfil!");
+            setShowCaptionModal(false);
+            setCurrentScreen(Screen.Confirmation);
+        } catch (err) {
+            toast.error("Erro ao publicar.");
+        } finally {
+            setIsPublishing(false);
+        }
+    };
 
     const fetchRealBusinesses = async () => {
         try {
@@ -270,19 +237,77 @@ const App: React.FC = () => {
         }
     };
 
+    const fetchFolders = async (userId: string) => {
+        if (userId.startsWith('guest_')) return [];
+        const { data, error } = await supabase.from("folders").select("*").eq('owner_id', userId).order("created_at", { ascending: false });
+        return data || [];
+    };
+
+    const fetchAllProducts = async (userId: string) => {
+        if (userId.startsWith('guest_')) return [];
+        const { data, error } = await supabase.from("products").select("*").eq('owner_id', userId).order("created_at", { ascending: false });
+        return data || [];
+    };
+
+    const handleAuthState = async (currentSession: Session | null) => {
+        setAuthLoading(true);
+        setSession(currentSession);
+        fetchRealBusinesses();
+        if (currentSession?.user) {
+            const user = currentSession.user;
+            const { data: freshProfile } = await supabase.from('profiles').select('*').eq('user_id', user.id).single();
+            if (user.id) {
+                const [f, p] = await Promise.all([fetchFolders(user.id), fetchAllProducts(user.id)]);
+                setFolders(f);
+                setProducts(p);
+            }
+            setProfile(freshProfile);
+            if (freshProfile) {
+                if (freshProfile.account_type === 'personal') setCurrentScreen(Screen.Feed);
+                else if (freshProfile.account_type === 'business') {
+                    setBusinessProfile({ id: user.id, business_name: freshProfile.full_name || freshProfile.username, business_category: 'fashion', description: freshProfile.bio || '', logo_url: freshProfile.avatar_url || '' });
+                    setCurrentScreen(Screen.VendorDashboard);
+                } else setCurrentScreen(Screen.AccountTypeSelection);
+            }
+        } else {
+            setProfile(null);
+            setBusinessProfile(null);
+            setCurrentScreen(Screen.AccountTypeSelection);
+        }
+        setAuthLoading(false);
+    };
+
+    useEffect(() => {
+        const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => handleAuthState(session));
+        supabase.auth.getSession().then(({ data }) => handleAuthState(data.session));
+        return () => listener.subscription.unsubscribe();
+    }, []);
+
     const handleCreateFolder = async (title: string) => {
-        if (!session?.user) return toast.error("Faça login para gerenciar sua loja.");
+        if (!session?.user) {
+            const newFolder: Folder = { id: Math.random().toString(36).substr(2, 9), owner_id: profile?.user_id || 'guest', title: title, cover_image: null, item_count: 0, created_at: new Date().toISOString() };
+            setFolders(prev => [newFolder, ...prev]);
+            toast.success('Coleção criada ✅');
+            return;
+        }
         setIsLoading(true);
         try {
             await supabase.from('folders').insert({ title, owner_id: session.user.id });
-            const { data } = await supabase.from('folders').select('*').eq('owner_id', session.user.id);
-            setFolders(data || []);
-            toast.success('Coleção criada ✅');
+            const freshFolders = await fetchFolders(session.user.id);
+            setFolders(freshFolders);
+            toast.success('Coleção salva no banco ✅');
         } catch (err: any) { toast.error(err.message); } finally { setIsLoading(false); }
     };
 
     const handleAddProductToFolder = async (folderId: string | null, details: { title: string, description: string, price: number, file: Blob | null }) => {
-        if (!session?.user) return;
+        if (!session?.user) {
+            const imgUrl = details.file ? URL.createObjectURL(details.file) : null;
+            const newProd: Product = { id: Math.random().toString(36).substr(2, 9), owner_id: profile?.user_id || 'guest', folder_id: folderId, title: details.title, description: details.description, price: details.price, image_url: imgUrl, created_at: new Date().toISOString() };
+            setProducts(prev => [newProd, ...prev]);
+            if (folderId && imgUrl) setFolders(prev => prev.map(f => f.id === folderId ? { ...f, cover_image: imgUrl } : f));
+            toast.success("Produto adicionado (Preview)");
+            return newProd;
+        }
         setIsLoading(true);
         try {
             let image_url: string | null = null;
@@ -294,71 +319,11 @@ const App: React.FC = () => {
             }
             const { data: productData } = await supabase.from('products').insert({ owner_id: session.user.id, title: details.title, description: details.description, price: details.price, image_url, folder_id: folderId }).select().single();
             if (folderId && image_url) await supabase.from('folders').update({ cover_image: image_url }).eq('id', folderId);
-            
-            const [p, f] = await Promise.all([
-                supabase.from('products').select('*').eq('owner_id', session.user.id),
-                supabase.from('folders').select('*').eq('owner_id', session.user.id)
-            ]);
-            setProducts(p.data || []);
-            setFolders(f.data || []);
+            const [p, f] = await Promise.all([fetchAllProducts(session.user.id), fetchFolders(session.user.id)]);
+            setProducts(p);
+            setFolders(f);
             return productData;
         } catch (err: any) { toast.error(err.message); } finally { setIsLoading(false); }
-    };
-
-    // --- VTO LOGIC ---
-
-    const startTryOn = (item: Item) => {
-        setVtoItem(item);
-        if (!userImage) {
-            setCurrentScreen(Screen.ImageSourceSelection);
-        } else {
-            handleGenerateLook(userImage, item, vtoItems);
-        }
-    };
-
-    const handlePhotoObtained = (url: string) => {
-        setUserImage(url);
-        if (profile?.account_type === 'business') setCurrentScreen(Screen.VendorDashboard);
-        else setCurrentScreen(Screen.Home);
-        toast.success("Foto pronta! Escolha um item para provar.");
-    };
-
-    const handleGenerateLook = async (image: string, item: Item, existing: Item[]) => {
-        setCurrentScreen(Screen.Generating);
-        try {
-            const result = await generateTryOnImage(image, item, existing);
-            setGeneratedImage(result);
-            setVtoItems(prev => [...prev, item]);
-            setCurrentScreen(Screen.Result);
-        } catch (err: any) {
-            toast.error(err.message);
-            if (profile?.account_type === 'business') setCurrentScreen(Screen.VendorDashboard);
-            else setCurrentScreen(Screen.Home);
-        }
-    };
-
-    const handlePublishLook = async (caption: string) => {
-        if (!generatedImage || !profile) return;
-        if (profile.user_id === 'guest') return setCurrentScreen(Screen.Login); // Força login apenas para publicar
-
-        setIsPublishing(true);
-        try {
-            const newPost: Post = {
-                id: Math.random().toString(36).substr(2, 9),
-                user: { id: profile.user_id, full_name: profile.full_name || profile.username, avatar_url: profile.avatar_url },
-                image: generatedImage,
-                items: vtoItems,
-                likes: 0,
-                isLiked: false,
-                comments: [],
-                commentCount: 0,
-                caption: caption
-            };
-            setPosts(prev => [newPost, ...prev]);
-            toast.success("Look publicado!");
-            setShowCaptionModal(false);
-            setCurrentScreen(Screen.Confirmation);
-        } catch (err) { toast.error("Erro ao publicar."); } finally { setIsPublishing(false); }
     };
 
     const renderScreen = () => {
@@ -373,8 +338,10 @@ const App: React.FC = () => {
                     unreadNotificationCount={0} onOpenNotificationsPanel={() => setIsNotificationsOpen(true)} 
                     onOpenPromotionModal={() => {}} followersCount={0} followingCount={0} 
                     folders={isSelf ? folders : viewedFolders} products={isSelf ? products : viewedProducts} posts={posts} 
-                    onCreateFolder={handleCreateFolder} onCreateProductInFolder={handleAddProductToFolder}
-                    onMoveProductToFolder={async (pId, fId) => {}} onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={() => {}} 
+                    onCreateFolder={handleCreateFolder} onDeleteFolder={(id) => setFolders(f => f.filter(x => x.id !== id))}
+                    onCreateProductInFolder={handleAddProductToFolder} onDeleteProduct={(id) => setProducts(p => p.filter(x => x.id !== id))}
+                    onMoveProductToFolder={async (pId, fId) => { setProducts(prev => prev.map(p => p.id === pId ? {...p, folder_id: fId} : p)); toast.success("Item movido!"); }} 
+                    onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={() => {}} 
                     onNavigateToProducts={() => setCurrentScreen(Screen.VendorProducts)} 
                     onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} 
                     onAddComment={() => {}} onItemClick={startTryOn} onViewProfile={setViewedProfileId}
@@ -384,21 +351,28 @@ const App: React.FC = () => {
         }
 
         switch (currentScreen) {
-            case Screen.Login: return <LoginScreen />;
-            case Screen.AccountTypeSelection: return <AccountTypeSelectionScreen onSelect={handleSelectAccountType} />;
+            case Screen.AccountTypeSelection: return <AccountTypeSelectionScreen onSelect={(type) => { 
+                if (type === 'personal') { setProfile(GUEST_PERSONAL_PROFILE); setCurrentScreen(Screen.Feed); } 
+                else { setProfile(GUEST_BUSINESS_PROFILE); setBusinessProfile({ id: 'guest_business', business_name: 'Loja de Exemplo', business_category: 'fashion', description: 'Preview do painel.', logo_url: 'https://i.postimg.cc/XJf6gckX/Pump_STARTAP.png' }); setCurrentScreen(Screen.VendorDashboard); }
+            }} />;
             case Screen.VendorDashboard: return businessProfile && profile && <VendorDashboard businessProfile={businessProfile} profile={profile} onOpenMenu={() => setShowVendorMenu(true)} unreadNotificationCount={unreadCount} onOpenNotificationsPanel={() => setIsNotificationsOpen(true)} onOpenPromotionModal={() => {}} followersCount={0} followingCount={0} folders={folders} products={products} posts={posts} onCreateFolder={handleCreateFolder} onCreateProductInFolder={handleAddProductToFolder} onMoveProductToFolder={async () => {}} onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={() => {}} onNavigateToProducts={() => setCurrentScreen(Screen.VendorProducts)} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onAddComment={() => {}} onItemClick={startTryOn} onViewProfile={setViewedProfileId} />;
             case Screen.Feed: return profile && <FeedScreen posts={posts} stories={[]} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={startTryOn} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={(cat) => setViewedProfileId(cat.id)} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onAddComment={() => {}} onNavigateToAllHighlights={() => {}} onStartCreate={() => { setVtoItems([]); setUserImage(null); setGeneratedImage(null); setCurrentScreen(Screen.ImageSourceSelection); }} unreadNotificationCount={unreadCount} onNotificationsClick={() => setIsNotificationsOpen(true)} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
-            case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={null} realBusinesses={realBusinesses} onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={() => {}} onSelectCategory={(cat) => setViewedProfileId(cat.id)} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => {}} onStartTryOn={() => { setVtoItems([]); setUserImage(null); setGeneratedImage(null); setCurrentScreen(Screen.ImageSourceSelection); }} isCartAnimating={false} onBack={() => {}} posts={posts} onItemClick={startTryOn} onViewProfile={setViewedProfileId} onNavigateToSettings={() => setIsSettingsOpen(true)} onSignOut={handleSignOut} unreadNotificationCount={unreadCount} unreadMessagesCount={0} onOpenNotificationsPanel={() => setIsNotificationsOpen(true)} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onAddComment={() => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
+            case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={null} realBusinesses={realBusinesses} onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={() => {}} onSelectCategory={(cat) => setViewedProfileId(cat.id)} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => {}} onStartTryOn={() => { setVtoItems([]); setUserImage(null); setGeneratedImage(null); setCurrentScreen(Screen.ImageSourceSelection); }} isCartAnimating={false} onBack={() => {}} posts={posts} onItemClick={startTryOn} onViewProfile={setViewedProfileId} onNavigateToSettings={() => setIsSettingsOpen(true)} onSignOut={() => handleAuthState(null)} unreadNotificationCount={unreadCount} unreadMessagesCount={0} onOpenNotificationsPanel={() => setIsNotificationsOpen(true)} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onAddComment={() => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
             case Screen.Search: return <SearchScreen onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} posts={posts} items={[]} onViewProfile={setViewedProfileId} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onItemClick={startTryOn} onItemAction={startTryOn} onOpenSplitCamera={() => {}} onOpenComments={() => {}} onAddToCart={(i) => setCartItems(p => [...p, i])} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
             case Screen.Cart: return <CartScreen cartItems={cartItems} onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} onRemoveItem={(i) => setCartItems(prev => prev.filter((_, idx) => idx !== i))} onBuyItem={() => {}} onTryOnItem={startTryOn} onCheckout={() => { toast.success("Pedido finalizado!"); setCartItems([]); }} />;
             
-            // --- VTO FLOW ---
+            // --- VTO FLOW SCREENS ---
             case Screen.ImageSourceSelection: return <ImageSourceSelectionScreen onImageUpload={handlePhotoObtained} onUseCamera={() => setCurrentScreen(Screen.Camera)} onBack={() => setCurrentScreen(Screen.Feed)} />;
             case Screen.Camera: return <CameraScreen onPhotoTaken={handlePhotoObtained} onBack={() => setCurrentScreen(Screen.ImageSourceSelection)} />;
-            case Screen.SubCategorySelection: return <SubCategorySelectionScreen node={{ id: 'root', name: 'Explorar', image: '', subCategories: MALE_CLOTHING_SUBCATEGORIES }} onSelectSubCategory={(sub) => { setCurrentSubCategory(sub); setCurrentScreen(Screen.ItemSelection); }} onBack={() => generatedImage ? setCurrentScreen(Screen.Result) : setCurrentScreen(Screen.Feed)} />;
+            case Screen.SubCategorySelection: return profile && <SubCategorySelectionScreen node={{ id: 'root', name: 'Explorar', image: '', subCategories: MALE_CLOTHING_SUBCATEGORIES }} onSelectSubCategory={(sub) => { setCurrentSubCategory(sub); setCurrentScreen(Screen.ItemSelection); }} onBack={() => {
+                if (generatedImage) setCurrentScreen(Screen.Result);
+                else setCurrentScreen(Screen.Feed);
+            }} />;
             case Screen.ItemSelection: return userImage && currentSubCategory && <ItemSelectionScreen userImage={userImage} collectionId={currentSubCategory.id} collectionName={currentSubCategory.name} collectionType="fashion" onItemSelect={startTryOn} onOpenSplitCamera={() => {}} onBack={() => setCurrentScreen(Screen.SubCategorySelection)} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} onAddToCart={(i) => setCartItems(p => [...p, i])} />;
             case Screen.Generating: return userImage && <LoadingIndicator userImage={generatedImage || userImage} />;
-            case Screen.Result: return generatedImage && <ResultScreen generatedImage={generatedImage} items={vtoItems} categoryItems={[]} onBuy={() => { setCartItems(p => [...p, ...vtoItems]); setCurrentScreen(Screen.Cart); }} onUndo={() => { setVtoItems(v => v.slice(0, -1)); setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home); }} onStartPublishing={() => setShowCaptionModal(true)} onSaveImage={() => {}} onItemSelect={startTryOn} onAddMoreItems={() => setCurrentScreen(Screen.SubCategorySelection)} onGenerateVideo={() => {}} />;
+            case Screen.Result: return generatedImage && <ResultScreen generatedImage={generatedImage} items={vtoItems} categoryItems={[]} onBuy={() => { setCartItems(p => [...p, ...vtoItems]); setCurrentScreen(Screen.Cart); }} onUndo={() => { setVtoItems(v => v.slice(0, -1)); setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home); }} onStartPublishing={() => setShowCaptionModal(true)} onSaveImage={handleSaveImage} onItemSelect={startTryOn} onAddMoreItems={() => {
+                setCurrentScreen(Screen.SubCategorySelection);
+            }} onGenerateVideo={() => {}} />;
             case Screen.Confirmation: return <ConfirmationScreen message="Look finalizado com sucesso!" onHome={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home)} />;
             
             default: return <SplashScreen />;
@@ -409,9 +383,9 @@ const App: React.FC = () => {
         <div className="h-[100dvh] w-full bg-white overflow-hidden flex flex-col relative">
             <div className="flex-grow relative overflow-hidden">{renderScreen()}</div>
             {isNotificationsOpen && <NotificationsPanel notifications={notifications} onClose={() => setIsNotificationsOpen(false)} onNotificationClick={() => {}} />}
-            {isSettingsOpen && profile && <SettingsPanel profile={profile} theme={theme} onToggleTheme={() => setTheme(t => t === 'light' ? 'dark' : 'light')} onClose={() => setIsSettingsOpen(false)} onSignOut={handleSignOut} onNavigateToVerification={() => {}} />}
+            {isSettingsOpen && profile && <SettingsPanel profile={profile} theme={theme} onToggleTheme={() => setTheme(t => t === 'light' ? 'dark' : 'light')} onClose={() => setIsSettingsOpen(false)} onSignOut={() => handleAuthState(null)} onNavigateToVerification={() => {}} />}
             {showCaptionModal && generatedImage && <CaptionModal image={generatedImage} onClose={() => setShowCaptionModal(false)} onPublish={handlePublishLook} isPublishing={isPublishing} />}
-            {profile && [Screen.Feed, Screen.Home, Screen.Cart, Screen.Search, Screen.VendorDashboard, Screen.VendorProducts, Screen.SubCategorySelection, Screen.ItemSelection].includes(currentScreen) && (profile.account_type || currentScreen === Screen.AccountTypeSelection) && !viewedProfileId && (
+            {profile && [Screen.Feed, Screen.Home, Screen.Cart, Screen.Search, Screen.VendorDashboard, Screen.VendorProducts, Screen.SubCategorySelection, Screen.ItemSelection].includes(currentScreen) && !viewedProfileId && (
                 <BottomNavBar activeScreen={currentScreen} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToPromotion={() => {}} onNavigateToProfile={() => { 
                         setViewedProfileId(null);
                         if (profile.account_type === 'business') setCurrentScreen(Screen.VendorDashboard);
@@ -424,7 +398,7 @@ const App: React.FC = () => {
                     }} isCartAnimating={false} accountType={profile.account_type} onNavigateToVendorAnalytics={() => {}} />
             )}
             {isLoading && <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center"><div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div></div>}
-            {showVendorMenu && <VendorMenuModal onClose={() => setShowVendorMenu(false)} onNavigateToAnalytics={() => {}} onNavigateToProducts={() => { setCurrentScreen(Screen.VendorProducts); setShowVendorMenu(false); }} onNavigateToAffiliates={() => {}} onNavigateToCollaborations={() => {}} onSignOut={handleSignOut} />}
+            {showVendorMenu && <VendorMenuModal onClose={() => setShowVendorMenu(false)} onNavigateToAnalytics={() => {}} onNavigateToProducts={() => { setCurrentScreen(Screen.VendorProducts); setShowVendorMenu(false); }} onNavigateToAffiliates={() => {}} onNavigateToCollaborations={() => {}} onSignOut={() => handleAuthState(null)} />}
             {recommendationItem && <RecommendationModal item={recommendationItem} onClose={() => setRecommendationItem(null)} onAddToCart={i => setCartItems(p => [...p, i])} onStartTryOn={startTryOn} />}
         </div>
     );

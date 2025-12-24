@@ -26,7 +26,7 @@ export const FEMALE_CLOTHING_SUBCATEGORIES = [
     { id: 'acessorios', name: 'Acessórios', image: 'https://i.postimg.cc/jjg7FSNR/ICONS5.jpg' },
 ];
 
-// Lojas Reais do Mercado (Baseado na imagem)
+// Lojas Reais do Mercado
 export const CATEGORIES: Category[] = [
     {
         id: 'lv',
@@ -47,27 +47,11 @@ export const CATEGORIES: Category[] = [
         isAd: true
     },
     {
-        id: 'noivas',
-        name: 'NOIVAS',
-        image: 'https://i.postimg.cc/vTfR0Rxy/wedding-dress.jpg',
-        type: 'fashion',
-        subCategories: [],
-        isAd: true
-    },
-    {
         id: 'adidas',
         name: 'ADIDAS',
         image: 'https://i.postimg.cc/LXmdq4H2/D.jpg',
         type: 'fashion',
         subCategories: MALE_CLOTHING_SUBCATEGORIES,
-        isAd: true
-    },
-    {
-        id: 'lilas',
-        name: 'LILÁS',
-        image: 'https://i.postimg.cc/85zX6F8F/lilas-brand.jpg',
-        type: 'fashion',
-        subCategories: [],
         isAd: true
     }
 ];

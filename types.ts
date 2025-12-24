@@ -1,4 +1,3 @@
-
 export type MarketplaceType =
   | 'fashion'
   | 'restaurant'

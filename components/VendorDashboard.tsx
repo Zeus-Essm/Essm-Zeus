@@ -36,7 +36,7 @@ interface VendorDashboardProps {
   onCreateProductInFolder: (folderId: string | null, details: { title: string, description: string, price: number, file: Blob | null }) => Promise<any>;
   onDeleteProduct?: (productId: string) => void;
   onMoveProductToFolder: (productId: string, folderId: string | null) => Promise<void>;
-  onUpdateProfile: (updates: { username?: string, bio?: string, name?: string }) => void;
+  onUpdateProfile: (updates: { name: string, bio: string, username: string }) => void;
   onUpdateProfileImage: (dataUrl: string) => void;
   onNavigateToProducts: () => void;
   onLikePost: (postId: string) => void;
@@ -105,7 +105,6 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     const [isAddingItem, setIsAddingItem] = useState(false);
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
     const [isEditingProfile, setIsEditingProfile] = useState(false);
-    const [movingProduct, setMovingProduct] = useState<Product | null>(null);
     const [viewingPostIndex, setViewingPostIndex] = useState<number | null>(null);
     const [commentingPost, setCommentingPost] = useState<Post | null>(null);
     
@@ -114,11 +113,9 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     const [newItemDesc, setNewItemDesc] = useState('');
     const [newItemFile, setNewItemFile] = useState<Blob | null>(null);
     const [newItemPreview, setNewItemPreview] = useState<string | null>(null);
-    const [isAiProcessing, setIsAiProcessing] = useState(false);
     const [newFolderTitle, setNewFolderTitle] = useState('');
 
     const itemFileInputRef = useRef<HTMLInputElement>(null);
-    const logoInputRef = useRef<HTMLInputElement>(null);
 
     const currentFolder = folders.find(f => f.id === selectedFolderId);
     const userPosts = posts.filter(p => p.user.id === profile.user_id);
@@ -220,7 +217,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                 <div className="px-5 pt-4">
                     <div className="flex items-center gap-4 mb-4">
                         <div className="relative shrink-0">
-                            <div className={`w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 to-amber-600 shadow-sm ${!isVisitor ? 'cursor-pointer' : ''}`}>
+                            <div className={`w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 to-amber-600 shadow-sm`}>
                                 <div className="w-full h-full rounded-full bg-white p-[2px] overflow-hidden">
                                     <div className="w-full h-full rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center">
                                         {profile.avatar_url ? (
@@ -234,12 +231,14 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                         </div>
                         <div className="flex-grow min-w-0">
                             <div className="flex items-center justify-between">
-                                <h2 className="font-bold text-md text-zinc-900 truncate uppercase tracking-tighter italic leading-none">
-                                    {profile.full_name || profile.username}
-                                </h2>
+                                <h2 className="font-bold text-md text-zinc-900 truncate uppercase tracking-tighter italic leading-none">{profile.full_name || profile.username}</h2>
                                 {!isVisitor && (
-                                    <button onClick={() => setIsEditingProfile(true)} className="p-1 active:scale-90 transition-transform">
-                                        <PencilIcon className="w-4 h-4 text-zinc-400" />
+                                    <button 
+                                        onClick={() => setIsEditingProfile(true)}
+                                        className="p-2 -mt-1 bg-zinc-50 rounded-xl text-zinc-400 active:scale-90 transition-all hover:bg-zinc-100 hover:text-zinc-900 shadow-sm border border-zinc-100/50"
+                                        aria-label="Editar perfil"
+                                    >
+                                        <PencilIcon className="w-4 h-4" />
                                     </button>
                                 )}
                             </div>
@@ -297,7 +296,6 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                             isVisitor={isVisitor}
                                         />
                                     ))}
-                                    {/* Vitrine Geral - Apenas Itens Sem Pasta */}
                                     {products.filter(p => !p.folder_id).map(product => (
                                         <div key={product.id} className="relative aspect-[3/4] rounded-[1.8rem] overflow-hidden shadow-md border border-zinc-100 group cursor-pointer" onClick={() => onItemClick(mapProductToItem(product))}>
                                             <img src={product.image_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg'} className="w-full h-full object-cover" />
@@ -328,6 +326,17 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                 </div>
             </main>
 
+            {isEditingProfile && (
+                <BioEditModal 
+                  profile={profile} 
+                  onClose={() => setIsEditingProfile(false)} 
+                  onSave={(updates) => {
+                      onUpdateProfile(updates);
+                      setIsEditingProfile(false);
+                  }} 
+                />
+            )}
+
             {isCreatingFolder && (
                 <div className="fixed inset-0 z-[200] bg-black/70 backdrop-blur-md flex items-center justify-center p-6 animate-fadeIn" onClick={() => setIsCreatingFolder(false)}>
                     <div className="w-full max-sm bg-white rounded-[2.5rem] p-10 flex flex-col gap-8 animate-modalZoomIn shadow-2xl" onClick={e => e.stopPropagation()}>
@@ -356,23 +365,12 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                 {newItemPreview ? <img src={newItemPreview} className="w-full h-full object-cover" /> : <CameraIcon className="w-12 h-12 text-zinc-200" />}
                                 <input type="file" ref={itemFileInputRef} accept="image/*" onChange={handleFileChange} className="hidden" />
                             </div>
-                            <input type="text" placeholder="Designação" value={newItemTitle} onChange={e => setNewItemTitle(e.target.value)} className="w-full p-5 bg-zinc-50 rounded-[1.5rem] border border-zinc-100 font-bold text-sm text-zinc-900 shadow-sm" />
-                            <input type="number" placeholder="Preço (AOA)" value={newItemPrice} onChange={e => setNewItemPrice(e.target.value)} className="w-full p-5 bg-zinc-50 rounded-[1.5rem] border border-zinc-100 font-bold text-sm text-zinc-900 shadow-sm" />
+                            <input type="text" placeholder="Designação" value={newItemTitle} onChange={e => setNewItemTitle(e.target.value)} className="w-full p-4 bg-zinc-50 rounded-[1.5rem] border border-zinc-100 font-bold text-sm text-zinc-900 shadow-sm" />
+                            <input type="number" placeholder="Preço (AOA)" value={newItemPrice} onChange={e => setNewItemPrice(e.target.value)} className="w-full p-4 bg-zinc-50 rounded-[1.5rem] border border-zinc-100 font-bold text-sm text-zinc-900 shadow-sm" />
                         </div>
                         <GradientButton onClick={() => handleSaveItem(false)} disabled={!newItemTitle}>CONCLUIR CADASTRO</GradientButton>
                     </div>
                 </div>
-            )}
-
-            {isEditingProfile && (
-                <BioEditModal 
-                    profile={profile}
-                    onClose={() => setIsEditingProfile(false)} 
-                    onSave={(updates) => {
-                        onUpdateProfile(updates);
-                        setIsEditingProfile(false);
-                    }} 
-                />
             )}
 
             {viewingPostIndex !== null && (
