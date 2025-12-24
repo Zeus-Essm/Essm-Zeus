@@ -1,3 +1,5 @@
+// src/types.ts
+
 export type MarketplaceType =
   | 'fashion'
   | 'restaurant'
@@ -6,9 +8,7 @@ export type MarketplaceType =
   | 'technology'
   | 'decoration';
 
-/* ======================
-   USER / PROFILE (Supabase Schema)
-====================== */
+// === SUPABASE TYPES (Alinhado com o JSON do Banco de Dados) ===
 
 export interface User {
   id: string;
@@ -17,27 +17,25 @@ export interface User {
 }
 
 export interface Profile {
-  user_id: string;
-  username: string;
+  user_id: string;        // PK alinhada com auth.users
+  username: string | null;
   full_name: string | null;
   bio: string | null;
   avatar_url: string | null;
   account_type: 'personal' | 'business' | null;
   verification_status?: 'unverified' | 'pending' | 'verified';
   reward_points?: number;
+  email?: string;
 }
-
-/* ======================
-   CATALOG / VENDOR (Supabase Schema)
-====================== */
 
 export interface Folder {
   id: string;
   owner_id: string;
   title: string;
   cover_image: string | null;
-  item_count: number;
   created_at: string;
+  // Item count é calculado no front ou via query, não é coluna direta
+  item_count?: number;
 }
 
 export interface Product {
@@ -48,44 +46,60 @@ export interface Product {
   description: string | null;
   price: number;
   image_url: string | null;
+  category: string;
+  is_try_on: boolean; // Atenção: snake_case (banco de dados)
   created_at: string;
 }
 
-export interface ShowcaseItem {
+export interface Post {
   id: string;
-  owner_id: string;
-  title: string;
+  user_id: string;
   image_url: string;
-  created_at?: string;
+  video_url?: string;
+  caption?: string;
+  likes_count: number;
+  is_sponsored: boolean;
+  created_at: string;
+  
+  // Dados unidos (Joins)
+  profiles?: Profile; 
+  
+  // === UI PROPERTIES (Added to fix component errors) ===
+  // Many components expect these properties based on common social UI patterns
+  user: User;
+  image: string;
+  video?: string;
+  likes: number;
+  isSponsored: boolean;
+
+  // Estados de UI
+  isLiked?: boolean;
+  comments: Comment[];
+  commentCount: number;
+  items: Item[]; // Produtos marcados no post
 }
 
-/* ======================
-   FEED / TRY-ON (UI Model)
-====================== */
+// === UI TYPES (Interfaces visuais) ===
 
 export interface Item {
+  // Adaptador para usar Produtos na interface de Try-On
   id: string;
   name: string;
   description: string;
   category: string;
   image: string;
   price: number;
-
-  // opcionais (uso em feed / try-on)
-  isTryOn?: boolean;
-  beautyType?: 'lipstick' | 'wig' | 'eyeshadow';
-  gender?: 'male' | 'female' | 'kid' | 'unisex';
-
-  // ligação com vendedor
-  vendorSubCategory?: string;
-  recommendationVideo?: string;
+  
+  isTryOn?: boolean; // UI usa camelCase
   folder_id?: string | null;
   owner_id?: string;
+  
+  // Outros campos de UI
+  vendorSubCategory?: string;
+  recommendationVideo?: string;
+  beautyType?: 'lipstick' | 'wig' | 'eyeshadow';
+  gender?: 'male' | 'female' | 'kid' | 'unisex';
 }
-
-/* ======================
-   SOCIAL
-====================== */
 
 export interface Comment {
   id: string;
@@ -94,32 +108,15 @@ export interface Comment {
   timestamp: string;
 }
 
-export interface Post {
-  id: string;
-  user: User;
-  image: string;
-  video?: string;
-  items: Item[];
-  likes: number;
-  isLiked: boolean;
-  comments: Comment[];
-  commentCount: number;
-  isSponsored?: boolean;
-  caption?: string;
-  layout?: 'product-overlay';
-  overlayPosition?: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
-}
-
+// Added missing Story type used in FeedScreen
 export interface Story {
   id: string;
-  user: { full_name: string | null; avatar_url: string | null };
-  backgroundImage: string;
+  user: User;
+  image_url: string;
+  created_at: string;
 }
 
-/* ======================
-   COMMUNICATION
-====================== */
-
+// Added missing Message type used in ChatScreen
 export interface Message {
   id: string;
   text: string;
@@ -127,28 +124,45 @@ export interface Message {
   timestamp: string;
 }
 
+// Added missing Conversation type used in ChatListScreen and ChatScreen
 export interface Conversation {
   id: string;
   participant: User;
-  lastMessage: Message;
+  lastMessage: {
+    text: string;
+    timestamp: string;
+  };
   unreadCount: number;
 }
 
-/* ======================
-   UI NAVIGATION
-====================== */
+// Added missing CollaborationPost type used in VendorCollaborationsScreen
+export interface CollaborationPost {
+  id: string;
+}
+
+// Added missing SavedLook type used in MyLooksScreen
+export interface SavedLook {
+  id: string;
+  image: string;
+  items: Item[];
+}
+
+// Added missing InfluencerAffiliationRequest type used in VendorAffiliatesScreen
+export interface InfluencerAffiliationRequest {
+  id: string;
+}
 
 export enum Screen {
   Splash,
-  Login,
+  Login,                 // Adicionado
   AccountTypeSelection,
-  BusinessOnboarding,
   VendorDashboard,
   VendorAnalytics,
   VendorProducts,
-  VendorAffiliates,
-  VendorCollaborations,
   Home,
+  Feed,
+  Cart,
+  Search,
   Settings,
   ImageSourceSelection,
   Camera,
@@ -157,13 +171,14 @@ export enum Screen {
   Generating,
   Result,
   Confirmation,
-  Feed,
+  // Telas extras do seu código original
+  BusinessOnboarding,
+  VendorAffiliates,
+  VendorCollaborations,
   MyLooks,
-  Cart,
   Rewards,
   ChatList,
   Chat,
-  Search,
   AllHighlights,
   VerificationIntro,
   IdUpload,
@@ -172,12 +187,6 @@ export enum Screen {
   SplitCamera,
   VideoEdit,
   DecorationPlacement
-}
-
-export interface SavedLook {
-  id: string;
-  image: string;
-  items: Item[];
 }
 
 export interface BusinessProfile {
@@ -194,31 +203,6 @@ export interface AppNotification {
   read: boolean;
   createdAt: Date;
   relatedCategoryId?: string;
-}
-
-export interface InfluencerAffiliationRequest {
-  id: string;
-  influencer: {
-    id: string;
-    name: string;
-    avatar: string;
-    followers: number;
-  };
-  status: 'pending' | 'approved' | 'rejected';
-  requestedAt: string;
-}
-
-export interface CollaborationPost {
-  id: string;
-  influencer: {
-    id: string;
-    name: string;
-    avatar: string;
-  };
-  businessId: string;
-  postId: string;
-  status: 'pending' | 'approved' | 'rejected';
-  submittedAt: string;
 }
 
 export interface SubCategory {

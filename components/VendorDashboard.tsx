@@ -274,6 +274,14 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                                     <p className="text-[11px] font-black text-white uppercase italic">{product.title}</p>
                                                     <p className="text-[10px] font-black text-amber-400 mt-1">{product.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
                                                 </div>
+                                                {!isVisitor && (
+                                                    <button 
+                                                        onClick={(e) => { e.stopPropagation(); onDeleteProduct?.(product.id); }}
+                                                        className="absolute top-2 right-2 p-2 bg-black/40 rounded-xl text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                                    >
+                                                        <TrashIcon className="w-4 h-4" />
+                                                    </button>
+                                                )}
                                             </div>
                                         ))}
                                         {!isVisitor && (
@@ -303,6 +311,14 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                                                 <p className="text-[11px] font-black text-white uppercase italic">{product.title}</p>
                                                 <p className="text-[10px] font-black text-amber-400 mt-1">{product.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}</p>
                                             </div>
+                                            {!isVisitor && (
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); onDeleteProduct?.(product.id); }}
+                                                    className="absolute top-2 right-2 p-2 bg-black/40 rounded-xl text-white opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                                                >
+                                                    <TrashIcon className="w-4 h-4" />
+                                                </button>
+                                            )}
                                         </div>
                                     ))}
                                     {!isVisitor && (

@@ -1,6 +1,5 @@
 
 import React from 'react';
-import Header from './Header';
 import { ShoppingBagIcon, EyeIcon, UsersIcon, StarIcon } from './IconComponents';
 
 interface VendorAnalyticsScreenProps {
