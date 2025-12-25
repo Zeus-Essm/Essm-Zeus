@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
@@ -72,6 +73,7 @@ const App: React.FC = () => {
     const [viewedProducts, setViewedProducts] = useState<Product[]>([]);
 
     // --- UI AUX ---
+    const [activeVendorFolderId, setActiveVendorFolderId] = useState<string | null>(null);
     const [posts, setPosts] = useState<Post[]>(INITIAL_POSTS);
     const [cartItems, setCartItems] = useState<Item[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -88,7 +90,6 @@ const App: React.FC = () => {
 
     const unreadCount = notifications.filter(n => !n.read).length;
 
-    // --- LOGIC: UPDATE PROFILE ---
     const handleUpdateProfile = async (updates: { name: string, bio: string, username: string }) => {
         if (!session?.user) {
             setProfile(prev => prev ? {
@@ -142,7 +143,6 @@ const App: React.FC = () => {
         }
     };
 
-    // --- LOGIC: CATALOG MANAGEMENT ---
     const handleDeleteFolder = async (folderId: string) => {
         if (!confirm("Deseja realmente excluir esta coleção? Todos os produtos nela serão movidos para a vitrine geral.")) return;
         
@@ -192,7 +192,6 @@ const App: React.FC = () => {
         }
     };
 
-    // --- LOGIC: START VTO ---
     const startTryOn = (item: Item) => {
         setVtoItem(item);
         if (!userImage) {
@@ -361,8 +360,9 @@ const App: React.FC = () => {
             const imgUrl = details.file ? URL.createObjectURL(details.file) : null;
             const newProd: Product = { id: Math.random().toString(36).substr(2, 9), owner_id: profile?.user_id || 'guest', folder_id: folderId, title: details.title, description: details.description, price: details.price, image_url: imgUrl, created_at: new Date().toISOString() };
             setProducts(prev => [newProd, ...prev]);
+            // Torna capa da coleção imediatamente (Visitante)
             if (folderId && imgUrl) setFolders(prev => prev.map(f => f.id === folderId ? { ...f, cover_image: imgUrl } : f));
-            toast.success("Produto adicionado (Preview)");
+            toast.success("Produto adicionado e capa da coleção atualizada!");
             return newProd;
         }
         setIsLoading(true);
@@ -375,12 +375,21 @@ const App: React.FC = () => {
                 image_url = data.publicUrl;
             }
             const { data: productData } = await supabase.from('products').insert({ owner_id: session.user.id, title: details.title, description: details.description, price: details.price, image_url, folder_id: folderId }).select().single();
-            if (folderId && image_url) await supabase.from('folders').update({ cover_image: image_url }).eq('id', folderId);
+            // Torna capa da coleção imediatamente (Supabase)
+            if (folderId && image_url) {
+                await supabase.from('folders').update({ cover_image: image_url }).eq('id', folderId);
+            }
             const [p, f] = await Promise.all([fetchAllProducts(session.user.id), fetchFolders(session.user.id)]);
             setProducts(p);
             setFolders(f);
+            toast.success("Item criado e definido como capa da coleção!");
             return productData;
         } catch (err: any) { toast.error(err.message); } finally { setIsLoading(false); }
+    };
+
+    const handleNavigateToProducts = (folderId: string | null = null) => {
+        setActiveVendorFolderId(folderId);
+        setCurrentScreen(Screen.VendorProducts);
     };
 
     const renderScreen = () => {
@@ -399,7 +408,7 @@ const App: React.FC = () => {
                     onCreateProductInFolder={handleAddProductToFolder} onDeleteProduct={handleDeleteProduct}
                     onMoveProductToFolder={async (pId, fId) => { setProducts(prev => prev.map(p => p.id === pId ? {...p, folder_id: fId} : p)); toast.success("Item movido!"); }} 
                     onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={() => {}} 
-                    onNavigateToProducts={() => setCurrentScreen(Screen.VendorProducts)} 
+                    onNavigateToProducts={handleNavigateToProducts} 
                     onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} 
                     onAddComment={() => {}} onItemClick={startTryOn} onViewProfile={setViewedProfileId}
                     isVisitor={!isSelf} onBack={() => setViewedProfileId(null)}
@@ -412,9 +421,9 @@ const App: React.FC = () => {
                 if (type === 'personal') { setProfile(GUEST_PERSONAL_PROFILE); setCurrentScreen(Screen.Feed); } 
                 else { setProfile(GUEST_BUSINESS_PROFILE); setBusinessProfile({ id: 'guest_business', business_name: 'Loja de Exemplo', business_category: 'fashion', description: 'Preview do painel.', logo_url: 'https://i.postimg.cc/XJf6gckX/Pump_STARTAP.png' }); setCurrentScreen(Screen.VendorDashboard); }
             }} />;
-            case Screen.VendorDashboard: return businessProfile && profile && <VendorDashboard businessProfile={businessProfile} profile={profile} onOpenMenu={() => setShowVendorMenu(true)} unreadNotificationCount={unreadCount} onOpenNotificationsPanel={() => setIsNotificationsOpen(true)} onOpenPromotionModal={() => {}} followersCount={0} followingCount={0} folders={folders} products={products} posts={posts} onCreateFolder={handleCreateFolder} onDeleteFolder={handleDeleteFolder} onCreateProductInFolder={handleAddProductToFolder} onDeleteProduct={handleDeleteProduct} onMoveProductToFolder={async () => {}} onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={() => {}} onNavigateToProducts={() => setCurrentScreen(Screen.VendorProducts)} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onAddComment={() => {}} onItemClick={startTryOn} onViewProfile={setViewedProfileId} />;
+            case Screen.VendorDashboard: return businessProfile && profile && <VendorDashboard businessProfile={businessProfile} profile={profile} onOpenMenu={() => setShowVendorMenu(true)} unreadNotificationCount={unreadCount} onOpenNotificationsPanel={() => setIsNotificationsOpen(true)} onOpenPromotionModal={() => {}} followersCount={0} followingCount={0} folders={folders} products={products} posts={posts} onCreateFolder={handleCreateFolder} onDeleteFolder={handleDeleteFolder} onCreateProductInFolder={handleAddProductToFolder} onDeleteProduct={handleDeleteProduct} onMoveProductToFolder={async () => {}} onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={() => {}} onNavigateToProducts={handleNavigateToProducts} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onAddComment={() => {}} onItemClick={startTryOn} onViewProfile={setViewedProfileId} />;
             case Screen.VendorAnalytics: return <VendorAnalyticsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} />;
-            case Screen.VendorProducts: return businessProfile && <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile} products={products} folders={folders} onCreateProduct={handleAddProductToFolder} onDeleteProduct={handleDeleteProduct} />;
+            case Screen.VendorProducts: return businessProfile && <VendorProductsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} businessProfile={businessProfile} products={products} folders={folders} onCreateProduct={handleAddProductToFolder} onDeleteProduct={handleDeleteProduct} initialFolderId={activeVendorFolderId} />;
             case Screen.Feed: return profile && <FeedScreen posts={posts} stories={[]} profile={profile} businessProfile={businessProfile} isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={startTryOn} onAddToCartMultiple={it => it.forEach(i => setCartItems(p => [...p, i]))} onBuyMultiple={it => { it.forEach(i => setCartItems(p => [...p, i])); setCurrentScreen(Screen.Cart); }} onViewProfile={setViewedProfileId} onSelectCategory={(cat) => setViewedProfileId(cat.id)} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onAddComment={() => {}} onNavigateToAllHighlights={() => {}} onStartCreate={() => { setVtoItems([]); setUserImage(null); setGeneratedImage(null); setCurrentScreen(Screen.ImageSourceSelection); }} unreadNotificationCount={unreadCount} onNotificationsClick={() => setIsNotificationsOpen(true)} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
             case Screen.Home: return profile && <HomeScreen loggedInProfile={profile} viewedProfileId={null} realBusinesses={realBusinesses} onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={() => {}} onSelectCategory={(cat) => setViewedProfileId(cat.id)} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToChat={() => {}} onNavigateToRewards={() => {}} onStartTryOn={() => { setVtoItems([]); setUserImage(null); setGeneratedImage(null); setCurrentScreen(Screen.ImageSourceSelection); }} isCartAnimating={false} onBack={() => {}} posts={posts} onItemClick={startTryOn} onViewProfile={setViewedProfileId} onNavigateToSettings={() => setIsSettingsOpen(true)} onSignOut={handleSignOut} unreadNotificationCount={unreadCount} unreadMessagesCount={0} onOpenNotificationsPanel={() => setIsNotificationsOpen(true)} isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onAddComment={() => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} />;
             case Screen.Search: return <SearchScreen onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} posts={posts} items={[]} onViewProfile={setViewedProfileId} onLikePost={(id) => setPosts(prev => prev.map(p => p.id === id ? {...p, isLiked: !p.isLiked} : p))} onItemClick={startTryOn} onItemAction={startTryOn} onOpenSplitCamera={() => {}} onOpenComments={() => {}} onAddToCart={(i) => setCartItems(p => [...p, i])} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;

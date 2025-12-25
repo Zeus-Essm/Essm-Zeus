@@ -29,7 +29,7 @@ interface VendorDashboardProps {
   onMoveProductToFolder: (productId: string, folderId: string | null) => Promise<void>;
   onUpdateProfile: (updates: { name: string, bio: string, username: string }) => void;
   onUpdateProfileImage: (dataUrl: string) => void;
-  onNavigateToProducts: () => void;
+  onNavigateToProducts: (folderId: string | null) => void;
   onLikePost: (postId: string) => void;
   onAddComment: (postId: string, text: string) => void;
   onItemClick: (item: Item) => void;
@@ -132,7 +132,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                         <div className="animate-fadeIn">
                             <div className="grid grid-cols-2 gap-4">
                                 {folders.map(folder => (
-                                    <div key={folder.id} className="relative h-56 rounded-2xl overflow-hidden group shadow-sm active:scale-[0.98] transition-all border border-zinc-100 cursor-pointer" onClick={onNavigateToProducts}>
+                                    <div key={folder.id} className="relative h-56 rounded-2xl overflow-hidden group shadow-sm active:scale-[0.98] transition-all border border-zinc-100 cursor-pointer" onClick={() => onNavigateToProducts(folder.id)}>
                                         {!isVisitor && (
                                             <button 
                                                 onClick={(e) => { e.stopPropagation(); onDeleteFolder(folder.id); }}
