@@ -1,264 +1,215 @@
 
 import React, { useState, useRef } from 'react';
-import Header from './Header';
 import type { BusinessProfile, Product, Folder } from '../types';
-import { PlusIcon, PencilIcon, EyeIcon, XCircleIcon, ShoppingBagIcon, CameraIcon } from './IconComponents';
-import GradientButton from './GradientButton';
-import { toast } from '../utils/toast';
-import { removeImageBackground, generateProductImage } from '../services/geminiService';
-
-const SparklesIconUI = () => (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.25 15L17.5 17.625l-.75-2.625a2.25 2.25 0 00-1.545-1.545L12.583 12.688l2.625-.75a2.25 2.25 0 001.545-1.545l.75-2.625.75 2.625a2.25 2.25 0 001.545 1.545l2.625.75-2.625.75a2.25 2.25 0 00-1.545 1.545L18.25 15z" />
-    </svg>
-);
+import { ArrowLeftIcon, PlusIcon, TrashIcon, CameraIcon, ChevronDownIcon } from './IconComponents';
 
 interface VendorProductsScreenProps {
-    onBack: () => void;
-    businessProfile: BusinessProfile;
-    products: Product[];
-    folders: Folder[];
-    onCreateProduct: (folderId: string | null, data: { title: string, description: string, price: number, file: Blob | null }) => Promise<void>;
-    onDeleteProduct?: (productId: string) => void;
+  onBack: () => void;
+  businessProfile: BusinessProfile;
+  products: Product[];
+  folders: Folder[];
+  onCreateProduct: (folderId: string | null, details: any) => Promise<any>;
+  onDeleteProduct: (id: string) => void; 
 }
 
-const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({ onBack, products, folders, onCreateProduct, onDeleteProduct }) => {
-    const [isCreating, setIsCreating] = useState(false);
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [price, setPrice] = useState('');
-    const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
-    const [file, setFile] = useState<Blob | null>(null);
-    const [preview, setPreview] = useState<string | null>(null);
-    const [isProcessing, setIsProcessing] = useState(false);
-    const fileInputRef = useRef<HTMLInputElement>(null);
+const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
+  onBack, products, folders, onCreateProduct, onDeleteProduct
+}) => {
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [isAddingItem, setIsAddingItem] = useState(false);
+  
+  const [newItemTitle, setNewItemTitle] = useState('');
+  const [newItemPrice, setNewItemPrice] = useState('');
+  const [newItemDesc, setNewItemDesc] = useState('');
+  const [newItemFile, setNewItemFile] = useState<Blob | null>(null);
+  const [newItemPreview, setNewItemPreview] = useState<string | null>(null);
+  const itemFileInputRef = useRef<HTMLInputElement>(null);
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const selected = e.target.files?.[0];
-        if (selected) {
-            setFile(selected);
-            const reader = new FileReader();
-            reader.onloadend = () => setPreview(reader.result as string);
-            reader.readAsDataURL(selected);
-        }
-    };
+  // Filtra os produtos e garante que os mais recentes apareçam primeiro (ordem decrescente de criação)
+  const filteredProducts = (selectedFolderId 
+    ? products.filter(p => p.folder_id === selectedFolderId)
+    : products).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-    const handleStartCreating = () => {
-        setIsCreating(true);
-    };
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+       setNewItemFile(file);
+       const reader = new FileReader();
+       reader.onloadend = () => setNewItemPreview(reader.result as string);
+       reader.readAsDataURL(file);
+    }
+  };
 
-    const handleRemoveBg = async () => {
-        if (!preview) return;
-        setIsProcessing(true);
-        try {
-            const result = await removeImageBackground(preview);
-            setPreview(result);
-            const res = await fetch(result);
-            setFile(await res.blob());
-        } catch (e) {
-            toast("Erro ao remover fundo pela IA.");
-        } finally {
-            setIsProcessing(false);
-        }
-    };
+  const handleSaveItem = async () => {
+     if (!newItemTitle || !newItemFile) return;
+     await onCreateProduct(selectedFolderId, {
+        title: newItemTitle,
+        description: newItemDesc,
+        price: parseFloat(newItemPrice) || 0,
+        file: newItemFile
+     });
+     setIsAddingItem(false);
+     setNewItemTitle(''); setNewItemPrice(''); setNewItemDesc(''); setNewItemFile(null); setNewItemPreview(null);
+  };
 
-    const handleAiGenerate = async () => {
-        if (!title) return toast("Digite o título para a IA gerar o produto.");
-        setIsProcessing(true);
-        try {
-            const result = await generateProductImage(title, description);
-            setPreview(result);
-            const res = await fetch(result);
-            setFile(await res.blob());
-        } catch (e) {
-            toast("Erro ao gerar imagem pela IA.");
-        } finally {
-            setIsProcessing(false);
-        }
-    };
+  return (
+    <div className="w-full h-full bg-white flex flex-col animate-fadeIn font-sans">
+       <div className="px-4 pt-4 pb-2 flex items-center justify-between border-b border-zinc-50 shrink-0">
+          <button onClick={onBack} className="p-2 bg-zinc-50 rounded-xl text-zinc-500 active:scale-90 transition-transform">
+            <ArrowLeftIcon className="w-5 h-5"/>
+          </button>
+          <h1 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900 italic">Gerir Catálogo</h1>
+          <div className="w-9"></div> 
+       </div>
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!title) {
-          toast("O nome do produto é obrigatório.");
-          return;
-        }
+       <div className="flex gap-2 px-4 py-4 overflow-x-auto scrollbar-hide shrink-0">
+          <button 
+             onClick={() => setSelectedFolderId(null)}
+             className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${!selectedFolderId ? 'bg-zinc-900 text-white shadow-md' : 'bg-zinc-50 text-zinc-400'}`}
+          >
+             Todos
+          </button>
+          {folders.map(f => (
+             <button 
+                key={f.id}
+                onClick={() => setSelectedFolderId(f.id)}
+                className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${selectedFolderId === f.id ? 'bg-zinc-900 text-white shadow-md' : 'bg-zinc-50 text-zinc-400'}`}
+             >
+                {f.title}
+             </button>
+          ))}
+       </div>
 
-        const priceValue = price ? parseFloat(price) : 0;
-        
-        await onCreateProduct(selectedFolderId, { 
-          title, 
-          description, 
-          price: priceValue, 
-          file: file || null 
-        });
-
-        toast.success("Produto criado e adicionado à coleção ✅");
-        
-        setTimeout(() => {
-            document.querySelector('.grid')?.scrollIntoView({ behavior: 'smooth' });
-        }, 150);
-
-        setIsCreating(false);
-        setTitle('');
-        setDescription('');
-        setPrice('');
-        setSelectedFolderId(null);
-        setFile(null);
-        setPreview(null);
-    };
-
-    return (
-        <div className="w-full h-full flex flex-col bg-[var(--bg-main)] text-[var(--text-primary)]">
-            <Header title={isCreating ? "Novo Produto" : "Gerenciar Catálogo"} onBack={isCreating ? () => setIsCreating(false) : onBack} />
-            <main className="flex-grow overflow-y-auto pt-16 p-4 space-y-4 animate-fadeIn pb-24">
+       <div className="flex-grow overflow-y-auto px-4 pb-28 grid grid-cols-2 gap-4">
+          {/* Mapeamento de produtos existentes - os mais recentes aparecem primeiro */}
+          {filteredProducts.map(product => (
+             <div key={product.id} className="relative aspect-[3/4] rounded-[2rem] overflow-hidden shadow-sm border border-zinc-100 group animate-fadeIn bg-zinc-50">
+                <img src={product.image_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg'} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                 
-                {!isCreating && (
-                    <div className="flex gap-2">
-                        <GradientButton onClick={handleStartCreating} className="flex-1 !py-3 !text-sm">
-                            <div className="flex items-center justify-center gap-2">
-                                <PlusIcon className="w-5 h-5" />
-                                Cadastrar Produto
-                            </div>
-                        </GradientButton>
-                        <button className="px-4 bg-[var(--bg-tertiary)] rounded-xl border border-[var(--border-primary)] text-[var(--accent-primary)]">
-                            <EyeIcon className="w-5 h-5" />
-                        </button>
+                <button 
+                   onClick={() => onDeleteProduct(product.id)}
+                   className="absolute top-3 right-3 p-2 bg-black/40 backdrop-blur-md rounded-xl text-white opacity-0 group-hover:opacity-100 active:scale-90 transition-all z-10"
+                >
+                   <TrashIcon className="w-4 h-4" />
+                </button>
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex flex-col justify-end p-5">
+                   <p className="text-white font-black text-[12px] truncate uppercase italic tracking-tighter">{product.title}</p>
+                   <p className="text-amber-400 font-black text-[11px] mt-0.5 tracking-tight">{(product.price || 0).toLocaleString('pt-AO', {style: 'currency', currency: 'AOA'})}</p>
+                </div>
+             </div>
+          ))}
+
+          {/* Botão de Adicionar - Movido para o FINAL conforme solicitado */}
+          <button 
+            onClick={() => setIsAddingItem(true)} 
+            className="aspect-[3/4] border-2 border-dashed border-zinc-100 rounded-[2rem] flex flex-col items-center justify-center gap-3 bg-zinc-50/30 text-zinc-300 hover:bg-zinc-50 transition-all group"
+          >
+             <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-zinc-300 group-hover:text-amber-500 transition-colors">
+                <PlusIcon className="w-6 h-6" strokeWidth={3} />
+             </div>
+             <span className="text-[9px] font-black uppercase tracking-[0.2em]">Novo Item</span>
+          </button>
+       </div>
+
+       {isAddingItem && (
+          <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-end animate-fadeIn" onClick={() => setIsAddingItem(false)}>
+             <div 
+                className="w-full h-[92vh] bg-white rounded-t-[3.5rem] flex flex-col shadow-2xl overflow-hidden" 
+                onClick={e => e.stopPropagation()}
+             >
+                {/* Header Modal - Fixo no topo */}
+                <div className="flex justify-between items-center px-8 pt-8 pb-4 shrink-0">
+                   <h2 className="text-2xl font-black uppercase italic text-zinc-900 tracking-tighter">NOVO ITEM</h2>
+                   <button onClick={() => setIsAddingItem(false)} className="p-3 bg-zinc-50 rounded-2xl text-zinc-400 hover:text-zinc-900 active:scale-90 transition-all">
+                      <ChevronDownIcon className="w-6 h-6" />
+                   </button>
+                </div>
+
+                {/* Área de Scroll - Contém o formulário */}
+                <div className="flex-grow overflow-y-auto px-8 pb-24 space-y-6 scrollbar-hide">
+                    {/* Preview Vertical 3:4 */}
+                    <div 
+                      onClick={() => itemFileInputRef.current?.click()} 
+                      className="w-full aspect-[3/4] max-w-[280px] mx-auto bg-zinc-50 border-2 border-dashed border-zinc-100 rounded-[2.5rem] flex flex-col items-center justify-center relative overflow-hidden transition-all hover:bg-zinc-100/50 cursor-pointer shadow-inner group"
+                    >
+                       {newItemPreview ? (
+                          <img src={newItemPreview} className="w-full h-full object-cover animate-imageAppear" />
+                       ) : (
+                          <div className="flex flex-col items-center gap-3">
+                             <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center text-zinc-300 group-hover:text-amber-500 transition-colors">
+                                <CameraIcon className="w-8 h-8" />
+                             </div>
+                             <span className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em]">Adicionar Foto</span>
+                          </div>
+                       )}
+                       <input type="file" ref={itemFileInputRef} accept="image/*" onChange={handleFileChange} className="hidden" />
                     </div>
-                )}
+                    
+                    <div className="space-y-5">
+                       <div>
+                          <label className="text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em] ml-4 mb-1 block">Nome do Produto</label>
+                          <input 
+                            type="text" 
+                            placeholder="Ex: T-shirt Oversized Black" 
+                            value={newItemTitle} 
+                            onChange={e => setNewItemTitle(e.target.value)} 
+                            className="w-full p-5 bg-zinc-50 rounded-2xl font-bold text-sm text-zinc-900 focus:bg-white focus:ring-4 ring-amber-500/10 transition-all border border-transparent focus:border-amber-500/20 outline-none" 
+                          />
+                       </div>
 
-                {isCreating ? (
-                    <form onSubmit={handleSubmit} className="space-y-6 animate-slideUp">
-                        <div className="space-y-3">
-                            <div 
-                                onClick={() => !isProcessing && fileInputRef.current?.click()}
-                                className="w-full h-64 border-2 border-dashed border-zinc-200 rounded-[2rem] flex flex-col items-center justify-center cursor-pointer bg-zinc-50 overflow-hidden relative"
-                            >
-                                {isProcessing && (
-                                    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex flex-col items-center justify-center gap-2">
-                                        <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-                                        <span className="text-[10px] font-black uppercase tracking-widest text-amber-600">Sincronizando IA...</span>
-                                    </div>
-                                )}
-                                {preview ? (
-                                    <img src={preview} alt="Preview" className="w-full h-full object-cover" />
-                                ) : (
-                                    <>
-                                        <CameraIcon className="w-10 h-10 text-zinc-300 mb-2" />
-                                        <span className="text-[10px] font-black uppercase text-zinc-400">Foto do Produto</span>
-                                    </>
-                                )}
-                                <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
-                            </div>
+                       <div>
+                          <label className="text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em] ml-4 mb-1 block">Preço de Venda (AOA)</label>
+                          <input 
+                            type="number" 
+                            placeholder="0.00" 
+                            value={newItemPrice} 
+                            onChange={e => setNewItemPrice(e.target.value)} 
+                            className="w-full p-5 bg-zinc-50 rounded-2xl font-bold text-sm text-zinc-900 focus:bg-white focus:ring-4 ring-amber-500/10 transition-all border border-transparent focus:border-amber-500/20 outline-none" 
+                          />
+                       </div>
 
-                            <div className="grid grid-cols-2 gap-2">
-                                <button 
-                                    type="button"
-                                    onClick={handleRemoveBg}
-                                    disabled={!preview || isProcessing}
-                                    className="flex items-center justify-center gap-2 py-3 bg-zinc-900 text-white rounded-xl text-[10px] font-black uppercase disabled:opacity-50"
-                                >
-                                    <SparklesIconUI />
-                                    Isolar Produto
-                                </button>
-                                <button 
-                                    type="button"
-                                    onClick={handleAiGenerate}
-                                    disabled={!title || isProcessing}
-                                    className="flex items-center justify-center gap-2 py-3 border-2 border-amber-500 text-amber-600 rounded-xl text-[10px] font-black uppercase disabled:opacity-50"
-                                >
-                                    <SparklesIconUI />
-                                    Criar pela IA
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="space-y-4">
-                            <div>
-                                <label className="text-[10px] font-black uppercase text-zinc-400 ml-4 mb-1 block tracking-widest">Coleção Destino</label>
-                                <select
-                                    value={selectedFolderId || ''}
-                                    onChange={e => setSelectedFolderId(e.target.value === '' ? null : e.target.value)}
-                                    className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:outline-none focus:border-amber-500 font-bold text-sm appearance-none"
-                                >
-                                    <option value="">Geral / Vitrine</option>
-                                    {folders.map(f => (
-                                        <option key={f.id} value={f.id}>{f.title}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <input
-                                type="text"
-                                placeholder="Título do Produto"
-                                value={title}
-                                onChange={e => setTitle(e.target.value)}
-                                className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:outline-none focus:border-amber-500 font-bold text-sm"
-                                required
-                            />
-                            <input
-                                type="number"
-                                placeholder="Preço (AOA)"
-                                value={price}
-                                onChange={e => setPrice(e.target.value)}
-                                className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:outline-none focus:border-amber-500 font-bold text-sm"
-                            />
-                            <textarea
-                                placeholder="Descrição"
-                                value={description}
-                                onChange={e => setDescription(e.target.value)}
-                                className="w-full p-4 bg-zinc-50 rounded-2xl border border-zinc-100 focus:outline-none focus:border-amber-500 font-bold text-sm h-32 resize-none"
-                            />
-                        </div>
-
-                        <GradientButton type="submit" disabled={!title || isProcessing}>
-                            Salvar no Banco de Dados
-                        </GradientButton>
-                    </form>
-                ) : products.length > 0 ? (
-                    <div className="grid grid-cols-1 gap-3">
-                        {products.map(product => (
-                            <div key={product.id} className="bg-[var(--bg-secondary)] border border-[var(--border-secondary)] p-3 rounded-2xl flex items-center gap-4">
-                                <div className="relative w-16 h-16 bg-zinc-800 rounded-xl overflow-hidden flex-shrink-0">
-                                    <img src={product.image_url || ''} alt={product.title} className="w-full h-full object-cover" />
-                                </div>
-                                <div className="flex-grow">
-                                    <h3 className="font-bold text-sm uppercase truncate max-w-[150px]">{product.title}</h3>
-                                    <p className="text-xs font-black text-[var(--accent-primary)]">
-                                        {product.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA' })}
-                                    </p>
-                                </div>
-                                <div className="flex gap-1">
-                                    <button className="p-2 bg-[var(--bg-tertiary)] rounded-lg hover:bg-zinc-200 transition-colors">
-                                        <PencilIcon className="w-4 h-4" />
-                                    </button>
-                                    <button 
-                                        onClick={() => onDeleteProduct?.(product.id)}
-                                        className="p-2 bg-[var(--bg-tertiary)] text-red-400 rounded-lg hover:bg-red-50 transition-colors"
-                                    >
-                                        <XCircleIcon className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
+                       <div>
+                          <label className="text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em] ml-4 mb-1 block">Descrição Adicional</label>
+                          <textarea 
+                            placeholder="Fale sobre o material, tamanho..." 
+                            value={newItemDesc} 
+                            onChange={e => setNewItemDesc(e.target.value)} 
+                            className="w-full p-5 bg-zinc-50 rounded-2xl font-bold text-sm text-zinc-900 focus:bg-white focus:ring-4 ring-amber-500/10 transition-all border border-transparent focus:border-amber-500/20 outline-none h-32 resize-none shadow-inner" 
+                          />
+                       </div>
                     </div>
-                ) : (
-                    <div className="flex flex-col items-center justify-center py-20 text-center space-y-4 animate-slideUp">
-                        <div className="w-20 h-20 rounded-full bg-[var(--bg-tertiary)] flex items-center justify-center border-2 border-dashed border-[var(--border-primary)]">
-                            <ShoppingBagIcon className="w-10 h-10 text-zinc-500" />
-                        </div>
-                        <div>
-                            <h3 className="font-black uppercase text-sm">Catálogo Vazio</h3>
-                            <p className="text-xs text-zinc-500 max-w-[200px] mx-auto mt-1">O seu estoque está vazio. Adicione produtos para começar a vender.</p>
-                        </div>
-                        <button onClick={handleStartCreating} className="text-[10px] font-black text-[var(--accent-primary)] uppercase underline tracking-widest">
-                            Cadastrar meu primeiro produto
-                        </button>
+
+                    {/* Botão de Concluir com margem de segurança no scroll */}
+                    <div className="pt-4 pb-8">
+                      <button 
+                        onClick={handleSaveItem} 
+                        disabled={!newItemTitle || !newItemFile} 
+                        className="w-full py-6 bg-amber-500 text-white font-black uppercase text-[12px] tracking-[0.2em] rounded-[1.8rem] shadow-[0_15px_30px_rgba(245,158,11,0.25)] active:scale-[0.98] transition-all disabled:opacity-30 disabled:cursor-not-allowed group flex items-center justify-center gap-3"
+                      >
+                        <span>CONCLUIR E CRIAR</span>
+                        <PlusIcon className="w-5 h-5 transition-transform group-hover:rotate-90" strokeWidth={3} />
+                      </button>
                     </div>
-                )}
-            </main>
-        </div>
-    );
+                </div>
+             </div>
+          </div>
+       )}
+
+       <style>{`
+          @keyframes imageAppear {
+            from { opacity: 0; transform: scale(1.05); }
+            to { opacity: 1; transform: scale(1); }
+          }
+          .animate-imageAppear {
+            animation: imageAppear 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+          }
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+       `}</style>
+    </div>
+  );
 };
 
 export default VendorProductsScreen;

@@ -1,14 +1,14 @@
-
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { GoogleIcon } from './IconComponents';
 import { toast } from '../utils/toast';
 
 interface LoginScreenProps {
-  onNavigateToSignUp: () => void;
+  onNavigateToSignUp?: () => void;
+  onSuccess?: () => void;
 }
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigateToSignUp }) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigateToSignUp, onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -31,7 +31,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigateToSignUp }) => {
                 if (error) throw error;
                 if (data.user) {
                     toast.success('Conta criada! Agora você pode entrar.');
-                    setIsSignUp(false); // Volta para o login após cadastrar
+                    setIsSignUp(false);
                 }
             } else {
                 const { error } = await supabase.auth.signInWithPassword({ 
@@ -39,6 +39,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigateToSignUp }) => {
                     password 
                 });
                 if (error) throw error;
+                if (onSuccess) onSuccess();
             }
         } catch (err: any) {
             console.error("Auth Error:", err);
