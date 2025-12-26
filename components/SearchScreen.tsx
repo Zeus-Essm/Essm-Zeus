@@ -1,7 +1,7 @@
 
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { ArrowLeftIcon, SearchIcon, UserIcon, VerifiedIcon, ShoppingBagIcon, StarIcon, ClockIcon, XCircleIcon, ChevronRightIcon, ChevronLeftIcon } from './IconComponents';
-import type { Post, Profile, Item, MarketplaceType, Category } from '../types';
+import React, { useState, useMemo, useEffect } from 'react';
+import { ArrowLeftIcon, SearchIcon, UserIcon, VerifiedIcon, ShoppingBagIcon, StarIcon, ClockIcon } from './IconComponents';
+import type { Post, Profile, Item, MarketplaceType } from '../types';
 import ImageViewModal from './ImageViewModal';
 import QuickViewModal from './QuickViewModal';
 import { CATEGORIES } from '../constants';
@@ -10,7 +10,7 @@ interface SearchScreenProps {
     onBack: () => void;
     posts: Post[];
     items: Item[];
-    realBusinesses: Category[];
+    availableProfiles: Profile[];
     onViewProfile: (profileId: string) => void;
     onLikePost: (postId: string) => void;
     onItemClick: (item: Item) => void;
@@ -25,7 +25,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
     onBack, 
     posts, 
     items,
-    realBusinesses,
+    availableProfiles,
     onViewProfile,
     onLikePost,
     onItemClick,
@@ -41,16 +41,11 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
         const saved = localStorage.getItem('pump_recent_searches');
         return saved ? JSON.parse(saved) : [];
     });
-    const [filteredProfiles, setFilteredProfiles] = useState<Category[]>([]);
+    const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([]);
     const [filteredItems, setFilteredItems] = useState<Item[]>([]);
     const [viewingPostDetails, setViewingPostDetails] = useState<{ posts: Post[]; startIndex: number } | null>(null);
     const [quickViewItem, setQuickViewItem] = useState<Item | null>(null);
     
-    // Carousel State
-    const carouselRef = useRef<HTMLDivElement>(null);
-    const [showLeftArrow, setShowLeftArrow] = useState(false);
-    const [showRightArrow, setShowRightArrow] = useState(true);
-
     const popularPosts = useMemo(() => {
         return [...posts].sort((a, b) => b.likes - a.likes);
     }, [posts]);
@@ -73,20 +68,22 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
 
         const lowercasedQuery = query.toLowerCase();
         
-        // Busca em Lojas Reais
-        const businessResults = realBusinesses.filter(biz =>
-            biz.name.toLowerCase().includes(lowercasedQuery)
+        // Busca em todos os perfis reais carregados do Supabase
+        const profileResults = availableProfiles.filter(p =>
+            (p.full_name?.toLowerCase().includes(lowercasedQuery) || 
+             p.username?.toLowerCase().includes(lowercasedQuery) ||
+             p.bio?.toLowerCase().includes(lowercasedQuery))
         );
-        setFilteredProfiles(businessResults);
+        setFilteredProfiles(profileResults);
         
-        // Busca em Produtos Reais
+        // Busca em todos os produtos reais do catálogo PUMP
         const itemResults = items.filter(item =>
             item.name.toLowerCase().includes(lowercasedQuery) ||
             item.description.toLowerCase().includes(lowercasedQuery)
         );
         setFilteredItems(itemResults);
 
-    }, [query, realBusinesses, items, activeTab]);
+    }, [query, availableProfiles, items, activeTab]);
 
     const handleSearchSubmit = (searchTerm: string) => {
         if (!searchTerm.trim()) return;
@@ -95,11 +92,6 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
         setRecentSearches(updated);
         localStorage.setItem('pump_recent_searches', JSON.stringify(updated));
         setQuery(term);
-    };
-
-    const handleCategoryClick = (category: Category) => {
-        setQuery(category.name);
-        handleSearchSubmit(category.name);
     };
 
     const clearRecentSearches = () => {
@@ -111,27 +103,9 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
         setViewingPostDetails({ posts: popularPosts, startIndex: postIndex });
     };
 
-    // Carousel Navigation Logic
-    const scrollCarousel = (direction: 'left' | 'right') => {
-        if (!carouselRef.current) return;
-        const scrollAmount = carouselRef.current.clientWidth * 0.8;
-        carouselRef.current.scrollBy({
-            left: direction === 'left' ? -scrollAmount : scrollAmount,
-            behavior: 'smooth'
-        });
-    };
-
-    const handleCarouselScroll = () => {
-        if (!carouselRef.current) return;
-        const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
-        setShowLeftArrow(scrollLeft > 10);
-        setShowRightArrow(scrollLeft + clientWidth < scrollWidth - 10);
-    };
-
     return (
         <>
             <div className="w-full h-full flex flex-col bg-white text-zinc-900 font-sans overflow-hidden">
-                {/* Header de Busca Profissional */}
                 <header className="px-4 pt-4 pb-2 flex flex-col gap-4 border-b border-zinc-50 shrink-0 sticky top-0 bg-white/95 backdrop-blur-md z-20">
                     <div className="flex items-center gap-3">
                         <button onClick={onBack} className="p-2 -ml-2 rounded-xl bg-zinc-50 text-zinc-400 active:scale-90 transition-all">
@@ -142,7 +116,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                             <form onSubmit={(e) => { e.preventDefault(); handleSearchSubmit(query); }}>
                                 <input
                                     type="text"
-                                    placeholder="Encontrar lojas ou produtos..."
+                                    placeholder="Procurar contas reais ou itens..."
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
                                     className="w-full bg-zinc-50 rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:bg-white border border-transparent focus:border-amber-500/40 transition-all placeholder:text-zinc-300 shadow-sm"
@@ -153,12 +127,12 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                     </div>
 
                     {query.trim() !== '' && (
-                        <div className="flex gap-1 animate-fadeIn">
+                        <div className="flex gap-1 animate-fadeIn px-1">
                             <button 
                                 onClick={() => setActiveTab('accounts')} 
                                 className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'accounts' ? 'bg-zinc-900 text-white shadow-lg' : 'text-zinc-400 hover:bg-zinc-50'}`}
                             >
-                                Lojas ({filteredProfiles.length})
+                                Contas ({filteredProfiles.length})
                             </button>
                             <button 
                                 onClick={() => setActiveTab('products')} 
@@ -173,19 +147,18 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                 <main className="flex-grow overflow-y-auto scrollbar-hide">
                     {query.trim() === '' ? (
                         <div className="animate-fadeIn">
-                            {/* Histórico Recente */}
                             {recentSearches.length > 0 && (
                                 <div className="p-5 pb-0">
                                     <div className="flex justify-between items-center mb-4">
                                         <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 italic">Pesquisas Recentes</h2>
-                                        <button onClick={clearRecentSearches} className="text-[9px] font-black uppercase text-amber-600 hover:text-amber-700 transition-colors">Limpar Tudo</button>
+                                        <button onClick={clearRecentSearches} className="text-[9px] font-black uppercase text-amber-600 hover:text-amber-700 transition-colors">Limpar</button>
                                     </div>
                                     <div className="flex flex-wrap gap-2">
                                         {recentSearches.map((term, i) => (
                                             <button 
                                                 key={i} 
                                                 onClick={() => handleSearchSubmit(term)}
-                                                className="flex items-center gap-2 px-4 py-2 bg-zinc-50 rounded-full border border-zinc-100 text-[11px] font-bold text-zinc-600 hover:border-amber-500/30 transition-all active:scale-95"
+                                                className="flex items-center gap-2 px-4 py-2 bg-zinc-50 rounded-full border border-zinc-100 text-[11px] font-bold text-zinc-600 hover:border-amber-500/30 active:scale-95 transition-all"
                                             >
                                                 <ClockIcon className="w-3 h-3 text-zinc-300" />
                                                 {term}
@@ -195,11 +168,10 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                                 </div>
                             )}
 
-                            {/* Popular Content Mosaic */}
-                            <div className="px-5 mb-4 mt-6">
-                                <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 italic">Tendências do Mercado</h2>
+                            <div className="px-5 mb-4 mt-8">
+                                <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 italic">Mais Relevantes</h2>
                             </div>
-                            <div className="grid grid-cols-3 gap-0.5 px-0.5">
+                            <div className="grid grid-cols-3 gap-0.5 px-0.5 pb-24">
                                 {popularPosts.length > 0 ? popularPosts.map((post, index) => (
                                     <div 
                                         key={post.id} 
@@ -212,30 +184,27 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                                         </div>
                                     </div>
                                 )) : (
-                                    <div className="col-span-3 py-24 text-center opacity-30">
-                                        <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                                            <ShoppingBagIcon className="w-8 h-8 text-zinc-300" />
-                                        </div>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 italic animate-pulse">Carregando tendências...</p>
+                                    <div className="col-span-3 py-32 text-center opacity-30">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Descobrindo tendências...</p>
                                     </div>
                                 )}
                             </div>
                         </div>
                     ) : (
-                        <div className="p-2 animate-fadeIn">
+                        <div className="p-2 animate-fadeIn pb-24">
                             {activeTab === 'accounts' ? (
                                 <div className="space-y-1">
                                     {filteredProfiles.length > 0 ? (
-                                        filteredProfiles.map(biz => (
+                                        filteredProfiles.map(p => (
                                             <button 
-                                                key={biz.id}
-                                                onClick={() => onViewProfile(biz.id)}
-                                                className="w-full flex items-center gap-4 p-4 text-left hover:bg-zinc-50 rounded-[2.2rem] transition-all group active:scale-[0.98]"
+                                                key={p.user_id}
+                                                onClick={() => onViewProfile(p.user_id)}
+                                                className="w-full flex items-center gap-4 p-4 text-left hover:bg-zinc-50 rounded-[2rem] transition-all group active:scale-[0.98]"
                                             >
                                                 <div className="relative">
                                                     <div className="w-14 h-14 rounded-full overflow-hidden bg-zinc-100 border-2 border-zinc-100 p-0.5 group-hover:border-amber-500/50 transition-colors shadow-sm">
-                                                        {biz.image ? (
-                                                            <img src={biz.image} alt="" className="w-full h-full object-cover rounded-full"/>
+                                                        {p.avatar_url ? (
+                                                            <img src={p.avatar_url} alt="" className="w-full h-full object-cover rounded-full"/>
                                                         ) : (
                                                             <UserIcon className="w-full h-full text-zinc-300 p-3" />
                                                         )}
@@ -244,23 +213,23 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                                                 <div className="flex-grow min-w-0">
                                                     <div className="flex items-center gap-1.5">
                                                         <p className="font-black text-sm text-zinc-900 truncate uppercase tracking-tighter italic leading-none">
-                                                            {biz.name}
+                                                            {p.full_name || p.username}
                                                         </p>
-                                                        <VerifiedIcon className="w-4 h-4 text-amber-500" />
+                                                        {p.account_type === 'business' && <VerifiedIcon className="w-4 h-4 text-amber-500" />}
                                                     </div>
                                                     <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">
-                                                        {biz.type === 'fashion' ? 'Loja de Moda' : 'Marca Verificada'}
+                                                        {p.account_type === 'business' ? 'Loja Verificada' : 'Membro PUMP'}
                                                     </p>
                                                 </div>
-                                                <div className="px-5 py-2.5 rounded-2xl bg-zinc-900 text-white text-[9px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100">
-                                                    Visitar
+                                                <div className="px-5 py-2.5 rounded-2xl bg-zinc-900 text-white text-[9px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100 shadow-lg">
+                                                    Explorar
                                                 </div>
                                             </button>
                                         ))
                                     ) : (
-                                        <div className="py-24 text-center opacity-30">
-                                            <UserIcon className="w-14 h-14 mx-auto mb-4 text-zinc-300" strokeWidth={1} />
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Nenhuma conta encontrada</p>
+                                        <div className="py-32 text-center opacity-30 flex flex-col items-center">
+                                            <UserIcon className="w-12 h-12 mb-4 text-zinc-300" strokeWidth={1} />
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Nenhum utilizador encontrado</p>
                                         </div>
                                     )}
                                 </div>
@@ -276,7 +245,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                                                 <div className="relative aspect-[3/4] overflow-hidden bg-zinc-50">
                                                     <img src={item.image} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"/>
                                                     <div className="absolute top-4 left-4 px-2.5 py-1.5 bg-white/95 backdrop-blur-md rounded-xl text-[8px] font-black uppercase tracking-widest text-zinc-900 shadow-sm border border-zinc-100/50">
-                                                        IA Ready
+                                                        Real Item
                                                     </div>
                                                 </div>
                                                 <div className="p-5 text-left">
@@ -288,9 +257,9 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                                             </button>
                                         ))
                                     ) : (
-                                        <div className="col-span-2 py-24 text-center opacity-30">
-                                            <ShoppingBagIcon className="w-14 h-14 mx-auto mb-4 text-zinc-300" strokeWidth={1} />
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Nenhum produto encontrado</p>
+                                        <div className="col-span-2 py-32 text-center opacity-30 flex flex-col items-center">
+                                            <ShoppingBagIcon className="w-12 h-12 mb-4 text-zinc-300" strokeWidth={1} />
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Nenhum produto real encontrado</p>
                                         </div>
                                     )}
                                 </div>

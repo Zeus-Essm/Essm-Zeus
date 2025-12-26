@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
@@ -28,47 +27,6 @@ import ResultScreen from './components/ResultScreen';
 import ConfirmationScreen from './components/ConfirmationScreen';
 import CaptionModal from './components/CaptionModal';
 
-// CONTROLE DE VERSÃO DO SISTEMA
-export const APP_VERSION = "1.0.9";
-
-/**
- * Realiza o logout completo limpando caches e forçando redirecionamento.
- */
-async function fullLogout() {
-  localStorage.clear();
-  sessionStorage.clear();
-  try {
-    await supabase.auth.signOut();
-  } catch (e) {
-    console.error("Erro ao deslogar:", e);
-  }
-  window.location.href = "/";
-}
-
-async function enforceAppUpdate() {
-  const storedVersion = localStorage.getItem("app_version");
-
-  if (storedVersion !== APP_VERSION) {
-    console.warn("🔄 Nova versão detectada (" + APP_VERSION + "). Resetando sessão e cache...");
-    
-    localStorage.clear();
-    sessionStorage.clear();
-
-    try {
-      await supabase.auth.signOut();
-    } catch (e) {
-      console.error("Erro ao deslogar durante o update:", e);
-    }
-
-    localStorage.setItem("app_version", APP_VERSION);
-    // @ts-ignore
-    window.location.reload(true);
-  }
-}
-
-// Executa a verificação de versão IMEDIATAMENTE antes de qualquer renderização
-enforceAppUpdate();
-
 const App: React.FC = () => {
     const [session, setSession] = useState<Session | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
@@ -79,6 +37,7 @@ const App: React.FC = () => {
     const [folders, setFolders] = useState<Folder[]>([]);
     const [posts, setPosts] = useState<Post[]>([]);
     const [realBusinessCategories, setRealBusinessCategories] = useState<Category[]>([]);
+    const [allProfilesForSearch, setAllProfilesForSearch] = useState<Profile[]>([]);
     
     const [authLoading, setAuthLoading] = useState(true);
     const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Splash);
@@ -94,114 +53,123 @@ const App: React.FC = () => {
     const [showCaptionModal, setShowCaptionModal] = useState(false);
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
-    // --- CARREGAMENTO GLOBAL DE DADOS ---
+    // --- CARREGAMENTO GLOBAL DE DADOS REAIS ---
 
-    const fetchRealStores = async () => {
+    const fetchGlobalData = async () => {
         try {
-            const { data, error } = await supabase
+            // 1. Perfis para Busca
+            const { data: profiles, error: pError } = await supabase
                 .from('profiles')
-                .select('*')
-                .eq('account_type', 'business');
+                .select('user_id, username, full_name, avatar_url, account_type, bio, business_category');
             
-            if (error) throw error;
-
-            if (data) {
-                const stores: Category[] = data.map(p => ({
-                    id: p.user_id,
-                    name: p.full_name || p.username || 'Loja PUMP',
-                    image: p.avatar_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg',
-                    type: (p.business_category as MarketplaceType) || 'fashion', 
-                    subCategories: [] 
-                }));
+            if (pError) {
+                console.error("Erro ao carregar perfis:", pError);
+            } else {
+                setAllProfilesForSearch(profiles || []);
+                const stores: Category[] = (profiles || [])
+                    .filter(p => p.account_type === 'business')
+                    .map(p => ({
+                        id: p.user_id,
+                        name: p.full_name || p.username || 'Loja PUMP',
+                        image: p.avatar_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg',
+                        type: (p.business_category as MarketplaceType) || 'fashion', 
+                        subCategories: [] 
+                    }));
                 setRealBusinessCategories(stores);
             }
-        } catch (err) {
-            console.error("Erro ao carregar lojas reais:", err);
-        }
-    };
 
-    const fetchGlobalFeed = async () => {
-        try {
-            const { data: postsData, error } = await supabase
+            // 2. Produtos Reais
+            const { data: allProducts, error: prodError } = await supabase
+                .from('products')
+                .select('*')
+                .order('created_at', { ascending: false });
+            
+            if (prodError) {
+                console.error("Erro ao carregar produtos:", prodError);
+            } else {
+                setAllMarketplaceProducts(allProducts || []);
+            }
+
+            // 3. Feed Global
+            const { data: postsData, error: postsError } = await supabase
                 .from('posts')
                 .select(`
-                    *,
-                    profiles:user_id (user_id, full_name, avatar_url, username),
-                    comments:comments (
-                        id, text, created_at, 
-                        user:user_id (user_id, full_name, avatar_url)
+                    id,
+                    image_url,
+                    caption,
+                    user_id,
+                    created_at,
+                    profiles (
+                        user_id,
+                        username,
+                        full_name,
+                        avatar_url
                     ),
-                    likes:likes (user_id)
+                    comments (
+                        id,
+                        text,
+                        created_at,
+                        profiles (
+                            user_id,
+                            username,
+                            full_name,
+                            avatar_url
+                        )
+                    ),
+                    likes (
+                        user_id
+                    )
                 `)
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
-
-            if (postsData) {
+            if (postsError) {
+                console.error("Erro ao carregar posts:", postsError);
+            } else if (postsData) {
                 const currentUserId = session?.user.id;
-                const formattedPosts: Post[] = postsData.map(p => ({
+                const formattedPosts: Post[] = postsData.map((p: any) => ({
                     id: p.id,
                     user_id: p.user_id,
                     user: { 
-                        id: p.profiles.user_id, 
-                        full_name: p.profiles.full_name || p.profiles.username, 
-                        avatar_url: p.profiles.avatar_url 
+                        id: p.profiles?.user_id || p.user_id, 
+                        full_name: p.profiles?.full_name || p.profiles?.username || 'Utilizador PUMP', 
+                        avatar_url: p.profiles?.avatar_url || null
                     },
                     image: p.image_url,
                     caption: p.caption,
                     likes: p.likes?.length || 0,
                     isLiked: p.likes?.some((l: any) => l.user_id === currentUserId),
                     created_at: p.created_at,
-                    comments: p.comments.map((c: any) => ({
+                    comments: (p.comments || []).map((c: any) => ({
                         id: c.id,
                         text: c.text,
                         timestamp: c.created_at,
-                        user: { id: c.user.user_id, full_name: c.user.full_name, avatar_url: c.user.avatar_url }
+                        user: { 
+                            id: c.profiles?.user_id || 'unknown', 
+                            full_name: c.profiles?.full_name || c.profiles?.username || 'Anónimo', 
+                            avatar_url: c.profiles?.avatar_url || null 
+                        }
                     })),
                     commentCount: p.comments?.length || 0,
                     items: [] 
                 }));
                 setPosts(formattedPosts);
             }
-        } catch (err) {
-            console.error("Erro ao carregar feed global:", err);
+        } catch (err: any) {
+            console.error("Exceção fatal no fetchGlobalData:", err);
         }
     };
 
-    const fetchMarketplace = async () => {
+    const fetchVendorData = async (userId: string) => {
         try {
-            const { data, error } = await supabase
-                .from('products')
-                .select('*')
-                .order('created_at', { ascending: false });
-            if (error) throw error;
-            setAllMarketplaceProducts(data || []);
+            const [fRes, pRes] = await Promise.all([
+                supabase.from('folders').select('*').eq('owner_id', userId).order('created_at', { ascending: false }),
+                supabase.from('products').select('*').eq('owner_id', userId).order('created_at', { ascending: false })
+            ]);
+            setFolders(fRes.data || []);
+            setProducts(pRes.data || []);
         } catch (err) {
-            console.error("Erro ao carregar mercado:", err);
+            console.error("Erro ao carregar dados do lojista:", err);
         }
-    };
-
-    const fetchData = async (userId: string, isBusiness: boolean) => {
-        setIsLoading(true);
-        await Promise.all([
-            fetchGlobalFeed(),
-            fetchMarketplace(),
-            fetchRealStores() 
-        ]);
-
-        if (isBusiness) {
-            try {
-                const [fRes, pRes] = await Promise.all([
-                    supabase.from('folders').select('*').eq('owner_id', userId).order('created_at', { ascending: false }),
-                    supabase.from('products').select('*').eq('owner_id', userId).order('created_at', { ascending: false })
-                ]);
-                setFolders(fRes.data || []);
-                setProducts(pRes.data || []);
-            } catch (err) {
-                console.error("Erro ao carregar dados do lojista:", err);
-            }
-        }
-        setIsLoading(false);
     };
 
     const processAuth = async (currentSession: Session | null) => {
@@ -219,15 +187,13 @@ const App: React.FC = () => {
                 .from('profiles')
                 .select('*')
                 .eq('user_id', currentSession.user.id)
-                .single();
+                .maybeSingle(); 
 
-            if (error && error.code !== 'PGRST116') throw error;
+            if (error) throw error;
 
             if (profileData) {
                 setProfile(profileData);
-                const isBusiness = profileData.account_type === 'business';
-                
-                if (isBusiness) {
+                if (profileData.account_type === 'business') {
                     setBusinessProfile({
                         id: profileData.user_id,
                         business_name: profileData.full_name || 'Minha Loja',
@@ -236,18 +202,19 @@ const App: React.FC = () => {
                         logo_url: profileData.avatar_url || ''
                     });
                     setCurrentScreen(Screen.VendorDashboard);
+                    await fetchVendorData(currentSession.user.id);
                 } else if (profileData.account_type === 'personal') {
                     setCurrentScreen(Screen.Feed);
                 } else {
                     setCurrentScreen(Screen.AccountTypeSelection);
                 }
-                
-                await fetchData(currentSession.user.id, isBusiness);
+                await fetchGlobalData();
             } else {
                 setCurrentScreen(Screen.AccountTypeSelection);
             }
-        } catch (err) {
-            toast.error("Erro ao carregar perfil.");
+        } catch (err: any) {
+            console.error("Erro no processAuth:", err);
+            toast.error("Erro ao carregar sessão.");
         } finally {
             setAuthLoading(false);
         }
@@ -264,17 +231,15 @@ const App: React.FC = () => {
 
     const handleLikePost = async (postId: string) => {
         if (!session?.user) return;
-        
         const post = posts.find(p => p.id === postId);
         if (!post) return;
-
         try {
             if (post.isLiked) {
                 await supabase.from('likes').delete().match({ post_id: postId, user_id: session.user.id });
             } else {
                 await supabase.from('likes').insert({ post_id: postId, user_id: session.user.id });
             }
-            fetchGlobalFeed(); 
+            fetchGlobalData(); 
         } catch (err) {
             console.error("Erro ao curtir:", err);
         }
@@ -287,10 +252,10 @@ const App: React.FC = () => {
                 .from('comments')
                 .insert({ post_id: postId, user_id: session.user.id, text });
             if (error) throw error;
-            fetchGlobalFeed();
+            fetchGlobalData();
             toast.success("Comentário enviado!");
         } catch (err) {
-            toast.error("Erro ao comentar.");
+            console.error("Erro ao comentar:", err);
         }
     };
 
@@ -302,9 +267,9 @@ const App: React.FC = () => {
                 .from('folders')
                 .insert({ title, owner_id: session.user.id })
                 .select()
-                .single();
+                .maybeSingle();
             if (error) throw error;
-            setFolders(prev => [data, ...prev]);
+            if (data) setFolders(prev => [data, ...prev]);
             toast.success('Coleção criada com sucesso!');
         } catch (err: any) {
             toast.error(err.message);
@@ -318,7 +283,6 @@ const App: React.FC = () => {
         setIsLoading(true);
         try {
             const imageUrl = details.file ? URL.createObjectURL(details.file) : 'https://i.postimg.cc/LXmdq4H2/D.jpg';
-            
             const { data: productData, error: productError } = await supabase
                 .from('products')
                 .insert({
@@ -332,28 +296,18 @@ const App: React.FC = () => {
                     is_try_on: true
                 })
                 .select()
-                .single();
+                .maybeSingle();
 
             if (productError) throw productError;
 
             if (folderId) {
-                const { error: folderUpdateError } = await supabase
-                    .from('folders')
-                    .update({ cover_image: imageUrl })
-                    .eq('id', folderId);
-
-                if (folderUpdateError) {
-                    console.error("Erro ao atualizar capa da coleção:", folderUpdateError);
-                } else {
-                    setFolders(prev => prev.map(f => 
-                        f.id === folderId ? { ...f, cover_image: imageUrl } : f
-                    ));
-                }
+                await supabase.from('folders').update({ cover_image: imageUrl }).eq('id', folderId);
+                setFolders(prev => prev.map(f => f.id === folderId ? { ...f, cover_image: imageUrl } : f));
             }
 
-            setProducts(prev => [productData, ...prev]);
-            fetchMarketplace(); 
-            toast.success("Item adicionado e capa da coleção atualizada!");
+            if (productData) setProducts(prev => [productData, ...prev]);
+            fetchGlobalData(); 
+            toast.success("Item adicionado!");
         } catch (err: any) {
             toast.error(err.message);
         } finally {
@@ -367,17 +321,12 @@ const App: React.FC = () => {
         try {
             const { data, error } = await supabase
                 .from('profiles')
-                .update({ 
-                    full_name: updates.name, 
-                    bio: updates.bio, 
-                    username: updates.username 
-                })
+                .update({ full_name: updates.name, bio: updates.bio, username: updates.username })
                 .eq('user_id', session.user.id)
                 .select()
-                .single();
-
+                .maybeSingle();
             if (error) throw error;
-            setProfile(data);
+            if (data) setProfile(data);
             toast.success("Perfil atualizado!");
         } catch (err: any) {
             toast.error(err.message);
@@ -397,7 +346,6 @@ const App: React.FC = () => {
                     account_type: type,
                     username: session.user.email?.split('@')[0] + Math.floor(Math.random()*1000)
                 });
-            
             if (error) throw error;
             await processAuth(session);
         } catch (error: any) {
@@ -408,7 +356,9 @@ const App: React.FC = () => {
     };
 
     const handleSignOut = async () => {
-        await fullLogout();
+        localStorage.clear();
+        sessionStorage.clear();
+        await supabase.auth.signOut();
     };
 
     const handleViewProfile = (id: string) => {
@@ -501,9 +451,7 @@ const App: React.FC = () => {
                 <HomeScreen 
                     loggedInProfile={profile} viewedProfileId={null} realBusinesses={realBusinessCategories} 
                     onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={() => {}} 
-                    onSelectCategory={(cat) => {
-                        handleViewProfile(cat.id);
-                    }} 
+                    onSelectCategory={(cat) => { handleViewProfile(cat.id); }} 
                     onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} 
                     onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} 
                     onNavigateToChat={() => {}} onNavigateToRewards={() => {}} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} 
@@ -524,7 +472,7 @@ const App: React.FC = () => {
                 onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home)} 
                 posts={posts} 
                 items={allMarketplaceProducts.map(p => ({ id: p.id, name: p.title, description: p.description || '', price: p.price, image: p.image_url || '', category: p.category }))} 
-                realBusinesses={realBusinessCategories}
+                availableProfiles={allProfilesForSearch}
                 onViewProfile={handleViewProfile} 
                 onLikePost={handleLikePost} 
                 onItemClick={startTryOn} 
@@ -552,23 +500,13 @@ const App: React.FC = () => {
                         if (!session?.user) return;
                         setIsLoading(true);
                         try {
-                            const { data, error } = await supabase
-                                .from('posts')
-                                .insert({
-                                    user_id: session.user.id,
-                                    image_url: generatedImage,
-                                    caption: caption
-                                })
-                                .select()
-                                .single();
-                            
-                            if (error) throw error;
-                            
-                            await fetchGlobalFeed(); 
+                            await supabase.from('posts').insert({ user_id: session.user.id, image_url: generatedImage, caption: caption });
+                            await fetchGlobalData(); 
                             setShowCaptionModal(false);
                             setCurrentScreen(Screen.Confirmation);
                         } catch (err: any) {
-                            toast.error(err.message);
+                            console.error("Erro ao publicar post:", err);
+                            toast.error("Erro ao publicar.");
                         } finally {
                             setIsLoading(false);
                         }

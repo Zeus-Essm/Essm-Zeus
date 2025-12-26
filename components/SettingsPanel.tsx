@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { SunIcon, MoonIcon, ChevronRightIcon, LogoutIcon, ShieldCheckIcon, BellIcon } from './IconComponents';
 import type { Profile } from '../types';
@@ -110,9 +109,9 @@ const SettingsPanel: React.FC<SettingsPanelProps> = ({ theme, onToggleTheme, onC
                         </div>
                     </div>
 
-                    <div className="px-5 pt-2">
-                        <p className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest text-center">
-                            PUMP V1.0.4 • Angola Edition
+                    <div className="px-5 pt-2 flex flex-col items-center gap-1 opacity-40">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 text-center">
+                            PUMP • Angola Edition
                         </p>
                     </div>
                 </main>

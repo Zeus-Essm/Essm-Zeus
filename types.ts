@@ -16,7 +16,7 @@ export interface User {
 }
 
 export interface Profile {
-  user_id: string;
+  user_id: string; 
   username: string | null;
   full_name: string | null;
   bio: string | null;
