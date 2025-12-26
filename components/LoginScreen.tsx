@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { supabase } from '../services/supabaseClient';
 import { GoogleIcon } from './IconComponents';
 import { toast } from '../utils/toast';
 
@@ -8,13 +7,13 @@ interface LoginScreenProps {
   onSuccess?: () => void;
 }
 
-const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigateToSignUp, onSuccess }) => {
+const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isSignUp, setIsSignUp] = useState(false);
 
-    const handleAuth = async (event: React.FormEvent) => {
+    const handleAuth = (event: React.FormEvent) => {
         event.preventDefault();
         if (!email || !password) {
             toast.error("Preencha todos os campos.");
@@ -22,48 +21,19 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onNavigateToSignUp, onSuccess
         }
         
         setLoading(true);
-        try {
-            if (isSignUp) {
-                const { error, data } = await supabase.auth.signUp({ 
-                    email, 
-                    password
-                });
-                if (error) throw error;
-                if (data.user) {
-                    toast.success('Conta criada! Agora você pode entrar.');
-                    setIsSignUp(false);
-                }
-            } else {
-                const { error } = await supabase.auth.signInWithPassword({ 
-                    email, 
-                    password 
-                });
-                if (error) throw error;
-                if (onSuccess) onSuccess();
-            }
-        } catch (err: any) {
-            console.error("Auth Error:", err);
-            toast.error(err.message || 'Erro na autenticação.');
-        } finally {
+        // Simulação de delay de rede
+        setTimeout(() => {
             setLoading(false);
-        }
+            if (onSuccess) onSuccess();
+        }, 1000);
     };
     
-    const handleSocialLogin = async (provider: 'google') => {
+    const handleSocialLogin = (provider: 'google') => {
         setLoading(true);
-        try {
-            const { error } = await supabase.auth.signInWithOAuth({
-                provider: provider,
-                options: {
-                    redirectTo: window.location.origin, 
-                },
-            });
-            if (error) throw error;
-        } catch (err: any) {
-            toast.error(err.message || 'Erro no login social.');
-        } finally {
+        setTimeout(() => {
             setLoading(false);
-        }
+            if (onSuccess) onSuccess();
+        }, 1200);
     };
 
     return (

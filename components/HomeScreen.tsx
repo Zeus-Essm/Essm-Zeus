@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { supabase } from '../services/supabaseClient';
+import React, { useState, useRef, useMemo } from 'react';
 import type { Profile, Category, Post, Item, MarketplaceType } from '../types';
 import { CATEGORIES } from '../constants';
 import { 
@@ -46,8 +45,6 @@ interface HomeScreenProps {
 
 const HomeScreen: React.FC<HomeScreenProps> = ({
   loggedInProfile,
-  viewedProfileId,
-  realBusinesses = [],
   onUpdateProfile,
   onUpdateProfileImage,
   onSelectCategory,
@@ -65,42 +62,14 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   onViewProfile,
   onSearchClick
 }) => {
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'posts' | 'market'>('market'); 
   const [selectedCategory, setSelectedCategory] = useState<MarketplaceType>('fashion');
   const [viewingPostIndex, setViewingPostIndex] = useState<number | null>(null);
   const [commentingPost, setCommentingPost] = useState<Post | null>(null);
-  
-  const isMyProfile = !viewedProfileId || viewedProfileId === loggedInProfile.user_id;
-  const profileImageInputRef = useRef<HTMLInputElement>(null);
-  const categoryScrollRef = useRef<HTMLDivElement>(null);
   const [isEditingBio, setIsEditingBio] = useState(false);
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      if (isMyProfile) {
-        setProfile(loggedInProfile);
-        setLoading(false);
-        return;
-      }
-      setLoading(true);
-      try {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', viewedProfileId)
-          .single();
-        if (error) throw error;
-        setProfile(data);
-      } catch (err) {
-        console.error("Perfil externo não encontrado");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProfile();
-  }, [viewedProfileId, loggedInProfile, isMyProfile]);
+  const profileImageInputRef = useRef<HTMLInputElement>(null);
+  const categoryScrollRef = useRef<HTMLDivElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -111,38 +80,18 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   };
 
-  const handleCategoryClick = (id: MarketplaceType, event: React.MouseEvent<HTMLButtonElement>) => {
-    setSelectedCategory(id);
-    event.currentTarget.scrollIntoView({
-      behavior: 'smooth',
-      block: 'nearest',
-      inline: 'center'
-    });
-  };
-
   const marketplaceItems = useMemo(() => {
-    if (selectedCategory === 'fashion') {
-        return realBusinesses;
-    }
-    return CATEGORIES.filter(c => c.type === selectedCategory && !c.isAd);
-  }, [selectedCategory, realBusinesses]);
+    return CATEGORIES.filter(c => c.type === selectedCategory);
+  }, [selectedCategory]);
 
-  if (loading) return (
-      <div className="h-full w-full bg-[var(--bg-main)] flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
-      </div>
-  );
-  
-  if (!profile) return null;
-
-  const userPosts = posts.filter(p => p.user.id === profile.user_id);
+  const userPosts = posts.filter(p => p.user.id === loggedInProfile.user_id);
 
   return (
     <div className="w-full h-full flex flex-col bg-white text-zinc-900 overflow-hidden font-sans">
       <header className="px-4 pt-4 pb-2 flex items-center justify-between bg-white shrink-0 z-10">
           <div className="flex items-center gap-1 cursor-pointer active:opacity-60 transition-opacity">
               <h1 className="text-lg font-bold tracking-tight text-zinc-900 uppercase italic">
-                {profile.username || "perfil"}
+                {loggedInProfile.username || "perfil"}
               </h1>
               <ChevronDownIcon className="w-3.5 h-3.5 text-zinc-800" strokeWidth={3} />
           </div>
@@ -179,43 +128,39 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             <div className="flex items-center gap-4 mb-4">
                 <div className="relative shrink-0">
                     <div 
-                        onClick={() => isMyProfile && profileImageInputRef.current?.click()}
-                        className={`w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 to-amber-600 shadow-sm ${isMyProfile ? 'cursor-pointer' : ''}`}
+                        onClick={() => profileImageInputRef.current?.click()}
+                        className={`w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 to-amber-600 shadow-sm cursor-pointer`}
                     >
                         <div className="w-full h-full rounded-full bg-white p-[2px] overflow-hidden">
                             <div className="w-full h-full rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center">
-                                {profile.avatar_url ? (
-                                    <img src={profile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
+                                {loggedInProfile.avatar_url ? (
+                                    <img src={loggedInProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                                 ) : (
                                     <UserIcon className="w-10 h-10 text-zinc-300" />
                                 )}
                             </div>
                         </div>
                     </div>
-                    {isMyProfile && (
-                        <button 
-                            onClick={() => profileImageInputRef.current?.click()}
-                            className="absolute bottom-0 right-0 w-7 h-7 bg-zinc-800 rounded-full border-2 border-white flex items-center justify-center text-white shadow-md active:scale-90 transition-all"
-                        >
-                            <PlusIcon className="w-3.5 h-3.5" strokeWidth={4} />
-                        </button>
-                    )}
+                    <button 
+                        onClick={() => profileImageInputRef.current?.click()}
+                        className="absolute bottom-0 right-0 w-7 h-7 bg-zinc-800 rounded-full border-2 border-white flex items-center justify-center text-white shadow-md active:scale-90 transition-all"
+                    >
+                        <PlusIcon className="w-3.5 h-3.5" strokeWidth={4} />
+                    </button>
                     <input type="file" accept="image/*" ref={profileImageInputRef} onChange={handleFileChange} className="hidden" />
                 </div>
 
                 <div className="flex-grow min-w-0">
                     <div className="flex items-center justify-between">
                         <h2 className="font-bold text-md text-zinc-900 truncate uppercase tracking-tighter italic">
-                            {profile.full_name || profile.username}
+                            {loggedInProfile.full_name || loggedInProfile.username}
                         </h2>
-                        {isMyProfile && (
-                            <button onClick={() => setIsEditingBio(true)} className="p-1 active:scale-90 transition-transform">
-                                <PencilIcon className="w-4 h-4 text-zinc-400" />
-                            </button>
-                        )}
+                        <button onClick={() => setIsEditingBio(true)} className="p-1 active:scale-90 transition-transform">
+                            <PencilIcon className="w-4 h-4 text-zinc-400" />
+                        </button>
                     </div>
                     <div className="text-[11px] text-zinc-600 font-medium leading-tight line-clamp-3 mt-1 whitespace-pre-line">
-                        {profile.bio || "Bio não definida."}
+                        {loggedInProfile.bio || "Bio não definida."}
                     </div>
                 </div>
             </div>
@@ -292,7 +237,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                         ].map((cat) => (
                             <button 
                                 key={cat.id}
-                                onClick={(e) => handleCategoryClick(cat.id as MarketplaceType, e)}
+                                onClick={() => setSelectedCategory(cat.id as MarketplaceType)}
                                 className={`px-5 py-2 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${selectedCategory === cat.id ? 'bg-amber-600 text-white shadow-md' : 'bg-zinc-50 text-zinc-500 border border-zinc-100'}`}
                             >
                                 {cat.label}
@@ -349,7 +294,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
       {isEditingBio && (
           <BioEditModal 
-            profile={profile}
+            profile={loggedInProfile}
             onClose={() => setIsEditingBio(false)} 
             onSave={(updates) => {
                 onUpdateProfile({ name: updates.name, bio: updates.bio, username: updates.username });
