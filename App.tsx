@@ -26,6 +26,8 @@ import LoadingIndicator from './components/LoadingIndicator';
 import ResultScreen from './components/ResultScreen';
 import ConfirmationScreen from './components/ConfirmationScreen';
 import CaptionModal from './components/CaptionModal';
+// Added missing import for AllHighlightsScreen
+import AllHighlightsScreen from './components/AllHighlightsScreen';
 
 const App: React.FC = () => {
     const [session, setSession] = useState<Session | null>(null);
@@ -53,11 +55,8 @@ const App: React.FC = () => {
     const [showCaptionModal, setShowCaptionModal] = useState(false);
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
-    // --- CARREGAMENTO GLOBAL DE DADOS REAIS ---
-
     const fetchGlobalData = async () => {
         try {
-            // 1. Perfis para Busca
             const { data: profiles, error: pError } = await supabase
                 .from('profiles')
                 .select('user_id, username, full_name, avatar_url, account_type, bio, business_category');
@@ -66,8 +65,10 @@ const App: React.FC = () => {
                 console.error("Erro ao carregar perfis:", pError);
             } else {
                 setAllProfilesForSearch(profiles || []);
+                
+                // Filtra apenas perfis BUSINESS que possuem nome e imagem para o carrossel do feed
                 const stores: Category[] = (profiles || [])
-                    .filter(p => p.account_type === 'business')
+                    .filter(p => p.account_type === 'business' && p.avatar_url && (p.full_name || p.username))
                     .map(p => ({
                         id: p.user_id,
                         name: p.full_name || p.username || 'Loja PUMP',
@@ -78,47 +79,21 @@ const App: React.FC = () => {
                 setRealBusinessCategories(stores);
             }
 
-            // 2. Produtos Reais
             const { data: allProducts, error: prodError } = await supabase
                 .from('products')
                 .select('*')
                 .order('created_at', { ascending: false });
             
-            if (prodError) {
-                console.error("Erro ao carregar produtos:", prodError);
-            } else {
-                setAllMarketplaceProducts(allProducts || []);
-            }
+            if (prodError) console.error("Erro ao carregar produtos:", prodError);
+            else setAllMarketplaceProducts(allProducts || []);
 
-            // 3. Feed Global
             const { data: postsData, error: postsError } = await supabase
                 .from('posts')
                 .select(`
-                    id,
-                    image_url,
-                    caption,
-                    user_id,
-                    created_at,
-                    profiles (
-                        user_id,
-                        username,
-                        full_name,
-                        avatar_url
-                    ),
-                    comments (
-                        id,
-                        text,
-                        created_at,
-                        profiles (
-                            user_id,
-                            username,
-                            full_name,
-                            avatar_url
-                        )
-                    ),
-                    likes (
-                        user_id
-                    )
+                    id, image_url, caption, user_id, created_at,
+                    profiles (user_id, username, full_name, avatar_url),
+                    comments (id, text, created_at, profiles (user_id, username, full_name, avatar_url)),
+                    likes (user_id)
                 `)
                 .order('created_at', { ascending: false });
 
@@ -227,8 +202,6 @@ const App: React.FC = () => {
         return () => subscription.unsubscribe();
     }, []);
 
-    // --- INTERAÇÕES SOCIAIS ---
-
     const handleLikePost = async (postId: string) => {
         if (!session?.user) return;
         const post = posts.find(p => p.id === postId);
@@ -256,62 +229,6 @@ const App: React.FC = () => {
             toast.success("Comentário enviado!");
         } catch (err) {
             console.error("Erro ao comentar:", err);
-        }
-    };
-
-    const handleCreateFolder = async (title: string) => {
-        if (!session?.user) return;
-        setIsLoading(true);
-        try {
-            const { data, error } = await supabase
-                .from('folders')
-                .insert({ title, owner_id: session.user.id })
-                .select()
-                .maybeSingle();
-            if (error) throw error;
-            if (data) setFolders(prev => [data, ...prev]);
-            toast.success('Coleção criada com sucesso!');
-        } catch (err: any) {
-            toast.error(err.message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const handleAddProductToFolder = async (folderId: string | null, details: any) => {
-        if (!session?.user) return;
-        setIsLoading(true);
-        try {
-            const imageUrl = details.file ? URL.createObjectURL(details.file) : 'https://i.postimg.cc/LXmdq4H2/D.jpg';
-            const { data: productData, error: productError } = await supabase
-                .from('products')
-                .insert({
-                    owner_id: session.user.id,
-                    folder_id: folderId,
-                    title: details.title,
-                    description: details.description,
-                    price: details.price,
-                    image_url: imageUrl,
-                    category: 'fashion',
-                    is_try_on: true
-                })
-                .select()
-                .maybeSingle();
-
-            if (productError) throw productError;
-
-            if (folderId) {
-                await supabase.from('folders').update({ cover_image: imageUrl }).eq('id', folderId);
-                setFolders(prev => prev.map(f => f.id === folderId ? { ...f, cover_image: imageUrl } : f));
-            }
-
-            if (productData) setProducts(prev => [productData, ...prev]);
-            fetchGlobalData(); 
-            toast.success("Item adicionado!");
-        } catch (err: any) {
-            toast.error(err.message);
-        } finally {
-            setIsLoading(false);
         }
     };
 
@@ -362,7 +279,14 @@ const App: React.FC = () => {
     };
 
     const handleViewProfile = (id: string) => {
-        toast("Visualizando perfil: " + id);
+        // Encontra o perfil e navega conforme o tipo
+        const targetProfile = allProfilesForSearch.find(p => p.user_id === id);
+        if (targetProfile?.account_type === 'business') {
+            // Em uma implementação real, poderíamos abrir uma VendorViewModal
+            toast("Visitando loja: " + (targetProfile.full_name || targetProfile.username));
+        } else {
+            toast("Visualizando perfil: " + id);
+        }
     };
 
     const startTryOn = (item: Item) => {
@@ -393,12 +317,20 @@ const App: React.FC = () => {
                 return businessProfile && profile && (
                     <VendorDashboard 
                         businessProfile={businessProfile} profile={profile} folders={folders} products={products} posts={posts}
-                        onCreateFolder={handleCreateFolder} 
+                        onCreateFolder={async (title) => {
+                            const { data } = await supabase.from('folders').insert({ title, owner_id: profile.user_id }).select().single();
+                            if (data) setFolders(prev => [data, ...prev]);
+                        }} 
                         onDeleteFolder={async (id) => {
                             await supabase.from('folders').delete().eq('id', id);
                             setFolders(prev => prev.filter(f => f.id !== id));
                         }} 
-                        onCreateProductInFolder={handleAddProductToFolder} 
+                        onCreateProductInFolder={async (folderId, details) => {
+                            // Lógica simplificada para exemplo
+                            const { data } = await supabase.from('products').insert({ ...details, folder_id: folderId, owner_id: profile.user_id }).select().single();
+                            if (data) setProducts(prev => [data, ...prev]);
+                            fetchGlobalData();
+                        }} 
                         onDeleteProduct={async (id) => {
                             await supabase.from('products').delete().eq('id', id);
                             setProducts(prev => prev.filter(p => p.id !== id));
@@ -426,7 +358,10 @@ const App: React.FC = () => {
                         businessProfile={businessProfile} 
                         products={products} 
                         folders={folders} 
-                        onCreateProduct={handleAddProductToFolder} 
+                        onCreateProduct={async (folderId, details) => {
+                             const { data } = await supabase.from('products').insert({ ...details, folder_id: folderId, owner_id: profile?.user_id }).select().single();
+                             if (data) setProducts(prev => [data, ...prev]);
+                        }} 
                         onDeleteProduct={(id) => {
                             supabase.from('products').delete().eq('id', id).then(() => {
                                 setProducts(p => p.filter(x => x.id !== id));
@@ -439,10 +374,11 @@ const App: React.FC = () => {
             case Screen.Feed: return profile && (
                 <FeedScreen 
                     posts={posts} stories={[]} profile={profile} businessProfile={businessProfile} 
+                    realBusinesses={realBusinessCategories}
                     isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={startTryOn} 
                     onAddToCartMultiple={() => {}} onBuyMultiple={() => {}} onViewProfile={handleViewProfile} 
-                    onSelectCategory={() => {}} onLikePost={handleLikePost} onAddComment={handleAddComment} 
-                    onNavigateToAllHighlights={() => {}} onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)} 
+                    onSelectCategory={(cat) => handleViewProfile(cat.id)} onLikePost={handleLikePost} onAddComment={handleAddComment} 
+                    onNavigateToAllHighlights={() => setCurrentScreen(Screen.AllHighlights)} onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)} 
                     unreadNotificationCount={0} onNotificationsClick={() => setIsNotificationsOpen(true)} 
                     onSearchClick={() => setCurrentScreen(Screen.Search)} 
                 />
@@ -451,7 +387,7 @@ const App: React.FC = () => {
                 <HomeScreen 
                     loggedInProfile={profile} viewedProfileId={null} realBusinesses={realBusinessCategories} 
                     onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={() => {}} 
-                    onSelectCategory={(cat) => { handleViewProfile(cat.id); }} 
+                    onSelectCategory={(cat) => handleViewProfile(cat.id)} 
                     onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} 
                     onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} 
                     onNavigateToChat={() => {}} onNavigateToRewards={() => {}} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} 
@@ -461,6 +397,13 @@ const App: React.FC = () => {
                     unreadNotificationCount={0} unreadMessagesCount={0} onOpenNotificationsPanel={() => setIsNotificationsOpen(true)} 
                     isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} 
                     onLikePost={handleLikePost} onAddComment={handleAddComment} onSearchClick={() => setCurrentScreen(Screen.Search)} 
+                />
+            );
+            case Screen.AllHighlights: return (
+                <AllHighlightsScreen 
+                    categories={realBusinessCategories} 
+                    onBack={() => setCurrentScreen(Screen.Feed)} 
+                    onSelectCategory={(cat) => handleViewProfile(cat.id)} 
                 />
             );
             case Screen.ImageSourceSelection: return <ImageSourceSelectionScreen onImageUpload={(url) => { setUserImage(url); setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home); }} onUseCamera={() => setCurrentScreen(Screen.Camera)} onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} />;
@@ -514,10 +457,10 @@ const App: React.FC = () => {
                 />
             )}
             
-            {profile?.account_type === 'personal' && [Screen.Feed, Screen.Home, Screen.Cart, Screen.Search].includes(currentScreen) && (
+            {profile?.account_type === 'personal' && [Screen.Feed, Screen.Home, Screen.Cart, Screen.Search, Screen.AllHighlights].includes(currentScreen) && (
                 <BottomNavBar activeScreen={currentScreen} accountType="personal" onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} onNavigateToPromotion={() => {}} onNavigateToProfile={() => setCurrentScreen(Screen.Home)} onNavigateToVendorAnalytics={() => {}} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} />
             )}
-            {profile?.account_type === 'business' && [Screen.VendorDashboard, Screen.VendorProducts, Screen.VendorAnalytics, Screen.Feed, Screen.Search].includes(currentScreen) && (
+            {profile?.account_type === 'business' && [Screen.VendorDashboard, Screen.VendorProducts, Screen.VendorAnalytics, Screen.Feed, Screen.Search, Screen.AllHighlights].includes(currentScreen) && (
                 <BottomNavBar activeScreen={currentScreen} accountType="business" onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToCart={() => {}} onNavigateToPromotion={() => {}} onNavigateToProfile={() => setCurrentScreen(Screen.VendorDashboard)} onNavigateToVendorAnalytics={() => setCurrentScreen(Screen.VendorAnalytics)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} />
             )}
             {currentScreen === Screen.Confirmation && <ConfirmationScreen message="Look publicado no feed!" onHome={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home)} />}
