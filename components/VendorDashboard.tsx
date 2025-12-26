@@ -108,7 +108,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                             <h2 className="font-bold text-md text-zinc-900 truncate uppercase tracking-tighter italic leading-none pr-8">
                                 {businessProfile.business_name}
                             </h2>
-                            <div className="text-[11px] text-zinc-600 font-medium leading-tight line-clamp-3 mt-1">
+                            <div className="text-[11px] text-zinc-600 font-medium leading-tight line-clamp-2 mt-1">
                                 {businessProfile.description || "Loja do ecossistema PUMP."}
                             </div>
                         </div>
@@ -118,52 +118,55 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                 <div className="flex bg-white sticky top-0 z-10 shadow-sm border-b border-zinc-50">
                     <button onClick={() => setActiveTab('shop')} className={`flex-1 py-4 flex justify-center items-center relative transition-colors ${activeTab === 'shop' ? 'text-amber-600' : 'text-zinc-400'}`}>
                         <span className="text-xs font-bold uppercase tracking-widest">CATÁLOGO</span>
-                        {activeTab === 'shop' && <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-amber-600 rounded-t-full"></div>}
+                        {activeTab === 'shop' && <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-amber-600"></div>}
                     </button>
                     <button onClick={() => setActiveTab('posts')} className={`flex-1 py-4 flex justify-center items-center relative transition-colors ${activeTab === 'posts' ? 'text-amber-600' : 'text-zinc-400'}`}>
                         <span className="text-xs font-bold uppercase tracking-widest">PUBLICAÇÕES</span>
-                        {activeTab === 'posts' && <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-amber-600 rounded-t-full"></div>}
+                        {activeTab === 'posts' && <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-amber-600"></div>}
                     </button>
                 </div>
 
-                <div className="min-h-[400px] bg-white p-4">
+                <div className="min-h-[400px] bg-white p-6">
                     {activeTab === 'shop' ? (
                         <div className="animate-fadeIn">
-                            <div className="grid grid-cols-3 gap-2">
+                            <div className="grid grid-cols-2 gap-6">
                                 {folders.map(folder => (
-                                    <div key={folder.id} className="relative h-32 rounded-xl overflow-hidden group shadow-sm active:scale-[0.98] transition-all border border-zinc-100 cursor-pointer" onClick={() => onNavigateToProducts(folder.id)}>
+                                    <div key={folder.id} className="relative aspect-[2/3.5] rounded-[2.5rem] overflow-hidden group shadow-xl active:scale-[0.98] transition-all border border-zinc-100 cursor-pointer" onClick={() => onNavigateToProducts(folder.id)}>
                                         {!isVisitor && (
                                             <button 
                                                 onClick={(e) => { e.stopPropagation(); onDeleteFolder(folder.id); }}
-                                                className="absolute top-1.5 left-1.5 z-20 p-1.5 bg-black/40 backdrop-blur-md rounded-lg text-white hover:bg-red-500 transition-colors"
+                                                className="absolute top-4 right-4 z-20 p-2.5 bg-black/40 backdrop-blur-md rounded-2xl text-white hover:bg-red-500 transition-colors"
                                             >
-                                                <TrashIcon className="w-3 h-3" />
+                                                <TrashIcon className="w-4 h-4" />
                                             </button>
                                         )}
                                         {folder.cover_image ? (
                                             <img src={folder.cover_image} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full bg-zinc-50 flex items-center justify-center">
-                                                <ArchiveIcon className="w-8 h-8 text-zinc-200" strokeWidth={1} />
+                                                <ArchiveIcon className="w-12 h-12 text-zinc-200" strokeWidth={1} />
                                             </div>
                                         )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2">
-                                            <h3 className="text-[10px] font-black text-white uppercase italic tracking-tighter leading-tight truncate">{folder.title}</h3>
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-6">
+                                            <h3 className="text-lg font-black text-white uppercase italic tracking-tighter leading-tight truncate">{folder.title}</h3>
+                                            <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mt-2">Explorar Coleção</p>
                                         </div>
                                     </div>
                                 ))}
                                 {!isVisitor && (
-                                    <button onClick={() => setIsCreatingFolder(true)} className="h-32 border border-dashed border-zinc-200 rounded-xl flex flex-col items-center justify-center gap-1.5 bg-zinc-50/50 transition-all hover:bg-zinc-50">
-                                        <PlusIcon className="w-5 h-5 text-zinc-300" strokeWidth={3} />
-                                        <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Nova</span>
+                                    <button onClick={() => setIsCreatingFolder(true)} className="aspect-[2/3.5] border-2 border-dashed border-zinc-100 rounded-[2.5rem] flex flex-col items-center justify-center gap-3 bg-zinc-50/30 transition-all hover:bg-zinc-50">
+                                        <div className="p-4 bg-white rounded-2xl shadow-sm">
+                                            <PlusIcon className="w-8 h-8 text-zinc-300" strokeWidth={3} />
+                                        </div>
+                                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Nova Coleção</span>
                                     </button>
                                 )}
                             </div>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-3 gap-0.5 animate-fadeIn p-0.5">
+                        <div className="grid grid-cols-2 gap-4 animate-fadeIn">
                             {userPosts.map((post, index) => (
-                                <div key={post.id} onClick={() => setViewingPostIndex(index)} className="aspect-square bg-zinc-100 overflow-hidden active:opacity-80 cursor-pointer">
+                                <div key={post.id} onClick={() => setViewingPostIndex(index)} className="aspect-[2/3] bg-zinc-100 rounded-3xl overflow-hidden shadow-md active:opacity-80 cursor-pointer">
                                     <img src={post.image} className="w-full h-full object-cover" />
                                 </div>
                             ))}

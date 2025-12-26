@@ -36,7 +36,6 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
     }
   }, [initialFolderId, folders, selectedFolderId]);
 
-  // Resetar campos quando for criar novo
   const resetForm = () => {
     setNewItemTitle('');
     setNewItemPrice('');
@@ -111,55 +110,57 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
           <button onClick={onBack} className="p-2 bg-zinc-50 rounded-xl text-zinc-500 active:scale-90 transition-transform">
             <ArrowLeftIcon className="w-5 h-5"/>
           </button>
-          <h1 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900 italic">Estoque</h1>
+          <h1 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900 italic">Gestão de Itens</h1>
           <div className="w-9"></div> 
        </div>
 
-       <div className="flex gap-1.5 px-4 py-3 overflow-x-auto scrollbar-hide shrink-0">
+       <div className="flex gap-2 px-5 py-5 overflow-x-auto scrollbar-hide shrink-0">
           {folders.map(f => (
              <button 
                 key={f.id}
                 onClick={() => setSelectedFolderId(f.id)}
-                className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${selectedFolderId === f.id ? 'bg-zinc-900 text-white border-zinc-900 shadow-sm' : 'bg-zinc-50 text-zinc-400 border-zinc-100'}`}
+                className={`px-6 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all ${selectedFolderId === f.id ? 'bg-zinc-900 text-white shadow-xl' : 'bg-zinc-50 text-zinc-400 border border-zinc-100'}`}
              >
                 {f.title}
              </button>
           ))}
        </div>
 
-       <div className="flex-grow overflow-y-auto px-2 pb-32 grid grid-cols-4 gap-1.5">
+       <div className="flex-grow overflow-y-auto px-6 pb-32 grid grid-cols-2 gap-6">
           {filteredProducts.map(product => (
-             <div key={product.id} className="relative aspect-square rounded-lg overflow-hidden shadow-sm border border-zinc-50 group animate-fadeIn bg-zinc-50">
+             <div key={product.id} className="relative aspect-[2/3.5] rounded-[2.5rem] overflow-hidden shadow-xl border border-zinc-100 group animate-fadeIn bg-zinc-50">
                 <img src={product.image_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg'} className="w-full h-full object-cover" />
                 
-                <div className="absolute top-1 right-1 flex flex-col gap-1 z-10">
+                <div className="absolute top-4 right-4 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all z-10 scale-100">
                     <button 
                        onClick={() => handleEditClick(product)}
-                       className="p-1 bg-white/95 rounded-md text-zinc-900 shadow-sm border border-zinc-100"
+                       className="p-4 bg-white/95 backdrop-blur-md rounded-2xl text-zinc-900 shadow-xl border border-zinc-100 active:scale-90 transition-all"
                     >
-                       <PencilIcon className="w-2.5 h-2.5" />
+                       <PencilIcon className="w-5 h-5" />
                     </button>
                     <button 
                        onClick={() => onDeleteProduct(product.id)}
-                       className="p-1 bg-red-500 rounded-md text-white shadow-sm"
+                       className="p-4 bg-red-500/95 backdrop-blur-md rounded-2xl text-white shadow-xl active:scale-90 transition-all"
                     >
-                       <TrashIcon className="w-2.5 h-2.5" />
+                       <TrashIcon className="w-5 h-5" />
                     </button>
                 </div>
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-1.5">
-                   <p className="text-white font-bold text-[7px] truncate uppercase italic tracking-tight">{product.title}</p>
-                   <p className="text-amber-400 font-black text-[8px] tracking-tighter">{(product.price || 0).toLocaleString('pt-AO', {maximumFractionDigits: 0})}</p>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent flex flex-col justify-end p-6">
+                   <p className="text-white font-bold text-[12px] truncate uppercase italic tracking-tight">{product.title}</p>
+                   <p className="text-amber-400 font-black text-sm mt-1 tracking-tighter">{(product.price || 0).toLocaleString('pt-AO', {maximumFractionDigits: 0})}</p>
                 </div>
              </div>
           ))}
 
           <button 
             onClick={() => { resetForm(); setIsAddingItem(true); }} 
-            className="aspect-square border border-dashed border-zinc-200 rounded-lg flex flex-col items-center justify-center gap-1 bg-zinc-50/30 text-zinc-300 hover:bg-zinc-50 transition-all active:scale-95"
+            className="aspect-[2/3.5] border-2 border-dashed border-zinc-100 rounded-[2.5rem] flex flex-col items-center justify-center gap-3 bg-zinc-50/20 text-zinc-300 hover:bg-zinc-100 transition-all active:scale-95"
           >
-             <PlusIcon className="w-4 h-4" strokeWidth={3} />
-             <span className="text-[6px] font-black uppercase tracking-widest">Add</span>
+             <div className="p-5 bg-white rounded-2xl shadow-md">
+                <PlusIcon className="w-10 h-10" strokeWidth={3} />
+             </div>
+             <span className="text-[11px] font-black uppercase tracking-widest">Novo Item</span>
           </button>
        </div>
 

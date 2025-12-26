@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
@@ -63,10 +64,12 @@ const App: React.FC = () => {
         setIsLoading(true);
         try {
             await supabase.auth.signOut();
-            window.location.reload();
+            // Fix: location.reload does not take arguments
+            location.reload();
         } catch (err) {
             console.error("Erro ao sair:", err);
-            window.location.reload();
+            // Fix: location.reload does not take arguments
+            location.reload();
         }
     };
 
@@ -196,6 +199,7 @@ const App: React.FC = () => {
 
             if (error) throw error;
             if (data) {
+                // Fix: Properly update products lists using map
                 setProducts(prev => prev.map(p => p.id === productId ? data : p));
                 setAllMarketplaceProducts(prev => prev.map(p => p.id === productId ? data : p));
                 toast.success("Item atualizado!");

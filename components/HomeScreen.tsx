@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useMemo } from 'react';
 import type { Profile, Category, Post, Item, MarketplaceType } from '../types';
 import { 
@@ -203,19 +202,19 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
 
         <div className="min-h-[400px] bg-white">
             {activeTab === 'posts' && (
-                <div className="grid grid-cols-3 gap-0.5 animate-fadeIn p-0.5">
+                <div className="grid grid-cols-2 gap-4 animate-fadeIn p-4">
                     {userPosts.length > 0 ? (
                         userPosts.map((post, index) => (
                             <div 
                                 key={post.id} 
                                 onClick={() => setViewingPostIndex(index)}
-                                className="aspect-square bg-zinc-100 overflow-hidden active:opacity-80 transition-opacity cursor-pointer"
+                                className="aspect-[2/3] bg-zinc-100 rounded-3xl shadow-md overflow-hidden active:opacity-80 transition-opacity cursor-pointer border border-zinc-100"
                             >
                                 <img src={post.image} alt="" className="w-full h-full object-cover" />
                             </div>
                         ))
                     ) : (
-                        <div className="col-span-3 py-32 text-center flex flex-col items-center opacity-30">
+                        <div className="col-span-2 py-32 text-center flex flex-col items-center opacity-30">
                             <LooksIcon className="w-12 h-12 text-zinc-400 mb-4" strokeWidth={1} />
                             <p className="text-[10px] font-bold uppercase tracking-widest">Nenhuma publicação ainda</p>
                         </div>
@@ -246,17 +245,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                         ))}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 px-4 pb-12">
+                    <div className="grid grid-cols-2 gap-4 px-4 pb-12">
                         {marketplaceItems.length > 0 ? marketplaceItems.map(category => (
                             <div 
                                 key={category.id} 
                                 onClick={() => onSelectCategory(category)} 
-                                className="relative h-56 rounded-2xl overflow-hidden group shadow-sm active:scale-[0.98] transition-all border border-zinc-100"
+                                className="relative aspect-[2/3.5] rounded-3xl overflow-hidden group shadow-lg active:scale-[0.98] transition-all border border-zinc-100"
                             >
                                 <img src={category.image} alt={category.name} className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">
-                                    <h3 className="text-md font-black text-white uppercase italic tracking-tighter leading-none">{category.name}</h3>
-                                    <p className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest mt-1">Loja Real</p>
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-5">
+                                    <h3 className="text-lg font-black text-white uppercase italic tracking-tighter leading-none">{category.name}</h3>
+                                    <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mt-2 italic">Loja Real</p>
                                 </div>
                             </div>
                         )) : (
