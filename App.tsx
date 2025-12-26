@@ -59,23 +59,32 @@ const App: React.FC = () => {
 
     const unreadCount = notifications.filter(n => !n.read).length;
 
-    // --- LÓGICA DE AUTENTICAÇÃO SUPABASE ---
+    // --- LÓGICA DE AUTENTICAÇÃO SUPABASE (ATUALIZADA PARA INICIAR NA SELEÇÃO) ---
 
     const handleAuthState = async (session: Session | null) => {
         setAuthLoading(true);
         setSession(session);
 
+        // SE NÃO HOUVER SESSÃO, INICIA NA TELA DE SELEÇÃO DE USUÁRIO
         if (!session?.user) {
-            setProfile(null);
+            setProfile({
+                user_id: 'guest_user',
+                username: 'visitante',
+                full_name: 'Visitante PUMP',
+                bio: 'Explorando as tendências de Angola.',
+                avatar_url: null,
+                account_type: null, // Mantém null para forçar a tela de seleção
+                reward_points: 0
+            });
             setBusinessProfile(null);
-            setCurrentScreen(Screen.Login);
+            setCurrentScreen(Screen.AccountTypeSelection); // Inicia aqui
             setAuthLoading(false);
             return;
         }
 
         const user = session.user;
 
-        // 1️⃣ tentar buscar profile
+        // 1️⃣ tentar buscar profile real
         const { data: existingProfile } = await supabase
             .from('profiles')
             .select('*')
@@ -104,8 +113,7 @@ const App: React.FC = () => {
 
             if (insertError) {
                 console.error('[PROFILE INSERT ERROR]', insertError);
-                // fallback UI
-                setCurrentScreen(Screen.Login);
+                setCurrentScreen(Screen.AccountTypeSelection); // Fallback seguro
                 setAuthLoading(false);
                 return;
             }
@@ -138,7 +146,6 @@ const App: React.FC = () => {
             setCurrentScreen(Screen.Feed);
         } 
         else {
-            // 4️⃣ onboarding obrigatório
             setCurrentScreen(Screen.AccountTypeSelection);
         }
 
@@ -157,7 +164,7 @@ const App: React.FC = () => {
         return () => subscription.unsubscribe();
     }, []);
 
-    // --- AÇÕES DO BANCO (REAL SUPABASE) ---
+    // --- AÇÕES DO BANCO ---
 
     const handleCreateFolder = async (title: string) => {
         if (!session?.user) return;
@@ -182,7 +189,6 @@ const App: React.FC = () => {
         if (!session?.user) return;
         setIsLoading(true);
         try {
-            // Simulação de upload para simplificar (substituir por storage real se necessário)
             const imageUrl = details.file ? URL.createObjectURL(details.file) : 'https://i.postimg.cc/LXmdq4H2/D.jpg';
             
             const { data, error } = await supabase
@@ -204,7 +210,6 @@ const App: React.FC = () => {
             
             setProducts(prev => [data, ...prev]);
 
-            // Atualiza capa da pasta se necessário
             if (folderId) {
                 const targetFolder = folders.find(f => f.id === folderId);
                 if (targetFolder && !targetFolder.cover_image) {
@@ -246,7 +251,24 @@ const App: React.FC = () => {
     };
 
     const handleAccountTypeSelection = async (type: 'personal' | 'business') => {
-        if (!session?.user) return;
+        if (!session?.user) {
+            // Se for visitante, apenas simulamos a mudança local
+            setProfile(prev => prev ? {...prev, account_type: type} : null);
+            
+            if (type === 'business') {
+                setBusinessProfile({
+                    id: 'guest_business',
+                    business_name: 'Minha Loja',
+                    business_category: 'fashion',
+                    description: 'Loja de teste (Visitante)',
+                    logo_url: 'https://i.postimg.cc/LXmdq4H2/D.jpg'
+                });
+                setCurrentScreen(Screen.VendorDashboard);
+            } else {
+                setCurrentScreen(Screen.Feed);
+            }
+            return;
+        }
         setIsLoading(true);
         try {
             const { error } = await supabase
@@ -254,7 +276,6 @@ const App: React.FC = () => {
                 .update({ account_type: type })
                 .eq('user_id', session.user.id);
             if (error) throw error;
-            // Recarrega estado para redirecionar
             await handleAuthState(session);
         } catch (error: any) {
             toast.error(error.message);
@@ -265,7 +286,6 @@ const App: React.FC = () => {
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
-        setCurrentScreen(Screen.Login);
     };
 
     const startTryOn = (item: Item) => {
