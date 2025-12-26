@@ -17,6 +17,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
 }) => {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(initialFolderId);
   const [isAddingItem, setIsAddingItem] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const [newItemTitle, setNewItemTitle] = useState('');
   const [newItemPrice, setNewItemPrice] = useState('');
@@ -25,7 +26,6 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
   const [newItemPreview, setNewItemPreview] = useState<string | null>(null);
   const itemFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Garante que uma coleção esteja selecionada se existirem pastas
   useEffect(() => {
     if (initialFolderId) {
       setSelectedFolderId(initialFolderId);
@@ -34,7 +34,6 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
     }
   }, [initialFolderId, folders, selectedFolderId]);
 
-  // Filtra e ordena: itens mais recentes primeiro
   const filteredProducts = (selectedFolderId 
     ? products.filter(p => p.folder_id === selectedFolderId)
     : products).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -51,14 +50,26 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
 
   const handleSaveItem = async () => {
      if (!newItemTitle || !newItemFile) return;
-     await onCreateProduct(selectedFolderId, {
-        title: newItemTitle,
-        description: newItemDesc,
-        price: parseFloat(newItemPrice) || 0,
-        file: newItemFile
-     });
-     setIsAddingItem(false);
-     setNewItemTitle(''); setNewItemPrice(''); setNewItemDesc(''); setNewItemFile(null); setNewItemPreview(null);
+     setIsSaving(true);
+     try {
+         const result = await onCreateProduct(selectedFolderId, {
+            title: newItemTitle,
+            description: newItemDesc,
+            price: parseFloat(newItemPrice) || 0,
+            file: newItemFile
+         });
+         
+         if (result) {
+            setIsAddingItem(false);
+            setNewItemTitle(''); 
+            setNewItemPrice(''); 
+            setNewItemDesc(''); 
+            setNewItemFile(null); 
+            setNewItemPreview(null);
+         }
+     } finally {
+         setIsSaving(false);
+     }
   };
 
   return (
@@ -72,7 +83,6 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
        </div>
 
        <div className="flex gap-2 px-4 py-4 overflow-x-auto scrollbar-hide shrink-0">
-          {/* Opção "Todos" removida conforme solicitação visual */}
           {folders.map(f => (
              <button 
                 key={f.id}
@@ -85,7 +95,6 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
        </div>
 
        <div className="flex-grow overflow-y-auto px-4 pb-32 grid grid-cols-2 gap-4">
-          {/* Mapeamento de produtos existentes - os mais recentes no topo */}
           {filteredProducts.map(product => (
              <div key={product.id} className="relative aspect-[3/4] rounded-[2rem] overflow-hidden shadow-sm border border-zinc-100 group animate-fadeIn bg-zinc-50">
                 <img src={product.image_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg'} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
@@ -104,7 +113,6 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
              </div>
           ))}
 
-          {/* Botão de Adicionar - Única opção, sempre ao FINAL do grid */}
           <button 
             onClick={() => setIsAddingItem(true)} 
             className="aspect-[3/4] border-2 border-dashed border-zinc-100 rounded-[2rem] flex flex-col items-center justify-center gap-3 bg-zinc-50/30 text-zinc-300 hover:bg-zinc-50 transition-all group active:scale-95"
@@ -117,21 +125,21 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
        </div>
 
        {isAddingItem && (
-          <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-end animate-fadeIn" onClick={() => setIsAddingItem(false)}>
+          <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-md flex items-end animate-fadeIn" onClick={() => !isSaving && setIsAddingItem(false)}>
              <div 
                 className="w-full h-[92vh] bg-white rounded-t-[3.5rem] flex flex-col shadow-2xl overflow-hidden" 
                 onClick={e => e.stopPropagation()}
              >
                 <div className="flex justify-between items-center px-8 pt-8 pb-4 shrink-0">
                    <h2 className="text-2xl font-black uppercase italic text-zinc-900 tracking-tighter">NOVO ITEM</h2>
-                   <button onClick={() => setIsAddingItem(false)} className="p-3 bg-zinc-50 rounded-2xl text-zinc-400 hover:text-zinc-900 active:scale-90 transition-all">
+                   <button onClick={() => !isSaving && setIsAddingItem(false)} className="p-3 bg-zinc-50 rounded-2xl text-zinc-400 hover:text-zinc-900 active:scale-90 transition-all">
                       <ChevronDownIcon className="w-6 h-6" />
                    </button>
                 </div>
 
                 <div className="flex-grow overflow-y-auto px-8 pb-24 space-y-6 scrollbar-hide">
                     <div 
-                      onClick={() => itemFileInputRef.current?.click()} 
+                      onClick={() => !isSaving && itemFileInputRef.current?.click()} 
                       className="w-full aspect-[3/4] max-w-[280px] mx-auto bg-zinc-50 border-2 border-dashed border-zinc-100 rounded-[2.5rem] flex flex-col items-center justify-center relative overflow-hidden transition-all hover:bg-zinc-100/50 cursor-pointer shadow-inner group"
                     >
                        {newItemPreview ? (
@@ -152,6 +160,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
                           <label className="text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em] ml-4 mb-1 block">Nome do Produto</label>
                           <input 
                             type="text" 
+                            disabled={isSaving}
                             placeholder="Ex: T-shirt Oversized Black" 
                             value={newItemTitle} 
                             onChange={e => setNewItemTitle(e.target.value)} 
@@ -163,6 +172,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
                           <label className="text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em] ml-4 mb-1 block">Preço de Venda (AOA)</label>
                           <input 
                             type="number" 
+                            disabled={isSaving}
                             placeholder="0.00" 
                             value={newItemPrice} 
                             onChange={e => setNewItemPrice(e.target.value)} 
@@ -174,6 +184,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
                           <label className="text-[9px] font-black uppercase text-zinc-400 tracking-[0.2em] ml-4 mb-1 block">Descrição Adicional</label>
                           <textarea 
                             placeholder="Fale sobre o material, tamanho..." 
+                            disabled={isSaving}
                             value={newItemDesc} 
                             onChange={e => setNewItemDesc(e.target.value)} 
                             className="w-full p-5 bg-zinc-50 rounded-2xl font-bold text-sm text-zinc-900 focus:bg-white focus:ring-4 ring-amber-500/10 transition-all border border-transparent focus:border-amber-500/20 outline-none h-32 resize-none shadow-inner" 
@@ -184,11 +195,11 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
                     <div className="pt-4 pb-8">
                       <button 
                         onClick={handleSaveItem} 
-                        disabled={!newItemTitle || !newItemFile} 
+                        disabled={!newItemTitle || !newItemFile || isSaving} 
                         className="w-full py-6 bg-amber-500 text-white font-black uppercase text-[12px] tracking-[0.2em] rounded-[1.8rem] shadow-[0_15px_30px_rgba(245,158,11,0.25)] active:scale-[0.98] transition-all disabled:opacity-30 disabled:cursor-not-allowed group flex items-center justify-center gap-3"
                       >
-                        <span>CONCLUIR E CRIAR</span>
-                        <PlusIcon className="w-5 h-5 transition-transform group-hover:rotate-90" strokeWidth={3} />
+                        <span>{isSaving ? 'A ENVIAR...' : 'CONCLUIR E CRIAR'}</span>
+                        {!isSaving && <PlusIcon className="w-5 h-5 transition-transform group-hover:rotate-90" strokeWidth={3} />}
                       </button>
                     </div>
                 </div>
