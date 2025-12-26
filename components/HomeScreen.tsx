@@ -81,7 +81,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   };
 
-  // Filtra as lojas reais com base na categoria selecionada no UI (por enquanto quase todas são moda)
   const marketplaceItems = useMemo(() => {
     return realBusinesses.filter(c => c.type === selectedCategory);
   }, [selectedCategory, realBusinesses]);
@@ -263,7 +262,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                         )) : (
                             <div className="col-span-2 py-20 text-center opacity-30 flex flex-col items-center">
                                 <SearchIcon className="w-10 h-10 text-zinc-300 mb-4" />
-                                <p className="text-[10px] font-bold uppercase tracking-widest italic text-zinc-400">Nenhuma loja cadastrada nesta categoria...</p>
+                                <p className="text-[10px] font-bold uppercase tracking-widest italic text-zinc-400">Nenhuma loja real nesta categoria ainda...</p>
                             </div>
                         )}
                     </div>

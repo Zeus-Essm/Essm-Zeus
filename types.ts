@@ -1,3 +1,4 @@
+
 export type MarketplaceType =
   | 'fashion'
   | 'restaurant'
@@ -21,6 +22,7 @@ export interface Profile {
   bio: string | null;
   avatar_url: string | null;
   account_type: 'personal' | 'business' | null;
+  business_category?: string | null;
   verification_status?: 'unverified' | 'pending' | 'verified';
   reward_points?: number;
   email?: string;

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
-import { Screen, Category, Item, Post, Profile, BusinessProfile, Folder, Product, Comment } from './types';
+import { Screen, Category, Item, Post, Profile, BusinessProfile, Folder, Product, Comment, MarketplaceType } from './types';
 import { toast } from './utils/toast';
 import { generateTryOnImage } from './services/geminiService';
 
@@ -69,8 +69,8 @@ const App: React.FC = () => {
                     id: p.user_id,
                     name: p.full_name || p.username || 'Loja PUMP',
                     image: p.avatar_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg',
-                    type: 'fashion', // Por padrão, todas entram na aba moda inicialmente
-                    subCategories: [] // Podem ser carregadas dinamicamente ao clicar
+                    type: (p.business_category as MarketplaceType) || 'fashion', 
+                    subCategories: [] 
                 }));
                 setRealBusinessCategories(stores);
             }
@@ -145,7 +145,7 @@ const App: React.FC = () => {
         await Promise.all([
             fetchGlobalFeed(),
             fetchMarketplace(),
-            fetchRealStores() // Adicionado fetch de lojas reais
+            fetchRealStores() 
         ]);
 
         if (isBusiness) {
@@ -190,7 +190,7 @@ const App: React.FC = () => {
                     setBusinessProfile({
                         id: profileData.user_id,
                         business_name: profileData.full_name || 'Minha Loja',
-                        business_category: 'fashion',
+                        business_category: profileData.business_category || 'fashion',
                         description: profileData.bio || '',
                         logo_url: profileData.avatar_url || ''
                     });
@@ -370,7 +370,6 @@ const App: React.FC = () => {
         await supabase.auth.signOut();
     };
 
-    // Fix: Defined handleViewProfile to resolve "Cannot find name 'onViewProfile'" error across multiple rendering cases.
     const handleViewProfile = (id: string) => {
         toast("Visualizando perfil: " + id);
     };
@@ -462,7 +461,6 @@ const App: React.FC = () => {
                     loggedInProfile={profile} viewedProfileId={null} realBusinesses={realBusinessCategories} 
                     onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={() => {}} 
                     onSelectCategory={(cat) => {
-                        // Navega para o perfil da loja ao clicar no mercado
                         handleViewProfile(cat.id);
                     }} 
                     onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} 
