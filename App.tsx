@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
 import { Screen, Category, Item, Post, Profile, BusinessProfile, Folder, Product, AppNotification, SubCategory } from './types';
-import { INITIAL_POSTS, MALE_CLOTHING_SUBCATEGORIES, CATEGORIES } from './constants';
+import { INITIAL_POSTS, CATEGORIES } from './constants';
 import { toast } from './utils/toast';
 import { generateTryOnImage } from './services/geminiService';
 
@@ -59,25 +59,17 @@ const App: React.FC = () => {
 
     const unreadCount = notifications.filter(n => !n.read).length;
 
-    // --- LÓGICA DE AUTENTICAÇÃO SUPABASE (ATUALIZADA PARA INICIAR NA SELEÇÃO) ---
+    // --- LÓGICA DE AUTENTICAÇÃO SUPABASE ---
 
     const handleAuthState = async (session: Session | null) => {
         setAuthLoading(true);
         setSession(session);
 
-        // SE NÃO HOUVER SESSÃO, INICIA NA TELA DE SELEÇÃO DE USUÁRIO
+        // Se não houver sessão, envia para o LOGIN (Reativado)
         if (!session?.user) {
-            setProfile({
-                user_id: 'guest_user',
-                username: 'visitante',
-                full_name: 'Visitante PUMP',
-                bio: 'Explorando as tendências de Angola.',
-                avatar_url: null,
-                account_type: null, // Mantém null para forçar a tela de seleção
-                reward_points: 0
-            });
+            setProfile(null);
             setBusinessProfile(null);
-            setCurrentScreen(Screen.AccountTypeSelection); // Inicia aqui
+            setCurrentScreen(Screen.Login);
             setAuthLoading(false);
             return;
         }
@@ -113,7 +105,7 @@ const App: React.FC = () => {
 
             if (insertError) {
                 console.error('[PROFILE INSERT ERROR]', insertError);
-                setCurrentScreen(Screen.AccountTypeSelection); // Fallback seguro
+                setCurrentScreen(Screen.Login);
                 setAuthLoading(false);
                 return;
             }
@@ -146,6 +138,7 @@ const App: React.FC = () => {
             setCurrentScreen(Screen.Feed);
         } 
         else {
+            // Se autenticado mas sem tipo de conta, vai para seleção
             setCurrentScreen(Screen.AccountTypeSelection);
         }
 
@@ -251,24 +244,8 @@ const App: React.FC = () => {
     };
 
     const handleAccountTypeSelection = async (type: 'personal' | 'business') => {
-        if (!session?.user) {
-            // Se for visitante, apenas simulamos a mudança local
-            setProfile(prev => prev ? {...prev, account_type: type} : null);
-            
-            if (type === 'business') {
-                setBusinessProfile({
-                    id: 'guest_business',
-                    business_name: 'Minha Loja',
-                    business_category: 'fashion',
-                    description: 'Loja de teste (Visitante)',
-                    logo_url: 'https://i.postimg.cc/LXmdq4H2/D.jpg'
-                });
-                setCurrentScreen(Screen.VendorDashboard);
-            } else {
-                setCurrentScreen(Screen.Feed);
-            }
-            return;
-        }
+        if (!session?.user) return;
+        
         setIsLoading(true);
         try {
             const { error } = await supabase
