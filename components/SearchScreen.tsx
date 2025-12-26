@@ -10,6 +10,7 @@ interface SearchScreenProps {
     onBack: () => void;
     posts: Post[];
     items: Item[];
+    realBusinesses: Category[];
     onViewProfile: (profileId: string) => void;
     onLikePost: (postId: string) => void;
     onItemClick: (item: Item) => void;
@@ -24,6 +25,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
     onBack, 
     posts, 
     items,
+    realBusinesses,
     onViewProfile,
     onLikePost,
     onItemClick,
@@ -39,7 +41,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
         const saved = localStorage.getItem('pump_recent_searches');
         return saved ? JSON.parse(saved) : [];
     });
-    const [filteredProfiles, setFilteredProfiles] = useState<Profile[]>([]);
+    const [filteredProfiles, setFilteredProfiles] = useState<Category[]>([]);
     const [filteredItems, setFilteredItems] = useState<Item[]>([]);
     const [viewingPostDetails, setViewingPostDetails] = useState<{ posts: Post[]; startIndex: number } | null>(null);
     const [quickViewItem, setQuickViewItem] = useState<Item | null>(null);
@@ -53,24 +55,6 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
         return [...posts].sort((a, b) => b.likes - a.likes);
     }, [posts]);
     
-    const allProfiles = useMemo(() => {
-        const profileMap = new Map<string, Profile>();
-        posts.forEach(post => {
-            if (!profileMap.has(post.user.id)) {
-                profileMap.set(post.user.id, {
-                    user_id: post.user.id, 
-                    // FIX: Corrected property name from name and avatar to full_name and avatar_url to match User/Profile type
-                    username: post.user.full_name || '',
-                    full_name: post.user.full_name || '',
-                    avatar_url: post.user.avatar_url || null,
-                    bio: null,
-                    account_type: post.isSponsored ? 'business' : 'personal',
-                });
-            }
-        });
-        return Array.from(profileMap.values());
-    }, [posts]);
-
     const getCategoryTypeFromItem = (item: Item): MarketplaceType => {
         const rootCategoryId = item.category.split('_')[0];
         const category = CATEGORIES.find(c => c.id === rootCategoryId);
@@ -88,19 +72,21 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
         if (activeTab === 'explore') setActiveTab('accounts');
 
         const lowercasedQuery = query.toLowerCase();
-        const profileResults = allProfiles.filter(profile =>
-            profile.username.toLowerCase().includes(lowercasedQuery) ||
-            (profile.full_name && profile.full_name.toLowerCase().includes(lowercasedQuery))
-        );
-        setFilteredProfiles(profileResults);
         
+        // Busca em Lojas Reais
+        const businessResults = realBusinesses.filter(biz =>
+            biz.name.toLowerCase().includes(lowercasedQuery)
+        );
+        setFilteredProfiles(businessResults);
+        
+        // Busca em Produtos Reais
         const itemResults = items.filter(item =>
             item.name.toLowerCase().includes(lowercasedQuery) ||
             item.description.toLowerCase().includes(lowercasedQuery)
         );
         setFilteredItems(itemResults);
 
-    }, [query, allProfiles, items, activeTab]);
+    }, [query, realBusinesses, items, activeTab]);
 
     const handleSearchSubmit = (searchTerm: string) => {
         if (!searchTerm.trim()) return;
@@ -156,7 +142,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                             <form onSubmit={(e) => { e.preventDefault(); handleSearchSubmit(query); }}>
                                 <input
                                     type="text"
-                                    placeholder="Marcas, pessoas ou peças..."
+                                    placeholder="Encontrar lojas ou produtos..."
                                     value={query}
                                     onChange={(e) => setQuery(e.target.value)}
                                     className="w-full bg-zinc-50 rounded-2xl pl-11 pr-4 py-3 text-sm font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:bg-white border border-transparent focus:border-amber-500/40 transition-all placeholder:text-zinc-300 shadow-sm"
@@ -172,13 +158,13 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                                 onClick={() => setActiveTab('accounts')} 
                                 className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'accounts' ? 'bg-zinc-900 text-white shadow-lg' : 'text-zinc-400 hover:bg-zinc-50'}`}
                             >
-                                Contas
+                                Lojas ({filteredProfiles.length})
                             </button>
                             <button 
                                 onClick={() => setActiveTab('products')} 
                                 className={`flex-1 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${activeTab === 'products' ? 'bg-zinc-900 text-white shadow-lg' : 'text-zinc-400 hover:bg-zinc-50'}`}
                             >
-                                Produtos
+                                Itens ({filteredItems.length})
                             </button>
                         </div>
                     )}
@@ -209,58 +195,8 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                                 </div>
                             )}
 
-                            {/* Explore Hub Carousel Sistema Profissional */}
-                            <div className="py-6 relative group">
-                                <div className="px-5 flex justify-between items-center mb-4">
-                                    <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 italic">Explorar Categorias</h2>
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest">Deslize</span>
-                                        <ChevronRightIcon className="w-4 h-4 text-zinc-200" />
-                                    </div>
-                                </div>
-                                
-                                {/* Carousel Navigation Buttons */}
-                                {showLeftArrow && (
-                                    <button 
-                                        onClick={() => scrollCarousel('left')}
-                                        className="absolute left-6 top-[55%] -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/70 backdrop-blur-md border border-zinc-100 shadow-xl flex items-center justify-center text-zinc-800 transition-all hover:bg-white hover:scale-110 active:scale-90"
-                                    >
-                                        <ChevronLeftIcon className="w-5 h-5" />
-                                    </button>
-                                )}
-                                {showRightArrow && (
-                                    <button 
-                                        onClick={() => scrollCarousel('right')}
-                                        className="absolute right-6 top-[55%] -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/70 backdrop-blur-md border border-zinc-100 shadow-xl flex items-center justify-center text-zinc-800 transition-all hover:bg-white hover:scale-110 active:scale-90"
-                                    >
-                                        <ChevronRightIcon className="w-5 h-5" />
-                                    </button>
-                                )}
-
-                                <div 
-                                    ref={carouselRef}
-                                    onScroll={handleCarouselScroll}
-                                    className="flex overflow-x-auto snap-x snap-mandatory gap-3 px-5 scrollbar-hide pb-2 scroll-smooth"
-                                >
-                                    {CATEGORIES.map(cat => (
-                                        <button 
-                                            key={cat.id} 
-                                            onClick={() => handleCategoryClick(cat)}
-                                            className="relative flex-shrink-0 w-44 h-28 rounded-[1.8rem] overflow-hidden snap-start shadow-md border border-zinc-100 group active:scale-95 transition-all"
-                                        >
-                                            <img src={cat.image} alt={cat.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent flex flex-col justify-end p-4">
-                                                <span className="text-[11px] font-black uppercase tracking-tighter italic text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
-                                                    {cat.name}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
                             {/* Popular Content Mosaic */}
-                            <div className="px-5 mb-4">
+                            <div className="px-5 mb-4 mt-6">
                                 <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 italic">Tendências do Mercado</h2>
                             </div>
                             <div className="grid grid-cols-3 gap-0.5 px-0.5">
@@ -280,7 +216,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                                         <div className="w-16 h-16 bg-zinc-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
                                             <ShoppingBagIcon className="w-8 h-8 text-zinc-300" />
                                         </div>
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 italic animate-pulse">Tendências em carregamento...</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400 italic animate-pulse">Carregando tendências...</p>
                                     </div>
                                 )}
                             </div>
@@ -290,16 +226,16 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                             {activeTab === 'accounts' ? (
                                 <div className="space-y-1">
                                     {filteredProfiles.length > 0 ? (
-                                        filteredProfiles.map(profile => (
+                                        filteredProfiles.map(biz => (
                                             <button 
-                                                key={profile.user_id}
-                                                onClick={() => onViewProfile(profile.user_id)}
+                                                key={biz.id}
+                                                onClick={() => onViewProfile(biz.id)}
                                                 className="w-full flex items-center gap-4 p-4 text-left hover:bg-zinc-50 rounded-[2.2rem] transition-all group active:scale-[0.98]"
                                             >
                                                 <div className="relative">
                                                     <div className="w-14 h-14 rounded-full overflow-hidden bg-zinc-100 border-2 border-zinc-100 p-0.5 group-hover:border-amber-500/50 transition-colors shadow-sm">
-                                                        {profile.avatar_url ? (
-                                                            <img src={profile.avatar_url} alt="" className="w-full h-full object-cover rounded-full"/>
+                                                        {biz.image ? (
+                                                            <img src={biz.image} alt="" className="w-full h-full object-cover rounded-full"/>
                                                         ) : (
                                                             <UserIcon className="w-full h-full text-zinc-300 p-3" />
                                                         )}
@@ -308,14 +244,12 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                                                 <div className="flex-grow min-w-0">
                                                     <div className="flex items-center gap-1.5">
                                                         <p className="font-black text-sm text-zinc-900 truncate uppercase tracking-tighter italic leading-none">
-                                                            {profile.username}
+                                                            {biz.name}
                                                         </p>
-                                                        {profile.account_type === 'business' && (
-                                                            <VerifiedIcon className="w-4 h-4 text-amber-500" />
-                                                        )}
+                                                        <VerifiedIcon className="w-4 h-4 text-amber-500" />
                                                     </div>
                                                     <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mt-1">
-                                                        {profile.account_type === 'business' ? 'Marca Verificada' : 'Perfil Pessoal'}
+                                                        {biz.type === 'fashion' ? 'Loja de Moda' : 'Marca Verificada'}
                                                     </p>
                                                 </div>
                                                 <div className="px-5 py-2.5 rounded-2xl bg-zinc-900 text-white text-[9px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-all transform scale-90 group-hover:scale-100">
@@ -326,7 +260,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                                     ) : (
                                         <div className="py-24 text-center opacity-30">
                                             <UserIcon className="w-14 h-14 mx-auto mb-4 text-zinc-300" strokeWidth={1} />
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Nenhum perfil correspondente</p>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Nenhuma conta encontrada</p>
                                         </div>
                                     )}
                                 </div>
@@ -356,7 +290,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                                     ) : (
                                         <div className="col-span-2 py-24 text-center opacity-30">
                                             <ShoppingBagIcon className="w-14 h-14 mx-auto mb-4 text-zinc-300" strokeWidth={1} />
-                                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Produto não localizado</p>
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Nenhum produto encontrado</p>
                                         </div>
                                     )}
                                 </div>

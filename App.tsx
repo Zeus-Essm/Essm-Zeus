@@ -28,6 +28,47 @@ import ResultScreen from './components/ResultScreen';
 import ConfirmationScreen from './components/ConfirmationScreen';
 import CaptionModal from './components/CaptionModal';
 
+// CONTROLE DE VERSÃO DO SISTEMA
+export const APP_VERSION = "1.0.9";
+
+/**
+ * Realiza o logout completo limpando caches e forçando redirecionamento.
+ */
+async function fullLogout() {
+  localStorage.clear();
+  sessionStorage.clear();
+  try {
+    await supabase.auth.signOut();
+  } catch (e) {
+    console.error("Erro ao deslogar:", e);
+  }
+  window.location.href = "/";
+}
+
+async function enforceAppUpdate() {
+  const storedVersion = localStorage.getItem("app_version");
+
+  if (storedVersion !== APP_VERSION) {
+    console.warn("🔄 Nova versão detectada (" + APP_VERSION + "). Resetando sessão e cache...");
+    
+    localStorage.clear();
+    sessionStorage.clear();
+
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error("Erro ao deslogar durante o update:", e);
+    }
+
+    localStorage.setItem("app_version", APP_VERSION);
+    // @ts-ignore
+    window.location.reload(true);
+  }
+}
+
+// Executa a verificação de versão IMEDIATAMENTE antes de qualquer renderização
+enforceAppUpdate();
+
 const App: React.FC = () => {
     const [session, setSession] = useState<Session | null>(null);
     const [profile, setProfile] = useState<Profile | null>(null);
@@ -367,7 +408,7 @@ const App: React.FC = () => {
     };
 
     const handleSignOut = async () => {
-        await supabase.auth.signOut();
+        await fullLogout();
     };
 
     const handleViewProfile = (id: string) => {
@@ -479,7 +520,20 @@ const App: React.FC = () => {
             case Screen.Generating: return userImage && <LoadingIndicator userImage={generatedImage || userImage} />;
             case Screen.Result: return generatedImage && <ResultScreen generatedImage={generatedImage} items={vtoItems} categoryItems={[]} onBuy={() => { setCartItems(p => [...p, ...vtoItems]); setCurrentScreen(Screen.Cart); }} onUndo={() => { setVtoItems(v => v.slice(0, -1)); setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home); }} onStartPublishing={() => setShowCaptionModal(true)} onSaveImage={() => {}} onItemSelect={startTryOn} onAddMoreItems={() => setCurrentScreen(Screen.SubCategorySelection)} onGenerateVideo={() => {}} />;
             case Screen.Cart: return <CartScreen cartItems={cartItems} onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} onRemoveItem={(i) => setCartItems(prev => prev.filter((_, idx) => idx !== i))} onBuyItem={() => {}} onTryOnItem={startTryOn} onCheckout={() => { toast.success("Pedido finalizado!"); setCartItems([]); }} />;
-            case Screen.Search: return <SearchScreen onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home)} posts={posts} items={allMarketplaceProducts.map(p => ({ id: p.id, name: p.title, description: p.description || '', price: p.price, image: p.image_url || '', category: p.category }))} onViewProfile={handleViewProfile} onLikePost={handleLikePost} onItemClick={startTryOn} onItemAction={startTryOn} onOpenSplitCamera={() => {}} onOpenComments={() => {}} onAddToCart={(i) => setCartItems(p => [...p, i])} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
+            case Screen.Search: return <SearchScreen 
+                onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home)} 
+                posts={posts} 
+                items={allMarketplaceProducts.map(p => ({ id: p.id, name: p.title, description: p.description || '', price: p.price, image: p.image_url || '', category: p.category }))} 
+                realBusinesses={realBusinessCategories}
+                onViewProfile={handleViewProfile} 
+                onLikePost={handleLikePost} 
+                onItemClick={startTryOn} 
+                onItemAction={startTryOn} 
+                onOpenSplitCamera={() => {}} 
+                onOpenComments={() => {}} 
+                onAddToCart={(i) => setCartItems(p => [...p, i])} 
+                onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} 
+            />;
             default: return <SplashScreen />;
         }
     };
