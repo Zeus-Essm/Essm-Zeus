@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { supabase } from '../services/supabaseClient';
 import { GoogleIcon } from './IconComponents';
 import { toast } from '../utils/toast';
 
@@ -13,7 +14,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
     const [password, setPassword] = useState('');
     const [isSignUp, setIsSignUp] = useState(false);
 
-    const handleAuth = (event: React.FormEvent) => {
+    const handleAuth = async (event: React.FormEvent) => {
         event.preventDefault();
         if (!email || !password) {
             toast.error("Preencha todos os campos.");
@@ -21,19 +22,38 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
         }
         
         setLoading(true);
-        // Simulação de delay de rede
-        setTimeout(() => {
+        try {
+            if (isSignUp) {
+                const { error } = await supabase.auth.signUp({ 
+                    email, 
+                    password,
+                    options: {
+                        data: {
+                            full_name: email.split('@')[0]
+                        }
+                    }
+                });
+                if (error) throw error;
+                toast.success("Conta criada! Verifique seu e-mail.");
+            } else {
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                if (onSuccess) onSuccess();
+            }
+        } catch (err: any) {
+            toast.error(err.message || "Erro na autenticação.");
+        } finally {
             setLoading(false);
-            if (onSuccess) onSuccess();
-        }, 1000);
+        }
     };
     
-    const handleSocialLogin = (provider: 'google') => {
-        setLoading(true);
-        setTimeout(() => {
-            setLoading(false);
-            if (onSuccess) onSuccess();
-        }, 1200);
+    const handleSocialLogin = async (provider: 'google') => {
+        try {
+            const { error } = await supabase.auth.signInWithOAuth({ provider });
+            if (error) throw error;
+        } catch (err: any) {
+            toast.error(err.message);
+        }
     };
 
     return (
@@ -126,7 +146,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
             </div>
 
             <footer className="py-4 sm:py-6 w-full flex justify-center gap-8 text-[9px] font-black uppercase text-zinc-300 tracking-[0.3em] bg-white border-t border-zinc-50">
-                <a href="/terms.html" className="hover:text-zinc-500 transition-colors">Termos</a>
+                <a href="/privacy.html" className="hover:text-zinc-500 transition-colors">Termos</a>
                 <a href="/privacy.html" className="hover:text-zinc-500 transition-colors">Privacidade</a>
             </footer>
         </div>
