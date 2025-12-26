@@ -48,6 +48,7 @@ export interface Product {
   category: string;
   is_try_on: boolean;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface Post {

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { BusinessProfile, Product, Folder } from '../types';
-import { ArrowLeftIcon, PlusIcon, TrashIcon, CameraIcon, ChevronDownIcon } from './IconComponents';
+import { ArrowLeftIcon, PlusIcon, TrashIcon, CameraIcon, ChevronDownIcon, PencilIcon } from './IconComponents';
 
 interface VendorProductsScreenProps {
   onBack: () => void;
@@ -8,15 +8,17 @@ interface VendorProductsScreenProps {
   products: Product[];
   folders: Folder[];
   onCreateProduct: (folderId: string | null, details: any) => Promise<any>;
+  onUpdateProduct: (productId: string, details: any) => Promise<any>;
   onDeleteProduct: (id: string) => void;
   initialFolderId?: string | null;
 }
 
 const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
-  onBack, products, folders, onCreateProduct, onDeleteProduct, initialFolderId = null
+  onBack, products, folders, onCreateProduct, onUpdateProduct, onDeleteProduct, initialFolderId = null
 }) => {
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(initialFolderId);
   const [isAddingItem, setIsAddingItem] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   
   const [newItemTitle, setNewItemTitle] = useState('');
@@ -34,6 +36,25 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
     }
   }, [initialFolderId, folders, selectedFolderId]);
 
+  // Resetar campos quando for criar novo
+  const resetForm = () => {
+    setNewItemTitle('');
+    setNewItemPrice('');
+    setNewItemDesc('');
+    setNewItemFile(null);
+    setNewItemPreview(null);
+    setEditingProduct(null);
+  };
+
+  const handleEditClick = (product: Product) => {
+    setEditingProduct(product);
+    setNewItemTitle(product.title);
+    setNewItemPrice(product.price.toString());
+    setNewItemDesc(product.description || '');
+    setNewItemPreview(product.image_url);
+    setIsAddingItem(true);
+  };
+
   const filteredProducts = (selectedFolderId 
     ? products.filter(p => p.folder_id === selectedFolderId)
     : products).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -49,26 +70,36 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
   };
 
   const handleSaveItem = async () => {
-     if (!newItemTitle || !newItemFile || isSaving) return;
+     if (!newItemTitle || isSaving) return;
      setIsSaving(true);
      try {
-         const result = await onCreateProduct(selectedFolderId, {
+         const details = {
             title: newItemTitle,
             description: newItemDesc,
             price: parseFloat(newItemPrice) || 0,
-            file: newItemFile
-         });
+            file: newItemFile,
+            image_url: newItemPreview,
+            folder_id: selectedFolderId
+         };
+
+         let result;
+         if (editingProduct) {
+            result = await onUpdateProduct(editingProduct.id, details);
+         } else {
+            if (!newItemFile) {
+                alert("Por favor, adicione uma foto.");
+                setIsSaving(false);
+                return;
+            }
+            result = await onCreateProduct(selectedFolderId, details);
+         }
          
          if (result) {
             setIsAddingItem(false);
-            setNewItemTitle(''); 
-            setNewItemPrice(''); 
-            setNewItemDesc(''); 
-            setNewItemFile(null); 
-            setNewItemPreview(null);
+            resetForm();
          }
      } catch (err) {
-         console.error("Erro ao salvar item no dashboard:", err);
+         console.error("Erro ao salvar item:", err);
      } finally {
          setIsSaving(false);
      }
@@ -80,49 +111,55 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
           <button onClick={onBack} className="p-2 bg-zinc-50 rounded-xl text-zinc-500 active:scale-90 transition-transform">
             <ArrowLeftIcon className="w-5 h-5"/>
           </button>
-          <h1 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900 italic">Gerir Catálogo</h1>
+          <h1 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900 italic">Estoque</h1>
           <div className="w-9"></div> 
        </div>
 
-       <div className="flex gap-2 px-4 py-4 overflow-x-auto scrollbar-hide shrink-0">
+       <div className="flex gap-1.5 px-4 py-3 overflow-x-auto scrollbar-hide shrink-0">
           {folders.map(f => (
              <button 
                 key={f.id}
                 onClick={() => setSelectedFolderId(f.id)}
-                className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${selectedFolderId === f.id ? 'bg-zinc-900 text-white shadow-md' : 'bg-zinc-50 text-zinc-400'}`}
+                className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all border ${selectedFolderId === f.id ? 'bg-zinc-900 text-white border-zinc-900 shadow-sm' : 'bg-zinc-50 text-zinc-400 border-zinc-100'}`}
              >
                 {f.title}
              </button>
           ))}
        </div>
 
-       <div className="flex-grow overflow-y-auto px-4 pb-32 grid grid-cols-2 gap-4">
+       <div className="flex-grow overflow-y-auto px-2 pb-32 grid grid-cols-4 gap-1.5">
           {filteredProducts.map(product => (
-             <div key={product.id} className="relative aspect-[3/4] rounded-[2rem] overflow-hidden shadow-sm border border-zinc-100 group animate-fadeIn bg-zinc-50">
-                <img src={product.image_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg'} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+             <div key={product.id} className="relative aspect-square rounded-lg overflow-hidden shadow-sm border border-zinc-50 group animate-fadeIn bg-zinc-50">
+                <img src={product.image_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg'} className="w-full h-full object-cover" />
                 
-                <button 
-                   onClick={() => onDeleteProduct(product.id)}
-                   className="absolute top-3 right-3 p-2 bg-black/40 backdrop-blur-md rounded-xl text-white opacity-0 group-hover:opacity-100 active:scale-90 transition-all z-10"
-                >
-                   <TrashIcon className="w-4 h-4" />
-                </button>
+                <div className="absolute top-1 right-1 flex flex-col gap-1 z-10">
+                    <button 
+                       onClick={() => handleEditClick(product)}
+                       className="p-1 bg-white/95 rounded-md text-zinc-900 shadow-sm border border-zinc-100"
+                    >
+                       <PencilIcon className="w-2.5 h-2.5" />
+                    </button>
+                    <button 
+                       onClick={() => onDeleteProduct(product.id)}
+                       className="p-1 bg-red-500 rounded-md text-white shadow-sm"
+                    >
+                       <TrashIcon className="w-2.5 h-2.5" />
+                    </button>
+                </div>
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex flex-col justify-end p-5">
-                   <p className="text-white font-black text-[12px] truncate uppercase italic tracking-tighter">{product.title}</p>
-                   <p className="text-amber-400 font-black text-[11px] mt-0.5 tracking-tight">{(product.price || 0).toLocaleString('pt-AO', {style: 'currency', currency: 'AOA'})}</p>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex flex-col justify-end p-1.5">
+                   <p className="text-white font-bold text-[7px] truncate uppercase italic tracking-tight">{product.title}</p>
+                   <p className="text-amber-400 font-black text-[8px] tracking-tighter">{(product.price || 0).toLocaleString('pt-AO', {maximumFractionDigits: 0})}</p>
                 </div>
              </div>
           ))}
 
           <button 
-            onClick={() => setIsAddingItem(true)} 
-            className="aspect-[3/4] border-2 border-dashed border-zinc-100 rounded-[2rem] flex flex-col items-center justify-center gap-3 bg-zinc-50/30 text-zinc-300 hover:bg-zinc-50 transition-all group active:scale-95"
+            onClick={() => { resetForm(); setIsAddingItem(true); }} 
+            className="aspect-square border border-dashed border-zinc-200 rounded-lg flex flex-col items-center justify-center gap-1 bg-zinc-50/30 text-zinc-300 hover:bg-zinc-50 transition-all active:scale-95"
           >
-             <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-zinc-300 group-hover:text-amber-500 transition-colors">
-                <PlusIcon className="w-6 h-6" strokeWidth={3} />
-             </div>
-             <span className="text-[9px] font-black uppercase tracking-[0.2em]">Novo Item</span>
+             <PlusIcon className="w-4 h-4" strokeWidth={3} />
+             <span className="text-[6px] font-black uppercase tracking-widest">Add</span>
           </button>
        </div>
 
@@ -133,7 +170,9 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
                 onClick={e => e.stopPropagation()}
              >
                 <div className="flex justify-between items-center px-8 pt-8 pb-4 shrink-0">
-                   <h2 className="text-2xl font-black uppercase italic text-zinc-900 tracking-tighter">NOVO ITEM</h2>
+                   <h2 className="text-2xl font-black uppercase italic text-zinc-900 tracking-tighter">
+                      {editingProduct ? 'EDITAR ITEM' : 'NOVO ITEM'}
+                   </h2>
                    <button onClick={() => !isSaving && setIsAddingItem(false)} className="p-3 bg-zinc-50 rounded-2xl text-zinc-400 hover:text-zinc-900 active:scale-90 transition-all">
                       <ChevronDownIcon className="w-6 h-6" />
                    </button>
@@ -197,10 +236,10 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
                     <div className="pt-4 pb-8">
                       <button 
                         onClick={handleSaveItem} 
-                        disabled={!newItemTitle || !newItemFile || isSaving} 
+                        disabled={!newItemTitle || isSaving} 
                         className="w-full py-6 bg-amber-500 text-white font-black uppercase text-[12px] tracking-[0.2em] rounded-[1.8rem] shadow-[0_15px_30px_rgba(245,158,11,0.25)] active:scale-[0.98] transition-all disabled:opacity-30 disabled:cursor-not-allowed group flex items-center justify-center gap-3"
                       >
-                        <span>{isSaving ? 'A ENVIAR...' : 'CONCLUIR E CRIAR'}</span>
+                        <span>{isSaving ? 'A GUARDAR...' : (editingProduct ? 'GUARDAR ALTERAÇÕES' : 'CONCLUIR E CRIAR')}</span>
                         {!isSaving && <PlusIcon className="w-5 h-5 transition-transform group-hover:rotate-90" strokeWidth={3} />}
                       </button>
                     </div>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import type { BusinessProfile, Profile, Folder, Product, Post, Item } from '../types';
 import { 
@@ -130,34 +129,33 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                 <div className="min-h-[400px] bg-white p-4">
                     {activeTab === 'shop' ? (
                         <div className="animate-fadeIn">
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-3 gap-2">
                                 {folders.map(folder => (
-                                    <div key={folder.id} className="relative h-56 rounded-2xl overflow-hidden group shadow-sm active:scale-[0.98] transition-all border border-zinc-100 cursor-pointer" onClick={() => onNavigateToProducts(folder.id)}>
+                                    <div key={folder.id} className="relative h-32 rounded-xl overflow-hidden group shadow-sm active:scale-[0.98] transition-all border border-zinc-100 cursor-pointer" onClick={() => onNavigateToProducts(folder.id)}>
                                         {!isVisitor && (
                                             <button 
                                                 onClick={(e) => { e.stopPropagation(); onDeleteFolder(folder.id); }}
-                                                className="absolute top-3 left-3 z-20 p-2 bg-black/40 backdrop-blur-md rounded-xl text-white hover:bg-red-500 transition-colors"
+                                                className="absolute top-1.5 left-1.5 z-20 p-1.5 bg-black/40 backdrop-blur-md rounded-lg text-white hover:bg-red-500 transition-colors"
                                             >
-                                                <TrashIcon className="w-4 h-4" />
+                                                <TrashIcon className="w-3 h-3" />
                                             </button>
                                         )}
                                         {folder.cover_image ? (
                                             <img src={folder.cover_image} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full bg-zinc-50 flex items-center justify-center">
-                                                <ArchiveIcon className="w-12 h-12 text-zinc-200" strokeWidth={1} />
+                                                <ArchiveIcon className="w-8 h-8 text-zinc-200" strokeWidth={1} />
                                             </div>
                                         )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-5">
-                                            <h3 className="text-md font-black text-white uppercase italic tracking-tighter leading-none">{folder.title}</h3>
-                                            <p className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest mt-1">Coleção</p>
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-2">
+                                            <h3 className="text-[10px] font-black text-white uppercase italic tracking-tighter leading-tight truncate">{folder.title}</h3>
                                         </div>
                                     </div>
                                 ))}
                                 {!isVisitor && (
-                                    <button onClick={() => setIsCreatingFolder(true)} className="h-56 border-2 border-dashed border-zinc-100 rounded-[1.8rem] flex flex-col items-center justify-center gap-2 bg-zinc-50/50 transition-all hover:bg-zinc-50">
-                                        <PlusIcon className="w-8 h-8 text-zinc-300" strokeWidth={3} />
-                                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Nova Coleção</span>
+                                    <button onClick={() => setIsCreatingFolder(true)} className="h-32 border border-dashed border-zinc-200 rounded-xl flex flex-col items-center justify-center gap-1.5 bg-zinc-50/50 transition-all hover:bg-zinc-50">
+                                        <PlusIcon className="w-5 h-5 text-zinc-300" strokeWidth={3} />
+                                        <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Nova</span>
                                     </button>
                                 )}
                             </div>

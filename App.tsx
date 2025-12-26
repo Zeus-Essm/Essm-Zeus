@@ -59,6 +59,17 @@ const App: React.FC = () => {
     const [showCaptionModal, setShowCaptionModal] = useState(false);
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
+    const handleSignOut = async () => {
+        setIsLoading(true);
+        try {
+            await supabase.auth.signOut();
+            window.location.reload();
+        } catch (err) {
+            console.error("Erro ao sair:", err);
+            window.location.reload();
+        }
+    };
+
     const fetchGlobalData = async () => {
         try {
             const { data: profiles, error: pError } = await supabase.from('profiles').select('*');
@@ -139,10 +150,7 @@ const App: React.FC = () => {
         setIsLoading(true);
         try {
             let finalImageUrl = details.image_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg';
-            
-            if (details.file) {
-                finalImageUrl = await uploadProductImage(details.file);
-            }
+            if (details.file) finalImageUrl = await uploadProductImage(details.file);
 
             const { data, error } = await supabase.from('products').insert({
                 title: details.title,
@@ -156,7 +164,6 @@ const App: React.FC = () => {
             }).select().single();
 
             if (error) throw error;
-            
             if (data) {
                 setProducts(prev => [data, ...prev]);
                 setAllMarketplaceProducts(prev => [data, ...prev]);
@@ -166,6 +173,37 @@ const App: React.FC = () => {
             return null;
         } catch (err: any) {
             toast.error(`Erro ao criar item: ${err.message}`);
+            return null;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const handleUpdateProduct = async (productId: string, details: any): Promise<Product | null> => {
+        setIsLoading(true);
+        try {
+            let finalImageUrl = details.image_url;
+            if (details.file) finalImageUrl = await uploadProductImage(details.file);
+
+            const { data, error } = await supabase.from('products').update({
+                title: details.title,
+                description: details.description,
+                price: details.price,
+                image_url: finalImageUrl,
+                folder_id: details.folder_id,
+                updated_at: new Date().toISOString()
+            }).eq('id', productId).select().single();
+
+            if (error) throw error;
+            if (data) {
+                setProducts(prev => prev.map(p => p.id === productId ? data : p));
+                setAllMarketplaceProducts(prev => prev.map(p => p.id === productId ? data : p));
+                toast.success("Item atualizado!");
+                return data;
+            }
+            return null;
+        } catch (err: any) {
+            toast.error(`Erro ao atualizar: ${err.message}`);
             return null;
         } finally {
             setIsLoading(false);
@@ -293,6 +331,7 @@ const App: React.FC = () => {
                         onBack={() => setCurrentScreen(Screen.VendorDashboard)} 
                         businessProfile={businessProfile} products={products} folders={folders}
                         onCreateProduct={handleCreateProduct}
+                        onUpdateProduct={handleUpdateProduct}
                         onDeleteProduct={(id) => {
                             supabase.from('products').delete().eq('id', id).then(() => setProducts(p => p.filter(x => x.id !== id)));
                         }}
@@ -317,7 +356,7 @@ const App: React.FC = () => {
                     onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} 
                     onNavigateToChat={() => {}} onNavigateToRewards={() => {}} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} 
                     isCartAnimating={false} onBack={() => {}} posts={posts} onItemClick={startTryOn} 
-                    onViewProfile={() => {}} onNavigateToSettings={() => setIsSettingsOpen(true)} onSignOut={() => supabase.auth.signOut()} 
+                    onViewProfile={() => {}} onNavigateToSettings={() => setIsSettingsOpen(true)} onSignOut={handleSignOut} 
                     unreadNotificationCount={0} unreadMessagesCount={0} onOpenNotificationsPanel={() => setIsNotificationsOpen(true)} 
                     isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} onLikePost={() => {}} onAddComment={() => {}} 
                     onSearchClick={() => setCurrentScreen(Screen.Search)} 
@@ -358,7 +397,7 @@ const App: React.FC = () => {
         <div className={`h-[100dvh] w-full bg-white overflow-hidden flex flex-col relative ${theme === 'dark' ? 'dark' : ''}`}>
             <div className="flex-grow relative overflow-hidden">{renderScreen()}</div>
             {isNotificationsOpen && <NotificationsPanel notifications={[]} onClose={() => setIsNotificationsOpen(false)} onNotificationClick={() => {}} />}
-            {isSettingsOpen && profile && <SettingsPanel profile={profile} theme={theme} onToggleTheme={() => setTheme(t => t === 'light' ? 'dark' : 'light')} onClose={() => setIsSettingsOpen(false)} onSignOut={() => supabase.auth.signOut()} onNavigateToVerification={() => {}} />}
+            {isSettingsOpen && profile && <SettingsPanel profile={profile} theme={theme} onToggleTheme={() => setTheme(t => t === 'light' ? 'dark' : 'light')} onClose={() => setIsSettingsOpen(false)} onSignOut={handleSignOut} onNavigateToVerification={() => {}} />}
             {isLoading && <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center"><div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div></div>}
             {showCaptionModal && generatedImage && (
                 <CaptionModal 
@@ -386,7 +425,7 @@ const App: React.FC = () => {
                 <BottomNavBar activeScreen={currentScreen} accountType="business" onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToCart={() => {}} onNavigateToPromotion={() => {}} onNavigateToProfile={() => setCurrentScreen(Screen.VendorDashboard)} onNavigateToVendorAnalytics={() => setCurrentScreen(Screen.VendorAnalytics)} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} isCartAnimating={false} />
             )}
             {currentScreen === Screen.Confirmation && <ConfirmationScreen message="Look publicado no feed!" onHome={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home)} />}
-            {showVendorMenu && <VendorMenuModal onClose={() => setShowVendorMenu(false)} onNavigateToAnalytics={() => { setCurrentScreen(Screen.VendorAnalytics); setShowVendorMenu(false); }} onNavigateToProducts={() => { setCurrentScreen(Screen.VendorProducts); setShowVendorMenu(false); }} onNavigateToAffiliates={() => {}} onNavigateToCollaborations={() => {}} onSignOut={() => supabase.auth.signOut()} />}
+            {showVendorMenu && <VendorMenuModal onClose={() => setShowVendorMenu(false)} onNavigateToAnalytics={() => { setCurrentScreen(Screen.VendorAnalytics); setShowVendorMenu(false); }} onNavigateToProducts={() => { setCurrentScreen(Screen.VendorProducts); setShowVendorMenu(false); }} onNavigateToAffiliates={() => {}} onNavigateToCollaborations={() => {}} onSignOut={handleSignOut} />}
         </div>
     );
 };
