@@ -105,6 +105,8 @@ const App: React.FC = () => {
 
     const handleAddProductToFolder = async (folderId: string | null, details: any) => {
         setIsLoading(true);
+        
+        // Simula o processamento da imagem
         const imageUrl = details.file ? URL.createObjectURL(details.file) : 'https://i.postimg.cc/LXmdq4H2/D.jpg';
         
         const newProduct: Product = {
@@ -120,7 +122,20 @@ const App: React.FC = () => {
             created_at: new Date().toISOString()
         };
 
+        // 1. Adiciona o produto ao catálogo
         setProducts(prev => [newProduct, ...prev]);
+
+        // 2. Lógica de Capa de Coleção: Se for o primeiro item, define como capa
+        if (folderId) {
+            setFolders(prevFolders => prevFolders.map(folder => {
+                // Se for a pasta correta e ainda NÃO tiver imagem de capa, usamos a deste produto
+                if (folder.id === folderId && !folder.cover_image) {
+                    return { ...folder, cover_image: imageUrl };
+                }
+                return folder;
+            }));
+        }
+
         setIsLoading(false);
         toast.success("Produto adicionado ao catálogo!");
     };
