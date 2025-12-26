@@ -361,7 +361,9 @@ const App: React.FC = () => {
             const newProd: Product = { id: Math.random().toString(36).substr(2, 9), owner_id: profile?.user_id || 'guest', folder_id: folderId, title: details.title, description: details.description, price: details.price, image_url: imgUrl, created_at: new Date().toISOString() };
             setProducts(prev => [newProd, ...prev]);
             // Torna capa da coleção imediatamente (Visitante)
-            if (folderId && imgUrl) setFolders(prev => prev.map(f => f.id === folderId ? { ...f, cover_image: imgUrl } : f));
+            if (folderId && imgUrl) {
+                setFolders(prev => prev.map(f => f.id === folderId ? { ...f, cover_image: imgUrl } : f));
+            }
             toast.success("Produto adicionado e capa da coleção atualizada!");
             return newProd;
         }
@@ -375,10 +377,14 @@ const App: React.FC = () => {
                 image_url = data.publicUrl;
             }
             const { data: productData } = await supabase.from('products').insert({ owner_id: session.user.id, title: details.title, description: details.description, price: details.price, image_url, folder_id: folderId }).select().single();
+            
             // Torna capa da coleção imediatamente (Supabase)
             if (folderId && image_url) {
                 await supabase.from('folders').update({ cover_image: image_url }).eq('id', folderId);
+                // Atualização otimista no estado local
+                setFolders(prev => prev.map(f => f.id === folderId ? { ...f, cover_image: image_url } : f));
             }
+            
             const [p, f] = await Promise.all([fetchAllProducts(session.user.id), fetchFolders(session.user.id)]);
             setProducts(p);
             setFolders(f);

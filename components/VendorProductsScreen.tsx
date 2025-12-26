@@ -86,7 +86,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
           {folders.map(f => (
              <button 
                 key={f.id}
-                onClick={() => setSelectedFolderId(selectedFolderId === f.id ? null : f.id)}
+                onClick={() => setSelectedFolderId(f.id)}
                 className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${selectedFolderId === f.id ? 'bg-zinc-900 text-white shadow-md' : 'bg-zinc-50 text-zinc-400'}`}
              >
                 {f.title}
