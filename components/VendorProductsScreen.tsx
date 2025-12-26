@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import type { BusinessProfile, Product, Folder } from '../types';
 import { ArrowLeftIcon, PlusIcon, TrashIcon, CameraIcon, ChevronDownIcon } from './IconComponents';
@@ -26,17 +25,16 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
   const [newItemPreview, setNewItemPreview] = useState<string | null>(null);
   const itemFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Sincroniza a seleção inicial se ela mudar externamente
+  // Garante que uma coleção esteja selecionada se existirem pastas
   useEffect(() => {
     if (initialFolderId) {
       setSelectedFolderId(initialFolderId);
     } else if (folders.length > 0 && !selectedFolderId) {
-      // Se não houver seleção e houver pastas, seleciona a primeira como padrão
       setSelectedFolderId(folders[0].id);
     }
-  }, [initialFolderId, folders]);
+  }, [initialFolderId, folders, selectedFolderId]);
 
-  // Filtra os produtos e garante que os mais recentes apareçam primeiro
+  // Filtra e ordena: itens mais recentes primeiro
   const filteredProducts = (selectedFolderId 
     ? products.filter(p => p.folder_id === selectedFolderId)
     : products).sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -53,7 +51,6 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
 
   const handleSaveItem = async () => {
      if (!newItemTitle || !newItemFile) return;
-     // O App.tsx já está configurado para tornar a imagem deste item a capa da folderId passada
      await onCreateProduct(selectedFolderId, {
         title: newItemTitle,
         description: newItemDesc,
@@ -66,14 +63,6 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
 
   return (
     <div className="w-full h-full bg-white flex flex-col animate-fadeIn font-sans relative">
-       {/* Botão Flutuante Único para Adicionar Item - Única opção agora */}
-       <button 
-          onClick={() => setIsAddingItem(true)}
-          className="fixed bottom-24 right-6 z-30 w-16 h-16 bg-amber-500 rounded-2xl shadow-[0_10px_25px_rgba(245,158,11,0.4)] text-white flex items-center justify-center active:scale-90 transition-transform"
-       >
-          <PlusIcon className="w-8 h-8" strokeWidth={3} />
-       </button>
-
        <div className="px-4 pt-4 pb-2 flex items-center justify-between border-b border-zinc-50 shrink-0">
           <button onClick={onBack} className="p-2 bg-zinc-50 rounded-xl text-zinc-500 active:scale-90 transition-transform">
             <ArrowLeftIcon className="w-5 h-5"/>
@@ -83,6 +72,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
        </div>
 
        <div className="flex gap-2 px-4 py-4 overflow-x-auto scrollbar-hide shrink-0">
+          {/* Opção "Todos" removida conforme solicitação visual */}
           {folders.map(f => (
              <button 
                 key={f.id}
@@ -94,31 +84,36 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
           ))}
        </div>
 
-       <div className="flex-grow overflow-y-auto px-4 pb-40 grid grid-cols-2 gap-4">
-          {/* Mapeamento de produtos existentes */}
-          {filteredProducts.length > 0 ? (
-              filteredProducts.map(product => (
-                 <div key={product.id} className="relative aspect-[3/4] rounded-[2rem] overflow-hidden shadow-sm border border-zinc-100 group animate-fadeIn bg-zinc-50">
-                    <img src={product.image_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg'} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                    
-                    <button 
-                       onClick={() => onDeleteProduct(product.id)}
-                       className="absolute top-3 right-3 p-2 bg-black/40 backdrop-blur-md rounded-xl text-white opacity-0 group-hover:opacity-100 active:scale-90 transition-all z-10"
-                    >
-                       <TrashIcon className="w-4 h-4" />
-                    </button>
+       <div className="flex-grow overflow-y-auto px-4 pb-32 grid grid-cols-2 gap-4">
+          {/* Mapeamento de produtos existentes - os mais recentes no topo */}
+          {filteredProducts.map(product => (
+             <div key={product.id} className="relative aspect-[3/4] rounded-[2rem] overflow-hidden shadow-sm border border-zinc-100 group animate-fadeIn bg-zinc-50">
+                <img src={product.image_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg'} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                
+                <button 
+                   onClick={() => onDeleteProduct(product.id)}
+                   className="absolute top-3 right-3 p-2 bg-black/40 backdrop-blur-md rounded-xl text-white opacity-0 group-hover:opacity-100 active:scale-90 transition-all z-10"
+                >
+                   <TrashIcon className="w-4 h-4" />
+                </button>
 
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex flex-col justify-end p-5">
-                       <p className="text-white font-black text-[12px] truncate uppercase italic tracking-tighter">{product.title}</p>
-                       <p className="text-amber-400 font-black text-[11px] mt-0.5 tracking-tight">{(product.price || 0).toLocaleString('pt-AO', {style: 'currency', currency: 'AOA'})}</p>
-                    </div>
-                 </div>
-              ))
-          ) : (
-              <div className="col-span-2 py-20 text-center opacity-30">
-                  <p className="text-[10px] font-black uppercase tracking-widest italic">Nenhum item nesta coleção.</p>
-              </div>
-          )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent flex flex-col justify-end p-5">
+                   <p className="text-white font-black text-[12px] truncate uppercase italic tracking-tighter">{product.title}</p>
+                   <p className="text-amber-400 font-black text-[11px] mt-0.5 tracking-tight">{(product.price || 0).toLocaleString('pt-AO', {style: 'currency', currency: 'AOA'})}</p>
+                </div>
+             </div>
+          ))}
+
+          {/* Botão de Adicionar - Única opção, sempre ao FINAL do grid */}
+          <button 
+            onClick={() => setIsAddingItem(true)} 
+            className="aspect-[3/4] border-2 border-dashed border-zinc-100 rounded-[2rem] flex flex-col items-center justify-center gap-3 bg-zinc-50/30 text-zinc-300 hover:bg-zinc-50 transition-all group active:scale-95"
+          >
+             <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-zinc-300 group-hover:text-amber-500 transition-colors">
+                <PlusIcon className="w-6 h-6" strokeWidth={3} />
+             </div>
+             <span className="text-[9px] font-black uppercase tracking-[0.2em]">Novo Item</span>
+          </button>
        </div>
 
        {isAddingItem && (
