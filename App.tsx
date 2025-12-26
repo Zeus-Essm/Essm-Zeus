@@ -2,8 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
-import { Screen, Category, Item, Post, Profile, BusinessProfile, Folder, Product, AppNotification } from './types';
-import { INITIAL_POSTS, CATEGORIES } from './constants';
+import { Screen, Category, Item, Post, Profile, BusinessProfile, Folder, Product, Comment } from './types';
+import { CATEGORIES } from './constants';
 import { toast } from './utils/toast';
 import { generateTryOnImage } from './services/geminiService';
 
@@ -16,9 +16,10 @@ import FeedScreen from './components/FeedScreen';
 import CartScreen from './components/CartScreen';
 import BottomNavBar from './components/BottomNavBar';
 import VendorDashboard from './components/VendorDashboard';
-import VendorMenuModal from './components/VendorMenuModal';
 import VendorProductsScreen from './components/VendorProductsScreen';
+// Fix: Import missing Vendor components to resolve "Cannot find name" errors
 import VendorAnalyticsScreen from './components/VendorAnalyticsScreen';
+import VendorMenuModal from './components/VendorMenuModal';
 import SearchScreen from './components/SearchScreen';
 import NotificationsPanel from './components/NotificationsPanel';
 import SettingsPanel from './components/SettingsPanel';
@@ -35,6 +36,7 @@ const App: React.FC = () => {
     const [businessProfile, setBusinessProfile] = useState<BusinessProfile | null>(null);
     
     const [products, setProducts] = useState<Product[]>([]);
+    const [allMarketplaceProducts, setAllMarketplaceProducts] = useState<Product[]>([]);
     const [folders, setFolders] = useState<Folder[]>([]);
     const [posts, setPosts] = useState<Post[]>([]);
     
@@ -52,47 +54,89 @@ const App: React.FC = () => {
     const [showCaptionModal, setShowCaptionModal] = useState(false);
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
-    // --- CARREGAMENTO DE DADOS ---
+    // --- CARREGAMENTO GLOBAL DE DADOS ---
 
-    const fetchData = async (userId: string, isBusiness: boolean) => {
-        setIsLoading(true);
+    const fetchGlobalFeed = async () => {
         try {
-            // Carregar Posts Globais
-            const { data: postsData } = await supabase
+            const { data: postsData, error } = await supabase
                 .from('posts')
-                .select('*, profiles(*)')
+                .select(`
+                    *,
+                    profiles:user_id (user_id, full_name, avatar_url, username),
+                    comments:comments (
+                        id, text, created_at, 
+                        user:user_id (user_id, full_name, avatar_url)
+                    ),
+                    likes:likes (user_id)
+                `)
                 .order('created_at', { ascending: false });
-            
+
+            if (error) throw error;
+
             if (postsData) {
+                const currentUserId = session?.user.id;
                 const formattedPosts: Post[] = postsData.map(p => ({
                     id: p.id,
                     user_id: p.user_id,
-                    user: { id: p.profiles.user_id, full_name: p.profiles.full_name, avatar_url: p.profiles.avatar_url },
+                    user: { 
+                        id: p.profiles.user_id, 
+                        full_name: p.profiles.full_name || p.profiles.username, 
+                        avatar_url: p.profiles.avatar_url 
+                    },
                     image: p.image_url,
                     caption: p.caption,
-                    likes: p.likes_count,
-                    isLiked: false,
+                    likes: p.likes?.length || 0,
+                    isLiked: p.likes?.some((l: any) => l.user_id === currentUserId),
                     created_at: p.created_at,
-                    comments: [],
-                    commentCount: 0,
-                    items: []
+                    comments: p.comments.map((c: any) => ({
+                        id: c.id,
+                        text: c.text,
+                        timestamp: c.created_at,
+                        user: { id: c.user.user_id, full_name: c.user.full_name, avatar_url: c.user.avatar_url }
+                    })),
+                    commentCount: p.comments?.length || 0,
+                    items: [] // Em uma versão futura, linkaríamos produtos aqui
                 }));
                 setPosts(formattedPosts);
             }
+        } catch (err) {
+            console.error("Erro ao carregar feed global:", err);
+        }
+    };
 
-            if (isBusiness) {
+    const fetchMarketplace = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('products')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (error) throw error;
+            setAllMarketplaceProducts(data || []);
+        } catch (err) {
+            console.error("Erro ao carregar mercado:", err);
+        }
+    };
+
+    const fetchData = async (userId: string, isBusiness: boolean) => {
+        setIsLoading(true);
+        await Promise.all([
+            fetchGlobalFeed(),
+            fetchMarketplace()
+        ]);
+
+        if (isBusiness) {
+            try {
                 const [fRes, pRes] = await Promise.all([
                     supabase.from('folders').select('*').eq('owner_id', userId).order('created_at', { ascending: false }),
                     supabase.from('products').select('*').eq('owner_id', userId).order('created_at', { ascending: false })
                 ]);
                 setFolders(fRes.data || []);
                 setProducts(pRes.data || []);
+            } catch (err) {
+                console.error("Erro ao carregar dados do lojista:", err);
             }
-        } catch (err) {
-            console.error("Erro ao buscar dados:", err);
-        } finally {
-            setIsLoading(false);
         }
+        setIsLoading(false);
     };
 
     const processAuth = async (currentSession: Session | null) => {
@@ -134,6 +178,8 @@ const App: React.FC = () => {
                 }
                 
                 await fetchData(currentSession.user.id, isBusiness);
+            } else {
+                setCurrentScreen(Screen.AccountTypeSelection);
             }
         } catch (err) {
             toast.error("Erro ao carregar perfil.");
@@ -149,7 +195,39 @@ const App: React.FC = () => {
         return () => subscription.unsubscribe();
     }, []);
 
-    // --- AÇÕES DO USUÁRIO ---
+    // --- INTERAÇÕES SOCIAIS ---
+
+    const handleLikePost = async (postId: string) => {
+        if (!session?.user) return;
+        
+        const post = posts.find(p => p.id === postId);
+        if (!post) return;
+
+        try {
+            if (post.isLiked) {
+                await supabase.from('likes').delete().match({ post_id: postId, user_id: session.user.id });
+            } else {
+                await supabase.from('likes').insert({ post_id: postId, user_id: session.user.id });
+            }
+            fetchGlobalFeed(); // Atualiza o estado global
+        } catch (err) {
+            console.error("Erro ao curtir:", err);
+        }
+    };
+
+    const handleAddComment = async (postId: string, text: string) => {
+        if (!session?.user) return;
+        try {
+            const { error } = await supabase
+                .from('comments')
+                .insert({ post_id: postId, user_id: session.user.id, text });
+            if (error) throw error;
+            fetchGlobalFeed();
+            toast.success("Comentário enviado!");
+        } catch (err) {
+            toast.error("Erro ao comentar.");
+        }
+    };
 
     const handleCreateFolder = async (title: string) => {
         if (!session?.user) return;
@@ -174,8 +252,6 @@ const App: React.FC = () => {
         if (!session?.user) return;
         setIsLoading(true);
         try {
-            // Em um app real, faríamos upload para o bucket 'products' aqui
-            // Usando URL temporária para o demo
             const imageUrl = details.file ? URL.createObjectURL(details.file) : 'https://i.postimg.cc/LXmdq4H2/D.jpg';
             
             const { data, error } = await supabase
@@ -195,6 +271,7 @@ const App: React.FC = () => {
 
             if (error) throw error;
             setProducts(prev => [data, ...prev]);
+            fetchMarketplace(); // Sincroniza catálogo global
             toast.success("Produto adicionado ao seu catálogo!");
         } catch (err: any) {
             toast.error(err.message);
@@ -220,9 +297,6 @@ const App: React.FC = () => {
 
             if (error) throw error;
             setProfile(data);
-            if (data.account_type === 'business') {
-                setBusinessProfile(prev => prev ? ({ ...prev, business_name: data.full_name, description: data.bio }) : null);
-            }
             toast.success("Perfil atualizado!");
         } catch (err: any) {
             toast.error(err.message);
@@ -237,8 +311,11 @@ const App: React.FC = () => {
         try {
             const { error } = await supabase
                 .from('profiles')
-                .update({ account_type: type })
-                .eq('user_id', session.user.id);
+                .upsert({ 
+                    user_id: session.user.id, 
+                    account_type: type,
+                    username: session.user.email?.split('@')[0] + Math.floor(Math.random()*1000)
+                });
             
             if (error) throw error;
             await processAuth(session);
@@ -301,8 +378,8 @@ const App: React.FC = () => {
                         followersCount={0} 
                         followingCount={0}
                         onMoveProductToFolder={async () => {}} 
-                        onLikePost={() => {}} 
-                        onAddComment={() => {}} 
+                        onLikePost={handleLikePost} 
+                        onAddComment={handleAddComment} 
                         onItemClick={startTryOn} 
                         onViewProfile={() => {}}
                     />
@@ -322,12 +399,15 @@ const App: React.FC = () => {
                         }} 
                     />
                 );
+            // Fix: Add case for Screen.VendorAnalytics to handle navigation to the analytics screen
+            case Screen.VendorAnalytics:
+                return <VendorAnalyticsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} />;
             case Screen.Feed: return profile && (
                 <FeedScreen 
                     posts={posts} stories={[]} profile={profile} businessProfile={businessProfile} 
                     isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={startTryOn} 
                     onAddToCartMultiple={() => {}} onBuyMultiple={() => {}} onViewProfile={() => {}} 
-                    onSelectCategory={() => {}} onLikePost={() => {}} onAddComment={() => {}} 
+                    onSelectCategory={() => {}} onLikePost={handleLikePost} onAddComment={handleAddComment} 
                     onNavigateToAllHighlights={() => {}} onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)} 
                     unreadNotificationCount={0} onNotificationsClick={() => setIsNotificationsOpen(true)} 
                     onSearchClick={() => setCurrentScreen(Screen.Search)} 
@@ -344,7 +424,7 @@ const App: React.FC = () => {
                     onViewProfile={() => {}} onNavigateToSettings={() => setIsSettingsOpen(true)} onSignOut={handleSignOut} 
                     unreadNotificationCount={0} unreadMessagesCount={0} onOpenNotificationsPanel={() => setIsNotificationsOpen(true)} 
                     isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} 
-                    onLikePost={() => {}} onAddComment={() => {}} onSearchClick={() => setCurrentScreen(Screen.Search)} 
+                    onLikePost={handleLikePost} onAddComment={handleAddComment} onSearchClick={() => setCurrentScreen(Screen.Search)} 
                 />
             );
             case Screen.ImageSourceSelection: return <ImageSourceSelectionScreen onImageUpload={(url) => { setUserImage(url); setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home); }} onUseCamera={() => setCurrentScreen(Screen.Camera)} onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} />;
@@ -352,7 +432,7 @@ const App: React.FC = () => {
             case Screen.Generating: return userImage && <LoadingIndicator userImage={generatedImage || userImage} />;
             case Screen.Result: return generatedImage && <ResultScreen generatedImage={generatedImage} items={vtoItems} categoryItems={[]} onBuy={() => { setCartItems(p => [...p, ...vtoItems]); setCurrentScreen(Screen.Cart); }} onUndo={() => { setVtoItems(v => v.slice(0, -1)); setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home); }} onStartPublishing={() => setShowCaptionModal(true)} onSaveImage={() => {}} onItemSelect={startTryOn} onAddMoreItems={() => setCurrentScreen(Screen.SubCategorySelection)} onGenerateVideo={() => {}} />;
             case Screen.Cart: return <CartScreen cartItems={cartItems} onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} onRemoveItem={(i) => setCartItems(prev => prev.filter((_, idx) => idx !== i))} onBuyItem={() => {}} onTryOnItem={startTryOn} onCheckout={() => { toast.success("Pedido finalizado!"); setCartItems([]); }} />;
-            case Screen.Search: return <SearchScreen onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home)} posts={posts} items={[]} onViewProfile={() => {}} onLikePost={() => {}} onItemClick={startTryOn} onItemAction={startTryOn} onOpenSplitCamera={() => {}} onOpenComments={() => {}} onAddToCart={(i) => setCartItems(p => [...p, i])} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
+            case Screen.Search: return <SearchScreen onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home)} posts={posts} items={allMarketplaceProducts.map(p => ({ id: p.id, name: p.title, description: p.description || '', price: p.price, image: p.image_url || '', category: p.category }))} onViewProfile={() => {}} onLikePost={handleLikePost} onItemClick={startTryOn} onItemAction={startTryOn} onOpenSplitCamera={() => {}} onOpenComments={() => {}} onAddToCart={(i) => setCartItems(p => [...p, i])} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
             default: return <SplashScreen />;
         }
     };
@@ -383,20 +463,7 @@ const App: React.FC = () => {
                             
                             if (error) throw error;
                             
-                            const newPost: Post = {
-                                id: data.id,
-                                user_id: session.user.id,
-                                user: { id: profile?.user_id!, full_name: profile?.full_name || profile?.username || 'Usuário', avatar_url: profile?.avatar_url || null },
-                                image: generatedImage,
-                                caption,
-                                likes: 0,
-                                isLiked: false,
-                                created_at: data.created_at,
-                                comments: [],
-                                commentCount: 0,
-                                items: [...vtoItems]
-                            };
-                            setPosts(prev => [newPost, ...prev]);
+                            await fetchGlobalFeed(); // Recarrega feed global para todos verem
                             setShowCaptionModal(false);
                             setCurrentScreen(Screen.Confirmation);
                         } catch (err: any) {
