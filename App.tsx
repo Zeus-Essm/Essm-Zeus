@@ -135,12 +135,11 @@ const App: React.FC = () => {
         return publicUrl;
     };
 
-    const handleCreateProduct = async (folderId: string | null, details: any) => {
+    const handleCreateProduct = async (folderId: string | null, details: any): Promise<Product | null> => {
         setIsLoading(true);
         try {
             let finalImageUrl = details.image_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg';
             
-            // Se houver um arquivo (Blob), fazemos o upload primeiro
             if (details.file) {
                 finalImageUrl = await uploadProductImage(details.file);
             }
@@ -152,16 +151,19 @@ const App: React.FC = () => {
                 image_url: finalImageUrl,
                 folder_id: folderId,
                 owner_id: session?.user.id,
-                category: 'fashion'
+                category: 'fashion',
+                is_try_on: true
             }).select().single();
 
             if (error) throw error;
+            
             if (data) {
                 setProducts(prev => [data, ...prev]);
-                fetchGlobalData(); // Atualiza catálogo global
+                setAllMarketplaceProducts(prev => [data, ...prev]);
                 toast.success("Item adicionado com sucesso!");
+                return data;
             }
-            return data;
+            return null;
         } catch (err: any) {
             toast.error(`Erro ao criar item: ${err.message}`);
             return null;
@@ -256,7 +258,7 @@ const App: React.FC = () => {
         }));
 
         switch (currentScreen) {
-            case Screen.Login: return <LoginScreen />;
+            case Screen.Login: return <LoginScreen onSuccess={() => {}} />;
             case Screen.AccountTypeSelection: return <AccountTypeSelectionScreen onSelect={async (type) => {
                 await supabase.from('profiles').update({ account_type: type }).eq('user_id', session?.user.id);
                 window.location.reload();
@@ -357,15 +359,22 @@ const App: React.FC = () => {
             <div className="flex-grow relative overflow-hidden">{renderScreen()}</div>
             {isNotificationsOpen && <NotificationsPanel notifications={[]} onClose={() => setIsNotificationsOpen(false)} onNotificationClick={() => {}} />}
             {isSettingsOpen && profile && <SettingsPanel profile={profile} theme={theme} onToggleTheme={() => setTheme(t => t === 'light' ? 'dark' : 'light')} onClose={() => setIsSettingsOpen(false)} onSignOut={() => supabase.auth.signOut()} onNavigateToVerification={() => {}} />}
-            {(isLoading || isLoading) && <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center"><div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div></div>}
+            {isLoading && <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center"><div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div></div>}
             {showCaptionModal && generatedImage && (
                 <CaptionModal 
                     image={generatedImage} onClose={() => setShowCaptionModal(false)} 
                     onPublish={async (caption) => {
-                        await supabase.from('posts').insert({ user_id: session?.user.id, image_url: generatedImage, caption });
-                        fetchGlobalData();
-                        setShowCaptionModal(false);
-                        setCurrentScreen(Screen.Confirmation);
+                        setIsLoading(true);
+                        try {
+                            await supabase.from('posts').insert({ user_id: session?.user.id, image_url: generatedImage, caption });
+                            await fetchGlobalData();
+                            setShowCaptionModal(false);
+                            setCurrentScreen(Screen.Confirmation);
+                        } catch (err) {
+                            toast.error("Erro ao publicar post.");
+                        } finally {
+                            setIsLoading(false);
+                        }
                     }} 
                 />
             )}

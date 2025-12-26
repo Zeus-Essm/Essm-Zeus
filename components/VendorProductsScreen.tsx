@@ -49,7 +49,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
   };
 
   const handleSaveItem = async () => {
-     if (!newItemTitle || !newItemFile) return;
+     if (!newItemTitle || !newItemFile || isSaving) return;
      setIsSaving(true);
      try {
          const result = await onCreateProduct(selectedFolderId, {
@@ -67,6 +67,8 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
             setNewItemFile(null); 
             setNewItemPreview(null);
          }
+     } catch (err) {
+         console.error("Erro ao salvar item no dashboard:", err);
      } finally {
          setIsSaving(false);
      }
