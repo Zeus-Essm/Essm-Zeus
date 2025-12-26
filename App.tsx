@@ -3,7 +3,6 @@ import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
 import { Screen, Category, Item, Post, Profile, BusinessProfile, Folder, Product, Comment } from './types';
-import { CATEGORIES } from './constants';
 import { toast } from './utils/toast';
 import { generateTryOnImage } from './services/geminiService';
 
@@ -17,7 +16,6 @@ import CartScreen from './components/CartScreen';
 import BottomNavBar from './components/BottomNavBar';
 import VendorDashboard from './components/VendorDashboard';
 import VendorProductsScreen from './components/VendorProductsScreen';
-// Fix: Import missing Vendor components to resolve "Cannot find name" errors
 import VendorAnalyticsScreen from './components/VendorAnalyticsScreen';
 import VendorMenuModal from './components/VendorMenuModal';
 import SearchScreen from './components/SearchScreen';
@@ -39,6 +37,7 @@ const App: React.FC = () => {
     const [allMarketplaceProducts, setAllMarketplaceProducts] = useState<Product[]>([]);
     const [folders, setFolders] = useState<Folder[]>([]);
     const [posts, setPosts] = useState<Post[]>([]);
+    const [realBusinessCategories, setRealBusinessCategories] = useState<Category[]>([]);
     
     const [authLoading, setAuthLoading] = useState(true);
     const [currentScreen, setCurrentScreen] = useState<Screen>(Screen.Splash);
@@ -55,6 +54,30 @@ const App: React.FC = () => {
     const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
     // --- CARREGAMENTO GLOBAL DE DADOS ---
+
+    const fetchRealStores = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('account_type', 'business');
+            
+            if (error) throw error;
+
+            if (data) {
+                const stores: Category[] = data.map(p => ({
+                    id: p.user_id,
+                    name: p.full_name || p.username || 'Loja PUMP',
+                    image: p.avatar_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg',
+                    type: 'fashion', // Por padrão, todas entram na aba moda inicialmente
+                    subCategories: [] // Podem ser carregadas dinamicamente ao clicar
+                }));
+                setRealBusinessCategories(stores);
+            }
+        } catch (err) {
+            console.error("Erro ao carregar lojas reais:", err);
+        }
+    };
 
     const fetchGlobalFeed = async () => {
         try {
@@ -95,7 +118,7 @@ const App: React.FC = () => {
                         user: { id: c.user.user_id, full_name: c.user.full_name, avatar_url: c.user.avatar_url }
                     })),
                     commentCount: p.comments?.length || 0,
-                    items: [] // Em uma versão futura, linkaríamos produtos aqui
+                    items: [] 
                 }));
                 setPosts(formattedPosts);
             }
@@ -121,7 +144,8 @@ const App: React.FC = () => {
         setIsLoading(true);
         await Promise.all([
             fetchGlobalFeed(),
-            fetchMarketplace()
+            fetchMarketplace(),
+            fetchRealStores() // Adicionado fetch de lojas reais
         ]);
 
         if (isBusiness) {
@@ -209,7 +233,7 @@ const App: React.FC = () => {
             } else {
                 await supabase.from('likes').insert({ post_id: postId, user_id: session.user.id });
             }
-            fetchGlobalFeed(); // Atualiza o estado global
+            fetchGlobalFeed(); 
         } catch (err) {
             console.error("Erro ao curtir:", err);
         }
@@ -254,7 +278,7 @@ const App: React.FC = () => {
         try {
             const imageUrl = details.file ? URL.createObjectURL(details.file) : 'https://i.postimg.cc/LXmdq4H2/D.jpg';
             
-            const { data, error } = await supabase
+            const { data: productData, error: productError } = await supabase
                 .from('products')
                 .insert({
                     owner_id: session.user.id,
@@ -269,10 +293,26 @@ const App: React.FC = () => {
                 .select()
                 .single();
 
-            if (error) throw error;
-            setProducts(prev => [data, ...prev]);
-            fetchMarketplace(); // Sincroniza catálogo global
-            toast.success("Produto adicionado ao seu catálogo!");
+            if (productError) throw productError;
+
+            if (folderId) {
+                const { error: folderUpdateError } = await supabase
+                    .from('folders')
+                    .update({ cover_image: imageUrl })
+                    .eq('id', folderId);
+
+                if (folderUpdateError) {
+                    console.error("Erro ao atualizar capa da coleção:", folderUpdateError);
+                } else {
+                    setFolders(prev => prev.map(f => 
+                        f.id === folderId ? { ...f, cover_image: imageUrl } : f
+                    ));
+                }
+            }
+
+            setProducts(prev => [productData, ...prev]);
+            fetchMarketplace(); 
+            toast.success("Item adicionado e capa da coleção atualizada!");
         } catch (err: any) {
             toast.error(err.message);
         } finally {
@@ -330,6 +370,11 @@ const App: React.FC = () => {
         await supabase.auth.signOut();
     };
 
+    // Fix: Defined handleViewProfile to resolve "Cannot find name 'onViewProfile'" error across multiple rendering cases.
+    const handleViewProfile = (id: string) => {
+        toast("Visualizando perfil: " + id);
+    };
+
     const startTryOn = (item: Item) => {
         if (!userImage) setCurrentScreen(Screen.ImageSourceSelection);
         else handleGenerateLook(userImage, item, vtoItems);
@@ -381,7 +426,7 @@ const App: React.FC = () => {
                         onLikePost={handleLikePost} 
                         onAddComment={handleAddComment} 
                         onItemClick={startTryOn} 
-                        onViewProfile={() => {}}
+                        onViewProfile={handleViewProfile}
                     />
                 );
             case Screen.VendorProducts: 
@@ -399,14 +444,13 @@ const App: React.FC = () => {
                         }} 
                     />
                 );
-            // Fix: Add case for Screen.VendorAnalytics to handle navigation to the analytics screen
             case Screen.VendorAnalytics:
                 return <VendorAnalyticsScreen onBack={() => setCurrentScreen(Screen.VendorDashboard)} />;
             case Screen.Feed: return profile && (
                 <FeedScreen 
                     posts={posts} stories={[]} profile={profile} businessProfile={businessProfile} 
                     isProfilePromoted={false} promotedItems={[]} onBack={() => {}} onItemClick={startTryOn} 
-                    onAddToCartMultiple={() => {}} onBuyMultiple={() => {}} onViewProfile={() => {}} 
+                    onAddToCartMultiple={() => {}} onBuyMultiple={() => {}} onViewProfile={handleViewProfile} 
                     onSelectCategory={() => {}} onLikePost={handleLikePost} onAddComment={handleAddComment} 
                     onNavigateToAllHighlights={() => {}} onStartCreate={() => setCurrentScreen(Screen.ImageSourceSelection)} 
                     unreadNotificationCount={0} onNotificationsClick={() => setIsNotificationsOpen(true)} 
@@ -415,13 +459,18 @@ const App: React.FC = () => {
             );
             case Screen.Home: return profile && (
                 <HomeScreen 
-                    loggedInProfile={profile} viewedProfileId={null} realBusinesses={CATEGORIES} 
+                    loggedInProfile={profile} viewedProfileId={null} realBusinesses={realBusinessCategories} 
                     onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={() => {}} 
-                    onSelectCategory={() => {}} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} 
+                    onSelectCategory={(cat) => {
+                        // Navega para o perfil da loja ao clicar no mercado
+                        handleViewProfile(cat.id);
+                    }} 
+                    onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} 
                     onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} 
                     onNavigateToChat={() => {}} onNavigateToRewards={() => {}} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} 
                     isCartAnimating={false} onBack={() => {}} posts={posts} onItemClick={startTryOn} 
-                    onViewProfile={() => {}} onNavigateToSettings={() => setIsSettingsOpen(true)} onSignOut={handleSignOut} 
+                    onViewProfile={handleViewProfile} 
+                    onNavigateToSettings={() => setIsSettingsOpen(true)} onSignOut={handleSignOut} 
                     unreadNotificationCount={0} unreadMessagesCount={0} onOpenNotificationsPanel={() => setIsNotificationsOpen(true)} 
                     isFollowing={false} onToggleFollow={() => {}} followersCount={0} followingCount={0} 
                     onLikePost={handleLikePost} onAddComment={handleAddComment} onSearchClick={() => setCurrentScreen(Screen.Search)} 
@@ -432,7 +481,7 @@ const App: React.FC = () => {
             case Screen.Generating: return userImage && <LoadingIndicator userImage={generatedImage || userImage} />;
             case Screen.Result: return generatedImage && <ResultScreen generatedImage={generatedImage} items={vtoItems} categoryItems={[]} onBuy={() => { setCartItems(p => [...p, ...vtoItems]); setCurrentScreen(Screen.Cart); }} onUndo={() => { setVtoItems(v => v.slice(0, -1)); setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home); }} onStartPublishing={() => setShowCaptionModal(true)} onSaveImage={() => {}} onItemSelect={startTryOn} onAddMoreItems={() => setCurrentScreen(Screen.SubCategorySelection)} onGenerateVideo={() => {}} />;
             case Screen.Cart: return <CartScreen cartItems={cartItems} onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Feed)} onRemoveItem={(i) => setCartItems(prev => prev.filter((_, idx) => idx !== i))} onBuyItem={() => {}} onTryOnItem={startTryOn} onCheckout={() => { toast.success("Pedido finalizado!"); setCartItems([]); }} />;
-            case Screen.Search: return <SearchScreen onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home)} posts={posts} items={allMarketplaceProducts.map(p => ({ id: p.id, name: p.title, description: p.description || '', price: p.price, image: p.image_url || '', category: p.category }))} onViewProfile={() => {}} onLikePost={handleLikePost} onItemClick={startTryOn} onItemAction={startTryOn} onOpenSplitCamera={() => {}} onOpenComments={() => {}} onAddToCart={(i) => setCartItems(p => [...p, i])} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
+            case Screen.Search: return <SearchScreen onBack={() => setCurrentScreen(profile?.account_type === 'business' ? Screen.VendorDashboard : Screen.Home)} posts={posts} items={allMarketplaceProducts.map(p => ({ id: p.id, name: p.title, description: p.description || '', price: p.price, image: p.image_url || '', category: p.category }))} onViewProfile={handleViewProfile} onLikePost={handleLikePost} onItemClick={startTryOn} onItemAction={startTryOn} onOpenSplitCamera={() => {}} onOpenComments={() => {}} onAddToCart={(i) => setCartItems(p => [...p, i])} onBuy={(i) => { setCartItems(p => [...p, i]); setCurrentScreen(Screen.Cart); }} />;
             default: return <SplashScreen />;
         }
     };
@@ -463,7 +512,7 @@ const App: React.FC = () => {
                             
                             if (error) throw error;
                             
-                            await fetchGlobalFeed(); // Recarrega feed global para todos verem
+                            await fetchGlobalFeed(); 
                             setShowCaptionModal(false);
                             setCurrentScreen(Screen.Confirmation);
                         } catch (err: any) {

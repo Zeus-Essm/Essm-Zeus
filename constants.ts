@@ -1,7 +1,7 @@
 
 import type { Category, Item, Post, Story, Conversation, CollaborationPost } from './types';
 
-// Estruturas de Sub-categorias (Pastas)
+// Estruturas de Sub-categorias (Pastas) - Mantidas para referência de ícones de sistema
 export const MALE_CLOTHING_SUBCATEGORIES = [
     { id: 'fato', name: 'Fato', image: 'https://i.postimg.cc/fLHkb25Z/ICONS8.jpg' },
     { id: 'tshirt', name: 'T-shirt', image: 'https://i.postimg.cc/gJxZFbq8/ICONS3.jpg' },
@@ -26,35 +26,9 @@ export const FEMALE_CLOTHING_SUBCATEGORIES = [
     { id: 'acessorios', name: 'Acessórios', image: 'https://i.postimg.cc/jjg7FSNR/ICONS5.jpg' },
 ];
 
-// Lojas Reais do Mercado
-export const CATEGORIES: Category[] = [
-    {
-        id: 'lv',
-        name: 'LOUIS VUITTON',
-        image: 'https://i.postimg.cc/xCknv8vV/pexels-rdne-6224633.jpg',
-        video: 'https://files.catbox.moe/ctk28a.mp4',
-        type: 'fashion',
-        subCategories: FEMALE_CLOTHING_SUBCATEGORIES,
-        isAd: true
-    },
-    {
-        id: 'new_feeling',
-        name: 'NEW FEELING',
-        image: 'https://i.postimg.cc/pTbvCjjp/NEW-FEELING.png',
-        video: 'https://files.catbox.moe/joiet2.mp4',
-        type: 'fashion',
-        subCategories: MALE_CLOTHING_SUBCATEGORIES,
-        isAd: true
-    },
-    {
-        id: 'adidas',
-        name: 'ADIDAS',
-        image: 'https://i.postimg.cc/LXmdq4H2/D.jpg',
-        type: 'fashion',
-        subCategories: MALE_CLOTHING_SUBCATEGORIES,
-        isAd: true
-    }
-];
+// As Lojas Reais agora são carregadas dinamicamente do Supabase.
+// Deixamos este array vazio para ser populado pelo App.tsx.
+export const CATEGORIES: Category[] = [];
 
 export const ITEMS: Item[] = [];
 export const INITIAL_STORIES: Story[] = [];

@@ -1,6 +1,6 @@
+
 import React, { useState, useRef, useMemo } from 'react';
 import type { Profile, Category, Post, Item, MarketplaceType } from '../types';
-import { CATEGORIES } from '../constants';
 import { 
     PlusIcon, UserIcon, 
     ChevronDownIcon, MenuIcon,
@@ -60,7 +60,8 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   onAddComment,
   onItemClick,
   onViewProfile,
-  onSearchClick
+  onSearchClick,
+  realBusinesses = []
 }) => {
   const [activeTab, setActiveTab] = useState<'posts' | 'market'>('market'); 
   const [selectedCategory, setSelectedCategory] = useState<MarketplaceType>('fashion');
@@ -80,9 +81,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
     }
   };
 
+  // Filtra as lojas reais com base na categoria selecionada no UI (por enquanto quase todas são moda)
   const marketplaceItems = useMemo(() => {
-    return CATEGORIES.filter(c => c.type === selectedCategory);
-  }, [selectedCategory]);
+    return realBusinesses.filter(c => c.type === selectedCategory);
+  }, [selectedCategory, realBusinesses]);
 
   const userPosts = posts.filter(p => p.user.id === loggedInProfile.user_id);
 
@@ -255,11 +257,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                                 <img src={category.image} alt={category.name} className="w-full h-full object-cover" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">
                                     <h3 className="text-md font-black text-white uppercase italic tracking-tighter leading-none">{category.name}</h3>
+                                    <p className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest mt-1">Loja Real</p>
                                 </div>
                             </div>
                         )) : (
-                            <div className="col-span-2 py-20 text-center opacity-30">
-                                <p className="text-[10px] font-bold uppercase tracking-widest italic">Aguardando novas lojas reais...</p>
+                            <div className="col-span-2 py-20 text-center opacity-30 flex flex-col items-center">
+                                <SearchIcon className="w-10 h-10 text-zinc-300 mb-4" />
+                                <p className="text-[10px] font-bold uppercase tracking-widest italic text-zinc-400">Nenhuma loja cadastrada nesta categoria...</p>
                             </div>
                         )}
                     </div>
