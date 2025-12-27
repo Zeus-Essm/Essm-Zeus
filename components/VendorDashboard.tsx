@@ -42,7 +42,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     businessProfile, profile, onOpenMenu, unreadNotificationCount, onOpenNotificationsPanel,
     onOpenPromotionModal, folders, products, posts, onCreateFolder, onDeleteFolder,
     onNavigateToProducts, onLikePost, onAddComment, onItemClick, onViewProfile,
-    onUpdateProfile, onUpdateProfileImage, isVisitor = false, onBack
+    onUpdateProfile, onUpdateProfileImage, isVisitor = false, onBack, followersCount, followingCount
 }) => {
     const [activeTab, setActiveTab] = useState<'shop' | 'posts'>('shop');
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
@@ -136,19 +136,18 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                             <h2 className="font-bold text-md text-zinc-900 truncate uppercase tracking-tighter italic leading-none pr-8">
                                 {businessProfile.business_name}
                             </h2>
-                            
-                            {/* Botão de Adicionar Logo Chamativo para Vendedores */}
-                            {!businessProfile.logo_url && !isVisitor && (
-                                <button 
-                                    onClick={handleLogoClick}
-                                    className="mt-1 px-4 py-1.5 bg-amber-500 text-white text-[9px] font-black uppercase rounded-xl tracking-widest shadow-lg shadow-amber-500/20 active:scale-95 transition-transform"
-                                >
-                                    ADICIONAR LOGO
-                                </button>
-                            )}
-
                             <div className="text-[11px] text-zinc-600 font-medium leading-tight line-clamp-2 mt-1">
                                 {businessProfile.description || "Loja do ecossistema PUMP."}
+                            </div>
+                            <div className="flex gap-4 mt-3">
+                                <div className="flex flex-col">
+                                    <span className="text-xs font-black text-zinc-900">{followersCount}</span>
+                                    <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Seguidores</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-xs font-black text-zinc-900">{followingCount}</span>
+                                    <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Seguindo</span>
+                                </div>
                             </div>
                         </div>
                     </div>
