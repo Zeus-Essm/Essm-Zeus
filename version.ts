@@ -2,32 +2,30 @@
 /**
  * RELATÓRIO DE ALTERAÇÕES APLICADAS (SUPABASE & ESTRUTURA)
  * 
- * 1) SEGUIDORES: Tabela 'follows' criada para suportar relações UUID-UUID (Loja e Pessoal).
- * 2) VTO FLOW: Lógica integrada para upload obrigatório antes da prova em itens de loja.
+ * 1) STORAGE: O bucket 'avatars' deve ser público.
+ * 2) FILENAMES: 
+ *    - Perfil Pessoal: `[user_id]/avatar.[ext]`
+ *    - Perfil Empresa: `[user_id]/logo.[ext]`
+ *    - Isso permite usar 'upsert: true' de forma previsível.
  * 3) SQL RECOMENDADO:
  */
 
 /*
--- Tabela de Seguidores Universais
-CREATE TABLE IF NOT EXISTS public.follows (
-    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-    follower_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-    following_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT now(),
-    UNIQUE(follower_id, following_id)
-);
+-- Adicionar coluna de controle de atualização se não existir
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
--- RLS
-ALTER TABLE public.follows ENABLE ROW LEVEL SECURITY;
+-- Política de Storage (Buckets)
+-- Permite que usuários autenticados gerenciem seus próprios arquivos na pasta com seu UID
+CREATE POLICY "Upload de Avatares Próprios" ON storage.objects
+FOR ALL TO authenticated
+USING (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text)
+WITH CHECK (bucket_id = 'avatars' AND (storage.foldername(name))[1] = auth.uid()::text);
 
-CREATE POLICY "Qualquer um pode ver seguidores" ON public.follows FOR SELECT USING (true);
-CREATE POLICY "Usuários podem seguir outros" ON public.follows FOR INSERT WITH CHECK (auth.uid() = follower_id);
-CREATE POLICY "Usuários podem deixar de seguir" ON public.follows FOR DELETE USING (auth.uid() = follower_id);
-
--- Índices
-CREATE INDEX IF NOT EXISTS idx_follows_follower ON public.follows(follower_id);
-CREATE INDEX IF NOT EXISTS idx_follows_following ON public.follows(following_id);
+-- Política de Leitura Pública
+CREATE POLICY "Visualização Pública de Avatares" ON storage.objects
+FOR SELECT TO public
+USING (bucket_id = 'avatars');
 */
 
-export const DB_ALIGNMENT_VERSION = "2.6.0";
-export const LAST_FEATURE_UPDATE = "2025-05-25 (Universal Follows & VTO-to-Post Flow)";
+export const DB_ALIGNMENT_VERSION = "2.5.0";
+export const LAST_FEATURE_UPDATE = "2025-05-24 (Profile Photo Sync)";

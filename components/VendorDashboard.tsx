@@ -42,7 +42,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     businessProfile, profile, onOpenMenu, unreadNotificationCount, onOpenNotificationsPanel,
     onOpenPromotionModal, folders, products, posts, onCreateFolder, onDeleteFolder,
     onNavigateToProducts, onLikePost, onAddComment, onItemClick, onViewProfile,
-    onUpdateProfile, onUpdateProfileImage, isVisitor = false, onBack, followersCount, followingCount
+    onUpdateProfile, onUpdateProfileImage, isVisitor = false, onBack
 }) => {
     const [activeTab, setActiveTab] = useState<'shop' | 'posts'>('shop');
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
@@ -136,26 +136,18 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                             <h2 className="font-bold text-md text-zinc-900 truncate uppercase tracking-tighter italic leading-none pr-8">
                                 {businessProfile.business_name}
                             </h2>
+                            {!businessProfile.logo_url && !isVisitor && (
+                                <button 
+                                    onClick={handleLogoClick}
+                                    className="mt-1 px-3 py-1 bg-amber-500 text-white text-[9px] font-black uppercase rounded-full tracking-widest shadow-sm"
+                                >
+                                    Adicionar Logo
+                                </button>
+                            )}
                             <div className="text-[11px] text-zinc-600 font-medium leading-tight line-clamp-2 mt-1">
                                 {businessProfile.description || "Loja do ecossistema PUMP."}
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                {/* Stats Section - Moved here to match screenshot layout */}
-                <div className="flex justify-around py-4 border-t border-b border-zinc-50 mb-2 mx-5">
-                    <div className="flex flex-col items-center">
-                        <span className="text-md font-bold text-zinc-900">{userPosts.length}</span>
-                        <span className="text-[10px] text-zinc-400 font-black uppercase tracking-tight">posts</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                        <span className="text-md font-bold text-zinc-900">{followersCount}</span>
-                        <span className="text-[10px] text-zinc-400 font-black uppercase tracking-tight">seguidores</span>
-                    </div>
-                    <div className="flex flex-col items-center">
-                        <span className="text-md font-bold text-zinc-900">{followingCount}</span>
-                        <span className="text-[10px] text-zinc-400 font-black uppercase tracking-tight">seguindo</span>
                     </div>
                 </div>
 
