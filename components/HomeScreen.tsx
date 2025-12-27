@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useMemo } from 'react';
 import type { Profile, Category, Post, Item, MarketplaceType } from '../types';
 import { 
@@ -68,8 +69,12 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
   const [commentingPost, setCommentingPost] = useState<Post | null>(null);
   const [isEditingBio, setIsEditingBio] = useState(false);
 
-  const profileImageInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const categoryScrollRef = useRef<HTMLDivElement>(null);
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -126,46 +131,52 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
       <main className="flex-grow overflow-y-auto pb-24">
         <div className="px-5 pt-4">
             <div className="flex items-center gap-4 mb-4">
-                <div className="relative shrink-0">
-                    <div 
-                        onClick={() => profileImageInputRef.current?.click()}
-                        className={`w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 to-amber-600 shadow-sm cursor-pointer`}
-                    >
+                <div className="relative shrink-0" onClick={handleAvatarClick}>
+                    <div className={`w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 to-amber-600 shadow-sm cursor-pointer active:scale-95 transition-transform`}>
                         <div className="w-full h-full rounded-full bg-white p-[2px] overflow-hidden">
                             <div className="w-full h-full rounded-full overflow-hidden bg-zinc-100 flex items-center justify-center">
                                 {loggedInProfile.avatar_url ? (
                                     <img src={loggedInProfile.avatar_url} alt="Profile" className="w-full h-full object-cover" />
                                 ) : (
-                                    <UserIcon className="w-10 h-10 text-zinc-300" />
+                                    <div className="flex flex-col items-center justify-center gap-1">
+                                        <PlusIcon className="w-6 h-6 text-zinc-400" />
+                                    </div>
                                 )}
                             </div>
                         </div>
                     </div>
                     <button 
-                        onClick={() => profileImageInputRef.current?.click()}
-                        className="absolute bottom-0 right-0 w-7 h-7 bg-zinc-800 rounded-full border-2 border-white flex items-center justify-center text-white shadow-md active:scale-90 transition-all"
+                        className="absolute bottom-0 right-0 w-7 h-7 bg-amber-500 rounded-full border-2 border-white flex items-center justify-center text-white shadow-md"
                     >
-                        <PlusIcon className="w-3.5 h-3.5" strokeWidth={4} />
+                        <PencilIcon className="w-3.5 h-3.5" strokeWidth={4} />
                     </button>
-                    <input type="file" accept="image/*" ref={profileImageInputRef} onChange={handleFileChange} className="hidden" />
+                    <input type="file" accept="image/*" ref={fileInputRef} onChange={handleFileChange} className="hidden" />
                 </div>
 
                 <div className="flex-grow min-w-0">
                     <div className="flex items-center justify-between">
-                        <h2 className="font-bold text-md text-zinc-900 truncate uppercase tracking-tighter italic">
+                        <h2 className="font-bold text-md text-zinc-900 truncate uppercase tracking-tighter italic leading-none">
                             {loggedInProfile.full_name || loggedInProfile.username}
                         </h2>
-                        <button onClick={() => setIsEditingBio(true)} className="p-1 active:scale-90 transition-transform">
-                            <PencilIcon className="w-4 h-4 text-zinc-400" />
+                        <button onClick={() => setIsEditingBio(true)} className="p-2 bg-zinc-50 rounded-full text-zinc-400 hover:text-amber-500 active:scale-90 transition-all">
+                            <PencilIcon className="w-4 h-4" />
                         </button>
                     </div>
-                    <div className="text-[11px] text-zinc-600 font-medium leading-tight line-clamp-3 mt-1 whitespace-pre-line">
-                        {loggedInProfile.bio || "Bio não definida."}
+                    {!loggedInProfile.avatar_url && (
+                        <button 
+                            onClick={handleAvatarClick}
+                            className="mt-1 px-3 py-1 bg-amber-500 text-white text-[9px] font-black uppercase rounded-full tracking-widest shadow-sm"
+                        >
+                            Adicionar Foto
+                        </button>
+                    )}
+                    <div className="text-[11px] text-zinc-600 font-medium leading-tight line-clamp-3 mt-2 whitespace-pre-line">
+                        {loggedInProfile.bio || "Membro exclusivo da comunidade PUMP."}
                     </div>
                 </div>
             </div>
 
-            <div className="flex justify-around py-4 border-t border-b border-zinc-100 mb-2">
+            <div className="flex justify-around py-4 border-t border-b border-zinc-50 mb-2">
                 <div className="flex flex-col items-center">
                     <span className="text-md font-bold text-zinc-900">{userPosts.length}</span>
                     <span className="text-[10px] text-zinc-400 font-black uppercase tracking-tight">posts</span>
@@ -189,14 +200,14 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
             className={`flex-1 py-4 flex justify-center items-center relative transition-colors ${activeTab === 'market' ? 'text-amber-600' : 'text-zinc-400'}`}
           >
             <span className="text-xs font-bold uppercase tracking-widest">MERCADO</span>
-            {activeTab === 'market' && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-amber-600"></div>}
+            {activeTab === 'market' && <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-amber-600"></div>}
           </button>
           <button 
             onClick={() => setActiveTab('posts')} 
             className={`flex-1 py-4 flex justify-center items-center relative transition-colors ${activeTab === 'posts' ? 'text-amber-600' : 'text-zinc-400'}`}
           >
             <span className="text-xs font-bold uppercase tracking-widest">PUBLICAÇÕES</span>
-            {activeTab === 'posts' && <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-amber-600"></div>}
+            {activeTab === 'posts' && <div className="absolute bottom-0 left-0 right-0 h-[2.5px] bg-amber-600"></div>}
           </button>
         </div>
 
@@ -208,7 +219,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                             <div 
                                 key={post.id} 
                                 onClick={() => setViewingPostIndex(index)}
-                                className="aspect-[2/3] bg-zinc-100 rounded-3xl shadow-md overflow-hidden active:opacity-80 transition-opacity cursor-pointer border border-zinc-100"
+                                className="aspect-[2/3] bg-zinc-100 rounded-[2rem] shadow-sm overflow-hidden active:opacity-80 transition-opacity cursor-pointer border border-zinc-100"
                             >
                                 <img src={post.image} alt="" className="w-full h-full object-cover" />
                             </div>
@@ -238,7 +249,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                             <button 
                                 key={cat.id}
                                 onClick={() => setSelectedCategory(cat.id as MarketplaceType)}
-                                className={`px-5 py-2 rounded-lg text-[11px] font-bold whitespace-nowrap transition-all ${selectedCategory === cat.id ? 'bg-amber-600 text-white shadow-md' : 'bg-zinc-50 text-zinc-500 border border-zinc-100'}`}
+                                className={`px-5 py-2 rounded-full text-[11px] font-black uppercase tracking-widest transition-all ${selectedCategory === cat.id ? 'bg-amber-600 text-white shadow-md' : 'bg-zinc-50 text-zinc-500 border border-zinc-100'}`}
                             >
                                 {cat.label}
                             </button>
@@ -250,7 +261,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                             <div 
                                 key={category.id} 
                                 onClick={() => onSelectCategory(category)} 
-                                className="relative aspect-[2/3.5] rounded-3xl overflow-hidden group shadow-lg active:scale-[0.98] transition-all border border-zinc-100"
+                                className="relative aspect-[2/3.5] rounded-[2rem] overflow-hidden group shadow-lg active:scale-[0.98] transition-all border border-zinc-100"
                             >
                                 <img src={category.image} alt={category.name} className="w-full h-full object-cover" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-5">

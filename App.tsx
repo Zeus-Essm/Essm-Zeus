@@ -64,11 +64,9 @@ const App: React.FC = () => {
         setIsLoading(true);
         try {
             await supabase.auth.signOut();
-            // Fix: location.reload does not take arguments
             location.reload();
         } catch (err) {
             console.error("Erro ao sair:", err);
-            // Fix: location.reload does not take arguments
             location.reload();
         }
     };
@@ -131,20 +129,86 @@ const App: React.FC = () => {
         setProducts(pRes.data || []);
     };
 
+    const handleUpdateProfileImage = async (base64DataUrl: string) => {
+        setIsLoading(true);
+        try {
+            // Requisito: Obter dados do usuário atualizado
+            const { data: userData } = await supabase.auth.getUser();
+            if (!userData.user) throw new Error("Usuário não encontrado.");
+            const userId = userData.user.id;
+
+            // Converter Base64 para Blob para o upload
+            const response = await fetch(base64DataUrl);
+            const blob = await response.blob();
+            
+            // Requisito: Estrutura filePath = userId/uuid.png
+            const filePath = `${userId}/${crypto.randomUUID()}.png`;
+
+            // Requisito: upsert: false
+            const { error: uploadError } = await supabase.storage
+                .from('avatars')
+                .upload(filePath, blob, { 
+                    upsert: false,
+                    contentType: 'image/png'
+                });
+
+            if (uploadError) {
+                console.error("Erro no upload:", uploadError);
+                throw uploadError;
+            }
+
+            // Obter URL pública
+            const { data: { publicUrl } } = supabase.storage
+                .from('avatars')
+                .getPublicUrl(filePath);
+
+            // Atualizar banco de dados
+            const { data: updatedProfile, error: dbError } = await supabase
+                .from('profiles')
+                .update({ 
+                    avatar_url: publicUrl,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('user_id', userId)
+                .select()
+                .single();
+
+            if (dbError) throw dbError;
+
+            // Atualizar estados locais para resposta visual imediata
+            if (updatedProfile) {
+                setProfile(updatedProfile);
+                if (updatedProfile.account_type === 'business') {
+                    setBusinessProfile(prev => prev ? { ...prev, logo_url: publicUrl } : null);
+                }
+                toast.success("Foto atualizada!");
+                fetchGlobalData();
+            }
+        } catch (err: any) {
+            console.error("Processo de upload falhou:", err);
+            toast.error(err.message || "Erro ao carregar foto.");
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     const uploadProductImage = async (file: Blob): Promise<string> => {
-        if (!session?.user) throw new Error("Não autenticado");
+        const { data: userData } = await supabase.auth.getUser();
+        if (!userData.user) throw new Error("Não autenticado");
+        const userId = userData.user.id;
+        
         const fileExt = (file as File).name?.split('.').pop() || 'jpg';
-        const fileName = `${session.user.id}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `${userId}/${crypto.randomUUID()}.${fileExt}`;
         
         const { error: uploadError } = await supabase.storage
             .from('products')
-            .upload(fileName, file);
+            .upload(filePath, file, { upsert: false });
 
         if (uploadError) throw uploadError;
 
         const { data: { publicUrl } } = supabase.storage
             .from('products')
-            .getPublicUrl(fileName);
+            .getPublicUrl(filePath);
 
         return publicUrl;
     };
@@ -199,7 +263,6 @@ const App: React.FC = () => {
 
             if (error) throw error;
             if (data) {
-                // Fix: Properly update products lists using map
                 setProducts(prev => prev.map(p => p.id === productId ? data : p));
                 setAllMarketplaceProducts(prev => prev.map(p => p.id === productId ? data : p));
                 toast.success("Item atualizado!");
@@ -322,7 +385,8 @@ const App: React.FC = () => {
                             await supabase.from('products').delete().eq('id', id);
                             setProducts(p => p.filter(prod => prod.id !== id));
                         }}
-                        onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={() => {}}
+                        onUpdateProfile={handleUpdateProfile} 
+                        onUpdateProfileImage={handleUpdateProfileImage}
                         onNavigateToProducts={() => setCurrentScreen(Screen.VendorProducts)}
                         onOpenMenu={() => setShowVendorMenu(true)} unreadNotificationCount={0} onOpenNotificationsPanel={() => setIsNotificationsOpen(true)}
                         onOpenPromotionModal={() => {}} followersCount={0} followingCount={0}
@@ -355,7 +419,7 @@ const App: React.FC = () => {
             case Screen.Home: return profile && (
                 <HomeScreen 
                     loggedInProfile={profile} viewedProfileId={null} realBusinesses={realBusinessCategories} 
-                    onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={() => {}} 
+                    onUpdateProfile={handleUpdateProfile} onUpdateProfileImage={handleUpdateProfileImage} 
                     onSelectCategory={handleSelectCategory} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} 
                     onNavigateToMyLooks={() => {}} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} 
                     onNavigateToChat={() => {}} onNavigateToRewards={() => {}} onStartTryOn={() => setCurrentScreen(Screen.ImageSourceSelection)} 

@@ -106,61 +106,63 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
 
   return (
     <div className="w-full h-full bg-white flex flex-col animate-fadeIn font-sans relative">
-       <div className="px-4 pt-4 pb-2 flex items-center justify-between border-b border-zinc-50 shrink-0">
+       <div className="px-4 pt-4 pb-2 flex items-center justify-between border-b border-zinc-50 shrink-0 bg-white z-20">
           <button onClick={onBack} className="p-2 bg-zinc-50 rounded-xl text-zinc-500 active:scale-90 transition-transform">
             <ArrowLeftIcon className="w-5 h-5"/>
           </button>
-          <h1 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900 italic">Gestão de Itens</h1>
+          <h1 className="text-sm font-black uppercase tracking-[0.2em] text-zinc-900 italic">Estoque</h1>
           <div className="w-9"></div> 
        </div>
 
-       <div className="flex gap-2 px-5 py-5 overflow-x-auto scrollbar-hide shrink-0">
+       <div className="flex gap-2 px-5 py-4 overflow-x-auto scrollbar-hide shrink-0 bg-white border-b border-zinc-50">
           {folders.map(f => (
              <button 
                 key={f.id}
                 onClick={() => setSelectedFolderId(f.id)}
-                className={`px-6 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all ${selectedFolderId === f.id ? 'bg-zinc-900 text-white shadow-xl' : 'bg-zinc-50 text-zinc-400 border border-zinc-100'}`}
+                className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${selectedFolderId === f.id ? 'bg-zinc-900 text-white shadow-md' : 'bg-zinc-50 text-zinc-400 border border-zinc-100'}`}
              >
                 {f.title}
              </button>
           ))}
        </div>
 
-       <div className="flex-grow overflow-y-auto px-6 pb-32 grid grid-cols-2 gap-6">
+       <div className="flex-grow overflow-y-auto px-5 pt-6 pb-32 grid grid-cols-2 gap-4">
           {filteredProducts.map(product => (
-             <div key={product.id} className="relative aspect-[2/3.5] rounded-[2.5rem] overflow-hidden shadow-xl border border-zinc-100 group animate-fadeIn bg-zinc-50">
+             <div key={product.id} className="relative aspect-[4/3] rounded-[2rem] overflow-hidden shadow-sm hover:shadow-md border border-zinc-100 group animate-fadeIn bg-zinc-50 active:scale-[0.98] transition-all">
                 <img src={product.image_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg'} className="w-full h-full object-cover" />
                 
-                <div className="absolute top-4 right-4 flex items-center gap-3 opacity-0 group-hover:opacity-100 transition-all z-10 scale-100">
+                <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all z-10 scale-90 group-hover:scale-100">
                     <button 
                        onClick={() => handleEditClick(product)}
-                       className="p-4 bg-white/95 backdrop-blur-md rounded-2xl text-zinc-900 shadow-xl border border-zinc-100 active:scale-90 transition-all"
+                       className="p-2.5 bg-white/95 backdrop-blur-md rounded-xl text-zinc-900 shadow-lg border border-zinc-100 active:scale-90 transition-all"
                     >
-                       <PencilIcon className="w-5 h-5" />
+                       <PencilIcon className="w-3.5 h-3.5" />
                     </button>
                     <button 
                        onClick={() => onDeleteProduct(product.id)}
-                       className="p-4 bg-red-500/95 backdrop-blur-md rounded-2xl text-white shadow-xl active:scale-90 transition-all"
+                       className="p-2.5 bg-red-500/95 backdrop-blur-md rounded-xl text-white shadow-lg active:scale-90 transition-all"
                     >
-                       <TrashIcon className="w-5 h-5" />
+                       <TrashIcon className="w-3.5 h-3.5" />
                     </button>
                 </div>
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent flex flex-col justify-end p-6">
-                   <p className="text-white font-bold text-[12px] truncate uppercase italic tracking-tight">{product.title}</p>
-                   <p className="text-amber-400 font-black text-sm mt-1 tracking-tighter">{(product.price || 0).toLocaleString('pt-AO', {maximumFractionDigits: 0})}</p>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
+                   <p className="text-white font-bold text-[11px] truncate uppercase italic tracking-tight leading-none">{product.title}</p>
+                   <p className="text-amber-400 font-black text-[12px] mt-1 tracking-tighter">
+                    {product.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 })}
+                   </p>
                 </div>
              </div>
           ))}
 
           <button 
             onClick={() => { resetForm(); setIsAddingItem(true); }} 
-            className="aspect-[2/3.5] border-2 border-dashed border-zinc-100 rounded-[2.5rem] flex flex-col items-center justify-center gap-3 bg-zinc-50/20 text-zinc-300 hover:bg-zinc-100 transition-all active:scale-95"
+            className="aspect-[4/3] border-2 border-dashed border-zinc-100 rounded-[2rem] flex flex-col items-center justify-center gap-2 bg-zinc-50/20 text-zinc-300 hover:bg-zinc-50 transition-all active:scale-95 group"
           >
-             <div className="p-5 bg-white rounded-2xl shadow-md">
-                <PlusIcon className="w-10 h-10" strokeWidth={3} />
+             <div className="p-2.5 bg-white rounded-xl shadow-sm border border-zinc-100 group-hover:border-amber-500/30 transition-colors">
+                <PlusIcon className="w-6 h-6 text-zinc-200 group-hover:text-amber-500" strokeWidth={3} />
              </div>
-             <span className="text-[11px] font-black uppercase tracking-widest">Novo Item</span>
+             <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Novo Item</span>
           </button>
        </div>
 
@@ -182,7 +184,7 @@ const VendorProductsScreen: React.FC<VendorProductsScreenProps> = ({
                 <div className="flex-grow overflow-y-auto px-8 pb-24 space-y-6 scrollbar-hide">
                     <div 
                       onClick={() => !isSaving && itemFileInputRef.current?.click()} 
-                      className="w-full aspect-[3/4] max-w-[280px] mx-auto bg-zinc-50 border-2 border-dashed border-zinc-100 rounded-[2.5rem] flex flex-col items-center justify-center relative overflow-hidden transition-all hover:bg-zinc-100/50 cursor-pointer shadow-inner group"
+                      className="w-full aspect-[4/3] max-w-full mx-auto bg-zinc-50 border-2 border-dashed border-zinc-100 rounded-[2.5rem] flex flex-col items-center justify-center relative overflow-hidden transition-all hover:bg-zinc-100/50 cursor-pointer shadow-inner group"
                     >
                        {newItemPreview ? (
                           <img src={newItemPreview} className="w-full h-full object-cover animate-imageAppear" />

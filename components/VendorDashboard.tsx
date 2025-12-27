@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useRef } from 'react';
 import type { BusinessProfile, Profile, Folder, Product, Post, Item } from '../types';
 import { 
     MenuIcon, PlusIcon, StarIcon, 
@@ -41,7 +42,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     businessProfile, profile, onOpenMenu, unreadNotificationCount, onOpenNotificationsPanel,
     onOpenPromotionModal, folders, products, posts, onCreateFolder, onDeleteFolder,
     onNavigateToProducts, onLikePost, onAddComment, onItemClick, onViewProfile,
-    onUpdateProfile, isVisitor = false, onBack
+    onUpdateProfile, onUpdateProfileImage, isVisitor = false, onBack
 }) => {
     const [activeTab, setActiveTab] = useState<'shop' | 'posts'>('shop');
     const [isCreatingFolder, setIsCreatingFolder] = useState(false);
@@ -49,6 +50,21 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
     const [viewingPostIndex, setViewingPostIndex] = useState<number | null>(null);
     const [commentingPost, setCommentingPost] = useState<Post | null>(null);
     const [isEditingBio, setIsEditingBio] = useState(false);
+    
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    const handleLogoClick = () => {
+        if (!isVisitor) fileInputRef.current?.click();
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => onUpdateProfileImage(reader.result as string);
+            reader.readAsDataURL(file);
+        }
+    };
 
     const userPosts = posts.filter(p => p.user.id === profile.user_id);
 
@@ -91,10 +107,22 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
             <main className="flex-grow overflow-y-auto pb-24">
                 <div className="px-5 pt-4">
                     <div className="flex items-center gap-4 mb-4">
-                        <div className="relative shrink-0">
-                            <div className="w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 to-amber-600 shadow-sm overflow-hidden">
-                                <img src={businessProfile.logo_url || 'https://i.postimg.cc/LXmdq4H2/D.jpg'} className="w-full h-full rounded-full object-cover border-2 border-white" />
+                        <div className="relative shrink-0" onClick={handleLogoClick}>
+                            <div className="w-20 h-20 rounded-full p-[2px] bg-gradient-to-tr from-amber-400 to-amber-600 shadow-sm overflow-hidden cursor-pointer active:scale-95 transition-transform">
+                                {businessProfile.logo_url ? (
+                                    <img src={businessProfile.logo_url} className="w-full h-full rounded-full object-cover border-2 border-white" />
+                                ) : (
+                                    <div className="w-full h-full rounded-full bg-zinc-50 flex items-center justify-center border-2 border-white">
+                                        <PlusIcon className="w-6 h-6 text-zinc-300" strokeWidth={3} />
+                                    </div>
+                                )}
                             </div>
+                            {!isVisitor && (
+                                <div className="absolute bottom-0 right-0 bg-amber-500 rounded-full p-1 border-2 border-white">
+                                    <PencilIcon className="w-3 h-3 text-white" />
+                                </div>
+                            )}
+                            <input type="file" ref={fileInputRef} accept="image/*" onChange={handleFileChange} className="hidden" />
                         </div>
                         <div className="flex-grow min-w-0 relative">
                             {!isVisitor && (
@@ -108,6 +136,14 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                             <h2 className="font-bold text-md text-zinc-900 truncate uppercase tracking-tighter italic leading-none pr-8">
                                 {businessProfile.business_name}
                             </h2>
+                            {!businessProfile.logo_url && !isVisitor && (
+                                <button 
+                                    onClick={handleLogoClick}
+                                    className="mt-1 px-3 py-1 bg-amber-500 text-white text-[9px] font-black uppercase rounded-full tracking-widest shadow-sm"
+                                >
+                                    Adicionar Logo
+                                </button>
+                            )}
                             <div className="text-[11px] text-zinc-600 font-medium leading-tight line-clamp-2 mt-1">
                                 {businessProfile.description || "Loja do ecossistema PUMP."}
                             </div>
@@ -126,39 +162,39 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                     </button>
                 </div>
 
-                <div className="min-h-[400px] bg-white p-6">
+                <div className="min-h-[400px] bg-white p-5">
                     {activeTab === 'shop' ? (
                         <div className="animate-fadeIn">
-                            <div className="grid grid-cols-2 gap-6">
+                            <div className="grid grid-cols-2 gap-4">
                                 {folders.map(folder => (
-                                    <div key={folder.id} className="relative aspect-[2/3.5] rounded-[2.5rem] overflow-hidden group shadow-xl active:scale-[0.98] transition-all border border-zinc-100 cursor-pointer" onClick={() => onNavigateToProducts(folder.id)}>
+                                    <div key={folder.id} className="relative aspect-[4/3] rounded-[2rem] overflow-hidden group shadow-md active:scale-95 transition-all border border-zinc-100 cursor-pointer" onClick={() => onNavigateToProducts(folder.id)}>
                                         {!isVisitor && (
                                             <button 
                                                 onClick={(e) => { e.stopPropagation(); onDeleteFolder(folder.id); }}
-                                                className="absolute top-4 right-4 z-20 p-2.5 bg-black/40 backdrop-blur-md rounded-2xl text-white hover:bg-red-500 transition-colors"
+                                                className="absolute top-2 right-2 z-20 p-1.5 bg-black/40 backdrop-blur-md rounded-xl text-white hover:bg-red-500 transition-colors"
                                             >
-                                                <TrashIcon className="w-4 h-4" />
+                                                <TrashIcon className="w-3.5 h-3.5" />
                                             </button>
                                         )}
                                         {folder.cover_image ? (
                                             <img src={folder.cover_image} className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full bg-zinc-50 flex items-center justify-center">
-                                                <ArchiveIcon className="w-12 h-12 text-zinc-200" strokeWidth={1} />
+                                                <ArchiveIcon className="w-10 h-10 text-zinc-200" strokeWidth={1} />
                                             </div>
                                         )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent flex flex-col justify-end p-6">
-                                            <h3 className="text-lg font-black text-white uppercase italic tracking-tighter leading-tight truncate">{folder.title}</h3>
-                                            <p className="text-[10px] font-bold text-amber-400 uppercase tracking-widest mt-2">Explorar Coleção</p>
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex flex-col justify-end p-4">
+                                            <h3 className="text-[13px] font-black text-white uppercase italic tracking-tighter leading-tight truncate">{folder.title}</h3>
+                                            <p className="text-[8px] font-bold text-amber-400 uppercase tracking-widest mt-0.5">Explorar</p>
                                         </div>
                                     </div>
                                 ))}
                                 {!isVisitor && (
-                                    <button onClick={() => setIsCreatingFolder(true)} className="aspect-[2/3.5] border-2 border-dashed border-zinc-100 rounded-[2.5rem] flex flex-col items-center justify-center gap-3 bg-zinc-50/30 transition-all hover:bg-zinc-50">
-                                        <div className="p-4 bg-white rounded-2xl shadow-sm">
-                                            <PlusIcon className="w-8 h-8 text-zinc-300" strokeWidth={3} />
+                                    <button onClick={() => setIsCreatingFolder(true)} className="aspect-[4/3] border-2 border-dashed border-zinc-100 rounded-[2rem] flex flex-col items-center justify-center gap-2 bg-zinc-50/30 transition-all hover:bg-zinc-50 active:scale-95">
+                                        <div className="p-2 bg-white rounded-xl shadow-sm">
+                                            <PlusIcon className="w-5 h-5 text-zinc-300" strokeWidth={3} />
                                         </div>
-                                        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Nova Coleção</span>
+                                        <span className="text-[8px] font-black text-zinc-400 uppercase tracking-widest">Nova Pasta</span>
                                     </button>
                                 )}
                             </div>
@@ -166,7 +202,7 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                     ) : (
                         <div className="grid grid-cols-2 gap-4 animate-fadeIn">
                             {userPosts.map((post, index) => (
-                                <div key={post.id} onClick={() => setViewingPostIndex(index)} className="aspect-[2/3] bg-zinc-100 rounded-3xl overflow-hidden shadow-md active:opacity-80 cursor-pointer">
+                                <div key={post.id} onClick={() => setViewingPostIndex(index)} className="aspect-[4/3] bg-zinc-100 rounded-2xl overflow-hidden shadow-sm active:opacity-80 cursor-pointer border border-zinc-50">
                                     <img src={post.image} className="w-full h-full object-cover" />
                                 </div>
                             ))}
