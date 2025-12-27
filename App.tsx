@@ -132,60 +132,55 @@ const App: React.FC = () => {
     const handleUpdateProfileImage = async (base64DataUrl: string) => {
         setIsLoading(true);
         try {
-            // 1. Obter usuário atual (Funciona para Email e Google)
-            const { data: userData, error: userError } = await supabase.auth.getUser();
-            if (userError || !userData.user) throw new Error("Usuário não autenticado.");
-            const userId = userData.user.id;
+            // 1. Obter usuário (Email ou Google)
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) throw new Error("Usuário não autenticado");
+            const userId = user.id;
 
-            // 2. Converter Base64 para Blob para o upload
+            // Converter base64 para Blob
             const response = await fetch(base64DataUrl);
             const file = await response.blob();
             
-            // 3. Estrutura do caminho solicitada: userId/uuid.png
-            const filePath = `${userId}/${crypto.randomUUID()}.png`;
+            // 2. Definir caminho solicitado: userId/avatar.png (dentro do bucket avatars)
+            const filePath = `${userId}/avatar.png`;
 
-            // 4. Upload para o bucket 'avatars' (upsert: false conforme solicitado)
+            // 3. Upload com upsert: true conforme solicitado
             const { error: uploadError } = await supabase.storage
-                .from('avatars')
-                .upload(filePath, file, { 
-                    upsert: false,
-                    contentType: 'image/png'
-                });
+                .from("avatars")
+                .upload(filePath, file, { upsert: true });
 
             if (uploadError) {
-                console.error("Erro no Storage:", uploadError);
+                console.error(uploadError);
                 throw uploadError;
             }
 
-            // 5. Obter URL pública
-            const { data: { publicUrl } } = supabase.storage
-                .from('avatars')
+            // 4. Obter URL pública
+            const { data } = supabase.storage
+                .from("avatars")
                 .getPublicUrl(filePath);
 
-            // 6. Atualizar a tabela de perfis
+            const avatarUrl = data.publicUrl;
+
+            // 5. Atualizar perfil no banco de dados
             const { data: updatedProfile, error: dbError } = await supabase
-                .from('profiles')
-                .update({ 
-                    avatar_url: publicUrl,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('user_id', userId)
+                .from("profiles")
+                .update({ avatar_url: avatarUrl })
+                .eq("user_id", userId)
                 .select()
                 .single();
 
             if (dbError) throw dbError;
 
-            // 7. Sincronizar estados locais
+            // 6. Atualizar estado local
             if (updatedProfile) {
                 setProfile(updatedProfile);
                 if (updatedProfile.account_type === 'business') {
-                    setBusinessProfile(prev => prev ? { ...prev, logo_url: publicUrl } : null);
+                    setBusinessProfile(prev => prev ? { ...prev, logo_url: avatarUrl } : null);
                 }
-                toast.success("Foto de perfil atualizada!");
-                fetchGlobalData(); // Atualiza feed e busca
+                toast.success("Foto atualizada com sucesso!");
+                fetchGlobalData();
             }
         } catch (err: any) {
-            console.error("Erro no processo de foto:", err);
             toast.error(err.message || "Falha ao carregar a foto.");
         } finally {
             setIsLoading(false);
@@ -193,24 +188,28 @@ const App: React.FC = () => {
     };
 
     const uploadProductImage = async (file: Blob): Promise<string> => {
-        const { data: userData } = await supabase.auth.getUser();
-        if (!userData.user) throw new Error("Não autenticado");
-        const userId = userData.user.id;
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Não autenticado");
+        const userId = user.id;
         
-        const fileExt = (file as File).name?.split('.').pop() || 'jpg';
-        const filePath = `${userId}/${crypto.randomUUID()}.${fileExt}`;
+        // Padrão solicitado: products/userId/productId.jpg
+        const productId = crypto.randomUUID();
+        const filePath = `${userId}/${productId}.jpg`;
         
         const { error: uploadError } = await supabase.storage
-            .from('products')
-            .upload(filePath, file, { upsert: false });
+            .from("products")
+            .upload(filePath, file, { upsert: true });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+            console.error(uploadError);
+            throw uploadError;
+        }
 
-        const { data: { publicUrl } } = supabase.storage
-            .from('products')
+        const { data } = supabase.storage
+            .from("products")
             .getPublicUrl(filePath);
 
-        return publicUrl;
+        return data.publicUrl;
     };
 
     const handleCreateProduct = async (folderId: string | null, details: any): Promise<Product | null> => {
