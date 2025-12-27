@@ -136,14 +136,17 @@ const VendorDashboard: React.FC<VendorDashboardProps> = ({
                             <h2 className="font-bold text-md text-zinc-900 truncate uppercase tracking-tighter italic leading-none pr-8">
                                 {businessProfile.business_name}
                             </h2>
+                            
+                            {/* Botão de Adicionar Logo Chamativo para Vendedores */}
                             {!businessProfile.logo_url && !isVisitor && (
                                 <button 
                                     onClick={handleLogoClick}
-                                    className="mt-1 px-3 py-1 bg-amber-500 text-white text-[9px] font-black uppercase rounded-full tracking-widest shadow-sm"
+                                    className="mt-1 px-4 py-1.5 bg-amber-500 text-white text-[9px] font-black uppercase rounded-xl tracking-widest shadow-lg shadow-amber-500/20 active:scale-95 transition-transform"
                                 >
-                                    Adicionar Logo
+                                    ADICIONAR LOGO
                                 </button>
                             )}
+
                             <div className="text-[11px] text-zinc-600 font-medium leading-tight line-clamp-2 mt-1">
                                 {businessProfile.description || "Loja do ecossistema PUMP."}
                             </div>

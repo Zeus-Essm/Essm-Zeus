@@ -132,37 +132,37 @@ const App: React.FC = () => {
     const handleUpdateProfileImage = async (base64DataUrl: string) => {
         setIsLoading(true);
         try {
-            // Requisito: Obter dados do usuário atualizado
-            const { data: userData } = await supabase.auth.getUser();
-            if (!userData.user) throw new Error("Usuário não encontrado.");
+            // 1. Obter usuário atual (Funciona para Email e Google)
+            const { data: userData, error: userError } = await supabase.auth.getUser();
+            if (userError || !userData.user) throw new Error("Usuário não autenticado.");
             const userId = userData.user.id;
 
-            // Converter Base64 para Blob para o upload
+            // 2. Converter Base64 para Blob para o upload
             const response = await fetch(base64DataUrl);
-            const blob = await response.blob();
+            const file = await response.blob();
             
-            // Requisito: Estrutura filePath = userId/uuid.png
+            // 3. Estrutura do caminho solicitada: userId/uuid.png
             const filePath = `${userId}/${crypto.randomUUID()}.png`;
 
-            // Requisito: upsert: false
+            // 4. Upload para o bucket 'avatars' (upsert: false conforme solicitado)
             const { error: uploadError } = await supabase.storage
                 .from('avatars')
-                .upload(filePath, blob, { 
+                .upload(filePath, file, { 
                     upsert: false,
                     contentType: 'image/png'
                 });
 
             if (uploadError) {
-                console.error("Erro no upload:", uploadError);
+                console.error("Erro no Storage:", uploadError);
                 throw uploadError;
             }
 
-            // Obter URL pública
+            // 5. Obter URL pública
             const { data: { publicUrl } } = supabase.storage
                 .from('avatars')
                 .getPublicUrl(filePath);
 
-            // Atualizar banco de dados
+            // 6. Atualizar a tabela de perfis
             const { data: updatedProfile, error: dbError } = await supabase
                 .from('profiles')
                 .update({ 
@@ -175,18 +175,18 @@ const App: React.FC = () => {
 
             if (dbError) throw dbError;
 
-            // Atualizar estados locais para resposta visual imediata
+            // 7. Sincronizar estados locais
             if (updatedProfile) {
                 setProfile(updatedProfile);
                 if (updatedProfile.account_type === 'business') {
                     setBusinessProfile(prev => prev ? { ...prev, logo_url: publicUrl } : null);
                 }
-                toast.success("Foto atualizada!");
-                fetchGlobalData();
+                toast.success("Foto de perfil atualizada!");
+                fetchGlobalData(); // Atualiza feed e busca
             }
         } catch (err: any) {
-            console.error("Processo de upload falhou:", err);
-            toast.error(err.message || "Erro ao carregar foto.");
+            console.error("Erro no processo de foto:", err);
+            toast.error(err.message || "Falha ao carregar a foto.");
         } finally {
             setIsLoading(false);
         }

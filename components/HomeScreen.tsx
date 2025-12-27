@@ -162,14 +162,17 @@ const HomeScreen: React.FC<HomeScreenProps> = ({
                             <PencilIcon className="w-4 h-4" />
                         </button>
                     </div>
+                    
+                    {/* Botão de Adicionar Foto Chamativo se vazio */}
                     {!loggedInProfile.avatar_url && (
                         <button 
                             onClick={handleAvatarClick}
-                            className="mt-1 px-3 py-1 bg-amber-500 text-white text-[9px] font-black uppercase rounded-full tracking-widest shadow-sm"
+                            className="mt-1 px-4 py-1.5 bg-amber-500 text-white text-[9px] font-black uppercase rounded-xl tracking-widest shadow-lg shadow-amber-500/20 active:scale-95 transition-transform"
                         >
-                            Adicionar Foto
+                            ADICIONAR FOTO
                         </button>
                     )}
+
                     <div className="text-[11px] text-zinc-600 font-medium leading-tight line-clamp-3 mt-2 whitespace-pre-line">
                         {loggedInProfile.bio || "Membro exclusivo da comunidade PUMP."}
                     </div>
