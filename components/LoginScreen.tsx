@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { GoogleIcon } from './IconComponents';
@@ -16,6 +15,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
 
     const handleAuth = async (event: React.FormEvent) => {
         event.preventDefault();
+        
+        if (!supabase) {
+            toast.error("O serviço de autenticação não foi configurado ou está offline.");
+            return;
+        }
+
         if (!email || !password) {
             toast.error("Preencha todos os campos.");
             return;
@@ -35,11 +40,10 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
                 });
                 if (error) throw error;
                 
-                // Se o Supabase retornar uma sessão imediatamente (auto-confirm off)
                 if (data.session) {
                     onSuccess();
                 } else {
-                    toast.success("Conta criada! Verifique seu e-mail ou faça login.");
+                    toast.success("Conta criada! Verifique seu e-mail.");
                     setIsSignUp(false);
                 }
             } else {
@@ -51,7 +55,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
             console.error("Auth Error:", err);
             let msg = err.message;
             if (msg === "Invalid login credentials") msg = "E-mail ou senha incorretos.";
-            if (msg.includes("Database error saving new user")) msg = "Erro no servidor (SQL Trigger). Verifique o script SQL.";
             toast.error(msg);
         } finally {
             setLoading(false);
@@ -59,11 +62,16 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
     };
     
     const handleSocialLogin = async (provider: 'google') => {
+        if (!supabase) {
+            toast.error("Serviço de login social indisponível.");
+            return;
+        }
+
         try {
             const { error } = await supabase.auth.signInWithOAuth({ 
                 provider,
                 options: {
-                    redirectTo: window.location.origin
+                    redirectTo: `${window.location.protocol}//${window.location.host}`
                 }
             });
             if (error) throw error;
@@ -89,7 +97,6 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
                             <label htmlFor="email" className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] ml-4">E-mail</label>
                             <input
                                 id="email"
-                                name="email"
                                 type="email"
                                 autoComplete="email"
                                 placeholder="exemplo@email.com"
@@ -102,12 +109,9 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
                         </div>
                         
                         <div className="space-y-1">
-                             <div className="flex justify-between items-center px-4">
-                                <label htmlFor="password" className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em]">Senha</label>
-                            </div>
+                            <label htmlFor="password" className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] ml-4">Senha</label>
                             <input
                                 id="password"
-                                name="password"
                                 type="password"
                                 autoComplete={isSignUp ? "new-password" : "current-password"}
                                 placeholder="••••••••"

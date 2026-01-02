@@ -1,45 +1,49 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 
 /**
- * Busca variáveis de ambiente de forma segura, evitando TypeErrors
- * caso import.meta ou process não estejam definidos no contexto atual.
+ * Busca variáveis de ambiente de forma segura em diferentes contextos (Vite ou Node/Shims).
  */
-const getEnvVar = (key: string): string => {
-  // 1. Tenta via import.meta (Vite/ESM)
+const getEnvVar = (key: string): string | undefined => {
   try {
     // @ts-ignore
-    if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env[key]) {
+    if (typeof import.meta !== "undefined" && import.meta.env?.[key]) {
       // @ts-ignore
       return import.meta.env[key];
     }
-  } catch (e) {}
+  } catch {}
 
-  // 2. Tenta via process.env (Node/CommonJS shims)
   try {
-    if (typeof process !== 'undefined' && process.env && process.env[key]) {
-      return process.env[key] as string;
+    if (typeof process !== "undefined" && process.env?.[key]) {
+      return process.env[key];
     }
-  } catch (e) {}
+  } catch {}
 
-  return '';
+  return undefined;
 };
 
-const supabaseUrl = getEnvVar('VITE_SUPABASE_URL') || getEnvVar('SUPABASE_URL');
-const supabaseAnonKey = getEnvVar('VITE_SUPABASE_ANON_KEY') || getEnvVar('SUPABASE_ANON_KEY');
+const supabaseUrl = getEnvVar("VITE_SUPABASE_URL") ?? getEnvVar("SUPABASE_URL");
+const supabaseAnonKey = getEnvVar("VITE_SUPABASE_ANON_KEY") ?? getEnvVar("SUPABASE_ANON_KEY");
 
 /**
- * Verificação de validade para evitar que o createClient lance 'supabaseUrl is required'.
- * Se as variáveis estiverem ausentes, usamos URLs fictícias mas válidas para manter o app vivo.
+ * Validação rigorosa para garantir que o createClient não receba parâmetros inválidos.
  */
-const isValid = supabaseUrl && supabaseUrl.startsWith('https://') && supabaseAnonKey;
+const isValidSupabaseConfig =
+  typeof supabaseUrl === "string" &&
+  supabaseUrl.startsWith("https://") &&
+  typeof supabaseAnonKey === "string" &&
+  supabaseAnonKey.length > 20;
 
-const finalUrl = isValid ? supabaseUrl : 'https://placeholder-project.supabase.co';
-const finalKey = isValid ? supabaseAnonKey : 'placeholder-key-for-preview-mode';
+/**
+ * Exporta o cliente como SupabaseClient ou null.
+ * O uso de null força os desenvolvedores a tratarem a ausência de conexão via tipagem e verificações.
+ */
+export const supabase: SupabaseClient | null =
+  isValidSupabaseConfig
+    ? createClient(supabaseUrl, supabaseAnonKey)
+    : null;
 
-// Exportamos o cliente. Se estiver em modo placeholder, as chamadas de banco retornarão erro 404/401
-// mas a aplicação NÃO irá travar no carregamento.
-export const supabase = createClient(finalUrl, finalKey);
-
-if (!isValid) {
-  console.warn("[PUMP] Supabase rodando em modo de pré-visualização (variáveis de ambiente ausentes).");
+if (!isValidSupabaseConfig) {
+  console.warn(
+    "[PUMP] Supabase: Cliente não inicializado (variáveis ausentes). Operando em modo de visualização."
+  );
 }
