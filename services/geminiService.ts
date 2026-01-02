@@ -1,5 +1,4 @@
-
-import { GoogleGenAI, Modality, GenerateContentResponse, HarmCategory, HarmBlockThreshold } from '@google/genai';
+import { GoogleGenAI, GenerateContentResponse } from '@google/genai';
 import type { Item } from '../types';
 
 // Utility to convert a data URL string into its base64 and mimeType parts.
@@ -15,7 +14,6 @@ const imageUrlToDataUrl = async (url: string): Promise<string> => {
   try {
     const response = await fetch(url);
     if (!response.ok) {
-        // Fallback to proxy if direct fetch fails (CORS)
         console.warn(`Direct fetch failed for ${url}, trying CORS proxy.`);
         const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
         const proxyResponse = await fetch(proxyUrl);
@@ -39,15 +37,8 @@ const imageUrlToDataUrl = async (url: string): Promise<string> => {
     });
   } catch (error) {
     console.error(`Erro ao converter a URL da imagem (${url}):`, error);
-    throw new Error('Não foi possível carregar a imagem do item. Pode ser um problema de conexão ou o link da imagem está quebrado.');
+    throw new Error('Não foi possível carregar a imagem do item.');
   }
-};
-
-/**
- * Normalizes the image to a square aspect ratio (1:1) by adding black bars.
- */
-export const normalizeImageAspectRatio = async (dataUrl: string): Promise<string> => {
-    return dataUrl; 
 };
 
 const extractImageFromResponse = (response: GenerateContentResponse): string => {
@@ -60,15 +51,8 @@ const extractImageFromResponse = (response: GenerateContentResponse): string => 
         return `data:${part.inlineData.mimeType};base64,${part.inlineData.data}`;
       }
     }
-    
-    const textPart = candidate.content.parts.find(part => part.text);
-    if (textPart && textPart.text) {
-        console.warn("Model text response:", textPart.text);
-        throw new Error(`A IA retornou texto em vez de imagem. Pode ter recusado o pedido.`);
-    }
     throw new Error("A resposta da IA não continha uma imagem válida.");
 };
-
 
 export const generateTryOnImage = async (userImage: string, newItem: Item, existingItems: Item[]): Promise<string> => {
     try {
@@ -80,14 +64,12 @@ export const generateTryOnImage = async (userImage: string, newItem: Item, exist
 
         const prompt = `
             Act as a professional virtual try-on AI.
-            Your task is to realistically generate an image of the user wearing the new clothing item.
-            - **User:** The person in the first image.
-            - **Clothing Item:** The product in the second image (${newItem.name}).
-            - **Context:** ${existingItems.length > 0 ? `Wearing: ${existingItems.map(i => i.name).join(', ')}.` : 'Original clothes.'}
+            Your task is to realistically generate an image of the person wearing the new clothing item.
+            - **Clothing Item:** ${newItem.name} (${newItem.description}).
+            - **Context:** ${existingItems.length > 0 ? `The user is already wearing: ${existingItems.map(i => i.name).join(', ')}.` : 'Standard fit.'}
             **RULES:**
-            1. Seamless replacement of current outfit.
-            2. Preserve face, hair, and background exactly.
-            3. Photorealistic lighting and body fit.
+            1. Photorealistic lighting and body fit.
+            2. Preserve face and background perfectly.
         `;
 
         const response = await ai.models.generateContent({
@@ -127,13 +109,13 @@ export const generateFashionVideo = async (
     onProgress: (message: string) => void
 ): Promise<string> => {
     try {
-        onProgress("Preparando sua passarela virtual...");
+        onProgress("Iniciando renderização da passarela...");
         const veoAi = new GoogleGenAI({ apiKey: process.env.API_KEY });
         const { base64, mimeType } = getBase64Parts(generatedImage);
 
         let operation = await veoAi.models.generateVideos({
             model: 'veo-3.1-fast-generate-preview',
-            prompt: 'A short, stylish video of this person showing off their fashion look. Professional camera movements. The background should remain consistent.',
+            prompt: 'A cinematic high-fashion runway walk video of this person showing off their outfit. Professional lighting, smooth camera movement.',
             image: {
                 imageBytes: base64,
                 mimeType: mimeType,
@@ -146,13 +128,13 @@ export const generateFashionVideo = async (
         });
 
         while (!operation.done) {
-            await new Promise(resolve => setTimeout(resolve, 10000));
-            onProgress("Refinando os frames do vídeo...");
+            await new Promise(resolve => setTimeout(resolve, 8000));
+            onProgress("Processando movimentos e texturas...");
             operation = await veoAi.operations.getVideosOperation({ operation: operation });
         }
 
         const downloadLink = operation.response?.generatedVideos?.[0]?.video?.uri;
-        if (!downloadLink) throw new Error("Link de download não encontrado.");
+        if (!downloadLink) throw new Error("Falha na geração do vídeo.");
         
         const response = await fetch(`${downloadLink}&key=${process.env.API_KEY}`);
         if (!response.ok) throw new Error(`Falha no download: ${response.statusText}`);

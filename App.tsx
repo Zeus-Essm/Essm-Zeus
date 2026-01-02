@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
-import { Screen, Category, Item, Post, Profile, BusinessProfile, Folder, Product, MarketplaceType } from './types';
+import { Screen, Item, Profile, BusinessProfile, Folder, Product, Post } from './types';
 import { toast } from './utils/toast';
 import { generateTryOnImage, generateStyleTip, generateFashionVideo } from './services/geminiService';
 
@@ -14,9 +14,6 @@ import FeedScreen from './components/FeedScreen';
 import CartScreen from './components/CartScreen';
 import BottomNavBar from './components/BottomNavBar';
 import VendorDashboard from './components/VendorDashboard';
-import VendorProductsScreen from './components/VendorProductsScreen';
-import VendorAnalyticsScreen from './components/VendorAnalyticsScreen';
-import VendorMenuModal from './components/VendorMenuModal';
 import SearchScreen from './components/SearchScreen';
 import SettingsPanel from './components/SettingsPanel';
 import ImageSourceSelectionScreen from './components/ImageSourceSelectionScreen';
@@ -77,8 +74,7 @@ const App: React.FC = () => {
     const handleGenerateVideo = async () => {
         if (!generatedImage) return;
 
-        // Check for paid API key required for Veo
-        // @ts-ignore
+        // @ts-ignore - window.aistudio injected in sandbox
         const hasKey = await window.aistudio.hasSelectedApiKey();
         if (!hasKey) {
             setShowKeyModal(true);
@@ -106,7 +102,7 @@ const App: React.FC = () => {
         setShowKeyModal(false);
         // @ts-ignore
         await window.aistudio.openSelectKey();
-        handleGenerateVideo(); // Proceed after selection
+        handleGenerateVideo(); 
     };
 
     const fetchProfileData = async (userId: string) => {
@@ -121,7 +117,6 @@ const App: React.FC = () => {
                     description: data.bio || '',
                     logo_url: data.avatar_url || ''
                 });
-                fetchVendorData(userId);
                 setCurrentScreen(Screen.VendorDashboard);
             } else if (data.account_type === 'personal') {
                 setCurrentScreen(Screen.Feed);
@@ -132,15 +127,6 @@ const App: React.FC = () => {
             setCurrentScreen(Screen.AccountTypeSelection);
         }
         setAuthLoading(false);
-    };
-
-    const fetchVendorData = async (userId: string) => {
-        const [fRes, pRes] = await Promise.all([
-            supabase.from('folders').select('*').eq('owner_id', userId),
-            supabase.from('products').select('*').eq('owner_id', userId)
-        ]);
-        setFolders(fRes.data || []);
-        setProducts(pRes.data || []);
     };
 
     useEffect(() => {
@@ -165,20 +151,6 @@ const App: React.FC = () => {
         return () => subscription.unsubscribe();
     }, []);
 
-    const handleAccountTypeSelection = async (type: 'personal' | 'business') => {
-        if (!session?.user) return;
-        setIsLoading(true);
-        try {
-            await supabase.from('profiles').update({ account_type: type }).eq('id', session.user.id);
-            if (type === 'business') setCurrentScreen(Screen.BusinessOnboarding);
-            else fetchProfileData(session.user.id);
-        } catch (e: any) {
-            toast.error("Erro: " + e.message);
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     const handleSignOut = async () => {
         setIsLoading(true);
         await supabase.auth.signOut();
@@ -190,7 +162,14 @@ const App: React.FC = () => {
 
         switch (currentScreen) {
             case Screen.Login: return <LoginScreen onSuccess={() => {}} />; 
-            case Screen.AccountTypeSelection: return <AccountTypeSelectionScreen onSelect={handleAccountTypeSelection} />;
+            case Screen.AccountTypeSelection: return <AccountTypeSelectionScreen onSelect={async (type) => {
+                if (!session?.user) return;
+                setIsLoading(true);
+                await supabase.from('profiles').update({ account_type: type }).eq('id', session.user.id);
+                if (type === 'business') setCurrentScreen(Screen.BusinessOnboarding);
+                else fetchProfileData(session.user.id);
+                setIsLoading(false);
+            }} />;
             case Screen.BusinessOnboarding:
                 return <BusinessOnboardingScreen onComplete={async (details) => {
                     setIsLoading(true);
@@ -295,7 +274,6 @@ const App: React.FC = () => {
                 />
             )}
             {isSettingsOpen && profile && <SettingsPanel profile={profile} theme={theme} onToggleTheme={() => setTheme(t => t === 'light' ? 'dark' : 'light')} onClose={() => setIsSettingsOpen(false)} onSignOut={handleSignOut} onNavigateToVerification={() => {}} />}
-            {showVendorMenu && <VendorMenuModal onClose={() => setShowVendorMenu(false)} onNavigateToAnalytics={() => { setCurrentScreen(Screen.VendorAnalytics); setShowVendorMenu(false); }} onNavigateToProducts={() => { setCurrentScreen(Screen.VendorProducts); setShowVendorMenu(false); }} onNavigateToAffiliates={() => {}} onNavigateToCollaborations={() => {}} onSignOut={handleSignOut} />}
             {showCaptionModal && <CaptionModal image={generatedImage || ''} onClose={() => setShowCaptionModal(false)} onPublish={() => { toast.success("Publicado!"); setShowCaptionModal(false); setCurrentScreen(Screen.Feed); }} />}
             {generatedVideoUrl && <VideoPlayerModal videoUrl={generatedVideoUrl} onClose={() => setGeneratedVideoUrl(null)} onPublish={() => { toast.success("Vídeo Publicado!"); setGeneratedVideoUrl(null); }} onSave={() => { toast.success("Vídeo Salvo!"); }} isPublishing={false} />}
             {showKeyModal && <VeoApiKeyModal onClose={() => setShowKeyModal(false)} onSelectKey={handleSelectKey} />}
