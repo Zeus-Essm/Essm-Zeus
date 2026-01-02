@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './services/supabaseClient';
 import { Screen, Category, Item, Post, Profile, BusinessProfile, Folder, Product, MarketplaceType } from './types';
 import { toast } from './utils/toast';
-import { generateTryOnImage } from './services/geminiService';
+import { generateTryOnImage, generateStyleTip, generateFashionVideo } from './services/geminiService';
 
 // Screen Components
 import SplashScreen from './components/SplashScreen';
@@ -26,6 +25,8 @@ import LoadingIndicator from './components/LoadingIndicator';
 import ResultScreen from './components/ResultScreen';
 import BusinessOnboardingScreen from './components/BusinessOnboardingScreen';
 import CaptionModal from './components/CaptionModal';
+import VideoPlayerModal from './components/VideoPlayerModal';
+import VeoApiKeyModal from './components/VeoApiKeyModal';
 
 const App: React.FC = () => {
     const [session, setSession] = useState<Session | null>(null);
@@ -42,6 +43,13 @@ const App: React.FC = () => {
     const [userImage, setUserImage] = useState<string | null>(null);
     const [vtoItems, setVtoItems] = useState<Item[]>([]);
     const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+    const [styleTip, setStyleTip] = useState<string | undefined>(undefined);
+    
+    const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string | null>(null);
+    const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
+    const [videoProgressMsg, setVideoProgressMsg] = useState<string | null>(null);
+    const [showKeyModal, setShowKeyModal] = useState(false);
+    
     const [cartItems, setCartItems] = useState<Item[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [showVendorMenu, setShowVendorMenu] = useState(false);
@@ -53,8 +61,10 @@ const App: React.FC = () => {
     useEffect(() => {
         if (currentScreen === Screen.Generating && userImage && vtoItems.length > 0 && !generatedImage) {
             generateTryOnImage(userImage, vtoItems[0], [])
-                .then(res => { 
-                    setGeneratedImage(res); 
+                .then(async res => { 
+                    setGeneratedImage(res);
+                    const tip = await generateStyleTip(vtoItems);
+                    setStyleTip(tip);
                     setCurrentScreen(Screen.Result); 
                 })
                 .catch(e => { 
@@ -64,13 +74,43 @@ const App: React.FC = () => {
         }
     }, [currentScreen, userImage, vtoItems, generatedImage]);
 
+    const handleGenerateVideo = async () => {
+        if (!generatedImage) return;
+
+        // Check for paid API key required for Veo
+        // @ts-ignore
+        const hasKey = await window.aistudio.hasSelectedApiKey();
+        if (!hasKey) {
+            setShowKeyModal(true);
+            return;
+        }
+
+        setIsGeneratingVideo(true);
+        try {
+            const videoUrl = await generateFashionVideo(generatedImage, (msg) => setVideoProgressMsg(msg));
+            setGeneratedVideoUrl(videoUrl);
+        } catch (e: any) {
+            if (e.message?.includes("Requested entity was not found")) {
+                toast.error("Erro na chave de API. Por favor, selecione novamente.");
+                setShowKeyModal(true);
+            } else {
+                toast.error("Falha ao gerar vídeo: " + e.message);
+            }
+        } finally {
+            setIsGeneratingVideo(false);
+            setVideoProgressMsg(null);
+        }
+    };
+
+    const handleSelectKey = async () => {
+        setShowKeyModal(false);
+        // @ts-ignore
+        await window.aistudio.openSelectKey();
+        handleGenerateVideo(); // Proceed after selection
+    };
+
     const fetchProfileData = async (userId: string) => {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .maybeSingle();
-        
+        const { data } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
         if (data) {
             setProfile(data);
             if (data.account_type === 'business') {
@@ -112,7 +152,6 @@ const App: React.FC = () => {
                 setAuthLoading(false);
             }
         });
-
         const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
             setSession(session);
             if (session) fetchProfileData(session.user.id);
@@ -123,7 +162,6 @@ const App: React.FC = () => {
                 setAuthLoading(false);
             }
         });
-
         return () => subscription.unsubscribe();
     }, []);
 
@@ -131,8 +169,7 @@ const App: React.FC = () => {
         if (!session?.user) return;
         setIsLoading(true);
         try {
-            const { error } = await supabase.from('profiles').update({ account_type: type }).eq('id', session.user.id);
-            if (error) throw error;
+            await supabase.from('profiles').update({ account_type: type }).eq('id', session.user.id);
             if (type === 'business') setCurrentScreen(Screen.BusinessOnboarding);
             else fetchProfileData(session.user.id);
         } catch (e: any) {
@@ -152,18 +189,14 @@ const App: React.FC = () => {
         if (authLoading) return <SplashScreen />;
 
         switch (currentScreen) {
-            case Screen.Login: 
-                return <LoginScreen onSuccess={() => {}} />; 
-            case Screen.AccountTypeSelection: 
-                return <AccountTypeSelectionScreen onSelect={handleAccountTypeSelection} />;
+            case Screen.Login: return <LoginScreen onSuccess={() => {}} />; 
+            case Screen.AccountTypeSelection: return <AccountTypeSelectionScreen onSelect={handleAccountTypeSelection} />;
             case Screen.BusinessOnboarding:
                 return <BusinessOnboardingScreen onComplete={async (details) => {
                     setIsLoading(true);
                     await supabase.from('profiles').update({
-                        full_name: details.business_name,
-                        bio: details.description,
-                        avatar_url: details.logo_url,
-                        business_category: details.business_category
+                        full_name: details.business_name, bio: details.description,
+                        avatar_url: details.logo_url, business_category: details.business_category
                     }).eq('id', session?.user.id);
                     setIsLoading(false);
                     fetchProfileData(session!.user.id);
@@ -203,7 +236,7 @@ const App: React.FC = () => {
                 return profile && (
                     <FeedScreen 
                         posts={posts} stories={[]} profile={profile} businessProfile={null} isProfilePromoted={false} promotedItems={[]}
-                        onBack={() => {}} onItemClick={(item) => { setVtoItems([item]); setGeneratedImage(null); setCurrentScreen(Screen.ImageSourceSelection); }}
+                        onBack={() => {}} onItemClick={(item) => { setVtoItems([item]); setGeneratedImage(null); setStyleTip(undefined); setCurrentScreen(Screen.ImageSourceSelection); }}
                         onAddToCartMultiple={(items) => { setCartItems(prev => [...prev, ...items]); toast.success("Adicionado!"); }}
                         onBuyMultiple={() => setCurrentScreen(Screen.Cart)}
                         onViewProfile={() => {}} onSelectCategory={() => {}} onLikePost={() => {}} onAddComment={() => {}}
@@ -230,9 +263,19 @@ const App: React.FC = () => {
             case Screen.ImageSourceSelection:
                 return <ImageSourceSelectionScreen onImageUpload={(url) => { setUserImage(url); setCurrentScreen(Screen.Generating); }} onUseCamera={() => setCurrentScreen(Screen.Camera)} onBack={() => setCurrentScreen(Screen.Feed)} />;
             case Screen.Generating:
-                return <LoadingIndicator userImage={userImage || ''} />;
+                return <LoadingIndicator userImage={userImage || ''} customMessage={videoProgressMsg} />;
             case Screen.Result:
-                return generatedImage && <ResultScreen generatedImage={generatedImage} items={vtoItems} categoryItems={[]} onBuy={() => { setCartItems(prev => [...prev, ...vtoItems]); setCurrentScreen(Screen.Cart); }} onUndo={() => { setGeneratedImage(null); setCurrentScreen(Screen.Feed); }} onStartPublishing={() => setShowCaptionModal(true)} onSaveImage={() => {}} onItemSelect={() => {}} onAddMoreItems={() => setCurrentScreen(Screen.Feed)} onGenerateVideo={() => {}} />;
+                return generatedImage && (
+                    <ResultScreen 
+                        generatedImage={generatedImage} items={vtoItems} 
+                        styleTip={styleTip} isGeneratingVideo={isGeneratingVideo}
+                        onBuy={() => { setCartItems(prev => [...prev, ...vtoItems]); setCurrentScreen(Screen.Cart); }} 
+                        onUndo={() => { setGeneratedImage(null); setGeneratedVideoUrl(null); setStyleTip(undefined); setCurrentScreen(Screen.Feed); }} 
+                        onStartPublishing={() => setShowCaptionModal(true)} onSaveImage={() => {}} 
+                        onAddMoreItems={() => setCurrentScreen(Screen.Feed)} 
+                        onGenerateVideo={handleGenerateVideo}
+                    />
+                );
             case Screen.Search:
                 return <SearchScreen onBack={() => setCurrentScreen(Screen.Feed)} posts={posts} items={[]} availableProfiles={[]} onViewProfile={() => {}} onLikePost={() => {}} onItemClick={() => {}} onItemAction={() => {}} onOpenSplitCamera={() => {}} onOpenComments={() => {}} onAddToCart={() => {}} onBuy={() => {}} />;
             default:
@@ -247,13 +290,15 @@ const App: React.FC = () => {
                 <BottomNavBar 
                     activeScreen={currentScreen} onNavigateToFeed={() => setCurrentScreen(Screen.Feed)} onNavigateToCart={() => setCurrentScreen(Screen.Cart)} 
                     onNavigateToPromotion={() => {}} onNavigateToProfile={() => setCurrentScreen(profile.account_type === 'business' ? Screen.VendorDashboard : Screen.Home)} 
-                    onStartTryOn={() => { setVtoItems([]); setGeneratedImage(null); setCurrentScreen(Screen.ImageSourceSelection); }} 
+                    onStartTryOn={() => { setVtoItems([]); setGeneratedImage(null); setGeneratedVideoUrl(null); setStyleTip(undefined); setCurrentScreen(Screen.ImageSourceSelection); }} 
                     isCartAnimating={false} accountType={profile.account_type} onNavigateToVendorAnalytics={() => setCurrentScreen(Screen.VendorAnalytics)} 
                 />
             )}
             {isSettingsOpen && profile && <SettingsPanel profile={profile} theme={theme} onToggleTheme={() => setTheme(t => t === 'light' ? 'dark' : 'light')} onClose={() => setIsSettingsOpen(false)} onSignOut={handleSignOut} onNavigateToVerification={() => {}} />}
             {showVendorMenu && <VendorMenuModal onClose={() => setShowVendorMenu(false)} onNavigateToAnalytics={() => { setCurrentScreen(Screen.VendorAnalytics); setShowVendorMenu(false); }} onNavigateToProducts={() => { setCurrentScreen(Screen.VendorProducts); setShowVendorMenu(false); }} onNavigateToAffiliates={() => {}} onNavigateToCollaborations={() => {}} onSignOut={handleSignOut} />}
             {showCaptionModal && <CaptionModal image={generatedImage || ''} onClose={() => setShowCaptionModal(false)} onPublish={() => { toast.success("Publicado!"); setShowCaptionModal(false); setCurrentScreen(Screen.Feed); }} />}
+            {generatedVideoUrl && <VideoPlayerModal videoUrl={generatedVideoUrl} onClose={() => setGeneratedVideoUrl(null)} onPublish={() => { toast.success("Vídeo Publicado!"); setGeneratedVideoUrl(null); }} onSave={() => { toast.success("Vídeo Salvo!"); }} isPublishing={false} />}
+            {showKeyModal && <VeoApiKeyModal onClose={() => setShowKeyModal(false)} onSelectKey={handleSelectKey} />}
             {isLoading && <div className="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center"><div className="w-10 h-10 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div></div>}
         </div>
     );
