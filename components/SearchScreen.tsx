@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { ArrowLeftIcon, SearchIcon, UserIcon, VerifiedIcon, ShoppingBagIcon, StarIcon, ClockIcon } from './IconComponents';
 import type { Post, Profile, Item, MarketplaceType } from '../types';
@@ -67,6 +68,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
 
         const lowercasedQuery = query.toLowerCase();
         
+        // Busca em todos os perfis reais carregados do Supabase
         const profileResults = availableProfiles.filter(p =>
             (p.full_name?.toLowerCase().includes(lowercasedQuery) || 
              p.username?.toLowerCase().includes(lowercasedQuery) ||
@@ -74,6 +76,7 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
         );
         setFilteredProfiles(profileResults);
         
+        // Busca em todos os produtos reais do catálogo PUMP
         const itemResults = items.filter(item =>
             item.name.toLowerCase().includes(lowercasedQuery) ||
             item.description.toLowerCase().includes(lowercasedQuery)
@@ -166,22 +169,22 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                             )}
 
                             <div className="px-5 mb-4 mt-8">
-                                <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 italic">Explore Tendências</h2>
+                                <h2 className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 italic">Mais Relevantes</h2>
                             </div>
-                            <div className="grid grid-cols-2 gap-4 px-4 pb-24">
+                            <div className="grid grid-cols-3 gap-0.5 px-0.5 pb-24">
                                 {popularPosts.length > 0 ? popularPosts.map((post, index) => (
                                     <div 
                                         key={post.id} 
                                         onClick={() => handleViewPost(index)}
-                                        className="relative aspect-[2/3] bg-zinc-100 rounded-[2.5rem] shadow-lg cursor-pointer overflow-hidden group border border-zinc-50"
+                                        className={`relative bg-zinc-100 cursor-pointer overflow-hidden group ${index % 7 === 0 ? 'col-span-2 row-span-2' : 'aspect-square'}`}
                                     >
                                         <img src={post.image} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"/>
                                         <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                            <StarIcon className="w-6 h-6 text-white" strokeWidth={2.5} />
+                                            <StarIcon className="w-5 h-5 text-white" />
                                         </div>
                                     </div>
                                 )) : (
-                                    <div className="col-span-2 py-32 text-center opacity-30">
+                                    <div className="col-span-3 py-32 text-center opacity-30">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Descobrindo tendências...</p>
                                     </div>
                                 )}
@@ -237,9 +240,9 @@ const SearchScreen: React.FC<SearchScreenProps> = ({
                                             <button 
                                                 key={item.id}
                                                 onClick={() => setQuickViewItem(item)}
-                                                className="flex flex-col bg-white rounded-[2.8rem] border border-zinc-100 overflow-hidden hover:shadow-xl transition-all group active:scale-[0.98]"
+                                                className="flex flex-col bg-white rounded-[2.2rem] border border-zinc-100 overflow-hidden hover:shadow-xl hover:shadow-black/5 transition-all group active:scale-[0.98]"
                                             >
-                                                <div className="relative aspect-[2/3.5] overflow-hidden bg-zinc-50">
+                                                <div className="relative aspect-[3/4] overflow-hidden bg-zinc-50">
                                                     <img src={item.image} alt="" className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"/>
                                                     <div className="absolute top-4 left-4 px-2.5 py-1.5 bg-white/95 backdrop-blur-md rounded-xl text-[8px] font-black uppercase tracking-widest text-zinc-900 shadow-sm border border-zinc-100/50">
                                                         Real Item

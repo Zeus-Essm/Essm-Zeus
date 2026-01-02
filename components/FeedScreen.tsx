@@ -1,8 +1,10 @@
-import React, { useState, useRef } from 'react';
+
+import React, { useState, useRef, useEffect } from 'react';
 import type { Post, Item, Story, MarketplaceType, Category, Profile, BusinessProfile } from '../types';
+import { CATEGORIES } from '../constants';
 import Header from './Header';
 import PostCard from './PostCard';
-import { PlusIcon, UserIcon, ChevronRightIcon, ChevronLeftIcon, StorefrontIcon } from './IconComponents';
+import { PlusIcon, UserIcon, ChevronRightIcon, ChevronLeftIcon } from './IconComponents';
 import ImageViewModal from './ImageViewModal';
 import ShopTheLookModal from './ShopTheLookModal';
 import CommentsModal from './CommentsModal';
@@ -13,7 +15,6 @@ interface FeedScreenProps {
   stories: Story[];
   profile: Profile;
   businessProfile: BusinessProfile | null;
-  realBusinesses: Category[];
   isProfilePromoted: boolean;
   promotedItems: { id: string; image: string; }[];
   onBack: () => void;
@@ -57,6 +58,7 @@ const StoryCard: React.FC<{ story: Story }> = ({ story }) => (
     <div className="flex-shrink-0 flex flex-col items-center gap-2 w-20 cursor-pointer group snap-start">
         <div className="relative p-[2px] bg-gradient-to-tr from-amber-400 to-amber-500 rounded-full shadow-sm">
             <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-white">
+              {/* FIX: Corrected property name from avatar to avatar_url to match User/Profile type */}
               <img 
                   src={story.user.avatar_url || ''} 
                   alt={story.user.full_name || ''} 
@@ -64,20 +66,36 @@ const StoryCard: React.FC<{ story: Story }> = ({ story }) => (
               />
             </div>
         </div>
+        {/* FIX: Corrected property name from name to full_name to match User/Profile type */}
         <span className="text-[11px] font-medium text-zinc-500 w-full text-center truncate">{story.user.full_name}</span>
     </div>
 );
 
 const FeedScreen: React.FC<FeedScreenProps> = ({ 
-    posts, stories, profile, businessProfile, realBusinesses, isProfilePromoted,
-    promotedItems, onItemClick, onAddToCartMultiple, onBuyMultiple, onViewProfile, 
-    onSelectCategory, onLikePost, onAddComment, onNavigateToAllHighlights,
-    onStartCreate, unreadNotificationCount, onNotificationsClick, onSearchClick,
+    posts, 
+    stories, 
+    profile, 
+    businessProfile,
+    isProfilePromoted,
+    promotedItems,
+    onItemClick, 
+    onAddToCartMultiple, 
+    onBuyMultiple, 
+    onViewProfile, 
+    onSelectCategory,
+    onLikePost,
+    onAddComment,
+    onNavigateToAllHighlights,
+    onStartCreate,
+    unreadNotificationCount,
+    onNotificationsClick,
+    onSearchClick,
  }) => {
   const [viewingPostIndex, setViewingPostIndex] = useState<number | null>(null);
   const [shoppingPost, setShoppingPost] = useState<{post: Post, type: MarketplaceType} | null>(null);
   const [commentingPost, setCommentingPost] = useState<Post | null>(null);
   
+  // Carousel logic for featured categories
   const carouselRef = useRef<HTMLDivElement>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(true);
@@ -91,15 +109,30 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
 
   const scrollCarousel = (direction: 'left' | 'right') => {
       if (!carouselRef.current) return;
-      const scrollAmount = carouselRef.current.clientWidth * 0.72;
+      const scrollAmount = carouselRef.current.clientWidth * 0.72; // Tries to align with card width
       carouselRef.current.scrollBy({
           left: direction === 'left' ? -scrollAmount : scrollAmount,
           behavior: 'smooth'
       });
   };
 
-  const featuredBrands = realBusinesses.slice(0, 10);
+  const featuredCategories = CATEGORIES.slice(0, 5);
   
+  const handleShopTheLook = (post: Post) => {
+    setShoppingPost({ post, type: 'fashion' });
+  };
+
+  const handleViewPost = (index: number) => {
+    setViewingPostIndex(index);
+  };
+
+  const handleOpenComments = (postId: string) => {
+    const post = posts.find(p => p.id === postId);
+    if (post) {
+      setCommentingPost(post);
+    }
+  };
+
   return (
     <>
       <div className="w-full h-full flex flex-col text-zinc-900 bg-white animate-fadeIn">
@@ -121,7 +154,7 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
             </div>
           </div>
           
-          {/* Marcas e Produtos Dinâmicos */}
+          {/* Featured Collections Section (Marcas e produtos) */}
           <div className="py-6 border-b border-zinc-50">
             <div className="px-5 flex justify-between items-center mb-5">
                 <h2 className="text-xl font-bold text-amber-600 tracking-tight leading-none">Marcas e produtos</h2>
@@ -134,6 +167,7 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
             </div>
             
             <div className="relative px-1 group">
+                {/* Botões de Navegação Bidirecional Inteligente */}
                 {showLeftArrow && (
                     <button 
                         onClick={() => scrollCarousel('left')}
@@ -143,7 +177,7 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
                     </button>
                 )}
                 
-                {showRightArrow && featuredBrands.length > 1 && (
+                {showRightArrow && (
                     <button 
                         onClick={() => scrollCarousel('right')}
                         className="absolute right-6 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/70 backdrop-blur-md border border-zinc-100 shadow-xl flex items-center justify-center text-zinc-800 transition-all hover:bg-white hover:scale-110 active:scale-90"
@@ -157,31 +191,27 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
                     onScroll={handleCarouselScroll}
                     className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 space-x-3 scrollbar-hide pb-2"
                 >
-                    {featuredBrands.length > 0 ? (
-                        featuredBrands.map((brand) => (
-                            <div key={brand.id} onClick={() => onSelectCategory(brand)} className="relative flex-shrink-0 w-[72%] aspect-[4/3] snap-center">
-                                <div className="relative w-full h-full rounded-[2rem] overflow-hidden cursor-pointer group shadow-lg border border-zinc-100 bg-zinc-900">
-                                    <img 
-                                        src={brand.image} 
-                                        alt={brand.name} 
-                                        className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110 opacity-90" 
+                    {featuredCategories.map((category) => (
+                        <div key={category.id} onClick={() => onSelectCategory(category)} className="relative flex-shrink-0 w-[72%] aspect-[4/3] snap-center">
+                            <div className="relative w-full h-full rounded-[2rem] overflow-hidden cursor-pointer group shadow-lg border border-zinc-100 bg-zinc-900">
+                                {category.video ? (
+                                    <video 
+                                        src={category.video} 
+                                        autoPlay 
+                                        loop 
+                                        muted 
+                                        playsInline 
+                                        className="w-full h-full object-cover transition-transform duration-[1.5s]" 
                                     />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent flex flex-col justify-end p-6">
-                                        <h3 className="text-2xl font-black tracking-tighter uppercase italic text-white drop-shadow-lg leading-none">{brand.name}</h3>
-                                        <p className="text-[10px] font-bold text-amber-400 uppercase tracking-[0.2em] mt-2 flex items-center gap-1.5">
-                                            <StorefrontIcon className="w-3.5 h-3.5" />
-                                            Loja Oficial
-                                        </p>
-                                    </div>
+                                ) : (
+                                    <img src={category.image} alt={category.name} className="w-full h-full object-cover transition-transform duration-[1.5s]" />
+                                )}
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-6">
+                                    <h3 className="text-2xl font-black tracking-tighter uppercase italic text-white drop-shadow-lg">{category.name}</h3>
                                 </div>
                             </div>
-                        ))
-                    ) : (
-                        <div className="w-full py-12 flex flex-col items-center justify-center text-zinc-300 gap-3">
-                            <StorefrontIcon className="w-12 h-12 opacity-20" />
-                            <p className="text-[10px] font-black uppercase tracking-widest">Nenhuma loja cadastrada ainda</p>
                         </div>
-                    )}
+                    ))}
                 </div>
             </div>
           </div>
@@ -199,10 +229,10 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
                             post={post}
                             onLike={() => onLikePost(post.id)}
                             onItemClick={onItemClick}
-                            onShopTheLook={() => setShoppingPost({ post, type: 'fashion' })}
+                            onShopTheLook={() => handleShopTheLook(post)}
                             onViewProfile={() => onViewProfile(post.user.id)}
-                            onImageClick={() => setViewingPostIndex(index)}
-                            onComment={() => setCommentingPost(post)}
+                            onImageClick={() => handleViewPost(index)}
+                            onComment={() => handleOpenComments(post.id)}
                         />
                         {index === 1 && isProfilePromoted && businessProfile && (
                             <PromotedProfileCard businessProfile={businessProfile} promotedItems={promotedItems} onVisit={() => onViewProfile(businessProfile.id)} />
@@ -220,7 +250,7 @@ const FeedScreen: React.FC<FeedScreenProps> = ({
         </div>
       </div>
       
-      {viewingPostIndex !== null && <ImageViewModal posts={posts} startIndex={viewingPostIndex} onClose={() => setViewingPostIndex(null)} onLike={onLikePost} onItemClick={onItemClick} onViewProfile={onViewProfile} onComment={(id) => setCommentingPost(posts.find(p => p.id === id) || null)} />}
+      {viewingPostIndex !== null && <ImageViewModal posts={posts} startIndex={viewingPostIndex} onClose={() => setViewingPostIndex(null)} onLike={onLikePost} onItemClick={onItemClick} onViewProfile={onViewProfile} onComment={handleOpenComments} />}
       {shoppingPost && <ShopTheLookModal post={shoppingPost.post} postType={shoppingPost.type} onClose={() => setShoppingPost(null)} onAddToCart={(items) => { onAddToCartMultiple(items); setShoppingPost(null); }} onBuyNow={(items) => onBuyMultiple(items)} />}
       {commentingPost && <CommentsModal post={commentingPost} currentUser={profile} onClose={() => setCommentingPost(null)} onAddComment={onAddComment} />}
     </>

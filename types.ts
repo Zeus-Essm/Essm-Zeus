@@ -16,7 +16,7 @@ export interface User {
 }
 
 export interface Profile {
-  user_id: string; 
+  id: string; 
   username: string | null;
   full_name: string | null;
   bio: string | null;
@@ -26,6 +26,8 @@ export interface Profile {
   verification_status?: 'unverified' | 'pending' | 'verified';
   reward_points?: number;
   email?: string;
+  // Fix: Added user_id to support access in components like ChatScreen
+  user_id?: string;
 }
 
 export interface Folder {
@@ -48,7 +50,6 @@ export interface Product {
   category: string;
   is_try_on: boolean;
   created_at: string;
-  updated_at?: string;
 }
 
 export interface Post {
@@ -61,7 +62,6 @@ export interface Post {
   caption?: string;
   likes: number;
   isLiked: boolean;
-  is_sponsored?: boolean;
   isSponsored?: boolean;
   created_at: string;
   comments: Comment[];
@@ -81,10 +81,9 @@ export interface Item {
   isTryOn?: boolean;
   folder_id?: string | null;
   owner_id?: string;
-  vendorSubCategory?: string;
+  // Fix: Added properties to resolve TypeScript errors in geminiService and ItemSelectionScreen
+  beautyType?: 'lipstick' | 'wig' | 'eyeshadow' | string;
   recommendationVideo?: string;
-  beautyType?: 'lipstick' | 'wig' | 'eyeshadow';
-  gender?: 'male' | 'female' | 'kid' | 'unisex';
 }
 
 export interface Comment {
@@ -118,20 +117,6 @@ export interface Conversation {
   unreadCount: number;
 }
 
-export interface CollaborationPost {
-  id: string;
-}
-
-export interface SavedLook {
-  id: string;
-  image: string;
-  items: Item[];
-}
-
-export interface InfluencerAffiliationRequest {
-  id: string;
-}
-
 export enum Screen {
   Splash,
   Login,
@@ -146,26 +131,17 @@ export enum Screen {
   Settings,
   ImageSourceSelection,
   Camera,
-  SubCategorySelection,
-  ItemSelection,
   Generating,
   Result,
   Confirmation,
   BusinessOnboarding,
-  VendorAffiliates,
-  VendorCollaborations,
   MyLooks,
   Rewards,
   ChatList,
   Chat,
   AllHighlights,
   VerificationIntro,
-  IdUpload,
-  FaceScan,
-  VerificationPending,
-  SplitCamera,
-  VideoEdit,
-  DecorationPlacement
+  SplitCamera
 }
 
 export interface BusinessProfile {
@@ -181,7 +157,6 @@ export interface AppNotification {
   message: string;
   read: boolean;
   createdAt: Date;
-  relatedCategoryId?: string;
 }
 
 export interface SubCategory {
@@ -194,5 +169,26 @@ export interface SubCategory {
 export interface Category extends SubCategory {
   video?: string;
   type: MarketplaceType;
-  isAd?: boolean;
+}
+
+// Fix: Added missing interfaces to resolve compilation errors in multiple screens
+export interface SavedLook {
+  id: string;
+  image: string;
+  items: Item[];
+  created_at: string;
+}
+
+export interface CollaborationPost extends Post {
+  brand_id?: string;
+  collaboration_status?: 'pending' | 'accepted' | 'declined';
+}
+
+export interface InfluencerAffiliationRequest {
+  id: string;
+  influencer_id: string;
+  influencer: Profile;
+  brand_id: string;
+  status: 'pending' | 'approved' | 'rejected';
+  created_at: string;
 }

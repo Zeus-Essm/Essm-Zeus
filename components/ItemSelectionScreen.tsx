@@ -1,7 +1,9 @@
-import React, { useMemo, useState } from 'react';
+
+import React, { useMemo, useState, useRef } from 'react';
 import type { Item, MarketplaceType } from '../types';
+import { ITEMS } from '../constants';
 import Header from './Header';
-import { ShoppingBagIcon, ArchiveIcon } from './IconComponents';
+import { ShoppingBagIcon, PlayIcon, ArchiveIcon, VideoCameraIcon } from './IconComponents';
 import QuickViewModal from './QuickViewModal';
 
 interface ItemSelectionScreenProps {
@@ -9,25 +11,84 @@ interface ItemSelectionScreenProps {
   collectionId: string;
   collectionName: string;
   collectionType: MarketplaceType;
-  itemsFromDb?: Item[];
   onItemSelect: (item: Item) => void;
-  onOpenSplitCamera: (item: Item) => void;
+  onOpenSplitCamera: (item: Item) => void; // Nova prop
   onBack: () => void;
   onBuy: (item: Item) => void;
   onAddToCart: (item: Item) => void;
 }
 
-const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ 
-    userImage, collectionId, collectionName, collectionType, itemsFromDb = [],
-    onItemSelect, onOpenSplitCamera, onBack, onBuy, onAddToCart 
-}) => {
-  const categoryItems = useMemo(() => 
-    itemsFromDb.filter(item => item.category === collectionId), 
-    [collectionId, itemsFromDb]
-  );
+// Internal Option Modal Component
+const OptionSelectionModal: React.FC<{
+    onClose: () => void;
+    onNormal: () => void;
+    onVideo: () => void;
+}> = ({ onClose, onNormal, onVideo }) => (
+    <div 
+        className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fadeIn"
+        onClick={onClose}
+    >
+        <div 
+            className="bg-[var(--bg-secondary)] border border-[var(--border-primary)] rounded-2xl w-full max-w-xs p-6 flex flex-col gap-4 shadow-2xl animate-modalZoomIn relative overflow-hidden"
+            onClick={e => e.stopPropagation()}
+        >
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--accent-primary)] to-yellow-200"></div>
+            <h3 className="text-xl font-bold text-center text-[var(--text-primary)] mb-2">Como deseja visualizar?</h3>
+            
+            <button 
+                onClick={onNormal} 
+                className="flex items-center gap-4 p-4 rounded-xl bg-[var(--bg-tertiary)] hover:bg-[var(--accent-primary)]/10 border-2 border-transparent hover:border-[var(--accent-primary)] transition-all group"
+            >
+                <div className="p-3 rounded-full bg-[var(--bg-main)] group-hover:bg-[var(--accent-primary)] transition-colors shadow-sm">
+                    <ArchiveIcon className="w-6 h-6 text-[var(--text-primary)] group-hover:text-[var(--accent-primary-text)]" />
+                </div>
+                <div className="text-left">
+                    <p className="font-bold text-[var(--text-primary)]">Versão Normal</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Apenas a imagem do produto</p>
+                </div>
+            </button>
+
+            <button 
+                onClick={onVideo} 
+                className="flex items-center gap-4 p-4 rounded-xl bg-[var(--bg-tertiary)] hover:bg-[var(--accent-primary)]/10 border-2 border-transparent hover:border-[var(--accent-primary)] transition-all group"
+            >
+                <div className="p-3 rounded-full bg-[var(--bg-main)] group-hover:bg-[var(--accent-primary)] transition-colors shadow-sm">
+                    <PlayIcon className="w-6 h-6 text-[var(--text-primary)] group-hover:text-[var(--accent-primary-text)]" />
+                </div>
+                <div className="text-left">
+                    <p className="font-bold text-[var(--text-primary)]">Com Vídeo Review</p>
+                    <p className="text-xs text-[var(--text-secondary)]">Ver recomendação em vídeo</p>
+                </div>
+            </button>
+
+            <button onClick={onClose} className="mt-2 text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors">Cancelar</button>
+        </div>
+    </div>
+);
+
+const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({ userImage, collectionId, collectionName, collectionType, onItemSelect, onOpenSplitCamera, onBack, onBuy, onAddToCart }) => {
+  const categoryItems = useMemo(() => ITEMS.filter(item => item.category === collectionId), [collectionId]);
   
   const [quickViewItem, setQuickViewItem] = useState<Item | null>(null);
+  const [itemForOptions, setItemForOptions] = useState<Item | null>(null);
+  
   const [animatingCartItemId, setAnimatingCartItemId] = useState<string | null>(null);
+  const lastClickDataRef = useRef<{ id: string, time: number }>({ id: '', time: 0 });
+
+  const handleCardClick = (item: Item) => {
+    const now = Date.now();
+    // Detecta duplo clique se for o mesmo item e o intervalo for menor que 300ms
+    if (lastClickDataRef.current.id === item.id && now - lastClickDataRef.current.time < 300) {
+      setQuickViewItem(item);
+      lastClickDataRef.current = { id: '', time: 0 }; // Reset
+    } else {
+      lastClickDataRef.current = { id: item.id, time: now };
+    }
+  };
+
+  const handleCloseModal = () => {
+    setQuickViewItem(null);
+  };
 
   const handleAddToCartClick = (e: React.MouseEvent, item: Item) => {
       e.stopPropagation();
@@ -36,59 +97,92 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({
       setTimeout(() => setAnimatingCartItemId(null), 1000);
   };
 
+  const handleMainActionClick = (item: Item, e?: React.MouseEvent) => {
+      e?.stopPropagation();
+      if (item.recommendationVideo) {
+          setItemForOptions(item);
+      } else {
+          onItemSelect(item);
+      }
+  };
+
+  const handleOptionNormal = () => {
+      if (itemForOptions) {
+          const itemWithoutVideo = { ...itemForOptions, recommendationVideo: undefined };
+          onItemSelect(itemWithoutVideo);
+          setItemForOptions(null);
+      }
+  };
+
+  const handleOptionVideo = () => {
+      if (itemForOptions) {
+          onItemSelect(itemForOptions);
+          setItemForOptions(null);
+      }
+  };
+
   return (
     <>
       <div className="w-full h-full flex flex-col text-[var(--text-primary)] animate-fadeIn bg-[var(--bg-main)]">
         <Header title={collectionName} onBack={onBack} />
-        
-        <div className="flex-grow overflow-y-auto px-5 pt-20 pb-4 scrollbar-hide">
-          <div className="mb-6 px-1">
-            <h2 className="text-2xl font-black text-zinc-900 uppercase italic tracking-tighter leading-none">Coleção</h2>
-            <p className="text-[10px] font-bold text-amber-500 uppercase tracking-widest mt-1">Sugeridos para você</p>
+        <div className="pt-16 px-4 flex-shrink-0">
+           <div className="relative w-32 h-48 mx-auto rounded-lg overflow-hidden shadow-lg shadow-black/20 mb-6 border-2 border-[var(--border-primary)]">
+              <img src={userImage} alt="Sua foto" className="w-full h-full object-cover" />
+               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"></div>
           </div>
-
+        </div>
+       
+        <div className="flex-grow overflow-y-auto px-4 pb-4">
+          <h2 className="text-2xl font-bold mb-4 text-[var(--accent-primary)] opacity-90 text-glow">Itens disponíveis</h2>
           {categoryItems.length > 0 ? (
-            <div className="grid grid-cols-2 gap-4 pb-24">
+            <div className="grid grid-cols-2 gap-4">
               {categoryItems.map(item => (
                 <div 
                     key={item.id}
-                    className="bg-white border border-zinc-100 rounded-[2rem] p-2 flex flex-col hover:shadow-xl transition-all duration-300 group active:scale-[0.98] shadow-md h-full"
-                    onClick={() => setQuickViewItem(item)}
+                    className="bg-[var(--bg-secondary)] border border-[var(--border-secondary)] rounded-xl p-2 flex flex-col hover:bg-[var(--accent-primary)]/5 cursor-pointer transition-all duration-200 ease-out hover:scale-[1.02] shadow-sm active:scale-95"
+                    onClick={() => handleCardClick(item)}
+                    onContextMenu={(e) => e.preventDefault()}
                 >
-                  <div className="relative overflow-hidden rounded-[1.8rem] aspect-[3/4] shrink-0 bg-zinc-50 shadow-inner">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
-                      {item.isTryOn && (
-                          <div className="absolute top-3 left-3 bg-amber-500/90 backdrop-blur-sm text-white text-[7px] font-black px-2 py-1 rounded-full uppercase tracking-widest shadow-lg">
-                              PUMP IA
+                  <div className="relative overflow-hidden rounded-lg mb-2">
+                      <img src={item.image} alt={item.name} className="w-full h-40 object-cover pointer-events-none transition-transform duration-500 hover:scale-110" />
+                      
+                      {item.recommendationVideo && (
+                          <div className="absolute top-2 right-2 bg-black/60 rounded-full p-1 backdrop-blur-sm">
+                              <PlayIcon className="w-3 h-3 text-white" />
                           </div>
                       )}
                   </div>
-                  
-                  <div className='flex flex-col flex-grow p-3'>
-                    <h3 className="text-xs font-black text-zinc-800 uppercase italic truncate mb-0.5">{item.name}</h3>
-                    <p className="text-amber-600 font-black text-sm mb-3 tracking-tighter">
-                        {item.price.toLocaleString('pt-AO', { style: 'currency', currency: 'AOA', maximumFractionDigits: 0 })}
-                    </p>
-                    
-                    <div className="mt-auto flex items-center gap-2">
-                        <button
-                            onClick={(e) => { e.stopPropagation(); onItemSelect(item); }}
-                            className="flex-1 text-[9px] text-center font-black uppercase tracking-widest py-3 rounded-xl bg-zinc-900 text-white transition-all active:scale-90 shadow-lg"
-                        >
-                            PROVAR
-                        </button>
+                  <div className='flex flex-col flex-grow p-1'>
+                    <h3 className="text-sm font-semibold flex-grow pointer-events-none truncate">{item.name}</h3>
+                    <div className="mt-2 flex items-center gap-2">
+                        <div className="flex-grow flex gap-2">
+                            <button
+                                onClick={(e) => handleMainActionClick(item, e)}
+                                className="flex-1 text-[10px] text-center font-bold uppercase tracking-wider py-2 px-1 rounded-full bg-[var(--accent-primary)] text-[var(--accent-primary-text)] transition-all transform active:scale-90"
+                            >
+                                {collectionType === 'decoration' ? 'USAR' : (collectionType === 'fashion' || item.isTryOn ? 'PROVAR' : 'REPOSTAR')}
+                            </button>
+                            <button
+                                onClick={(e) => { e.stopPropagation(); onOpenSplitCamera(item); }}
+                                className="flex-1 flex items-center justify-center gap-1 text-[10px] text-center font-bold uppercase tracking-wider py-2 px-1 rounded-full bg-white text-black border border-zinc-300 transition-all transform active:scale-90"
+                            >
+                                <VideoCameraIcon className="w-3 h-3" />
+                                CRIAR
+                            </button>
+                        </div>
                         
                         <button
                             onClick={(e) => handleAddToCartClick(e, item)}
-                            className={`p-3 rounded-xl transition-all transform duration-300 ${animatingCartItemId === item.id ? 'bg-green-500 text-white' : 'bg-zinc-50 text-zinc-400 hover:bg-zinc-100 active:scale-90 border border-zinc-100 shadow-sm'}`}
+                            className={`p-2.5 rounded-full transition-all transform duration-300 ${animatingCartItemId === item.id ? 'bg-green-500 scale-110 rotate-12' : 'bg-[var(--bg-tertiary)] hover:bg-[var(--text-secondary)]/20 active:scale-90'}`}
+                            aria-label="Adicionar ao carrinho"
                             disabled={animatingCartItemId === item.id}
                         >
                             {animatingCartItemId === item.id ? (
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={5} stroke="currentColor" className="w-4 h-4">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="white" className="w-4 h-4">
                                   <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                                 </svg>
                             ) : (
-                                <ShoppingBagIcon className="w-4 h-4" />
+                                <ShoppingBagIcon className="w-4 h-4 text-[var(--accent-primary)]" />
                             )}
                         </button>
                     </div>
@@ -97,9 +191,8 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 opacity-30">
-              <ArchiveIcon className="w-12 h-12 text-zinc-300 mb-4" strokeWidth={1} />
-              <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Nada encontrado</p>
+            <div className="text-center py-10">
+              <p className="text-[var(--text-secondary)]">Nenhum item encontrado nesta categoria.</p>
             </div>
           )}
         </div>
@@ -108,13 +201,33 @@ const ItemSelectionScreen: React.FC<ItemSelectionScreenProps> = ({
       {quickViewItem && (
         <QuickViewModal 
             item={quickViewItem} 
-            collectionType={collectionType}
-            onClose={() => setQuickViewItem(null)}
-            onBuy={(item) => { onBuy(item); setQuickViewItem(null); }}
-            onAddToCart={(item) => { onAddToCart(item); setQuickViewItem(null); }}
-            onItemAction={(item) => { onItemSelect(item); setQuickViewItem(null); }}
-            onOpenSplitCamera={(item) => { onOpenSplitCamera(item); setQuickViewItem(null); }}
+            collectionType={collectionType} // Passar o tipo para o modal saber se mostra CRIAR
+            onClose={handleCloseModal}
+            onBuy={(item) => {
+                handleCloseModal();
+                onBuy(item);
+            }}
+            onAddToCart={(item) => {
+                handleCloseModal();
+                onAddToCart(item);
+            }}
+            onItemAction={(item) => {
+                handleCloseModal();
+                handleMainActionClick(item);
+            }}
+            onOpenSplitCamera={(item) => {
+                handleCloseModal();
+                onOpenSplitCamera(item);
+            }}
         />
+      )}
+
+      {itemForOptions && (
+          <OptionSelectionModal 
+              onClose={() => setItemForOptions(null)}
+              onNormal={handleOptionNormal}
+              onVideo={handleOptionVideo}
+          />
       )}
     </>
   );

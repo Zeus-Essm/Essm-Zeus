@@ -1,11 +1,11 @@
+
 import React, { useState } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { GoogleIcon } from './IconComponents';
 import { toast } from '../utils/toast';
 
 interface LoginScreenProps {
-  onNavigateToSignUp?: () => void;
-  onSuccess?: () => void;
+  onSuccess: () => void;
 }
 
 const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
@@ -24,7 +24,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
         setLoading(true);
         try {
             if (isSignUp) {
-                const { error } = await supabase.auth.signUp({ 
+                const { data, error } = await supabase.auth.signUp({ 
                     email, 
                     password,
                     options: {
@@ -34,14 +34,25 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
                     }
                 });
                 if (error) throw error;
-                toast.success("Conta criada! Verifique seu e-mail.");
+                
+                // Se o Supabase retornar uma sessão imediatamente (auto-confirm off)
+                if (data.session) {
+                    onSuccess();
+                } else {
+                    toast.success("Conta criada! Verifique seu e-mail ou faça login.");
+                    setIsSignUp(false);
+                }
             } else {
                 const { error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
-                if (onSuccess) onSuccess();
+                onSuccess();
             }
         } catch (err: any) {
-            toast.error(err.message || "Erro na autenticação.");
+            console.error("Auth Error:", err);
+            let msg = err.message;
+            if (msg === "Invalid login credentials") msg = "E-mail ou senha incorretos.";
+            if (msg.includes("Database error saving new user")) msg = "Erro no servidor (SQL Trigger). Verifique o script SQL.";
+            toast.error(msg);
         } finally {
             setLoading(false);
         }
@@ -49,7 +60,12 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
     
     const handleSocialLogin = async (provider: 'google') => {
         try {
-            const { error } = await supabase.auth.signInWithOAuth({ provider });
+            const { error } = await supabase.auth.signInWithOAuth({ 
+                provider,
+                options: {
+                    redirectTo: window.location.origin
+                }
+            });
             if (error) throw error;
         } catch (err: any) {
             toast.error(err.message);
@@ -57,28 +73,29 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
     };
 
     return (
-        <div className="relative flex flex-col min-h-[100dvh] w-full bg-white animate-fadeIn font-sans select-none overflow-y-auto overflow-x-hidden">
+        <div className="relative flex flex-col min-h-[100dvh] w-full bg-white animate-fadeIn font-sans select-none overflow-y-auto">
             <div className="flex-grow flex flex-col items-center justify-center px-8 py-6">
                 <div className="w-full max-w-sm flex flex-col items-center">
                     
-                    <div className="flex text-[64px] sm:text-[72px] font-black lowercase tracking-tighter mb-8 sm:mb-12 leading-none">
+                    <div className="flex text-[64px] font-black lowercase tracking-tighter mb-8 leading-none">
                       <span className="text-[#FFC107]">p</span>
                       <span className="text-[#2D336B]">u</span>
                       <span className="text-[#0EA5E9]">m</span>
                       <span className="text-[#F44336]">p</span>
                     </div>
 
-                    <form onSubmit={handleAuth} className="w-full space-y-4 sm:space-y-5">
+                    <form onSubmit={handleAuth} className="w-full space-y-4" noValidate>
                         <div className="space-y-1">
-                            <label className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] ml-4">
-                                E-mail
-                            </label>
+                            <label htmlFor="email" className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em] ml-4">E-mail</label>
                             <input
+                                id="email"
+                                name="email"
                                 type="email"
+                                autoComplete="email"
                                 placeholder="exemplo@email.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full p-4 bg-zinc-50 rounded-[1.25rem] border border-zinc-100 focus:border-amber-500/30 focus:bg-white focus:outline-none transition-all text-sm font-bold text-zinc-900 placeholder:text-zinc-300 shadow-sm"
+                                className="w-full p-4 bg-zinc-50 rounded-[1.25rem] border border-zinc-100 focus:border-amber-500/30 focus:bg-white focus:outline-none transition-all text-sm font-bold text-zinc-900 placeholder:text-zinc-300"
                                 disabled={loading}
                                 required
                             />
@@ -86,21 +103,17 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
                         
                         <div className="space-y-1">
                              <div className="flex justify-between items-center px-4">
-                                <label className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em]">
-                                    Senha
-                                </label>
-                                {!isSignUp && (
-                                    <button type="button" className="text-[10px] font-black uppercase text-amber-500 hover:text-amber-600 transition-colors tracking-widest">
-                                        Esqueci
-                                    </button>
-                                )}
+                                <label htmlFor="password" className="text-[10px] font-black uppercase text-zinc-400 tracking-[0.2em]">Senha</label>
                             </div>
                             <input
+                                id="password"
+                                name="password"
                                 type="password"
+                                autoComplete={isSignUp ? "new-password" : "current-password"}
                                 placeholder="••••••••"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full p-4 bg-zinc-50 rounded-[1.25rem] border border-zinc-100 focus:border-amber-500/30 focus:bg-white focus:outline-none transition-all text-sm font-bold text-zinc-900 placeholder:text-zinc-300 shadow-sm"
+                                className="w-full p-4 bg-zinc-50 rounded-[1.25rem] border border-zinc-100 focus:border-amber-500/30 focus:bg-white focus:outline-none transition-all text-sm font-bold text-zinc-900 placeholder:text-zinc-300"
                                 disabled={loading}
                                 required
                             />
@@ -117,7 +130,7 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
                         </div>
                     </form>
 
-                    <div className="mt-6 sm:mt-8 flex flex-col items-center w-full gap-5">
+                    <div className="mt-8 flex flex-col items-center w-full gap-5">
                         <button
                             type="button"
                             onClick={() => setIsSignUp(!isSignUp)}
@@ -145,8 +158,8 @@ const LoginScreen: React.FC<LoginScreenProps> = ({ onSuccess }) => {
                 </div>
             </div>
 
-            <footer className="py-4 sm:py-6 w-full flex justify-center gap-8 text-[9px] font-black uppercase text-zinc-300 tracking-[0.3em] bg-white border-t border-zinc-50">
-                <a href="/privacy.html" className="hover:text-zinc-500 transition-colors">Termos</a>
+            <footer className="py-6 w-full flex justify-center gap-8 text-[9px] font-black uppercase text-zinc-300 tracking-[0.3em] bg-white border-t border-zinc-50">
+                <a href="/terms.html" className="hover:text-zinc-500 transition-colors">Termos</a>
                 <a href="/privacy.html" className="hover:text-zinc-500 transition-colors">Privacidade</a>
             </footer>
         </div>
